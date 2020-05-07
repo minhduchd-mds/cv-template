@@ -1,0 +1,376 @@
+/*------------------------------------------------------------
+ Theme name :
+ Author : Minh Duc
+ Description : Bootstrap Theme v4.3.0
+--------------------------------------------------------------
+        CSS INDEX
+========================
+1.Theme Default CSS (typography , body  ,link color ,section)
+
+
+/*******************************
+     1. Theme Default
+********************************/
+
+
+a{
+    text-decoration: none !important;
+    transition: all .3s ease-in-out;
+    -webkit-transition: all .3s ease-in-out;
+    -ms-transition: all .3s ease-in-out;
+    -moz-transition: all .3s ease-in-out;
+    -o-transition: all .3s ease-in-out;
+}
+body,html{
+    background: #e9ecef;
+}
+ul{
+    padding: 0;
+}
+ul li  {
+    list-style: none;
+}
+ul li span{
+    font-family: "UTM Penumbra", Regular;
+    color: #333;
+    margin-left: .9rem;
+    font-size: 1.13rem;
+}
+.pb-5, .py-5 {
+    padding-bottom: 3rem !important;
+}
+.pt-5, .py-5 {
+    padding-top: 3rem !important;
+}
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    line-height: 1.2;
+}
+.col-1, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-10, .col-11, .col-12, .col, .col-auto, .col-sm-1, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm, .col-sm-auto, .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12, .col-md, .col-md-auto, .col-lg-1, .col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6, .col-lg-7, .col-lg-8, .col-lg-9, .col-lg-10, .col-lg-11, .col-lg-12, .col-lg, .col-lg-auto, .col-xl-1, .col-xl-2, .col-xl-3, .col-xl-4, .col-xl-5, .col-xl-6, .col-xl-7, .col-xl-8, .col-xl-9, .col-xl-10, .col-xl-11, .col-xl-12, .col-xl, .col-xl-auto {
+    position: relative;
+    width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+.title-h3:after{
+    content: "";
+    border-bottom: .2rem solid #f0ba00;
+    height: 2px;
+    width: 50px;
+    position: absolute;
+    z-index: 1;
+}
+#text-tagert {
+    font-family: "UTM Penumbra", Regular;
+    font-size: 1.17rem;
+}
+/*******************************
+     2. Header
+********************************/
+
+/*----dropdown-hover------*/
+.dropdown {
+    cursor: default;
+}
+.dropdown-hover {
+    display: none;
+    position: fixed;
+    top: 129px;
+    min-width: 200px;
+    color: #1C1C1C;
+    background-color: #fff;
+    box-shadow: 0px 26px 25px 4px rgba(0, 0, 0, 0.28);
+    z-index: 999999!important;
+}
+.navbar-link  .active a{
+    color: #028B00;
+}
+.dropdown-hover a {
+    border-top: 1px solid #4848481a;
+    padding: 12px 16px !important;
+    text-decoration: none;
+    display: block;
+    text-transform: uppercase !important;
+    font-family: "UTM Penumbra",Regular !important;
+    font-size: 14px !important;
+    line-height: 1.3rem !important;
+}
+.dropdown:hover .dropdown-hover {
+    display: block;
+}
+
+.dropdown-hover a:hover {
+    background: #028B00;
+    color: #fff !important;
+}
+/*-----sticky navbar-----*/
+.sticky {
+    background: #fff;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+    -webkit-box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+    -o-box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+    -ms-box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+    z-index: 999999;
+}
+.sticky + #slider {
+    padding-top: 90px;
+}
+.sticky .info-nav{
+    display: none;
+}
+.sticky .navbar-link{
+    margin-left: auto !important;
+}
+.sticky .dropdown .dropdown-hover{
+    top: 89px;
+}
+
+/*******************************
+     3. Slider
+********************************/
+#page-home .container {background: #fff;}
+#page-home .container .row .col{
+
+}
+.border-bg-left,.border-bg-right{
+    height: 697.98px;
+}
+.border-bg-left{
+    border-top: 3px solid #d1d5d8;
+    border-left: 3px solid #d1d5d8;
+    border-bottom: 3px solid #d1d5d8;
+}
+.border-bg-right{
+    border-top: 3px solid #d1d5d8;
+    border-right: 3px solid #d1d5d8;
+    border-bottom: 3px solid #d1d5d8;
+}
+.border-bg:after{
+    content: "";
+    background: #d1d5d8;
+    position: absolute;
+    height: 97%;
+    width: 0.2rem;
+    top: 7px;
+    bottom: 0;
+    left: 2px;
+}
+.border-bg:before{
+
+}#page-home{padding: 60px 0;}
+#page-home .profile {
+    height: 100%;
+    box-shadow: -37px 4px 28px 10px rgba(0, 0, 0, 0.11) !important;
+}
+#page-home .profile-content{width: 287px;height: auto;margin: auto;}
+#page-home .profile-content ul{
+    margin: 2rem 1.7rem;
+}
+#page-home .profile-content img{
+    height: 165px;
+    width: 165px;
+    border-radius: 5rem;
+    margin: 0 3.7rem;
+}
+#main-right:before{
+    content: "";
+    background: #d1d5d8;
+    position: absolute;
+    height: 100%;
+    width: 0.4rem;
+    top: 0;
+    bottom: 0;
+    left: -34px;
+    z-index: 2;
+}
+#main-right{
+    height: 100%;
+    box-shadow: 37px 4px 28px 10px rgba(0, 0, 0, 0.11) !important;
+
+}
+#main-right .card {
+    margin-bottom: 1.3rem;
+    padding: .5rem;
+    border: none;
+    /*box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;*/
+}
+.main-description{width: 100%;}
+
+.skills-content{
+    background-color: #e9ecef;
+}
+.skills {
+    text-align: right;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: .4rem;
+    color: white;
+}
+.html,.js,.photoshop,.boostrap,.css {width: 1%; background-color: #99a2ab;}
+
+
+/*******************************
+     9. page
+********************************/
+.card{
+    border: none; border-radius: 0;
+    position: relative;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    padding: 1rem;
+}
+.card-body{
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    padding: 1.25rem;
+}
+.card-body h4{
+    font-family: "UTM Penumbra", BoldItalic;
+    font-size: 1.1rem;
+}
+.card-body h5 {
+    font-size: 1rem;
+}
+.card-body h5 span{
+
+}
+#card-left-1 ,#card-left-2,#card-left-3,#card-left-4,#card-right-1,#card-right-2,#card-right-3,#card-right-4{
+    height: 100%;
+    width: auto;
+}
+#page-home .active ,#setting-slider .active{display: block;}
+ #card-left-1,#card-left-2,#card-left-3,#card-left-4{
+    box-shadow: -37px 4px 28px 10px rgba(0, 0, 0, 0.11) !important;
+}
+.profile,#card-left-1,#card-left-2,#card-left-3,#card-left-4,#main-right,#card-right-1,#card-right-2,#card-right-3,#card-right-4{
+    display: none;
+}
+#card-right-1,#card-right-2,#card-right-3,#card-right-4{
+    display: none;
+    box-shadow: 37px 4px 28px 10px rgba(0, 0, 0, 0.11) !important;
+}
+#card-right-1:before,#card-right-2:before,#card-right-3:before,#card-right-4:before{
+    content: "";
+    background: #d1d5d8;
+    position: absolute;
+    height: 100%;
+    width: 0.4rem;
+    top: 0;
+    bottom: 0;
+    left: -34px;
+    z-index: 2;
+}
+.project-sm1, .project-sm2, .project-sm3{
+    margin-bottom: .8rem;
+}
+.carousel-item img {height: 300px;}
+/*******************************
+     10. fa
+********************************/
+.social-network a{
+    padding: 13px;
+    font-size: 20px;
+    width: 50px;
+    text-align: center;
+    text-decoration: none;
+    margin: 5px 2px;
+    border-radius: 50%;
+    color: #fff !important;
+}
+
+.social-network a:hover {
+    opacity: 0.7;
+}
+
+.fa-facebook {
+    background: #3B5998;
+    color: white;
+}
+
+.fa-twitter {
+    background: #55ACEE;
+    color: white;
+}
+
+.fa-google {
+    background: #dd4b39;
+    color: white;
+}
+
+.fa-linkedin {
+    background: #007bb5;
+    color: white;
+}
+
+.fa-youtube {
+    background: #bb0000;
+    color: white;
+}
+
+/*******************************
+     11. Setting slider
+********************************/
+#setting-slider {
+    opacity: 0;
+    background: rgba(221, 221, 221, 0.45);
+    height: 50px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+#setting-slider .setting-content-center {
+    overflow: auto;
+}
+.carousel-control-prev-1,.carousel-control-prev-2,.carousel-control-prev-3,.carousel-control-prev-4{left: -166px;}
+.carousel-control-next-1,.carousel-control-next-2,.carousel-control-next-3,.carousel-control-next-4{right: -166px;}
+
+.carousel-control-prev-1, .carousel-control-next-1,.carousel-control-prev-2, .carousel-control-next-2 ,.carousel-control-prev-3, .carousel-control-next-3,.carousel-control-prev-4, .carousel-control-next-4
+{
+    display: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    width: 12%;
+    color: #fff;
+    text-align: center;
+    opacity: .5;
+    transition: opacity .15s ease;
+}
+/*-----------background icon --------------*/
+.prev{
+    background: url('icons8-prev.png') center center no-repeat;
+    background-size: cover;
+}
+/*.pause{*/
+/*    background: url('../image/icon/icons8-pause.png');*/
+/*    background-size: cover;*/
+/*}*/
+.next{
+    background: url('icons8-next.png') center center no-repeat;
+    background-size: cover;
+}
+
+.prev,.pause,.next{
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+}
+
