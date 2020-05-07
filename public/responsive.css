@@ -31,6 +31,26 @@
     .main-description i{
         font-size: 1em;
     }
+    .col-12 {
+        -ms-flex: 0 0 100%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    .quick.active {
+        width: 90px;
+        height: 90px;
+        top: -30px;
+        left: -30px;
+    }
+    .quick-b.active {
+        width: 60px;
+        height: 60px;
+    }
+    .quick-a.shake{
+        height: 35px;
+        width: 35px;
+    }
+
 }
 
 
@@ -39,6 +59,11 @@
     #setting-slider{
         opacity: 1;
         width: 100%;
+    }
+    .col-12 {
+        -ms-flex: 0 0 100%;
+        flex: 0 0 100%;
+        max-width: 100%;
     }
     #setting-slider .active{display: block !important;}
     #setting-slider .carousel-control-prev-1, #setting-slider .carousel-control-prev-2, #setting-slider .carousel-control-prev-3, #setting-slider .carousel-control-prev-4,
@@ -67,6 +92,22 @@
     .main-description i{
         font-size: 1em;
     }
+    .quick.active {
+        width: 90px;
+        height: 90px;
+        top: -28px;
+        left: -28px;
+    }
+    .quick-b.active {
+        width: 60px;
+        height: 60px;
+        top: -13px;
+        left: -13px;
+    }
+    .quick-a.shake{
+        height: 35px;
+        width: 35px;
+    }
 }
 
 
@@ -84,12 +125,24 @@
     .container {
         max-width: 960px !important;
     }
+    .col-lg-6{
 
+    }
+    .col-lg-6 {
+        -ms-flex: 0 0 50%;
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
 }
 @media only screen and (min-width: 1024px) and (max-width: 1439px)
 {
     .container {
         max-width: 1140px !important;
+    }
+    .col-lg-6 {
+        -ms-flex: 0 0 50%;
+        flex: 0 0 50%;
+        max-width: 50%;
     }
 
 }
