@@ -5,7 +5,7 @@
                 <div class="col-12 col-md-6 col-lg-6 col-lg-6 border-bg-left">
                     <div class="profile pt-5 pb-5 animated fadeInLeft delay-1s active">
                         <div class="profile-content mt-5">
-                            <img src="../assets/images/IMG_3038.jpg" class="img-fluid shadow">
+                            <img src="../assets/images/IMG_3038.jpg" class="img-fluid shadow" alt="">
                             <ul class="profile-p">
                                 <li><i class="fa fa-user"></i><span>Đỗ Minh Đức</span></li>
                                 <li><i class="fa fa-birthday-cake"></i><span>09/10/1995</span></li>
