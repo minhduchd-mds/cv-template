@@ -406,7 +406,7 @@ article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
 /*----------Call----------*/
 .call{
     position: fixed!important;
-    bottom: 5.8rem;
+    top: 70%;
     left: 2.5rem;
     z-index: 999;
 }
