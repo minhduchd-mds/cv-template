@@ -9,8 +9,6 @@
             <span class="next" aria-hidden="true"></span>
             <span class="sr-only">Next</span>
         </a>
-
-
         <a class="carousel-control-prev-2 btn" href="javascript:void(0);" role="button">
             <span class="prev" aria-hidden="true"></span>
             <span class="sr-only">Previous</span>
@@ -31,7 +29,9 @@
             <span class="sr-only">Next</span>
         </a>
     </div>
+
 </template>
+
 
 <script>
 	export default {
