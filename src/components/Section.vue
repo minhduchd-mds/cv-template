@@ -1,9 +1,12 @@
 <template>
     <section id="page-home">
-        <div class="container">
-            <div class="row">
-                <div class="col-12 col-md-6 col-lg-6 col-lg-6 border-bg-left">
-                    <div class="profile pt-5 pb-5 animated fadeInLeft delay-1s active">
+        <v-container fluid>
+            <v-row
+                    :align="alignment"
+                   :justify="justify"
+            >
+                <v-col cols="12" sm="12" md="6" lg="6" xl="6"  class="border-bg-left">
+                    <div  class="profile pt-5 pb-5 animated fadeInLeft delay-1s active">
                         <div class="profile-content mt-5">
                             <img src="../assets/images/IMG_3038.jpg" class="img-fluid shadow" alt="">
                             <ul class="profile-p">
@@ -20,13 +23,12 @@
                             </div>
                         </div>
 
-                        <a class="carousel-control-prev-1 btn" href="javascript:void(0);" role="button" data-slide="prev">
+                        <a class="carousel-control-prev-1 btn" href="javascript:void(0);">
                             <span class="prev" aria-hidden="true"></span>
                             <span class="sr-only">Previous</span>
                         </a>
                     </div>
-                    <!--           page1         -->
-                    <div id="card-left-1" class="card p-5 animated fadeInRight">
+                    <div id="card-left-1"  class="card p-5 animated fadeInRight">
                         <div class="card">
                             <div class="title-h3">
                                 <h3 class="">Học vấn</h3>
@@ -67,13 +69,12 @@
                                 <p>Game, Phim, Nhạc , Design web.</p>
                             </div>
                         </div>
-                        <a class="carousel-control-prev-2 btn" href="javascript:void(0);" role="button" data-slide="prev">
+                        <a class="carousel-control-prev-2 btn" href="javascript:void(0);">
                             <span class="prev" aria-hidden="true"></span>
                             <span class="sr-only">Previous</span>
                         </a>
                     </div>
-                    <!--                    -->
-                    <div id="card-left-2" class="card p-5 animated fadeInRight">
+                    <div id="card-left-2"  class="card p-5 animated fadeInRight">
                         <div class="card">
                             <div class="card-body">
                                 <div class="project-sm1">
@@ -122,17 +123,13 @@
                         </div>
 
 
-                        <a class="carousel-control-prev-3 btn" href="javascript:void(0);" role="button" data-slide="prev">
+                        <a class="carousel-control-prev-3 btn" href="javascript:void(0);">
                             <span class="prev" aria-hidden="true"></span>
                             <span class="sr-only">Previous</span>
                         </a>
                     </div>
-                    <!--                    -->
-
-
-                    <!--                    -->
-                </div>
-                <div class="col-12 col-md-6 col-lg-6 col-lg-6 border-bg-right">
+                </v-col>
+                <v-col cols="12" sm="12" md="6" lg="6" xl="6" class="border-bg-right">
                     <div id="main-right" class="pt-5 pb-5 ml-3 animated fadeInRight delay-1s active">
                         <div class="card">
                             <div class="title-h3">
@@ -181,13 +178,12 @@
                                 </div>
                             </div>
                         </div>
-                        <a class="carousel-control-next-1 btn" href="javascript:void(0);" role="button" data-slide="next">
+                        <a class="carousel-control-next-1 btn" href="javascript:void(0);" >
                             <span class="next" aria-hidden="true"></span>
                             <span class="sr-only">Next</span>
                         </a>
                     </div>
-
-                    <div id="card-right-1" class="card p-5 animated fadeInRight">
+                    <div id="card-right-1"  class="card p-5 animated fadeInRight">
                         <div class="card">
                             <div class="title-h3">
                                 <h3 class="">Kinh nghiệm khi làm việc</h3>
@@ -238,12 +234,11 @@
                                 </div>
                             </div>
                         </div>
-                        <a class="carousel-control-next-2 btn" href="javascript:void(0);" role="button" data-slide="next">
+                        <a class="carousel-control-next-2 btn" href="javascript:void(0);" >
                             <span class="next" aria-hidden="true"></span>
                             <span class="sr-only">Next</span>
                         </a>
                     </div>
-
                     <div id="card-right-2" class="card p-5 animated fadeInRight">
                         <div class="card">
                             <div class="title-h3">
@@ -290,20 +285,43 @@
                             </div>
                         </div>
 
-                        <a class="carousel-control-next-3 btn" href="javascript:void(0);" role="button" data-slide="next">
+                        <a class="carousel-control-next-3 btn" href="javascript:void(0);" >
                             <span class="next" aria-hidden="true"></span>
                             <span class="sr-only">Next</span>
                         </a>
                     </div>
-                </div>
-            </div>
-        </div>
+
+                </v-col>
+            </v-row>
+        </v-container>
     </section>
 
 </template>
 
 <script>
 	export default {
-		name: "Section"
+		name: "Section",
+		data () {
+			return {
+				alignmentsAvailable: [
+					'start',
+					'center',
+					'end',
+					'baseline',
+					'stretch',
+				],
+				alignment: 'center',
+				dense: false,
+				justifyAvailable: [
+					'start',
+					'center',
+					'end',
+					'space-around',
+					'space-between',
+				],
+				justify: 'center',
+			}
+
+		},
 	}
 </script>

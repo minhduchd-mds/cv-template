@@ -5,7 +5,7 @@
 @media only screen and (min-width: 320px) and (max-width: 374px)
 {
     #setting-slider{
-        opacity: 1;
+        opacity: 0;
         width: 100%;
     }
     .border-bg-left, .border-bg-right{
@@ -50,21 +50,20 @@
         height: 35px;
         width: 35px;
     }
-
+    .prev, .pause, .next{
+        width: 100%;
+        height: 50px;
+    }
 }
 
 
 @media only screen and (min-width: 374px) and (max-width: 424px)
 {
     #setting-slider{
-        opacity: 1;
+        opacity: 0;
         width: 100%;
     }
-    .col-12 {
-        -ms-flex: 0 0 100%;
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
+
     #setting-slider .active{display: block !important;}
     #setting-slider .carousel-control-prev-1, #setting-slider .carousel-control-prev-2, #setting-slider .carousel-control-prev-3, #setting-slider .carousel-control-prev-4,
     #setting-slider  .carousel-control-next-1,#setting-slider  .carousel-control-next-2, #setting-slider  .carousel-control-next-3, #setting-slider  .carousel-control-next-4{
@@ -75,7 +74,10 @@
     #card-right-1  .carousel-control-next-2, #card-right-2  .carousel-control-next-3, #card-right-3 .carousel-control-next-4, #card-right-4{
         display: none;
     }
-
+    .prev, .pause, .next{
+        width: 100%;
+        height: 50px;
+    }
     .profile, #card-left-1, #card-left-2, #card-left-3, #card-left-4, #main-right, #card-right-1, #card-right-2, #card-right-3, #card-right-4{
         padding: 2rem 1rem !important;
     }
@@ -113,49 +115,21 @@
 
 @media only screen and (min-width: 425px) and (max-width: 767px)
 {
-    .container {
-        max-width: 540px;
-    }
-    .col-lg-6 {
-        -ms-flex: 0 0 50%;
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
+
 }
 
 
 @media only screen and (min-width: 768px) and (max-width: 998px)
 {
-    .container {
-        max-width: 960px !important;
-    }
-    .col-lg-6 {
-        -ms-flex: 0 0 50%;
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
+
 }
 @media only screen and (min-width: 1024px) and (max-width: 1439px)
 {
-    .container {
-        max-width: 1140px !important;
-    }
-    .col-lg-6 {
-        -ms-flex: 0 0 50%;
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
+
 
 }
 @media only screen and (min-width: 1440px) and (max-width: 2560px){
 
-    .container {
-        max-width: 1200px !important;
-    }
-    .col-lg-6 {
-        -ms-flex: 0 0 50%;
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
+
 
 }

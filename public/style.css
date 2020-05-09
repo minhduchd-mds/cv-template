@@ -61,27 +61,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
     display: block;
 }
-.row {
-    display: -ms-flexbox;
-    display: flex;
-    -ms-flex-wrap: wrap;
-    flex-wrap: wrap;
-    margin-right: -15px;
-    margin-left: -15px;
-}
-.container {
-    width: 100%;
-    padding-right: 15px;
-    padding-left: 15px;
-    margin-right: auto;
-    margin-left: auto;
-}
-.col-1, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-10, .col-11, .col-12, .col, .col-auto, .col-sm-1, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm, .col-sm-auto, .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12, .col-md, .col-md-auto, .col-lg-1, .col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6, .col-lg-7, .col-lg-8, .col-lg-9, .col-lg-10, .col-lg-11, .col-lg-12, .col-lg, .col-lg-auto, .col-xl-1, .col-xl-2, .col-xl-3, .col-xl-4, .col-xl-5, .col-xl-6, .col-xl-7, .col-xl-8, .col-xl-9, .col-xl-10, .col-xl-11, .col-xl-12, .col-xl, .col-xl-auto {
-    position: relative;
-    width: 100%;
-    padding-right: 15px;
-    padding-left: 15px;
-}
+
 .title-h3:after{
     content: "";
     border-bottom: .2rem solid #f0ba00;
@@ -190,7 +170,7 @@ article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
 }
 .border-bg:before{
 
-}#page-home{padding: 60px 0;}
+}#page-home{padding: 30px 0;}
 #page-home .profile {
     height: 100%;
     box-shadow: -37px 4px 28px 10px rgba(0, 0, 0, 0.11) !important;
@@ -404,9 +384,16 @@ article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
 }
 
 /*----------Call----------*/
-.call{
+/*.call{*/
+/*    position: fixed!important;*/
+/*    top: 70%;*/
+/*    left: 2.5rem;*/
+/*    z-index: 999;*/
+/*}*/
+.call {display: none;}
+.download-pdf{
     position: fixed!important;
-    top: 70%;
+    top: 80%;
     left: 2.5rem;
     z-index: 999;
 }
@@ -476,6 +463,29 @@ article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
     border: 2px solid transparent;
     opacity: 1;
     background: #29e14a url('ios-call.svg') no-repeat center center;
+    -webkit-animation: quick-a 1s infinite ease-in-out;
+    -moz-animation: quick-a 1s infinite ease-in-out;
+    -ms-animation: quick-a 1s infinite ease-in-out;
+    -o-animation: quick-a 1s infinite ease-in-out;
+    animation: quick-a 1s infinite ease-in-out;
+    -webkit-transform-origin: 50% 50%;
+    -moz-transform-origin: 50% 50%;
+    -ms-transform-origin: 50% 50%;
+    -o-transform-origin: 50% 50%;
+    transform-origin: 50% 50%;
+}
+.quick-a.shake-download{
+    width: 50px;
+    height: 50px;
+    top: 0;
+    left: 0;
+    position: absolute;
+    -webkit-border-radius: 100%;
+    -moz-border-radius: 100%;
+    border-radius: 100%;
+    border: 2px solid transparent;
+    opacity: 1;
+    background: #29e14a url('icons8-export_pdf.png') no-repeat center center;
     -webkit-animation: quick-a 1s infinite ease-in-out;
     -moz-animation: quick-a 1s infinite ease-in-out;
     -ms-animation: quick-a 1s infinite ease-in-out;
