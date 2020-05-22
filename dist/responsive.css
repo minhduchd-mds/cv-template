@@ -1,0 +1,135 @@
+/*
+   Design responsive  : Minh Duc ;
+   Standard version   : 0.0001 ;
+*/
+@media only screen and (min-width: 320px) and (max-width: 374px)
+{
+    #setting-slider{
+        opacity: 0;
+        width: 100%;
+    }
+    .border-bg-left, .border-bg-right{
+        height: auto;
+        width: auto;
+    }
+    #setting-slider .active{display: block !important;}
+    #setting-slider .carousel-control-prev-1, #setting-slider .carousel-control-prev-2, #setting-slider .carousel-control-prev-3, #setting-slider .carousel-control-prev-4,
+    #setting-slider  .carousel-control-next-1,#setting-slider  .carousel-control-next-2, #setting-slider  .carousel-control-next-3, #setting-slider  .carousel-control-next-4{
+        display: none;
+    }
+    .profile, #card-left-1, #card-left-2, #card-left-3, #card-left-4, #main-right, #card-right-1, #card-right-2, #card-right-3, #card-right-4{
+        padding: 2rem 1rem !important;
+    }
+    .carousel-control-prev-1, .carousel-control-prev-2, .carousel-control-prev-3, .carousel-control-prev-4{
+        left: 0;
+        display: none;
+    }
+    .carousel-control-next-1, .carousel-control-next-2, .carousel-control-next-3, .carousel-control-next-4{
+        right: 0;
+        display: none;
+    }
+    .main-description i{
+        font-size: 1em;
+    }
+    .col-12 {
+        -ms-flex: 0 0 100%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    .quick.active {
+        width: 90px;
+        height: 90px;
+        top: -30px;
+        left: -30px;
+    }
+    .quick-b.active {
+        width: 60px;
+        height: 60px;
+    }
+    .quick-a.shake{
+        height: 35px;
+        width: 35px;
+    }
+    .prev, .pause, .next{
+        width: 100%;
+        height: 50px;
+    }
+}
+
+
+@media only screen and (min-width: 374px) and (max-width: 424px)
+{
+    #setting-slider{
+        opacity: 0;
+        width: 100%;
+    }
+
+    #setting-slider .active{display: block !important;}
+    #setting-slider .carousel-control-prev-1, #setting-slider .carousel-control-prev-2, #setting-slider .carousel-control-prev-3, #setting-slider .carousel-control-prev-4,
+    #setting-slider  .carousel-control-next-1,#setting-slider  .carousel-control-next-2, #setting-slider  .carousel-control-next-3, #setting-slider  .carousel-control-next-4{
+        display: none;
+    }
+    .profile   .carousel-control-prev-1 , #card-left-1 .carousel-control-prev-2, #card-left-2 .carousel-control-prev-3,
+    #card-left-3 .carousel-control-prev-4, #card-left-4  .carousel-control-next-1, #main-right  .carousel-control-next-1,
+    #card-right-1  .carousel-control-next-2, #card-right-2  .carousel-control-next-3, #card-right-3 .carousel-control-next-4, #card-right-4{
+        display: none;
+    }
+    .prev, .pause, .next{
+        width: 100%;
+        height: 50px;
+    }
+    .profile, #card-left-1, #card-left-2, #card-left-3, #card-left-4, #main-right, #card-right-1, #card-right-2, #card-right-3, #card-right-4{
+        padding: 2rem 1rem !important;
+    }
+    .carousel-control-prev-1, .carousel-control-prev-2, .carousel-control-prev-3, .carousel-control-prev-4{
+        left: 0;
+    }
+    .carousel-control-next-1, .carousel-control-next-2, .carousel-control-next-3, .carousel-control-next-4{
+        right: 0;
+    }
+    .border-bg-left, .border-bg-right{
+        height: auto;
+        width: auto;
+    }
+    .main-description i{
+        font-size: 1em;
+    }
+    .quick.active {
+        width: 90px;
+        height: 90px;
+        top: -28px;
+        left: -28px;
+    }
+    .quick-b.active {
+        width: 60px;
+        height: 60px;
+        top: -13px;
+        left: -13px;
+    }
+    .quick-a.shake{
+        height: 35px;
+        width: 35px;
+    }
+}
+
+
+@media only screen and (min-width: 425px) and (max-width: 767px)
+{
+
+}
+
+
+@media only screen and (min-width: 768px) and (max-width: 998px)
+{
+
+}
+@media only screen and (min-width: 1024px) and (max-width: 1439px)
+{
+
+
+}
+@media only screen and (min-width: 1440px) and (max-width: 2560px){
+
+
+
+}
