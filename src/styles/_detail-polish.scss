@@ -1,0 +1,300 @@
+/*
+ * Detail polish found through visual QA screenshots.
+ * These are intentional production refinements, not decorative additions.
+ */
+
+/* The Studio's closing principle section is intentionally dark; preserve readable hierarchy. */
+.principles {
+  color: #f5f5f7;
+  background:
+    radial-gradient(circle at 86% 12%, rgba(0,113,227,.12), transparent 28%),
+    #111318;
+
+  .section-heading {
+    h2 { color: #f5f5f7; }
+    .section-index { color: #78b7ff; }
+  }
+}
+
+.principle-grid article {
+  border-color: rgba(255,255,255,.11);
+  color: #f5f5f7;
+  background: rgba(255,255,255,.055);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+
+  > span {
+    color: #78b7ff;
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: .1em;
+  }
+
+  h3 {
+    color: #f5f5f7;
+    font-size: 15px;
+    line-height: 1.3;
+    letter-spacing: -.018em;
+    text-wrap: balance;
+  }
+
+  p {
+    color: rgba(245,245,247,.68);
+    font-size: 11.5px;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  &:hover {
+    border-color: rgba(255,255,255,.2);
+    background: rgba(255,255,255,.085);
+    box-shadow: none;
+  }
+}
+
+.site-footer {
+  border-top-color: rgba(255,255,255,.08);
+  color: rgba(245,245,247,.58);
+  background: #0d0f14;
+}
+
+/* Sidebar title should read as one deliberate headline, not accidental three-line wrapping. */
+.template-panel .section-heading {
+  h2 {
+    max-width: 11ch;
+    font-size: clamp(25px, 2vw, 31px);
+    line-height: .98;
+    text-wrap: balance;
+  }
+
+  p {
+    max-width: 29ch;
+    font-size: 11.5px;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+}
+
+/* Floating route actions are a compact utility dock rather than content overlays. */
+.studio-home-launch,
+.concept-launch {
+  min-height: 42px;
+  border: 1px solid var(--apple-separator);
+  border-radius: 13px;
+  color: var(--apple-label);
+  background: rgba(250,250,252,.88);
+  box-shadow: 0 10px 28px rgba(0,0,0,.10);
+}
+
+.studio-home-launch {
+  font-size: 11px;
+  font-weight: 620;
+}
+
+.concept-launch {
+  position: fixed;
+  z-index: 80;
+  right: 22px;
+  bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 11px;
+  text-decoration: none;
+
+  .concept-launch-dot {
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #67a9ff, #6d5dfc);
+    box-shadow: inset 0 1px rgba(255,255,255,.3);
+  }
+
+  > span:nth-child(2) {
+    display: grid;
+    gap: 1px;
+  }
+
+  strong {
+    color: var(--apple-label);
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  small {
+    color: var(--apple-secondary);
+    font-size: 9.5px;
+    line-height: 1.2;
+  }
+
+  > b {
+    color: var(--apple-secondary);
+    font-size: 13px;
+  }
+}
+
+/* Mobile A4 preview uses a deterministic fit scale instead of cropping desktop zoom. */
+@media (max-width: 640px) {
+  .preview-stage {
+    --preview-zoom: .5;
+    overflow: hidden;
+    padding: 18px 10px 22px;
+  }
+
+  .preview-zoom {
+    --preview-zoom: .5 !important;
+  }
+
+  .zoom-control {
+    display: none;
+  }
+
+  .preview-toolbar {
+    align-items: center;
+  }
+
+  .preview-actions {
+    gap: 6px;
+  }
+
+  .cycle-control,
+  .focus-control {
+    min-height: 38px;
+    padding-inline: 9px;
+    font-size: 10.5px;
+  }
+
+  .quality-score {
+    min-width: 40px;
+    padding: 5px;
+  }
+
+  .score-ring {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+
+  .color-control {
+    min-height: 38px;
+  }
+}
+
+@media (max-width: 520px) {
+  .preview-stage { --preview-zoom: .43; }
+  .preview-zoom { --preview-zoom: .43 !important; }
+}
+
+@media (max-width: 390px) {
+  .preview-stage { --preview-zoom: .38; }
+  .preview-zoom { --preview-zoom: .38 !important; }
+}
+
+/* Compact Studio navigation prioritizes actions over descriptive brand copy. */
+@media (max-width: 640px) {
+  .topbar {
+    gap: 8px;
+  }
+
+  .brand {
+    flex: 0 0 auto;
+
+    > span:last-child { display: none; }
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .topbar-actions {
+    min-width: 0;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .ghost-button {
+    display: none;
+  }
+
+  .auto-complete-button {
+    min-width: 48px;
+    padding-inline: 7px;
+  }
+
+  .editor-trigger {
+    min-width: 54px;
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+
+  .primary-button {
+    min-width: 54px;
+    padding-inline: 10px;
+    font-size: 11px;
+
+    span:first-child { display: none; }
+
+    &::before {
+      content: 'PDF';
+      font-weight: 650;
+    }
+  }
+
+  .studio-home-launch,
+  .concept-launch {
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .studio-home-launch {
+    right: auto;
+    left: 12px;
+    min-height: 40px;
+    padding-inline: 11px;
+  }
+
+  .concept-launch {
+    right: 12px;
+    min-height: 40px;
+    padding: 6px 9px;
+
+    small { display: none; }
+    .concept-launch-dot {
+      width: 20px;
+      height: 20px;
+      flex-basis: 20px;
+      border-radius: 7px;
+    }
+  }
+
+  .principles {
+    padding-inline: 20px;
+  }
+
+  .principle-grid {
+    gap: 10px;
+  }
+
+  .principle-grid article {
+    min-height: 0;
+    padding: 18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .concept-launch strong {
+    font-size: 10px;
+  }
+
+  .concept-launch > b {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .principle-grid article,
+  .studio-home-launch,
+  .concept-launch {
+    transition: none;
+  }
+}
