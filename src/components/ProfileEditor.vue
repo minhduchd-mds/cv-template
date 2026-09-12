@@ -23,11 +23,31 @@
       </nav>
 
       <div class="editor-body">
+        <p v-if="imageError" class="editor-error" role="alert">{{ imageError }}</p>
+
         <section v-if="activeTab === 'profile'" class="editor-section">
           <div class="editor-section-heading">
             <div><span>01</span><h3>Profile & contact</h3></div>
             <p>Core information shared by every template and landing concept.</p>
           </div>
+
+          <div class="avatar-builder">
+            <div class="avatar-preview" :class="{ empty: !profile.avatar }" :style="imageStyle(profile.avatar)">
+              <span v-if="!profile.avatar">{{ initials }}</span>
+            </div>
+            <div>
+              <strong>Profile photo</strong>
+              <p>Upload JPG, PNG or WebP. The image is compressed locally before it is saved.</p>
+              <div class="image-actions">
+                <label class="image-upload-button">
+                  <input type="file" accept="image/jpeg,image/png,image/webp" @change="uploadAvatar" />
+                  Upload photo
+                </label>
+                <button v-if="profile.avatar" type="button" class="image-clear" @click="update('avatar', '')">Remove</button>
+              </div>
+            </div>
+          </div>
+
           <div class="editor-grid">
             <label class="editor-field editor-field-wide"><span>Full name</span><input :value="profile.name" type="text" @input="update('name', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Role / headline</span><input :value="profile.role" type="text" @input="update('role', $event.target.value)" /></label>
@@ -76,17 +96,21 @@
         <section v-else-if="activeTab === 'projects'" class="editor-section">
           <div class="editor-section-heading">
             <div><span>04</span><h3>Selected projects</h3></div>
-            <p>Project covers automatically flow into Case Study, Bento and other visual concepts.</p>
+            <p>Upload project covers directly. They flow into Case Study, Bento and visual CV concepts automatically.</p>
           </div>
           <div class="builder-list">
             <article v-for="(project, index) in profile.projects" :key="`project-${index}`" class="builder-card">
               <div class="builder-card-top"><strong>{{ project.name || `Project ${index + 1}` }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('projects', index, -1)">↑</button><button type="button" :disabled="index === profile.projects.length - 1" @click="move('projects', index, 1)">↓</button><button type="button" class="danger" @click="remove('projects', index)">×</button></div></div>
-              <div class="project-cover-preview" :class="{ empty: !project.image }" :style="coverStyle(project.image)"><span v-if="!project.image">Optional cover image</span></div>
+              <div class="project-cover-preview" :class="{ empty: !project.image }" :style="imageStyle(project.image)"><span v-if="!project.image">Project cover</span></div>
+              <div class="project-upload-row">
+                <label class="image-upload-button compact"><input type="file" accept="image/jpeg,image/png,image/webp" @change="uploadProjectImage(index, $event)" />Upload cover</label>
+                <button v-if="project.image" type="button" class="image-clear" @click="updateItem('projects', index, 'image', '')">Remove image</button>
+              </div>
               <div class="editor-grid">
                 <label class="editor-field editor-field-wide"><span>Project name</span><input :value="project.name" type="text" @input="updateItem('projects', index, 'name', $event.target.value)" /></label>
                 <label class="editor-field"><span>Type / tags</span><input :value="project.type" type="text" placeholder="AI · Design Ops" @input="updateItem('projects', index, 'type', $event.target.value)" /></label>
                 <label class="editor-field"><span>Impact</span><input :value="project.impact" type="text" placeholder="40% faster review" @input="updateItem('projects', index, 'impact', $event.target.value)" /></label>
-                <label class="editor-field editor-field-wide"><span>Cover image URL</span><input :value="project.image || ''" type="url" placeholder="https://.../project-cover.jpg" @input="updateItem('projects', index, 'image', $event.target.value)" /><small>Leave blank to use the generated visual fallback.</small></label>
+                <label class="editor-field editor-field-wide"><span>Optional external cover URL</span><input :value="externalImageValue(project.image)" type="url" placeholder="https://.../project-cover.jpg" @input="updateItem('projects', index, 'image', $event.target.value)" /><small>Direct uploads are stored locally in the browser. URL remains useful for a shareable profile.</small></label>
                 <label class="editor-field editor-field-wide"><span>Description</span><textarea :value="project.description" rows="5" @input="updateItem('projects', index, 'description', $event.target.value)"></textarea></label>
               </div>
             </article>
@@ -94,14 +118,66 @@
           <button class="builder-add" type="button" @click="$emit('add-item', { section: 'projects' })">+ Add project</button>
         </section>
 
-        <section v-else class="editor-section">
+        <section v-else-if="activeTab === 'education'" class="editor-section">
           <div class="editor-section-heading">
-            <div><span>05</span><h3>Skills & languages</h3></div>
+            <div><span>05</span><h3>Education & certificates</h3></div>
+            <p>Keep formal education and professional credentials structured separately.</p>
+          </div>
+
+          <div class="builder-subheading"><strong>Education</strong><button class="builder-add-inline" type="button" @click="$emit('add-item', { section: 'education' })">+ Add</button></div>
+          <div class="builder-list">
+            <article v-for="(item, index) in profile.education" :key="`education-${index}`" class="builder-card builder-card-compact">
+              <div class="builder-card-top"><strong>{{ item.title || `Education ${index + 1}` }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('education', index, -1)">↑</button><button type="button" :disabled="index === profile.education.length - 1" @click="move('education', index, 1)">↓</button><button type="button" class="danger" @click="remove('education', index)">×</button></div></div>
+              <div class="editor-grid"><label class="editor-field editor-field-wide"><span>Program / degree</span><input :value="item.title" type="text" @input="updateItem('education', index, 'title', $event.target.value)" /></label><label class="editor-field"><span>School / institution</span><input :value="item.place" type="text" @input="updateItem('education', index, 'place', $event.target.value)" /></label><label class="editor-field"><span>Period</span><input :value="item.period" type="text" @input="updateItem('education', index, 'period', $event.target.value)" /></label></div>
+            </article>
+          </div>
+
+          <div class="builder-subheading certificates-heading"><strong>Certificates</strong><button class="builder-add-inline" type="button" @click="$emit('add-item', { section: 'certificates' })">+ Add</button></div>
+          <div class="builder-list">
+            <article v-for="(item, index) in profile.certificates" :key="`certificate-${index}`" class="builder-card builder-card-compact">
+              <div class="builder-card-top"><strong>{{ item.title || `Certificate ${index + 1}` }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('certificates', index, -1)">↑</button><button type="button" :disabled="index === profile.certificates.length - 1" @click="move('certificates', index, 1)">↓</button><button type="button" class="danger" @click="remove('certificates', index)">×</button></div></div>
+              <div class="editor-grid"><label class="editor-field editor-field-wide"><span>Certificate</span><input :value="item.title" type="text" @input="updateItem('certificates', index, 'title', $event.target.value)" /></label><label class="editor-field"><span>Issuer</span><input :value="item.issuer" type="text" @input="updateItem('certificates', index, 'issuer', $event.target.value)" /></label><label class="editor-field"><span>Year / period</span><input :value="item.period" type="text" @input="updateItem('certificates', index, 'period', $event.target.value)" /></label><label class="editor-field editor-field-wide"><span>Credential URL</span><input :value="item.url || ''" type="url" @input="updateItem('certificates', index, 'url', $event.target.value)" /></label></div>
+            </article>
+          </div>
+        </section>
+
+        <section v-else-if="activeTab === 'skills'" class="editor-section">
+          <div class="editor-section-heading">
+            <div><span>06</span><h3>Skills & languages</h3></div>
             <p>Use concise keywords for recruiter scanning and ATS matching.</p>
           </div>
           <label class="editor-field editor-field-wide"><span>Skills · one per line or comma separated</span><textarea :value="profile.skills.join('\n')" rows="10" @input="updateArray('skills', tokenList($event.target.value))"></textarea><small>{{ profile.skills.length }} skills</small></label>
           <div class="skill-preview"><span v-for="skill in profile.skills" :key="skill">{{ skill }}</span></div>
           <label class="editor-field editor-field-wide editor-language-field"><span>Languages · one per line</span><textarea :value="profile.languages.join('\n')" rows="5" @input="updateArray('languages', lines($event.target.value))"></textarea></label>
+        </section>
+
+        <section v-else class="editor-section">
+          <div class="editor-section-heading">
+            <div><span>07</span><h3>Section layout</h3></div>
+            <p>Drag sections to reorder them. Turn a section off to hide it from every CV template.</p>
+          </div>
+          <div class="layout-list">
+            <article
+              v-for="(section, index) in profile.sections"
+              :key="section.id"
+              class="layout-item"
+              :class="{ dragging: dragIndex === index, disabled: !section.enabled }"
+              draggable="true"
+              @dragstart="startDrag(index)"
+              @dragend="dragIndex = null"
+              @dragover.prevent
+              @drop="dropSection(index)"
+            >
+              <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+              <div><strong>{{ section.label }}</strong><small>{{ section.id }}</small></div>
+              <div class="layout-actions">
+                <button type="button" :disabled="index === 0" aria-label="Move section up" @click="moveSection(index, -1)">↑</button>
+                <button type="button" :disabled="index === profile.sections.length - 1" aria-label="Move section down" @click="moveSection(index, 1)">↓</button>
+                <label class="section-toggle"><input type="checkbox" :checked="section.enabled" @change="toggleSection(section.id, $event.target.checked)" /><span></span></label>
+              </div>
+            </article>
+          </div>
+          <div class="editor-note"><strong>Template-aware ordering</strong><p>Each template keeps its core visual structure. Your order is respected within the main and sidebar flows, while disabled sections are hidden everywhere.</p></div>
         </section>
       </div>
 
@@ -114,6 +190,8 @@
 </template>
 
 <script>
+const MAX_FILE_BYTES = 10 * 1024 * 1024
+
 export default {
   name: 'ProfileEditor',
   props: { open: { type: Boolean, default: false }, profile: { type: Object, required: true } },
@@ -121,14 +199,23 @@ export default {
   data() {
     return {
       activeTab: 'profile',
+      imageError: '',
+      dragIndex: null,
       tabs: [
         { id: 'profile', label: 'Profile', icon: '◉' },
         { id: 'impact', label: 'Impact', icon: '↗' },
         { id: 'experience', label: 'Experience', icon: '▤' },
         { id: 'projects', label: 'Projects', icon: '◇' },
+        { id: 'education', label: 'Education', icon: '◎' },
         { id: 'skills', label: 'Skills', icon: '⌘' },
+        { id: 'layout', label: 'Layout', icon: '↕' },
       ],
     }
+  },
+  computed: {
+    initials() {
+      return String(this.profile.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
+    },
   },
   methods: {
     update(key, value) { this.$emit('update-field', { key, value }) },
@@ -138,7 +225,84 @@ export default {
     move(section, index, direction) { this.$emit('move-item', { section, index, direction }) },
     lines(value) { return value.split(/\n+/).map((item) => item.trim()).filter(Boolean) },
     tokenList(value) { return value.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean) },
-    coverStyle(url) { return url ? { backgroundImage: `linear-gradient(rgba(15,23,42,.05), rgba(15,23,42,.05)), url("${url.replace(/"/g, '%22')}")` } : {} },
+    imageStyle(url) { return url ? { backgroundImage: `linear-gradient(rgba(15,23,42,.04), rgba(15,23,42,.04)), url("${String(url).replace(/"/g, '%22')}")` } : {} },
+    externalImageValue(value) { return String(value || '').startsWith('data:') ? '' : (value || '') },
+    async uploadAvatar(event) {
+      const file = event.target.files?.[0]
+      if (!file) return
+      try {
+        const image = await this.compressImage(file, 640, 0.82)
+        this.update('avatar', image)
+        this.imageError = ''
+      } catch (error) {
+        this.imageError = error.message || 'Unable to process this image.'
+      } finally {
+        event.target.value = ''
+      }
+    },
+    async uploadProjectImage(index, event) {
+      const file = event.target.files?.[0]
+      if (!file) return
+      try {
+        const image = await this.compressImage(file, 1600, 0.78)
+        this.updateItem('projects', index, 'image', image)
+        this.imageError = ''
+      } catch (error) {
+        this.imageError = error.message || 'Unable to process this image.'
+      } finally {
+        event.target.value = ''
+      }
+    },
+    compressImage(file, maxDimension, quality) {
+      if (!file.type.startsWith('image/')) return Promise.reject(new Error('Please choose an image file.'))
+      if (file.size > MAX_FILE_BYTES) return Promise.reject(new Error('Image is too large. Please choose a file under 10 MB.'))
+
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onerror = () => reject(new Error('Unable to read this image.'))
+        reader.onload = () => {
+          const image = new Image()
+          image.onerror = () => reject(new Error('This image format could not be decoded.'))
+          image.onload = () => {
+            const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight))
+            const width = Math.max(1, Math.round(image.naturalWidth * scale))
+            const height = Math.max(1, Math.round(image.naturalHeight * scale))
+            const canvas = document.createElement('canvas')
+            canvas.width = width
+            canvas.height = height
+            const context = canvas.getContext('2d')
+            if (!context) return reject(new Error('Image processing is not available in this browser.'))
+            context.imageSmoothingEnabled = true
+            context.imageSmoothingQuality = 'high'
+            context.drawImage(image, 0, 0, width, height)
+            resolve(canvas.toDataURL('image/webp', quality))
+          }
+          image.src = reader.result
+        }
+        reader.readAsDataURL(file)
+      })
+    },
+    toggleSection(id, enabled) {
+      const sections = (this.profile.sections || []).map((section) => section.id === id ? { ...section, enabled } : { ...section })
+      this.updateArray('sections', sections)
+    },
+    startDrag(index) { this.dragIndex = index },
+    dropSection(index) {
+      if (this.dragIndex === null || this.dragIndex === index) return
+      const sections = (this.profile.sections || []).map((section) => ({ ...section }))
+      const [moved] = sections.splice(this.dragIndex, 1)
+      sections.splice(index, 0, moved)
+      this.updateArray('sections', sections)
+      this.dragIndex = null
+    },
+    moveSection(index, direction) {
+      const sections = (this.profile.sections || []).map((section) => ({ ...section }))
+      const nextIndex = index + direction
+      if (nextIndex < 0 || nextIndex >= sections.length) return
+      const [moved] = sections.splice(index, 1)
+      sections.splice(nextIndex, 0, moved)
+      this.updateArray('sections', sections)
+    },
   },
 }
 </script>
