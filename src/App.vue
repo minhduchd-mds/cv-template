@@ -27,7 +27,7 @@
             Pick a template, tune the accent and export an A4-ready CV.
           </p>
           <div class="hero-meta">
-            <div><strong>4</strong><span>starter templates</span></div>
+            <div><strong>6</strong><span>starter templates</span></div>
             <div><strong>A4</strong><span>print-ready layout</span></div>
             <div><strong>1</strong><span>shared data source</span></div>
           </div>
@@ -35,7 +35,7 @@
         <div class="hero-orbit" aria-hidden="true">
           <div class="orbit-card orbit-card-a"><span>01</span><b>ATS Clean</b></div>
           <div class="orbit-card orbit-card-b"><span>02</span><b>Product</b></div>
-          <div class="orbit-card orbit-card-c"><span>03</span><b>Creative</b></div>
+          <div class="orbit-card orbit-card-c"><span>03</span><b>Design Engineer</b></div>
           <div class="hero-badge">A4<br /><small>PDF</small></div>
         </div>
       </section>
@@ -70,7 +70,11 @@
               :class="['template-card', { active: selectedId === template.id }]"
               @click="chooseTemplate(template)"
             >
-              <div class="template-thumb" :class="`thumb-${template.variant}`" :style="{ '--thumb-accent': template.accent }">
+              <div
+                class="template-thumb"
+                :class="[`thumb-${template.variant}`, template.theme ? `thumb-theme-${template.theme}` : '']"
+                :style="{ '--thumb-accent': template.accent }"
+              >
                 <span class="thumb-sidebar"></span>
                 <span class="thumb-head"></span>
                 <span class="thumb-line line-a"></span>
@@ -96,13 +100,25 @@
                 <small>{{ selectedTemplate.name }} · A4</small>
               </div>
             </div>
-            <label class="color-control">
-              <span>Accent</span>
-              <input v-model="accent" type="color" aria-label="Change CV accent color" />
-            </label>
+            <div class="preview-actions">
+              <label class="zoom-control">
+                <span>Zoom</span>
+                <select v-model.number="zoom" aria-label="CV preview zoom">
+                  <option :value="0.75">75%</option>
+                  <option :value="0.85">85%</option>
+                  <option :value="1">100%</option>
+                </select>
+              </label>
+              <label class="color-control">
+                <span>Accent</span>
+                <input v-model="accent" type="color" aria-label="Change CV accent color" />
+              </label>
+            </div>
           </div>
           <div class="preview-stage">
-            <CvDocument :profile="candidate" :template="selectedTemplate" :accent="accent" />
+            <div class="preview-zoom" :style="{ '--preview-zoom': zoom }">
+              <CvDocument :profile="candidate" :template="selectedTemplate" :accent="accent" />
+            </div>
           </div>
         </div>
       </section>
@@ -123,7 +139,7 @@
       </section>
 
       <footer class="site-footer studio-only">
-        <span>CV Studio · Vue 2.6.14</span>
+        <span>CV Studio · Vue 3.5.42 · Vite 8.2.2</span>
         <span>Responsive · Shared data · Print ready</span>
       </footer>
 
@@ -150,6 +166,7 @@ export default {
       selectedId: templates[0].id,
       category: 'All',
       accent: templates[0].accent,
+      zoom: 0.85,
     }
   },
   computed: {
