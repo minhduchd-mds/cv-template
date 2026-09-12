@@ -34,27 +34,6 @@ jobs:
       - name: Build Vite app
         run: npm run build
 
-      - name: Switch Pages source to GitHub Actions
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPOSITORY: ${{ github.repository }}
-        shell: bash
-        run: |
-          set -u
-          code=$(curl -sS -o /tmp/pages-response.txt -w "%{http_code}" \
-            -X PUT \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2026-03-10" \
-            "https://api.github.com/repos/${GH_REPOSITORY}/pages" \
-            -d '{"build_type":"workflow"}')
-          if [ -s /tmp/pages-response.txt ]; then cat /tmp/pages-response.txt; fi
-          if [ "$code" = "204" ]; then
-            echo "GitHub Pages source is set to GitHub Actions."
-          else
-            echo "::warning::Could not switch Pages source automatically (HTTP ${code}). The custom Pages workflow can still deploy successfully."
-          fi
-
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
 
