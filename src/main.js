@@ -4,5 +4,6 @@ import './styles.css'
 import './enhancements.css'
 import './editor.css'
 import './motion.css'
+import './quality.css'
 
 createApp(App).mount('#app')
