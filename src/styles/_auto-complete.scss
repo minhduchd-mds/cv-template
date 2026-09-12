@@ -1,0 +1,119 @@
+.auto-complete-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(109,93,252,.26);
+  border-radius: 12px;
+  padding: 9px 11px 9px 13px;
+  color: #4c3fc7;
+  background: linear-gradient(180deg,#f7f6ff,#f1efff);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 800;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+
+  strong {
+    min-width: 34px;
+    padding: 5px 7px;
+    border-radius: 8px;
+    color: #fff;
+    background: #5d50db;
+    font-size: 9px;
+    text-align: center;
+  }
+
+  &:hover {
+    border-color: rgba(93,80,219,.48);
+    box-shadow: 0 8px 20px rgba(93,80,219,.11);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(109,93,252,.25);
+    outline-offset: 2px;
+  }
+}
+
+.auto-complete-toast {
+  position: fixed;
+  z-index: 55;
+  top: 82px;
+  right: 24px;
+  width: min(410px,calc(100vw - 32px));
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px 16px;
+  border: 1px solid #ddd9ff;
+  border-radius: 16px;
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 18px 48px rgba(15,23,42,.14);
+  backdrop-filter: blur(14px);
+
+  > div {
+    display: grid;
+    gap: 4px;
+  }
+
+  strong {
+    color: #111827;
+    font-size: 12px;
+  }
+
+  span {
+    color: #475569;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  small {
+    color: #7c3aed;
+    font-size: 9px;
+    line-height: 1.45;
+  }
+
+  > button {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    color: #64748b;
+    background: #fff;
+    cursor: pointer;
+    font-size: 18px;
+
+    &:focus-visible {
+      outline: 3px solid rgba(109,93,252,.25);
+      outline-offset: 2px;
+    }
+  }
+}
+
+@media (max-width: 880px) {
+  .auto-complete-button span { display: none; }
+  .auto-complete-button { padding: 7px; }
+}
+
+@media (max-width: 640px) {
+  .auto-complete-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .auto-complete-toast {
+    top: max(72px,calc(env(safe-area-inset-top) + 60px));
+    right: 16px;
+    left: 16px;
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auto-complete-button { transition: none; }
+}
