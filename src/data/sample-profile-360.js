@@ -15,7 +15,7 @@ export const sampleProfile360 = {
     website: 'alexchen.design',
     github: 'github.com/alexchen-design',
     linkedin: 'linkedin.com/in/alexchen-design',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=88',
+    avatar: '/sample/alex-profile.svg',
   },
 
   positioning: {
@@ -109,7 +109,7 @@ export const sampleProfile360 = {
         'Reframed the product around task states, progressive disclosure and a shared detail workspace with contextual actions.',
       result:
         'Usability testing showed 31% faster task completion and materially fewer navigation errors across the primary workflow.',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1600&q=86',
+      image: '/sample/atlas-ops.svg',
       tags: ['Workflow UX', 'Tables', 'Design System', 'Accessibility'],
     },
     {
@@ -127,7 +127,7 @@ export const sampleProfile360 = {
         'Added evidence-first explanations, confidence framing, safe fallback states and reversible actions.',
       result:
         'The revised flow reduced triage steps and improved confidence ratings in internal usability sessions.',
-      image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=86',
+      image: '/sample/signal-ai.svg',
       tags: ['AI UX', 'Trust', 'Analytics', 'Human-in-the-loop'],
     },
     {
@@ -145,7 +145,7 @@ export const sampleProfile360 = {
         'Introduced semantic tokens, component contracts, accessibility rules, QA checks and release notes shared with engineering.',
       result:
         'Component adoption reached 85%, while design review cycles became shorter and more predictable.',
-      image: 'https://images.unsplash.com/photo-1559028012-481c04fa702d?auto=format&fit=crop&w=1600&q=86',
+      image: '/sample/northstar-system.svg',
       tags: ['Tokens', 'Components', 'Governance', 'Design QA'],
     },
     {
@@ -163,7 +163,7 @@ export const sampleProfile360 = {
         'Reorganized information around business questions, thresholds, alerts and progressive drill-down.',
       result:
         'Five recurring report views were consolidated into one responsive workspace with clearer escalation paths.',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1600&q=86',
+      image: '/sample/pulse-dashboard.svg',
       tags: ['Dashboard', 'Data Visualization', 'Information Architecture'],
     },
   ],
