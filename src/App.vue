@@ -89,6 +89,21 @@ const ITEM_FACTORIES = {
   highlights: () => ({ value: '10+', label: 'Meaningful outcome' }),
   experience: () => ({ role: 'Role title', company: 'Company', period: '2026 — Present', location: '', bullets: ['Describe your scope and measurable impact.'] }),
   projects: () => ({ name: 'New project', type: 'Product · Design', impact: 'Key measurable impact', description: 'Describe the problem, your role, the solution and what changed as a result.', image: '' }),
+  education: () => ({ title: 'Program or degree', place: 'Institution', period: '2026' }),
+  certificates: () => ({ title: 'Professional certificate', issuer: 'Issuer', period: '2026', url: '' }),
+}
+
+const hydrateCandidate = (saved) => {
+  const base = cloneCandidate()
+  if (!saved || typeof saved !== 'object') return base
+  const hydrated = { ...base, ...saved }
+  if (!Array.isArray(saved.sections) || !saved.sections.length) hydrated.sections = base.sections
+  if (!Array.isArray(saved.certificates)) hydrated.certificates = base.certificates
+  if (!Array.isArray(saved.education)) hydrated.education = base.education
+  if (!Array.isArray(saved.projects)) hydrated.projects = base.projects
+  hydrated.projects = hydrated.projects.map((project) => ({ image: '', ...project }))
+  if (typeof hydrated.avatar !== 'string') hydrated.avatar = ''
+  return hydrated
 }
 
 export default {
@@ -114,6 +129,7 @@ export default {
       if ((profile.skills || []).length >= 5) score += 10
       if ((profile.skills || []).length >= 10) score += 5
       if ((profile.education || []).length >= 1) score += 5
+      if ((profile.certificates || []).length >= 1) score += 5
       if ((profile.languages || []).length >= 1) score += 5
       if ((profile.highlights || []).length >= 2) score += 5
       return Math.min(score, 100)
@@ -121,18 +137,18 @@ export default {
     scoreLabel() { if (this.cvScore >= 90) return 'Excellent'; if (this.cvScore >= 80) return 'Strong'; if (this.cvScore >= 65) return 'Good base'; return 'Needs detail' },
   },
   watch: {
-    candidate: { deep: true, handler(value) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)) } catch (error) { console.warn('Unable to persist CV profile locally.', error) } } },
+    candidate: { deep: true, handler(value) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)) } catch (error) { console.warn('Unable to persist CV profile locally. Uploaded images may exceed browser storage.', error) } } },
     selectedId: 'persistStudioSettings', accent: 'persistStudioSettings', zoom: 'persistStudioSettings',
   },
   mounted() {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) this.candidate = { ...cloneCandidate(), ...JSON.parse(saved) }
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+      this.candidate = hydrateCandidate(saved)
       const studioSettings = JSON.parse(localStorage.getItem(STUDIO_KEY) || '{}')
       if (this.templates.some((item) => item.id === studioSettings.selectedId)) this.selectedId = studioSettings.selectedId
       if (typeof studioSettings.accent === 'string') this.accent = studioSettings.accent
       if ([0.75, 0.85, 1].includes(studioSettings.zoom)) this.zoom = studioSettings.zoom
-    } catch (error) { console.warn('Unable to restore saved CV Studio state.', error) }
+    } catch (error) { console.warn('Unable to restore saved CV Studio state.', error); this.candidate = cloneCandidate() }
     window.addEventListener('keydown', this.handleShortcut)
   },
   beforeUnmount() { window.removeEventListener('keydown', this.handleShortcut) },
