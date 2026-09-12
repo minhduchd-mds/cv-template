@@ -3,6 +3,7 @@
     <ConceptExperience v-if="isConceptRoute" :concept-id="conceptId" @back="goStudio" />
     <template v-else-if="isStudioRoute">
       <StudioView />
+      <a class="studio-home-launch" href="./" aria-label="Back to CV Studio landing page" @click.prevent="goLanding">← Home</a>
       <a class="concept-launch" href="#concept-apple" aria-label="Open five full-screen CV web concepts">
         <span class="concept-launch-dot"></span>
         <span><strong>5 Web Concepts</strong><small>Full-screen landing ideas</small></span>
@@ -19,6 +20,8 @@ import MarketingLanding from './landing/MarketingLanding.vue'
 import ConceptExperience from './concepts/ConceptExperience.vue'
 
 const IDS = ['apple', 'bento', 'engineer', 'case-study', 'executive']
+const STUDIO_INTERNAL_HASHES = new Set(['#top', '#templates'])
+const initialMode = (hash) => hash === '#studio' ? 'studio' : hash.startsWith('#concept-') ? 'concept' : 'landing'
 const META = {
   landing: {
     title: 'CV Studio · Portfolio & Resume System',
@@ -54,14 +57,15 @@ export default {
   name: 'RootApp',
   components: { StudioView, MarketingLanding, ConceptExperience },
   data() {
-    return { routeHash: window.location.hash }
+    const routeHash = window.location.hash
+    return { routeHash, routeMode: initialMode(routeHash) }
   },
   computed: {
     isConceptRoute() {
-      return this.routeHash.startsWith('#concept-')
+      return this.routeMode === 'concept'
     },
     isStudioRoute() {
-      return this.routeHash === '#studio'
+      return this.routeMode === 'studio'
     },
     conceptId() {
       const id = this.routeHash.replace('#concept-', '')
@@ -77,14 +81,29 @@ export default {
   },
   methods: {
     syncRoute() {
-      const previousWasAppRoute = this.isConceptRoute || this.isStudioRoute
-      this.routeHash = window.location.hash
+      const previousMode = this.routeMode
+      const nextHash = window.location.hash
+      this.routeHash = nextHash
+
+      if (nextHash.startsWith('#concept-')) this.routeMode = 'concept'
+      else if (nextHash === '#studio') this.routeMode = 'studio'
+      else if (previousMode === 'studio' && STUDIO_INTERNAL_HASHES.has(nextHash)) this.routeMode = 'studio'
+      else this.routeMode = 'landing'
+
       this.updateMeta()
-      const nextIsAppRoute = this.isConceptRoute || this.isStudioRoute
-      if (previousWasAppRoute || nextIsAppRoute) window.scrollTo({ top: 0, behavior: 'instant' })
+      if (previousMode !== this.routeMode && (previousMode !== 'landing' || this.routeMode !== 'landing')) {
+        window.scrollTo({ top: 0, behavior: 'instant' })
+      }
     },
     goStudio() {
       window.location.hash = 'studio'
+    },
+    goLanding() {
+      window.history.pushState(null, '', `${window.location.pathname}${window.location.search}`)
+      this.routeHash = ''
+      this.routeMode = 'landing'
+      this.updateMeta()
+      window.scrollTo({ top: 0, behavior: 'instant' })
     },
     updateMeta() {
       const key = this.isConceptRoute ? this.conceptId : this.isStudioRoute ? 'studio' : 'landing'
