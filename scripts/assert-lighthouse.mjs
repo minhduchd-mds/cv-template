@@ -19,6 +19,7 @@ const metricBudgets = [
   { id: 'cumulative-layout-shift', label: 'CLS', max: 0.1, unit: '' },
 ]
 
+const diagnosticCategories = ['accessibility', 'best-practices', 'seo']
 let failed = false
 
 console.log('\nLighthouse score budgets')
@@ -49,6 +50,27 @@ for (const budget of metricBudgets) {
   console.log(`${passed ? '✓' : '✗'} ${budget.label}: ${formatted}${budget.unit} (max ${budget.max}${budget.unit})`)
   if (!passed) failed = true
 }
+
+console.log('\nActionable Lighthouse diagnostics')
+let diagnosticCount = 0
+for (const categoryId of diagnosticCategories) {
+  const refs = categories[categoryId]?.auditRefs || []
+  const findings = refs
+    .map(({ id, weight }) => ({ audit: audits[id], id, weight }))
+    .filter(({ audit, weight }) => weight > 0 && typeof audit?.score === 'number' && audit.score < 1)
+    .sort((a, b) => (a.audit.score ?? 1) - (b.audit.score ?? 1))
+
+  if (!findings.length) continue
+  console.log(`\n${categoryId}`)
+  for (const { audit, id } of findings) {
+    diagnosticCount += 1
+    const score = Math.round((audit.score || 0) * 100)
+    const detail = String(audit.displayValue || '').trim()
+    console.log(`- [${score}] ${id}: ${audit.title}${detail ? ` — ${detail}` : ''}`)
+  }
+}
+
+if (!diagnosticCount) console.log('No scored accessibility, best-practices, or SEO findings below 100.')
 
 if (failed) {
   console.error('\nLighthouse quality gate failed.')
