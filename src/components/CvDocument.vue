@@ -1,5 +1,9 @@
 <template>
-  <article class="cv-sheet" :class="`cv-${template.variant}`" :style="{ '--cv-accent': accent }">
+  <article
+    class="cv-sheet"
+    :class="[`cv-${template.variant}`, template.theme ? `theme-${template.theme}` : '']"
+    :style="{ '--cv-accent': accent }"
+  >
     <template v-if="template.variant === 'ats'">
       <header class="cv-header ats-header">
         <div>
