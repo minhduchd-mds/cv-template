@@ -1,5 +1,5 @@
 <template>
-  <div class="studio-shell">
+  <div class="studio-shell" :class="{ 'focus-mode': focusMode }">
     <header class="topbar studio-only">
       <a class="brand" href="#top" aria-label="CV Studio home">
         <span class="brand-mark">CV</span>
@@ -9,6 +9,11 @@
         </span>
       </a>
       <div class="topbar-actions">
+        <span class="shortcut-hint" aria-label="Keyboard shortcuts">
+          <kbd>E</kbd> Edit
+          <kbd>F</kbd> Focus
+          <kbd>N</kbd> Next
+        </span>
         <a class="ghost-button" href="#templates">Templates</a>
         <button class="editor-trigger" type="button" @click="editorOpen = true">Edit profile</button>
         <button class="primary-button" type="button" @click="printCv">
@@ -102,6 +107,19 @@
               </div>
             </div>
             <div class="preview-actions">
+              <button class="cycle-control" type="button" title="Next template (N)" @click="cycleTemplate">
+                Next style ↻
+              </button>
+              <button
+                class="focus-control"
+                :class="{ active: focusMode }"
+                type="button"
+                :aria-pressed="focusMode"
+                title="Toggle focus preview (F)"
+                @click="focusMode = !focusMode"
+              >
+                {{ focusMode ? 'Exit focus' : 'Focus' }}
+              </button>
               <label class="zoom-control">
                 <span>Zoom</span>
                 <select v-model.number="zoom" aria-label="CV preview zoom">
@@ -118,7 +136,12 @@
           </div>
           <div class="preview-stage">
             <div class="preview-zoom" :style="{ '--preview-zoom': zoom }">
-              <CvDocument :profile="candidate" :template="selectedTemplate" :accent="accent" />
+              <CvDocument
+                :key="selectedTemplate.id"
+                :profile="candidate"
+                :template="selectedTemplate"
+                :accent="accent"
+              />
             </div>
           </div>
         </div>
@@ -141,7 +164,7 @@
 
       <footer class="site-footer studio-only">
         <span>CV Studio · Vue 3.5.42 · Vite 8.3.0</span>
-        <span>Editable · Responsive · Shared data · Print ready</span>
+        <span>Editable · Responsive · Motion-aware · Print ready</span>
       </footer>
 
       <div class="print-only print-document">
@@ -182,6 +205,7 @@ export default {
       accent: templates[0].accent,
       zoom: 0.85,
       editorOpen: false,
+      focusMode: false,
     }
   },
   computed: {
@@ -217,11 +241,46 @@ export default {
     } catch (error) {
       console.warn('Unable to restore saved CV profile.', error)
     }
+    window.addEventListener('keydown', this.handleShortcut)
+  },
+  beforeUnmount() {
+    window.removeEventListener('keydown', this.handleShortcut)
   },
   methods: {
     chooseTemplate(template) {
       this.selectedId = template.id
       this.accent = template.accent
+    },
+    cycleTemplate() {
+      const currentIndex = this.templates.findIndex((item) => item.id === this.selectedId)
+      const nextTemplate = this.templates[(currentIndex + 1) % this.templates.length]
+      this.category = 'All'
+      this.chooseTemplate(nextTemplate)
+    },
+    handleShortcut(event) {
+      const target = event.target
+      const isTyping = target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      )
+      if (isTyping || event.metaKey || event.ctrlKey || event.altKey) return
+
+      const key = event.key.toLowerCase()
+      if (key === 'e') {
+        this.editorOpen = true
+      } else if (key === 'f') {
+        this.focusMode = !this.focusMode
+      } else if (key === 'n') {
+        this.cycleTemplate()
+      } else if (key === 'p') {
+        event.preventDefault()
+        this.printCv()
+      } else if (key === 'escape') {
+        this.editorOpen = false
+        this.focusMode = false
+      }
     },
     updateProfileField({ key, value }) {
       if (Object.prototype.hasOwnProperty.call(this.candidate, key)) {
