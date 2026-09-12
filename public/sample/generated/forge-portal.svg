@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-label="Forge Developer Portal project cover">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#172554"/><stop offset="1" stop-color="#3b82f6"/></linearGradient>
+    <radialGradient id="orb"><stop stop-color="#93c5fd" stop-opacity=".95"/><stop offset="1" stop-color="#93c5fd" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="720" rx="48" fill="url(#bg)"/>
+  <circle cx="970" cy="110" r="310" fill="url(#orb)" opacity=".42"/>
+  <rect x="86" y="78" width="1028" height="564" rx="34" fill="#fff" fill-opacity=".10" stroke="#fff" stroke-opacity=".20"/>
+  <rect x="120" y="116" width="440" height="490" rx="26" fill="#fff" fill-opacity=".93"/>
+  <rect x="602" y="116" width="478" height="144" rx="24" fill="#fff" fill-opacity=".13"/>
+  <rect x="602" y="280" width="228" height="326" rx="24" fill="#fff" fill-opacity=".10"/>
+  <rect x="850" y="280" width="230" height="326" rx="24" fill="#fff" fill-opacity=".16"/>
+  <rect x="152" y="158" width="240" height="18" rx="9" fill="#3b82f6" opacity=".82"/>
+  <rect x="152" y="202" width="350" height="12" rx="6" fill="#cbd5e1"/>
+  <rect x="152" y="228" width="290" height="12" rx="6" fill="#e2e8f0"/>
+  <rect x="152" y="292" width="376" height="112" rx="18" fill="#3b82f6" opacity=".12"/>
+  <rect x="152" y="428" width="176" height="142" rx="18" fill="#eef2ff"/>
+  <rect x="346" y="428" width="182" height="142" rx="18" fill="#f1f5f9"/>
+  <text x="642" y="174" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700">Forge Developer Portal</text>
+  <text x="642" y="212" fill="#fff" fill-opacity=".72" font-family="Inter,Arial,sans-serif" font-size="16">Developer experience · Platform</text>
+  <text x="638" y="350" fill="#fff" fill-opacity=".72" font-family="Inter,Arial,sans-serif" font-size="14">IMPACT</text>
+  <text x="638" y="388" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="700">Reduced setup time from 45 minutes to 12 minutes</text>
+  <path d="M638 520 C706 430 750 548 804 430" stroke="#93c5fd" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <circle cx="925" cy="405" r="58" fill="none" stroke="#93c5fd" stroke-width="18" opacity=".85"/>
+  <circle cx="925" cy="405" r="30" fill="#93c5fd" opacity=".45"/>
+</svg>
