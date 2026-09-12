@@ -1,60 +1,93 @@
 # CV Studio
 
-A modern CV template studio built on **Vue 3.5.42 + Vite 8.3.0** with one shared profile data model, reusable renderers, A4-ready CV directions and five full-screen portfolio/CV web concepts for product, UI/UX and technology roles.
+A production-minded portfolio and resume system built with **Vue 3.5.42 + Vite 8.3.0**. One structured career profile can drive multiple A4 CV directions, five full-screen web identities and a marketing landing page without duplicating content.
 
 ## Current stack
 
 - Vue **3.5.42**
 - Vite **8.3.0**
 - `@vitejs/plugin-vue` **6.0.8**
-- Node **20.19+ or 22.12+**
-- Plain Vue SFC + CSS architecture, intentionally dependency-light
+- Sass **1.104.0**
+- Playwright **1.63.0**
+- Lighthouse **13.4.1**
+- Node **22.23.2 LTS** in CI and Pages (`>=22.19.0` required by the project)
+- npm lockfile v3 + deterministic `npm ci` installs in CI, Pages and Vercel
 
-## 5 full-screen CV web concepts
+## Product surfaces
 
-The repository now includes five distinct landing-page directions. Open them from the **5 Web Concepts** launcher in CV Studio or navigate directly with the hash routes below.
-
-| Concept | Route | Direction |
+| Surface | Route | Purpose |
 | --- | --- | --- |
-| Apple Editorial | `#concept-apple` | Typography-first, calm, premium and recruiter-friendly |
-| Bento Product | `#concept-bento` | Impact metrics, modular product cards and dashboard energy |
-| Design Engineer | `#concept-engineer` | Design × engineering positioning for code-aware designers |
-| Case Study Resume | `#concept-case-study` | Project storytelling through Problem → Solution → Impact |
-| Executive Dark Glass | `#concept-executive` | Premium dark leadership direction for Senior/Lead profiles |
-
-Each concept includes a direct link back to this GitHub repository, a CTA into the editable CV Studio, responsive behavior, motion details and `prefers-reduced-motion` support.
+| Marketing landing | `/` | Explain the product, workflow, templates, sample cases and privacy model |
+| CV Builder | `#studio` | Edit one structured profile, preview templates and export A4/PDF |
+| Apple Editorial | `#concept-apple` | Typography-first portfolio CV |
+| Bento Product | `#concept-bento` | Metrics, modular proof and product storytelling |
+| Design Engineer | `#concept-engineer` | Design × engineering positioning |
+| Case Study Resume | `#concept-case-study` | Problem → Solution → Impact storytelling |
+| Executive Dark Glass | `#concept-executive` | Senior/leadership presentation |
 
 ## Current features
 
 - **6 A4 CV directions**: Senior Product Designer, ATS Clean, Creative Portfolio, Executive Minimal, Design System Lead and Design Engineer.
-- **5 full-screen CV website concepts** with independent information architecture and visual direction.
-- Category-based template gallery with live A4 preview.
-- Shared Profile Editor for name, role, location, email, phone, website and professional summary.
-- Local browser persistence so profile edits survive reloads.
-- CV Quality Score with realtime feedback.
-- Accent color customization and 75% / 85% / 100% preview zoom.
-- Focus mode, keyboard shortcuts and motion-aware interactions.
-- Browser print/PDF styling that removes Studio UI and prints only the selected CV.
-- Shared `variant + theme` architecture so new visual directions do not require duplicated CV pages.
+- **5 full-screen web identities** with different information architecture and visual language.
+- Structured 360° sample profile projected into a concise CV data model.
+- Builder editing for profile, impact, experience, projects, education, certificates, skills and languages.
+- Section show/hide and ordering controls.
+- Avatar and project image upload plus allowlisted external HTTPS image sources.
+- Local-first persistence through browser `localStorage`; no account is required.
+- CV Quality Score, accent customization, 75% / 85% / 100% zoom and Focus mode.
+- Keyboard shortcuts: `E` edit, `F` focus, `N` next style, `P` print and `Esc` close/exit.
+- A4 browser print/PDF rules that hide Studio chrome.
+- Motion with `prefers-reduced-motion` support.
+- Self-hosted sample SVG artwork so the demo does not depend on an image CDN.
 
-## What changed from the legacy repository
+> **Sample-data note:** Alex Chen and the accompanying metrics/testimonials are fictional demonstration content. They are not product or business claims.
 
-- Migrated Vue 2 / Vue CLI to **Vue 3 + Vite**.
-- Replaced the old hard-coded CV screen with a reusable CV Studio.
-- Added a lightweight hash-based concept experience layer without adding router dependencies.
-- Separated CV content from presentation in `src/data/cv.js`.
-- Removed Firebase bootstrapping from the application entry point.
-- Removed obsolete Vue CLI, Babel, Jest, Cypress and legacy deployment configuration.
-- Removed tracked `node_modules`, `dist` and IDE metadata from source control.
+## Quality and security gates
+
+Every push to `master` is verified with:
+
+1. Dangerous frontend API linting.
+2. Production Vite build.
+3. JS/CSS bundle budgets.
+4. Chromium installation from the pinned Playwright dependency.
+5. Responsive end-to-end tests at desktop, tablet and mobile viewports.
+6. Visual QA captures for critical landing, Studio and concept surfaces.
+7. Lighthouse performance, accessibility, best-practices and SEO budgets.
+8. CodeQL JavaScript/TypeScript analysis in the separate security workflow.
+
+The Lighthouse gate currently enforces:
+
+- Performance ≥ **82**
+- Accessibility ≥ **95**
+- Best Practices ≥ **95**
+- SEO ≥ **90**
+- LCP ≤ **4,000 ms**
+- TBT ≤ **400 ms**
+- CLS ≤ **0.10**
+
+The assertion script also prints scored non-perfect Accessibility / Best Practices / SEO audits so quality work can target specific findings instead of chasing a single aggregate score.
+
+Security controls include a restrictive production CSP, `nosniff`, clickjacking protection, Permissions Policy, HSTS on Vercel, safe image-source normalization and CI rejection of risky frontend patterns such as `eval`, `new Function`, `document.write`, direct `innerHTML`, `v-html` and remote script injection.
 
 ## Run locally
 
+Use the committed dependency graph:
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Production build:
+Full local verification:
+
+```bash
+npm run verify
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+Production preview:
 
 ```bash
 npm run build
@@ -64,37 +97,68 @@ npm run preview
 ## Project structure
 
 ```text
-index.html                   # Vite application entry
-vite.config.js               # Vite + Vue configuration
+index.html
+vite.config.js
+package-lock.json
+playwright.config.js
+scripts/
+  security-lint.mjs
+  check-bundle-budget.mjs
+  assert-lighthouse.mjs
+tests/e2e/
+  studio.spec.js
+  visual-qa.spec.js
+public/sample/
+  alex-profile.svg
+  atlas-ops.svg
+  signal-ai.svg
+  northstar-system.svg
+  pulse-dashboard.svg
 src/
-  RootApp.vue                # Lightweight Studio / concept route shell
-  App.vue                    # CV Studio, gallery, persistence and preview controls
-  main.js                    # Vue 3 application bootstrap
-  styles.css                 # Core Studio + CV layout styles
-  enhancements.css           # CV template themes and preview controls
-  editor.css                 # Profile editor UI
-  motion.css                 # Studio motion system
-  quality.css                # CV quality score UI
-  concepts/
-    ConceptExperience.vue    # Five full-screen CV website concepts
-    concepts.css             # Independent visual systems + responsive motion
+  RootApp.vue
+  App.vue
+  main.js                      # imports one SCSS entrypoint
   components/
-    CvDocument.vue           # Shared A4 CV renderer
-    ProfileEditor.vue        # Shared profile editing drawer
+    CvDocument.vue
+    ProfileEditor.vue
   data/
-    cv.js                    # Profile content + template definitions
+    cv.js
+    sample-profile-360.js
+    sample-media.js
+    initialize-sample-media.js
+  security/
+    safe-media.js
+  landing/
+    MarketingLanding.vue
+  concepts/
+    ConceptExperience.vue
+    concepts.css
+    concept-experience.css
+    concept-polish.css
+  styles/
+    main.scss                   # single style entrypoint
+    _tokens.scss
+    _landing.scss
+    _app-shell.scss
+    _quality.scss
+    _cv-sections.scss
+    _enhancements.scss
+    _builder-advanced.scss
 ```
+
+Legacy CSS is being migrated incrementally behind `src/styles/main.scss`. The entrypoint deliberately preserves historical cascade order while migrated areas move into first-class Sass modules. Responsive E2E and Lighthouse gates protect the UI during that refactor.
 
 ## Template architecture
 
-Each A4 template in `src/data/cv.js` has a `variant` and optional `theme`.
+Each A4 template in `src/data/cv.js` has a structural `variant` and an optional visual `theme`.
 
-- `variant` chooses the structural renderer: `product`, `ats`, `creative`, or `executive`.
-- `theme` changes the visual direction without duplicating the document renderer.
-- All templates render the same profile object, keeping content consistent across formats.
+- `variant`: `product`, `ats`, `creative`, or `executive`.
+- `theme`: changes visual direction without duplicating the document renderer.
+- Every A4 template reads the same candidate profile.
+- Web concepts reuse the same underlying career story but intentionally change hierarchy and presentation for different hiring contexts.
 
-The web concepts reuse the same profile data but deliberately change the landing-page hierarchy, interaction model and visual composition so they can be evaluated as genuinely different portfolio directions.
+## Deployment
 
-## Next product steps
-
-The architecture is ready for section-level editing of experience/projects/skills, drag-and-drop section ordering, Vietnamese/English content variants, multiple saved profiles, automated PDF export and turning a selected web concept into a publishable personal portfolio route.
+- GitHub Pages builds the Vite `dist` output with Node 22.23.2 and `npm ci`.
+- The custom Pages workflow waits until legacy Pages jobs on `master` are quiet before publishing Vite last, preventing older deploys from overwriting current assets.
+- Vercel also uses the committed lockfile through `npm ci` and applies the production security headers declared in `vercel.json`.
