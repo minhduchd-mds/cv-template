@@ -19,6 +19,11 @@
 @use 'app-shell';
 @use 'accessibility';
 
-// Final presentation layer: current Apple HIG-inspired tokens, material,
-// hierarchy, adaptive layout and interaction behavior. Loaded last on purpose.
+// Current Apple HIG-inspired tokens, material, hierarchy, adaptive layout and
+// interaction behavior establish the visual system.
 @use 'apple-ui';
+
+// Claude frontend-design refinement layer: text geometry, reading measure,
+// supporting copy frames and Builder readability. Loaded after the visual system
+// so content hierarchy stays consistent across future UI changes.
+@use 'text-frames';
