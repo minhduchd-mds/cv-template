@@ -44,7 +44,7 @@ export function withLocalSampleMedia(profile) {
       : [],
     seo: {
       ...(profile.seo || {}),
-      shareImage: mediaUrl(profile.seo?.shareImage ? sampleMediaManifest.avatar : sampleMediaManifest.fallbackProject),
+      shareImage: mediaUrl(sampleMediaManifest.fallbackProject),
     },
   }
 }
