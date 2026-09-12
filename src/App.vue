@@ -8,10 +8,25 @@
       <div class="topbar-actions">
         <span class="shortcut-hint" aria-label="Keyboard shortcuts"><kbd>E</kbd> Edit <kbd>F</kbd> Focus <kbd>N</kbd> Next</span>
         <a class="ghost-button" href="#templates">Templates</a>
+        <button class="auto-complete-button" type="button" @click="runAutoComplete">
+          <span>Auto-complete CV</span><strong>{{ completionPercent }}%</strong>
+        </button>
         <button class="editor-trigger" type="button" @click="editorOpen = true">Edit CV</button>
         <button class="primary-button" type="button" @click="printCv"><span>Export / Print PDF</span><span aria-hidden="true">↗</span></button>
       </div>
     </header>
+
+    <div v-if="autoCompleteResult" class="auto-complete-toast studio-only" role="status" aria-live="polite">
+      <div>
+        <strong>{{ autoCompleteResult.changedFields ? 'Auto-complete applied' : 'CV already complete' }}</strong>
+        <span v-if="autoCompleteResult.changedFields">
+          {{ autoCompleteResult.changedFields }} missing field{{ autoCompleteResult.changedFields === 1 ? '' : 's' }} filled · {{ autoCompleteResult.before }}% → {{ autoCompleteResult.after }}%
+        </span>
+        <span v-else>No missing content was detected.</span>
+        <small v-if="autoCompleteResult.reviewRequired">Draft placeholders are marked [Review]. Replace them with verified personal facts before export.</small>
+      </div>
+      <button type="button" aria-label="Dismiss Auto-complete status" @click="autoCompleteResult = null">×</button>
+    </div>
 
     <main id="top">
       <section class="hero studio-only">
@@ -81,6 +96,7 @@
 import CvDocument from './components/CvDocument.vue'
 import ProfileEditor from './components/ProfileEditor.vue'
 import { candidate as defaultCandidate, templates } from './data/cv'
+import { autoCompleteCv, candidateCompletionReport } from './data/auto-complete-cv'
 import { safeImageSource, sanitizeProfileMedia } from './security/safe-media'
 
 const STORAGE_KEY = 'cv-studio-profile-v1'
@@ -120,12 +136,13 @@ export default {
   name: 'App',
   components: { CvDocument, ProfileEditor },
   data() {
-    return { candidate: sanitizeProfileMedia(cloneCandidate()), templates, selectedId: templates[0].id, category: 'All', accent: templates[0].accent, zoom: 0.85, editorOpen: false, focusMode: false }
+    return { candidate: sanitizeProfileMedia(cloneCandidate()), templates, selectedId: templates[0].id, category: 'All', accent: templates[0].accent, zoom: 0.85, editorOpen: false, focusMode: false, autoCompleteResult: null }
   },
   computed: {
     categories() { return ['All'].concat(Array.from(new Set(this.templates.map((item) => item.category)))) },
     filteredTemplates() { return this.category === 'All' ? this.templates : this.templates.filter((item) => item.category === this.category) },
     selectedTemplate() { return this.templates.find((item) => item.id === this.selectedId) || this.templates[0] },
+    completionPercent() { return candidateCompletionReport(this.candidate).percent },
     cvScore() {
       const profile = this.candidate
       let score = 0
@@ -168,6 +185,12 @@ export default {
   methods: {
     chooseTemplate(template) { this.selectedId = template.id; this.accent = template.accent },
     cycleTemplate() { const currentIndex = this.templates.findIndex((item) => item.id === this.selectedId); const nextTemplate = this.templates[(currentIndex + 1) % this.templates.length]; this.category = 'All'; this.chooseTemplate(nextTemplate) },
+    runAutoComplete() {
+      const result = autoCompleteCv(this.candidate, cloneCandidate())
+      this.candidate = sanitizeProfileMedia(result.profile)
+      this.autoCompleteResult = result.summary
+      if (result.summary.changedFields) this.editorOpen = true
+    },
     handleShortcut(event) {
       const target = event.target
       const isTyping = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
@@ -202,6 +225,7 @@ export default {
     },
     resetCandidate() {
       this.candidate = sanitizeProfileMedia(cloneCandidate())
+      this.autoCompleteResult = null
       try {
         localStorage.setItem(SAMPLE_VERSION_KEY, SAMPLE_VERSION)
         localStorage.removeItem(STORAGE_KEY)
