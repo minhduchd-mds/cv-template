@@ -19,7 +19,7 @@
           <div class="eyebrow"><span></span> CV system · 2026 edition</div>
           <h1>One profile.<br /><em>Multiple CV directions.</em></h1>
           <p>A modern, code-aware resume studio built for Senior UI/UX, Product Design and technology roles. Pick a template, edit your profile, tune the accent and export an A4-ready CV.</p>
-          <div class="hero-meta"><div><strong>6</strong><span>starter templates</span></div><div><strong>A4</strong><span>print-ready layout</span></div><div><strong>1</strong><span>shared editable profile</span></div></div>
+          <div class="hero-meta"><div><strong>6</strong><span>starter templates</span></div><div><strong>A4</strong><span>print-ready layout</span></div><div><strong>360°</strong><span>sample profile data</span></div></div>
         </div>
         <div class="hero-orbit" aria-hidden="true"><div class="orbit-card orbit-card-a"><span>01</span><b>ATS Clean</b></div><div class="orbit-card orbit-card-b"><span>02</span><b>Product</b></div><div class="orbit-card orbit-card-c"><span>03</span><b>Design Engineer</b></div><div class="hero-badge">A4<br /><small>PDF</small></div></div>
       </section>
@@ -84,6 +84,8 @@ import { candidate as defaultCandidate, templates } from './data/cv'
 
 const STORAGE_KEY = 'cv-studio-profile-v1'
 const STUDIO_KEY = 'cv-studio-settings-v1'
+const SAMPLE_VERSION_KEY = 'cv-studio-sample-version'
+const SAMPLE_VERSION = '360-v1'
 const cloneCandidate = () => JSON.parse(JSON.stringify(defaultCandidate))
 const ITEM_FACTORIES = {
   highlights: () => ({ value: '10+', label: 'Meaningful outcome' }),
@@ -92,6 +94,13 @@ const ITEM_FACTORIES = {
   education: () => ({ title: 'Program or degree', place: 'Institution', period: '2026' }),
   certificates: () => ({ title: 'Professional certificate', issuer: 'Issuer', period: '2026', url: '' }),
 }
+
+const isLegacyDemoProfile = (saved) => (
+  saved &&
+  saved.name === 'Nguyễn Minh Anh' &&
+  saved.email === 'hello@example.com' &&
+  saved.website === 'portfolio.example.com'
+)
 
 const hydrateCandidate = (saved) => {
   const base = cloneCandidate()
@@ -143,7 +152,10 @@ export default {
   mounted() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-      this.candidate = hydrateCandidate(saved)
+      const sampleVersion = localStorage.getItem(SAMPLE_VERSION_KEY)
+      const shouldUpgradeLegacyDemo = isLegacyDemoProfile(saved) && sampleVersion !== SAMPLE_VERSION
+      this.candidate = hydrateCandidate(shouldUpgradeLegacyDemo ? null : saved)
+      localStorage.setItem(SAMPLE_VERSION_KEY, SAMPLE_VERSION)
       const studioSettings = JSON.parse(localStorage.getItem(STUDIO_KEY) || '{}')
       if (this.templates.some((item) => item.id === studioSettings.selectedId)) this.selectedId = studioSettings.selectedId
       if (typeof studioSettings.accent === 'string') this.accent = studioSettings.accent
@@ -183,7 +195,13 @@ export default {
       const [item] = collection.splice(index, 1)
       collection.splice(nextIndex, 0, item)
     },
-    resetCandidate() { this.candidate = cloneCandidate(); try { localStorage.removeItem(STORAGE_KEY) } catch (error) { console.warn('Unable to clear saved CV profile.', error) } },
+    resetCandidate() {
+      this.candidate = cloneCandidate()
+      try {
+        localStorage.setItem(SAMPLE_VERSION_KEY, SAMPLE_VERSION)
+        localStorage.removeItem(STORAGE_KEY)
+      } catch (error) { console.warn('Unable to clear saved CV profile.', error) }
+    },
     printCv() { window.print() },
   },
 }
