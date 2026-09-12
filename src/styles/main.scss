@@ -18,3 +18,7 @@
 @use 'landing';
 @use 'app-shell';
 @use 'accessibility';
+
+// Final presentation layer: current Apple HIG-inspired tokens, material,
+// hierarchy, adaptive layout and interaction behavior. Loaded last on purpose.
+@use 'apple-ui';
