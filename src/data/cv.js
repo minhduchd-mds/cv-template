@@ -1,3 +1,5 @@
+import { resumeCandidateFrom360, sampleProfile360 } from './sample-profile-360'
+
 export const templates = [
   {
     id: 'product-slate',
@@ -55,98 +57,5 @@ export const templates = [
   },
 ]
 
-export const candidate = {
-  name: 'Nguyễn Minh Anh',
-  role: 'Senior UI/UX & Product Designer',
-  location: 'Hà Nội, Việt Nam',
-  email: 'hello@example.com',
-  phone: '+84 900 000 000',
-  website: 'portfolio.example.com',
-  avatar: '',
-  summary:
-    'Product-minded UI/UX designer focused on complex web platforms, design systems and code-aware delivery. I turn ambiguous workflows into clear interfaces, reusable patterns and measurable product outcomes.',
-  sections: [
-    { id: 'summary', label: 'Profile', enabled: true },
-    { id: 'highlights', label: 'Impact', enabled: true },
-    { id: 'experience', label: 'Experience', enabled: true },
-    { id: 'projects', label: 'Projects', enabled: true },
-    { id: 'skills', label: 'Skills', enabled: true },
-    { id: 'education', label: 'Education', enabled: true },
-    { id: 'certificates', label: 'Certificates', enabled: true },
-    { id: 'languages', label: 'Languages', enabled: true },
-  ],
-  highlights: [
-    { value: '6+', label: 'Years designing digital products' },
-    { value: '15+', label: 'Complex modules audited or redesigned' },
-    { value: '40%', label: 'Faster design-to-dev handoff' },
-  ],
-  experience: [
-    {
-      role: 'Senior UI/UX Designer',
-      company: 'Enterprise Product Team',
-      period: '2022 — Present',
-      location: 'Hà Nội',
-      bullets: [
-        'Led end-to-end UX for enterprise web products spanning analytics, operations and internal platforms.',
-        'Built and governed a reusable design system covering tokens, components, interaction states and accessibility guidance.',
-        'Partnered directly with front-end teams to reduce visual drift and improve implementation quality across releases.',
-      ],
-    },
-    {
-      role: 'UI/UX Designer',
-      company: 'Digital Platform Studio',
-      period: '2020 — 2022',
-      location: 'Hà Nội',
-      bullets: [
-        'Designed responsive web journeys from discovery and flow mapping through polished production UI.',
-        'Introduced structured UX reviews and component reuse to improve consistency across multiple products.',
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: 'Design QA Agent',
-      type: 'AI · Design Ops',
-      impact: 'Automated visual QA workflow',
-      description: 'A design-to-web audit concept that compares implementation quality, flags UI issues and structures review output for delivery teams.',
-      image: '',
-    },
-    {
-      name: 'Analytics Workspace',
-      type: 'B2B · Data',
-      impact: 'Unified dashboard patterns',
-      description: 'A modular analytics experience with responsive dashboards, drill-down patterns and reusable chart interaction rules.',
-      image: '',
-    },
-    {
-      name: 'Design System Core',
-      type: 'Platform · System',
-      impact: 'Reusable cross-product foundation',
-      description: 'Shared tokens, components and quality rules designed to bridge Figma decisions and front-end implementation.',
-      image: '',
-    },
-  ],
-  skills: [
-    'Product Design',
-    'UI/UX',
-    'Design Systems',
-    'Interaction Design',
-    'UX Audit',
-    'Accessibility',
-    'Figma',
-    'Prototyping',
-    'HTML/CSS',
-    'Vue / React awareness',
-    'Design QA',
-    'AI-assisted workflows',
-  ],
-  education: [
-    { title: 'Software & Web Development', place: 'Technology Program', period: '2018' },
-    { title: 'Continuous Product & UX Learning', place: 'Professional Certificates', period: '2024 — Present' },
-  ],
-  certificates: [
-    { title: 'Product Design Certification', issuer: 'Professional Program', period: '2025', url: '' },
-    { title: 'Accessibility & Design Systems', issuer: 'Continuing Education', period: '2026', url: '' },
-  ],
-  languages: ['Vietnamese · Native', 'English · Professional working proficiency'],
-}
+export { sampleProfile360 }
+export const candidate = resumeCandidateFrom360(sampleProfile360)
