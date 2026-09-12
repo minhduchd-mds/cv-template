@@ -1,11 +1,11 @@
 # CV Studio
 
-A modern CV template studio built on **Vue 3.5.42 + Vite 8.2.2** with one shared profile data model, reusable renderers and A4-ready visual directions for product, UI/UX and technology roles.
+A modern CV template studio built on **Vue 3.5.42 + Vite 8.3.0** with one shared profile data model, reusable renderers and A4-ready visual directions for product, UI/UX and technology roles.
 
 ## Current stack
 
 - Vue **3.5.42**
-- Vite **8.2.2**
+- Vite **8.3.0**
 - `@vitejs/plugin-vue` **6.0.8**
 - Node **20.19+ or 22.12+**
 - Plain Vue SFC + CSS architecture, intentionally dependency-light
