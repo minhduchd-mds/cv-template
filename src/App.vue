@@ -140,7 +140,7 @@
       </section>
 
       <footer class="site-footer studio-only">
-        <span>CV Studio · Vue 3.5.42 · Vite 8.2.2</span>
+        <span>CV Studio · Vue 3.5.42 · Vite 8.3.0</span>
         <span>Editable · Responsive · Shared data · Print ready</span>
       </footer>
 
