@@ -10,6 +10,7 @@
       </a>
       <div class="topbar-actions">
         <a class="ghost-button" href="#templates">Templates</a>
+        <button class="editor-trigger" type="button" @click="editorOpen = true">Edit profile</button>
         <button class="primary-button" type="button" @click="printCv">
           <span>Export / Print PDF</span>
           <span aria-hidden="true">↗</span>
@@ -24,12 +25,12 @@
           <h1>One profile.<br /><em>Multiple CV directions.</em></h1>
           <p>
             A modern, code-aware resume studio built for Senior UI/UX, Product Design and technology roles.
-            Pick a template, tune the accent and export an A4-ready CV.
+            Pick a template, edit your profile, tune the accent and export an A4-ready CV.
           </p>
           <div class="hero-meta">
             <div><strong>6</strong><span>starter templates</span></div>
             <div><strong>A4</strong><span>print-ready layout</span></div>
-            <div><strong>1</strong><span>shared data source</span></div>
+            <div><strong>1</strong><span>shared editable profile</span></div>
           </div>
         </div>
         <div class="hero-orbit" aria-hidden="true">
@@ -131,7 +132,7 @@
           </div>
         </div>
         <div class="principle-grid">
-          <article><span>DATA</span><h3>Content separated from layout</h3><p>Edit one profile object and every template updates consistently.</p></article>
+          <article><span>DATA</span><h3>Content separated from layout</h3><p>Edit one profile and every template updates consistently.</p></article>
           <article><span>UX</span><h3>Readable before decorative</h3><p>Clear hierarchy, restrained density and strong recruiter scanning patterns.</p></article>
           <article><span>CODE</span><h3>Template variants, not duplicated pages</h3><p>Shared renderer and reusable tokens keep future CV styles easy to maintain.</p></article>
           <article><span>OUTPUT</span><h3>A4 and browser PDF ready</h3><p>Print rules remove the studio UI and preserve the selected CV document.</p></article>
@@ -140,33 +141,47 @@
 
       <footer class="site-footer studio-only">
         <span>CV Studio · Vue 3.5.42 · Vite 8.2.2</span>
-        <span>Responsive · Shared data · Print ready</span>
+        <span>Editable · Responsive · Shared data · Print ready</span>
       </footer>
 
       <div class="print-only print-document">
         <CvDocument :profile="candidate" :template="selectedTemplate" :accent="accent" />
       </div>
     </main>
+
+    <ProfileEditor
+      :open="editorOpen"
+      :profile="candidate"
+      @close="editorOpen = false"
+      @update-field="updateProfileField"
+      @reset="resetCandidate"
+    />
   </div>
 </template>
 
 <script>
 import CvDocument from './components/CvDocument.vue'
-import { candidate, templates } from './data/cv'
+import ProfileEditor from './components/ProfileEditor.vue'
+import { candidate as defaultCandidate, templates } from './data/cv'
+
+const STORAGE_KEY = 'cv-studio-profile-v1'
+const cloneCandidate = () => JSON.parse(JSON.stringify(defaultCandidate))
 
 export default {
   name: 'App',
   components: {
     CvDocument,
+    ProfileEditor,
   },
   data() {
     return {
-      candidate,
+      candidate: cloneCandidate(),
       templates,
       selectedId: templates[0].id,
       category: 'All',
       accent: templates[0].accent,
       zoom: 0.85,
+      editorOpen: false,
     }
   },
   computed: {
@@ -181,10 +196,45 @@ export default {
       return this.templates.find((item) => item.id === this.selectedId) || this.templates[0]
     },
   },
+  watch: {
+    candidate: {
+      deep: true,
+      handler(value) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
+        } catch (error) {
+          console.warn('Unable to persist CV profile locally.', error)
+        }
+      },
+    },
+  },
+  mounted() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        this.candidate = { ...cloneCandidate(), ...JSON.parse(saved) }
+      }
+    } catch (error) {
+      console.warn('Unable to restore saved CV profile.', error)
+    }
+  },
   methods: {
     chooseTemplate(template) {
       this.selectedId = template.id
       this.accent = template.accent
+    },
+    updateProfileField({ key, value }) {
+      if (Object.prototype.hasOwnProperty.call(this.candidate, key)) {
+        this.candidate[key] = value
+      }
+    },
+    resetCandidate() {
+      this.candidate = cloneCandidate()
+      try {
+        localStorage.removeItem(STORAGE_KEY)
+      } catch (error) {
+        console.warn('Unable to clear saved CV profile.', error)
+      }
     },
     printCv() {
       window.print()
