@@ -1,4 +1,7 @@
-import { resumeCandidateFrom360, sampleProfile360 } from './sample-profile-360'
+import { resumeCandidateFrom360, sampleProfile360 as rawSampleProfile360 } from './sample-profile-360'
+import { withLocalSampleMedia } from './sample-media'
+
+export const sampleProfile360 = withLocalSampleMedia(rawSampleProfile360)
 
 export const templates = [
   {
@@ -57,5 +60,4 @@ export const templates = [
   },
 ]
 
-export { sampleProfile360 }
 export const candidate = resumeCandidateFrom360(sampleProfile360)
