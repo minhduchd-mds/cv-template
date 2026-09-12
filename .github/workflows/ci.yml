@@ -32,5 +32,11 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Check dangerous frontend APIs
+        run: npm run security:lint
+
       - name: Build production bundle
         run: npm run build
+
+      - name: Enforce bundle budgets
+        run: npm run verify:bundle
