@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Atlas Ops sample project artwork</title>
+  <desc id="desc">Abstract enterprise operations dashboard mockup.</desc>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eaf0ff"/><stop offset="1" stop-color="#c7d6fb"/></linearGradient></defs>
+  <rect width="1200" height="760" rx="44" fill="url(#bg)"/>
+  <rect x="90" y="76" width="1020" height="608" rx="28" fill="#fff"/>
+  <rect x="90" y="76" width="210" height="608" rx="28" fill="#101827"/>
+  <circle cx="145" cy="136" r="18" fill="#7167ff"/>
+  <rect x="132" y="190" width="110" height="14" rx="7" fill="#94a3b8" opacity=".7"/>
+  <rect x="132" y="232" width="86" height="12" rx="6" fill="#64748b" opacity=".55"/>
+  <rect x="132" y="270" width="126" height="12" rx="6" fill="#64748b" opacity=".55"/>
+  <rect x="344" y="128" width="250" height="28" rx="12" fill="#172033"/>
+  <rect x="344" y="180" width="680" height="88" rx="18" fill="#f5f7fb"/>
+  <rect x="370" y="204" width="148" height="16" rx="8" fill="#315efb" opacity=".82"/>
+  <rect x="370" y="232" width="300" height="10" rx="5" fill="#cbd5e1"/>
+  <g fill="#f8fafc" stroke="#dbe3ef" stroke-width="2"><rect x="344" y="300" width="316" height="150" rx="18"/><rect x="690" y="300" width="334" height="150" rx="18"/><rect x="344" y="480" width="680" height="142" rx="18"/></g>
+  <path d="M390 405c55-88 112-52 158-108 42 68 78 74 111 30" fill="none" stroke="#7167ff" stroke-width="10" stroke-linecap="round"/>
+  <g fill="#d7def0"><rect x="736" y="342" width="220" height="12" rx="6"/><rect x="736" y="378" width="168" height="12" rx="6"/><rect x="390" y="524" width="570" height="14" rx="7"/><rect x="390" y="562" width="520" height="14" rx="7"/></g>
+</svg>
