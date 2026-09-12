@@ -23,7 +23,7 @@
 // interaction behavior establish the visual system.
 @use 'apple-ui';
 
-// Claude frontend-design refinement layer: text geometry, reading measure,
-// supporting copy frames and Builder readability. Loaded after the visual system
-// so content hierarchy stays consistent across future UI changes.
+// Claude frontend-design refinement layers: text geometry, reading measure,
+// supporting copy frames, Builder readability and compact control microcopy.
 @use 'text-frames';
+@use 'microcopy';
