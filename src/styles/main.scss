@@ -4,9 +4,9 @@
 // into a first-class SCSS module. Keep this order aligned with the historical
 // main.js imports so cascade behavior stays stable during the migration.
 @use '../styles.css';
-@use '../enhancements.css';
+@use 'enhancements';
 @use '../editor.css';
-@use '../builder-advanced.css';
+@use 'builder-advanced';
 @use 'cv-sections';
 @use '../motion.css';
 @use 'quality';
