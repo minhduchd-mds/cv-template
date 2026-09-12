@@ -8,7 +8,7 @@
       <div class="topbar-actions">
         <span class="shortcut-hint" aria-label="Keyboard shortcuts"><kbd>E</kbd> Edit <kbd>F</kbd> Focus <kbd>N</kbd> Next</span>
         <a class="ghost-button" href="#templates">Templates</a>
-        <button class="auto-complete-button" type="button" @click="runAutoComplete">
+        <button class="auto-complete-button" type="button" :aria-label="`Auto-complete CV · ${completionPercent}% complete`" @click="runAutoComplete">
           <span>Auto-complete CV</span><strong>{{ completionPercent }}%</strong>
         </button>
         <button class="editor-trigger" type="button" @click="editorOpen = true">Edit CV</button>
