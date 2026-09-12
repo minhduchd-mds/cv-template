@@ -1,0 +1,41 @@
+// WCAG AA contrast corrections for compact landing-page metadata.
+// Keep hierarchy through type scale and weight instead of low-contrast color.
+$landing-muted-aa: #5f6878;
+$landing-accent-aa: #5a4ee5;
+
+.landing-page {
+  .landing-brand small,
+  .landing-proof p,
+  .landing-template-feature__paper p,
+  .landing-template-feature__copy p,
+  .landing-template-row__index,
+  .landing-template-row small,
+  .landing-template-row p,
+  .landing-section__heading span,
+  .landing-workflow__steps li small,
+  .landing-workflow__steps li p,
+  .landing-case-lead small,
+  .landing-case-lead p,
+  .landing-case-lead__proof span,
+  .landing-case__body > div > p,
+  .landing-case dt,
+  .landing-capabilities__groups article small,
+  .landing-capabilities__groups article p,
+  .landing-testimonial aside small,
+  .landing-faq summary span,
+  .landing-footer,
+  .landing-footer .landing-brand strong,
+  .landing-footer .landing-brand small,
+  .landing-footer a,
+  .landing-footer > span {
+    color: $landing-muted-aa;
+  }
+
+  .landing-proof > div > span,
+  .landing-template-feature__copy small,
+  .landing-workflow__steps > li > span,
+  .landing-case__body > div > small,
+  .landing-capabilities__groups article > span {
+    color: $landing-accent-aa;
+  }
+}
