@@ -18,7 +18,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -40,3 +40,37 @@ jobs:
 
       - name: Enforce bundle budgets
         run: npm run verify:bundle
+
+      - name: Install Chromium for browser QA
+        run: npx playwright install --with-deps chromium
+
+      - name: Run responsive end-to-end tests
+        run: npm run test:e2e:ci
+
+      - name: Enforce Lighthouse quality budgets
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/cv-studio-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl -fsS http://127.0.0.1:4173/ > /dev/null
+          export CHROME_PATH="$(node -e "const { chromium } = require('@playwright/test'); process.stdout.write(chromium.executablePath())")"
+
+          npx lighthouse http://127.0.0.1:4173/ \
+            --quiet \
+            --preset=desktop \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --output=json \
+            --output-path=./lighthouse-report.json
+
+          npm run lighthouse:assert
