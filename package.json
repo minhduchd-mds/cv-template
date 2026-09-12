@@ -4,15 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "data:sync": "node scripts/sync-sample-data.mjs",
+    "data:check": "node scripts/sync-sample-data.mjs --check",
+    "predev": "npm run data:sync",
     "dev": "vite",
     "serve": "vite",
     "security:lint": "node scripts/security-lint.mjs",
+    "prebuild": "npm run data:sync",
     "build": "vite build",
     "verify:bundle": "node scripts/check-bundle-budget.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --project=desktop-chromium --project=tablet-chromium --project=mobile-chromium",
     "lighthouse:assert": "node scripts/assert-lighthouse.mjs",
-    "verify": "npm run security:lint && npm run build && npm run verify:bundle",
+    "verify": "npm run data:sync && npm run security:lint && npm run build && npm run verify:bundle",
     "preview": "vite preview"
   },
   "dependencies": {
