@@ -62,8 +62,19 @@ export const candidate = {
   email: 'hello@example.com',
   phone: '+84 900 000 000',
   website: 'portfolio.example.com',
+  avatar: '',
   summary:
     'Product-minded UI/UX designer focused on complex web platforms, design systems and code-aware delivery. I turn ambiguous workflows into clear interfaces, reusable patterns and measurable product outcomes.',
+  sections: [
+    { id: 'summary', label: 'Profile', enabled: true },
+    { id: 'highlights', label: 'Impact', enabled: true },
+    { id: 'experience', label: 'Experience', enabled: true },
+    { id: 'projects', label: 'Projects', enabled: true },
+    { id: 'skills', label: 'Skills', enabled: true },
+    { id: 'education', label: 'Education', enabled: true },
+    { id: 'certificates', label: 'Certificates', enabled: true },
+    { id: 'languages', label: 'Languages', enabled: true },
+  ],
   highlights: [
     { value: '6+', label: 'Years designing digital products' },
     { value: '15+', label: 'Complex modules audited or redesigned' },
@@ -98,18 +109,21 @@ export const candidate = {
       type: 'AI · Design Ops',
       impact: 'Automated visual QA workflow',
       description: 'A design-to-web audit concept that compares implementation quality, flags UI issues and structures review output for delivery teams.',
+      image: '',
     },
     {
       name: 'Analytics Workspace',
       type: 'B2B · Data',
       impact: 'Unified dashboard patterns',
       description: 'A modular analytics experience with responsive dashboards, drill-down patterns and reusable chart interaction rules.',
+      image: '',
     },
     {
       name: 'Design System Core',
       type: 'Platform · System',
       impact: 'Reusable cross-product foundation',
       description: 'Shared tokens, components and quality rules designed to bridge Figma decisions and front-end implementation.',
+      image: '',
     },
   ],
   skills: [
@@ -129,6 +143,10 @@ export const candidate = {
   education: [
     { title: 'Software & Web Development', place: 'Technology Program', period: '2018' },
     { title: 'Continuous Product & UX Learning', place: 'Professional Certificates', period: '2024 — Present' },
+  ],
+  certificates: [
+    { title: 'Product Design Certification', issuer: 'Professional Program', period: '2025', url: '' },
+    { title: 'Accessibility & Design Systems', issuer: 'Continuing Education', period: '2026', url: '' },
   ],
   languages: ['Vietnamese · Native', 'English · Professional working proficiency'],
 }
