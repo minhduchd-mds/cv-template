@@ -81,6 +81,7 @@
 import CvDocument from './components/CvDocument.vue'
 import ProfileEditor from './components/ProfileEditor.vue'
 import { candidate as defaultCandidate, templates } from './data/cv'
+import { safeImageSource, sanitizeProfileMedia } from './security/safe-media'
 
 const STORAGE_KEY = 'cv-studio-profile-v1'
 const STUDIO_KEY = 'cv-studio-settings-v1'
@@ -104,7 +105,7 @@ const isLegacyDemoProfile = (saved) => (
 
 const hydrateCandidate = (saved) => {
   const base = cloneCandidate()
-  if (!saved || typeof saved !== 'object') return base
+  if (!saved || typeof saved !== 'object') return sanitizeProfileMedia(base)
   const hydrated = { ...base, ...saved }
   if (!Array.isArray(saved.sections) || !saved.sections.length) hydrated.sections = base.sections
   if (!Array.isArray(saved.certificates)) hydrated.certificates = base.certificates
@@ -112,14 +113,14 @@ const hydrateCandidate = (saved) => {
   if (!Array.isArray(saved.projects)) hydrated.projects = base.projects
   hydrated.projects = hydrated.projects.map((project) => ({ image: '', ...project }))
   if (typeof hydrated.avatar !== 'string') hydrated.avatar = ''
-  return hydrated
+  return sanitizeProfileMedia(hydrated)
 }
 
 export default {
   name: 'App',
   components: { CvDocument, ProfileEditor },
   data() {
-    return { candidate: cloneCandidate(), templates, selectedId: templates[0].id, category: 'All', accent: templates[0].accent, zoom: 0.85, editorOpen: false, focusMode: false }
+    return { candidate: sanitizeProfileMedia(cloneCandidate()), templates, selectedId: templates[0].id, category: 'All', accent: templates[0].accent, zoom: 0.85, editorOpen: false, focusMode: false }
   },
   computed: {
     categories() { return ['All'].concat(Array.from(new Set(this.templates.map((item) => item.category)))) },
@@ -160,7 +161,7 @@ export default {
       if (this.templates.some((item) => item.id === studioSettings.selectedId)) this.selectedId = studioSettings.selectedId
       if (typeof studioSettings.accent === 'string') this.accent = studioSettings.accent
       if ([0.75, 0.85, 1].includes(studioSettings.zoom)) this.zoom = studioSettings.zoom
-    } catch (error) { console.warn('Unable to restore saved CV Studio state.', error); this.candidate = cloneCandidate() }
+    } catch (error) { console.warn('Unable to restore saved CV Studio state.', error); this.candidate = sanitizeProfileMedia(cloneCandidate()) }
     window.addEventListener('keydown', this.handleShortcut)
   },
   beforeUnmount() { window.removeEventListener('keydown', this.handleShortcut) },
@@ -179,10 +180,14 @@ export default {
       else if (key === 'escape') { this.editorOpen = false; this.focusMode = false }
     },
     persistStudioSettings() { try { localStorage.setItem(STUDIO_KEY, JSON.stringify({ selectedId: this.selectedId, accent: this.accent, zoom: this.zoom })) } catch (error) { console.warn('Unable to persist CV Studio settings.', error) } },
-    updateProfileField({ key, value }) { if (Object.prototype.hasOwnProperty.call(this.candidate, key)) this.candidate[key] = value },
+    updateProfileField({ key, value }) {
+      if (!Object.prototype.hasOwnProperty.call(this.candidate, key)) return
+      this.candidate[key] = key === 'avatar' ? safeImageSource(value) : value
+    },
     updateProfileItem({ section, index, key, value }) {
       const collection = this.candidate[section]
-      if (Array.isArray(collection) && collection[index] && typeof collection[index] === 'object') collection[index][key] = value
+      if (!Array.isArray(collection) || !collection[index] || typeof collection[index] !== 'object') return
+      collection[index][key] = section === 'projects' && key === 'image' ? safeImageSource(value) : value
     },
     updateProfileArray({ key, value }) { if (Array.isArray(this.candidate[key]) && Array.isArray(value)) this.candidate[key] = value },
     addProfileItem({ section }) { const factory = ITEM_FACTORIES[section]; if (factory && Array.isArray(this.candidate[section])) this.candidate[section].push(factory()) },
@@ -196,7 +201,7 @@ export default {
       collection.splice(nextIndex, 0, item)
     },
     resetCandidate() {
-      this.candidate = cloneCandidate()
+      this.candidate = sanitizeProfileMedia(cloneCandidate())
       try {
         localStorage.setItem(SAMPLE_VERSION_KEY, SAMPLE_VERSION)
         localStorage.removeItem(STORAGE_KEY)
