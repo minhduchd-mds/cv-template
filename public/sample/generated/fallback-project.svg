@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-label="Sample project cover">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#111827"/><stop offset=".55" stop-color="#4338ca"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+  <rect width="1200" height="720" rx="48" fill="url(#g)"/>
+  <rect x="90" y="86" width="1020" height="548" rx="36" fill="#fff" fill-opacity=".10" stroke="#fff" stroke-opacity=".22"/>
+  <rect x="140" y="140" width="420" height="444" rx="28" fill="#fff" fill-opacity=".94"/>
+  <rect x="610" y="140" width="450" height="120" rx="24" fill="#fff" fill-opacity=".14"/>
+  <rect x="610" y="292" width="212" height="292" rx="24" fill="#fff" fill-opacity=".11"/>
+  <rect x="848" y="292" width="212" height="292" rx="24" fill="#fff" fill-opacity=".17"/>
+  <text x="650" y="204" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="700">Project cover</text>
+  <text x="650" y="244" fill="#fff" fill-opacity=".7" font-family="Inter,Arial,sans-serif" font-size="17">Auto-generated sample artwork</text>
+</svg>
