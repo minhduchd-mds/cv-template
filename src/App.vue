@@ -107,6 +107,15 @@
               </div>
             </div>
             <div class="preview-actions">
+              <div
+                class="quality-score"
+                :style="{ '--score-angle': `${cvScore * 3.6}deg` }"
+                :title="`CV quality score: ${cvScore}/100 · ${scoreLabel}`"
+                aria-live="polite"
+              >
+                <span class="score-ring"><span>{{ cvScore }}</span></span>
+                <span><strong>CV score</strong><small>{{ scoreLabel }}</small></span>
+              </div>
               <button class="cycle-control" type="button" title="Next template (N)" @click="cycleTemplate">
                 Next style ↻
               </button>
@@ -188,6 +197,7 @@ import ProfileEditor from './components/ProfileEditor.vue'
 import { candidate as defaultCandidate, templates } from './data/cv'
 
 const STORAGE_KEY = 'cv-studio-profile-v1'
+const STUDIO_KEY = 'cv-studio-settings-v1'
 const cloneCandidate = () => JSON.parse(JSON.stringify(defaultCandidate))
 
 export default {
@@ -219,6 +229,31 @@ export default {
     selectedTemplate() {
       return this.templates.find((item) => item.id === this.selectedId) || this.templates[0]
     },
+    cvScore() {
+      const profile = this.candidate
+      let score = 0
+      const contactFields = ['name', 'role', 'location', 'email', 'phone', 'website']
+      score += contactFields.filter((key) => String(profile[key] || '').trim()).length * 5
+
+      if (String(profile.summary || '').trim().length >= 80) score += 10
+      if ((profile.experience || []).length >= 1) score += 10
+      if ((profile.experience || []).length >= 2) score += 5
+      if ((profile.projects || []).length >= 1) score += 10
+      if ((profile.projects || []).length >= 3) score += 5
+      if ((profile.skills || []).length >= 5) score += 10
+      if ((profile.skills || []).length >= 10) score += 5
+      if ((profile.education || []).length >= 1) score += 5
+      if ((profile.languages || []).length >= 1) score += 5
+      if ((profile.highlights || []).length >= 2) score += 5
+
+      return Math.min(score, 100)
+    },
+    scoreLabel() {
+      if (this.cvScore >= 90) return 'Excellent'
+      if (this.cvScore >= 80) return 'Strong'
+      if (this.cvScore >= 65) return 'Good base'
+      return 'Needs detail'
+    },
   },
   watch: {
     candidate: {
@@ -231,6 +266,9 @@ export default {
         }
       },
     },
+    selectedId: 'persistStudioSettings',
+    accent: 'persistStudioSettings',
+    zoom: 'persistStudioSettings',
   },
   mounted() {
     try {
@@ -238,8 +276,19 @@ export default {
       if (saved) {
         this.candidate = { ...cloneCandidate(), ...JSON.parse(saved) }
       }
+
+      const studioSettings = JSON.parse(localStorage.getItem(STUDIO_KEY) || '{}')
+      if (this.templates.some((item) => item.id === studioSettings.selectedId)) {
+        this.selectedId = studioSettings.selectedId
+      }
+      if (typeof studioSettings.accent === 'string') {
+        this.accent = studioSettings.accent
+      }
+      if ([0.75, 0.85, 1].includes(studioSettings.zoom)) {
+        this.zoom = studioSettings.zoom
+      }
     } catch (error) {
-      console.warn('Unable to restore saved CV profile.', error)
+      console.warn('Unable to restore saved CV Studio state.', error)
     }
     window.addEventListener('keydown', this.handleShortcut)
   },
@@ -280,6 +329,17 @@ export default {
       } else if (key === 'escape') {
         this.editorOpen = false
         this.focusMode = false
+      }
+    },
+    persistStudioSettings() {
+      try {
+        localStorage.setItem(STUDIO_KEY, JSON.stringify({
+          selectedId: this.selectedId,
+          accent: this.accent,
+          zoom: this.zoom,
+        }))
+      } catch (error) {
+        console.warn('Unable to persist CV Studio settings.', error)
       }
     },
     updateProfileField({ key, value }) {
