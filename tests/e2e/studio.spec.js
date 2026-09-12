@@ -52,6 +52,64 @@ test('builder opens from its route, edits shared data and persists locally', asy
   expect(runtimeErrors).toEqual([])
 })
 
+test('Auto-complete CV fills only missing content and marks custom drafts for review', async ({ page }) => {
+  const runtimeErrors = watchRuntimeErrors(page)
+  await page.addInitScript(() => {
+    localStorage.setItem('cv-studio-profile-v1', JSON.stringify({
+      name: 'Sam Rivera',
+      role: 'Product Designer',
+      location: '',
+      email: 'sam@portfolio.test',
+      phone: '',
+      website: '',
+      avatar: '',
+      headline: '',
+      availability: '',
+      summary: '',
+      sections: [],
+      highlights: [],
+      experience: [],
+      projects: [],
+      skills: [],
+      tools: [],
+      education: [],
+      certificates: [],
+      languages: [],
+      recognition: [],
+      testimonials: [],
+      interests: [],
+    }))
+  })
+
+  await page.goto('/#studio')
+  const autoComplete = page.getByRole('button', { name: /Auto-complete CV/i })
+  await expect(autoComplete).toBeVisible()
+  await expect(autoComplete).not.toContainText('100%')
+  await autoComplete.click()
+
+  await expect(page.locator('.auto-complete-toast')).toContainText('Auto-complete applied')
+  await expect(page.locator('.auto-complete-toast')).toContainText('[Review]')
+  await expect(page.getByRole('heading', { name: /Edit once\. Update every CV/i })).toBeVisible()
+
+  const stored = await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}'))).toMatchObject({
+    name: 'Sam Rivera',
+    role: 'Product Designer',
+    email: 'sam@portfolio.test',
+  })
+
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}'))
+  expect(saved.name).toBe('Sam Rivera')
+  expect(saved.role).toBe('Product Designer')
+  expect(saved.email).toBe('sam@portfolio.test')
+  expect(saved.summary).toContain('[Review:')
+  expect(saved.highlights.length).toBeGreaterThan(0)
+  expect(saved.projects.length).toBeGreaterThan(0)
+  expect(saved.skills.length).toBeGreaterThan(0)
+
+  await expectNoHorizontalOverflow(page)
+  expect(runtimeErrors).toEqual([])
+})
+
 test('concept routes remain reachable and keyboard navigation has no dead end', async ({ page }) => {
   const runtimeErrors = watchRuntimeErrors(page)
   await page.goto('/#concept-bento')
