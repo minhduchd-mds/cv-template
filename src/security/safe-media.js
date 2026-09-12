@@ -1,6 +1,12 @@
 const DATA_IMAGE_PATTERN = /^data:image\/(?:png|jpe?g|webp|gif|avif);base64,[a-z0-9+/=\s]+$/i
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
 
+const mediaBaseUrl = () => {
+  if (typeof document !== 'undefined' && document.baseURI) return document.baseURI
+  if (typeof window !== 'undefined' && window.location?.href) return window.location.href
+  return 'https://localhost/'
+}
+
 export function safeImageSource(value) {
   if (typeof value !== 'string') return ''
   const source = value.trim()
@@ -10,7 +16,7 @@ export function safeImageSource(value) {
   if (source.startsWith('blob:')) return source
 
   try {
-    const url = new URL(source, window.location.origin)
+    const url = new URL(source, mediaBaseUrl())
     if (url.protocol === 'https:') return url.href
     if (url.protocol === 'http:' && LOCAL_HOSTS.has(url.hostname)) return url.href
   } catch {
