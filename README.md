@@ -10,23 +10,23 @@ A modern CV template studio built on **Vue 3.5.42 + Vite 8.2.2** with one shared
 - Node **20.19+ or 22.12+**
 - Plain Vue SFC + CSS architecture, intentionally dependency-light
 
-## What changed
+## Current features
 
-- Migrated the legacy Vue 2 / Vue CLI project to Vue 3 + Vite.
-- Replaced the old single hard-coded CV screen with a reusable CV Studio.
-- Added **6 starter CV directions**:
-  - Senior Product Designer
-  - ATS Clean
-  - Creative Portfolio
-  - Executive Minimal
-  - Design System Lead
-  - Design Engineer
-- Added category filtering, live template switching and accent customization.
-- Added preview zoom controls for easier A4 inspection.
-- Added template-level themes so multiple visual directions can reuse one renderer.
-- Added browser print/PDF styling for A4 output.
+- **6 CV directions**: Senior Product Designer, ATS Clean, Creative Portfolio, Executive Minimal, Design System Lead and Design Engineer.
+- Category-based template gallery with live A4 preview.
+- Shared Profile Editor for name, role, location, email, phone, website and professional summary.
+- Local browser persistence so profile edits survive reloads.
+- Accent color customization and 75% / 85% / 100% preview zoom.
+- Browser print/PDF styling that removes Studio UI and prints only the selected CV.
+- Shared `variant + theme` architecture so new visual directions do not require duplicated CV pages.
+
+## What changed from the legacy repository
+
+- Migrated Vue 2 / Vue CLI to **Vue 3 + Vite**.
+- Replaced the old hard-coded CV screen with a reusable CV Studio.
 - Separated CV content from presentation in `src/data/cv.js`.
-- Removed legacy Firebase bootstrapping and obsolete Vue CLI, Babel, Jest, Cypress and deployment configuration.
+- Removed Firebase bootstrapping from the application entry point.
+- Removed obsolete Vue CLI, Babel, Jest, Cypress and legacy deployment configuration.
 - Removed tracked `node_modules`, `dist` and IDE metadata from the redesign branch.
 
 ## Run locally
@@ -49,12 +49,14 @@ npm run preview
 index.html                   # Vite application entry
 vite.config.js               # Vite + Vue configuration
 src/
-  App.vue                    # CV Studio shell, gallery and preview controls
+  App.vue                    # CV Studio shell, gallery, persistence and preview controls
   main.js                    # Vue 3 application bootstrap
   styles.css                 # Core Studio + CV layout styles
-  enhancements.css           # New template themes and preview controls
+  enhancements.css           # New CV template themes and preview controls
+  editor.css                 # Profile editor UI
   components/
     CvDocument.vue           # Shared CV renderer
+    ProfileEditor.vue        # Shared profile editing drawer
   data/
     cv.js                    # Profile content + template definitions
 ```
@@ -71,10 +73,10 @@ Each template in `src/data/cv.js` has a `variant` and optional `theme`.
 
 1. Add template metadata in `src/data/cv.js`.
 2. Reuse an existing `variant` when the information architecture is the same.
-3. Add a new `theme-*` style when only visual treatment changes.
+3. Add a new `theme-*` style when only the visual treatment changes.
 4. Create a new renderer branch in `CvDocument.vue` only when the document structure truly changes.
 5. Check desktop preview, responsive behavior and A4 print/PDF output.
 
-## Product direction
+## Next product steps
 
-Next useful improvements are an editable profile form, section visibility/reordering, language variants, saved profiles, and true PDF export automation. The current architecture is intentionally prepared for those additions without duplicating CV pages.
+The architecture is ready for section-level editing of experience/projects/skills, drag-and-drop section ordering, Vietnamese/English content variants, multiple saved profiles and automated PDF export.
