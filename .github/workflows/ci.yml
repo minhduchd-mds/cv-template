@@ -9,7 +9,7 @@ on:
       - master
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: cv-studio-${{ github.workflow }}-${{ github.ref }}
@@ -32,12 +32,20 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Export generated dependency lock
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: generated-package-lock
-          path: package-lock.json
-          retention-days: 1
+      - name: Commit generated dependency lock on master
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git status --porcelain -- package-lock.json | grep -q .; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json
+            git commit -m "chore(deps): lock deterministic npm dependency graph"
+            git push origin HEAD:master
+          else
+            echo "package-lock.json is already deterministic; no commit needed."
+          fi
 
       - name: Check dangerous frontend APIs
         run: npm run security:lint
