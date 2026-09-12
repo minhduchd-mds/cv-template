@@ -1,7 +1,13 @@
 import { resumeCandidateFrom360, sampleProfile360 as rawSampleProfile360 } from './sample-profile-360'
 import { withLocalSampleMedia } from './sample-media'
+import { completeCandidate, completeProfile360 } from './profile-autofill'
 
-export const sampleProfile360 = withLocalSampleMedia(rawSampleProfile360)
+const completedSampleProfile360 = completeProfile360(rawSampleProfile360, {
+  fillEmptyArrays: true,
+  ensureMinimums: true,
+})
+
+export const sampleProfile360 = withLocalSampleMedia(completedSampleProfile360)
 
 export const templates = [
   {
@@ -60,4 +66,6 @@ export const templates = [
   },
 ]
 
-export const candidate = resumeCandidateFrom360(sampleProfile360)
+export const candidate = completeCandidate(resumeCandidateFrom360(sampleProfile360), {
+  fillEmptyArrays: true,
+})
