@@ -27,3 +27,7 @@
 // supporting copy frames, Builder readability and compact control microcopy.
 @use 'text-frames';
 @use 'microcopy';
+
+// Screenshot-driven production polish. Kept last so responsive fixes address
+// real visual QA findings without creating a parallel design system.
+@use 'detail-polish';
