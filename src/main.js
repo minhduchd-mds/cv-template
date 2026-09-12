@@ -8,5 +8,6 @@ import './quality.css'
 import './concepts/concepts.css'
 import './concepts/concept-experience.css'
 import './concepts/concept-polish.css'
+import './concepts/data-covers.css'
 
 createApp(RootApp).mount('#app')
