@@ -48,6 +48,25 @@ const addRuntimeStyles=()=>{
   document.head.append(link)
 }
 
+const loadEvidenceRuntime=profile=>{
+  if(document.querySelector('script[data-evidence-runtime]')){
+    if(window.CV_EVIDENCE_BOOT) window.CV_EVIDENCE_BOOT(profile)
+    return
+  }
+  const script=document.createElement('script')
+  script.src='./evidence-runtime.js'
+  script.defer=true
+  script.dataset.evidenceRuntime='true'
+  script.addEventListener('load',()=>{
+    if(window.CV_EVIDENCE_BOOT) window.CV_EVIDENCE_BOOT(profile)
+  },{once:true})
+  script.addEventListener('error',()=>{
+    document.documentElement.dataset.evidenceModel='error'
+    console.error('Evidence runtime failed to load')
+  },{once:true})
+  document.head.append(script)
+}
+
 const initials=name=>name.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase()
 const setText=(selector,value,root=document)=>{
   const node=root.querySelector(selector)
@@ -252,13 +271,18 @@ const buildRecruiterMode=profile=>{
 }
 
 document.documentElement.dataset.profileModel='loading'
+document.documentElement.dataset.evidenceModel='loading'
 fetch('../data/profile.json')
   .then(response=>{
     if(!response.ok) throw new Error(`Profile request failed: ${response.status}`)
     return response.json()
   })
-  .then(buildRecruiterMode)
+  .then(profile=>{
+    buildRecruiterMode(profile)
+    loadEvidenceRuntime(profile)
+  })
   .catch(error=>{
     document.documentElement.dataset.profileModel='error'
+    document.documentElement.dataset.evidenceModel='error'
     console.error('Shared profile failed to load',error)
   })
