@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "identity": {
     "name": "Alex Chen",
     "preferredName": "Alex",
@@ -22,9 +22,9 @@
   "proof": [
     { "value": "8+", "label": "Years designing digital products" },
     { "value": "18+", "label": "Products and major surfaces shipped" },
-    { "value": "31%", "label": "Faster completion in primary workflow" },
-    { "value": "85%", "label": "Design-system adoption" },
-    { "value": "40%", "label": "Less design-to-dev clarification" },
+    { "value": "31%", "label": "Faster completion in primary workflow", "projectId": "atlas-ops" },
+    { "value": "85%", "label": "Design-system adoption", "projectId": "northstar-system" },
+    { "value": "40%", "label": "Less design-to-dev clarification", "projectId": "northstar-system" },
     { "value": "7", "label": "Cross-functional teams supported" }
   ],
   "projects": [
@@ -37,6 +37,16 @@
       "problem": "Users moved across several tools and dense tables to complete one task, creating missed exceptions and slow handoffs.",
       "method": "Reframed the product around task states, progressive disclosure and a shared detail workspace with contextual actions.",
       "result": "Usability testing showed 31% faster task completion and materially fewer navigation errors.",
+      "evidence": {
+        "baseline": "Before redesign, the benchmark workflow required repeated tool switching, dense table scanning and multiple context changes.",
+        "measure": "Task-completion benchmark comparing the existing workflow with the redesigned task-state prototype.",
+        "confidence": "Validated through moderated usability sessions using the same high-frequency operational scenario.",
+        "artifacts": [
+          { "type": "Benchmark", "label": "Before / after task-path comparison" },
+          { "type": "Prototype", "label": "Task-state interaction prototype" },
+          { "type": "Study", "label": "Usability findings and navigation-error log" }
+        ]
+      },
       "tags": ["Workflow UX", "Tables", "Design System", "Accessibility"]
     },
     {
@@ -48,6 +58,16 @@
       "problem": "AI suggestions were difficult to trust because users could not see supporting evidence or understand downstream actions.",
       "method": "Added evidence-first explanations, confidence framing, safe fallback states and reversible actions.",
       "result": "The revised flow reduced triage steps and improved confidence ratings in internal usability sessions.",
+      "evidence": {
+        "baseline": "The original analyst path required 7 decision and navigation steps before a suggestion could be safely acted on.",
+        "measure": "Step-count comparison across the same triage scenario, supported by qualitative confidence feedback.",
+        "confidence": "Observed in internal usability sessions with reversible-action and evidence states enabled.",
+        "artifacts": [
+          { "type": "Flow", "label": "7-step to 3-step triage map" },
+          { "type": "Prototype", "label": "Evidence-first AI recommendation states" },
+          { "type": "Study", "label": "Confidence and trust observation notes" }
+        ]
+      },
       "tags": ["AI UX", "Trust", "Analytics", "Human-in-the-loop"]
     },
     {
@@ -59,6 +79,16 @@
       "problem": "Fast product growth created inconsistent patterns, duplicated components and visual drift between design and code.",
       "method": "Introduced semantic tokens, component contracts, accessibility rules, QA checks and release notes shared with engineering.",
       "result": "Component adoption reached 85%, while design review cycles became shorter and more predictable.",
+      "evidence": {
+        "baseline": "Teams maintained duplicated components and inconsistent visual rules across active product surfaces before shared governance was introduced.",
+        "measure": "Adoption tracking across active surfaces plus design-to-development clarification trends during rollout.",
+        "confidence": "Measured against component usage and repeated review patterns rather than self-reported maturity scores.",
+        "artifacts": [
+          { "type": "System", "label": "Semantic token and component contract map" },
+          { "type": "Governance", "label": "Adoption and release-note tracker" },
+          { "type": "QA", "label": "Accessibility and design-QA checklist" }
+        ]
+      },
       "tags": ["Tokens", "Components", "Governance", "Design QA"]
     },
     {
@@ -70,6 +100,16 @@
       "problem": "Leaders received multiple reports with duplicated metrics and no consistent way to identify what required attention.",
       "method": "Reorganized information around business questions, thresholds, alerts and progressive drill-down.",
       "result": "Five recurring report views were consolidated into one responsive workspace with clearer escalation paths.",
+      "evidence": {
+        "baseline": "Decision-makers previously moved between 5 recurring reporting views with duplicated metrics and inconsistent escalation cues.",
+        "measure": "Information-architecture inventory comparing duplicated views, decision questions and escalation paths before and after consolidation.",
+        "confidence": "Verified against the recurring report set and the consolidated dashboard information model.",
+        "artifacts": [
+          { "type": "Audit", "label": "Five-view reporting inventory" },
+          { "type": "IA", "label": "Decision-question information architecture" },
+          { "type": "Prototype", "label": "Responsive drill-down dashboard" }
+        ]
+      },
       "tags": ["Dashboard", "Data Visualization", "Information Architecture"]
     }
   ],
