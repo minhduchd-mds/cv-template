@@ -3,6 +3,10 @@
  * Keeps Builder feedback explicit without adding decorative chrome.
  */
 
+.studio-route-dock {
+  display: contents;
+}
+
 :where(.editor-field, .builder-card, .avatar-builder, .layout-item) {
   transition:
     border-color var(--apple-fast) ease,
@@ -179,6 +183,73 @@
 
   .builder-list:empty::before {
     font-size: 12px;
+  }
+
+  .studio-route-dock {
+    display: grid;
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+    gap: 8px;
+    padding: 12px 16px calc(18px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(255,255,255,.08);
+    background: #0d0f14;
+  }
+
+  .studio-route-dock .studio-home-launch,
+  .studio-route-dock .concept-launch {
+    position: static;
+    inset: auto;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    min-height: 48px;
+    margin: 0;
+    padding: 0 14px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    color: #f5f5f7;
+    background: rgba(255,255,255,.07);
+    box-shadow: none;
+    backdrop-filter: none;
+    transform: none;
+  }
+
+  .studio-route-dock .studio-home-launch {
+    display: inline-flex;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .studio-route-dock .studio-home-launch::before {
+    display: none;
+  }
+
+  .studio-route-dock .concept-launch {
+    display: flex;
+    justify-content: flex-start;
+    gap: 9px;
+  }
+
+  .studio-route-dock .concept-launch > span:nth-child(2) {
+    display: grid;
+    min-width: 0;
+  }
+
+  .studio-route-dock .concept-launch strong {
+    color: #f5f5f7;
+    font-size: 11px;
+  }
+
+  .studio-route-dock .concept-launch small {
+    display: block;
+    color: rgba(245,245,247,.58);
+    font-size: 9px;
+  }
+
+  .studio-route-dock .concept-launch > b {
+    display: block;
+    margin-left: auto;
+    color: rgba(245,245,247,.7);
   }
 }
 
