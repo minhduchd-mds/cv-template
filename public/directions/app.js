@@ -11,6 +11,13 @@ const directions=[
 {id:'relay',code:'RLY-10',name:'Relay',kind:'OUTCOME PIPELINE',intent:'Show how value moves',audience:'Design engineer / Product',story:'Frame the career as a transformation pipeline from challenge to thinking, design, shipped work and measurable outcome.',steps:[['Input','Start with context, constraints and challenge.'],['Transform','Show research, system thinking and craft.'],['Output','End on shipped result, metric and learning.']]}
 ]
 
+const fullWorlds={
+  'signal-field':'./worlds/signal-field.html',
+  'threadscape':'./worlds/threadscape.html',
+  'focus-lens':'./worlds/focus-lens.html',
+  'relay':'./worlds/relay.html'
+}
+
 const lab=document.querySelector('.lab')
 const stage=document.querySelector('.stage')
 const cards=[...document.querySelectorAll('.card')]
@@ -23,6 +30,12 @@ const title=document.querySelector('#story-title')
 const copy=document.querySelector('#story-copy')
 const storyGrid=document.querySelector('#story-grid')
 const next=document.querySelector('#next-direction')
+const stageFoot=document.querySelector('.stage-foot')
+const openWorld=document.createElement('button')
+openWorld.type='button'
+openWorld.id='open-world'
+openWorld.innerHTML='Open full world <span>↗</span>'
+stageFoot.insertBefore(openWorld,next)
 let current=0
 
 function render(index){
@@ -38,6 +51,8 @@ function render(index){
   copy.textContent=item.story
   storyGrid.innerHTML=item.steps.map((step,i)=>`<article><span>0${i+1}</span><h3>${step[0]}</h3><p>${step[1]}</p></article>`).join('')
   cards.forEach((card,i)=>card.classList.toggle('active',i===current))
+  openWorld.hidden=!fullWorlds[item.id]
+  openWorld.setAttribute('aria-label',fullWorlds[item.id]?`Open ${item.name} full portfolio world`:'Full portfolio world not available yet')
 }
 
 cards.forEach((card,index)=>{
@@ -46,6 +61,10 @@ cards.forEach((card,index)=>{
   card.addEventListener('click',()=>{render(index);document.querySelector('.stage-shell').scrollIntoView({behavior:'smooth',block:'center'})})
 })
 next.addEventListener('click',()=>render(current+1))
+openWorld.addEventListener('click',()=>{
+  const route=fullWorlds[directions[current].id]
+  if(route) window.location.href=route
+})
 
 stage.addEventListener('pointermove',(event)=>{
   const box=stage.getBoundingClientRect()
