@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, extname } from 'node:path'
 
-const roots = ['src']
+const roots = ['src', 'public']
 const extensions = new Set(['.js', '.ts', '.vue', '.html'])
 const forbidden = [
   { label: 'eval()', pattern: /\beval\s*\(/ },
@@ -37,4 +37,4 @@ if (violations.length) {
   process.exit(1)
 }
 
-console.log(`Frontend security lint passed across ${files.length} source files.`)
+console.log(`Frontend security lint passed across ${files.length} source files in src and public.`)
