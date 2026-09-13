@@ -57,6 +57,33 @@
   background: #0d0f14;
 }
 
+/* Bento keeps its dark dramatic direction, but drama comes from scale/composition — not unreadable copy. */
+.bento-page {
+  h1 {
+    max-width: 10.5ch;
+    color: rgba(248,250,255,.96);
+    text-wrap: balance;
+  }
+
+  h1 em {
+    color: #8b7cff;
+  }
+
+  .bento-copy > p {
+    max-width: 58ch;
+    color: rgba(226,231,241,.72);
+    font-size: 15px;
+    line-height: 1.65;
+    text-wrap: pretty;
+  }
+
+  .concept-pill {
+    color: #c7bdff;
+    border-color: rgba(139,124,255,.3);
+    background: rgba(139,124,255,.14);
+  }
+}
+
 /* Sidebar title should read as one deliberate headline, not accidental three-line wrapping. */
 .template-panel .section-heading {
   h2 {
@@ -133,16 +160,31 @@
   }
 }
 
-/* Mobile A4 preview uses a deterministic fit scale instead of cropping desktop zoom. */
+/*
+ * Preview scaling must affect layout, not only paint. Modern CSS zoom keeps the A4
+ * sheet centered and makes the panel's measured height match the visible sheet.
+ */
+.preview-zoom {
+  transform: none;
+  zoom: var(--preview-zoom, .85);
+}
+
+.preview-stage:has(.preview-zoom) {
+  min-height: 0;
+}
+
+/* Mobile A4 preview uses deterministic fit scales instead of cropping desktop zoom. */
 @media (max-width: 640px) {
   .preview-stage {
-    --preview-zoom: .5;
+    --preview-zoom: .46;
     overflow: hidden;
+    min-height: 0;
     padding: 18px 10px 22px;
   }
 
   .preview-zoom {
-    --preview-zoom: .5 !important;
+    --preview-zoom: .46 !important;
+    margin-inline: auto;
   }
 
   .zoom-control {
@@ -181,13 +223,13 @@
 }
 
 @media (max-width: 520px) {
-  .preview-stage { --preview-zoom: .43; }
-  .preview-zoom { --preview-zoom: .43 !important; }
+  .preview-stage { --preview-zoom: .42; }
+  .preview-zoom { --preview-zoom: .42 !important; }
 }
 
 @media (max-width: 390px) {
-  .preview-stage { --preview-zoom: .38; }
-  .preview-zoom { --preview-zoom: .38 !important; }
+  .preview-stage { --preview-zoom: .37; }
+  .preview-zoom { --preview-zoom: .37 !important; }
 }
 
 /* Compact Studio navigation prioritizes actions over descriptive brand copy. */
@@ -296,5 +338,11 @@
   .studio-home-launch,
   .concept-launch {
     transition: none;
+  }
+}
+
+@media print {
+  .preview-zoom {
+    zoom: 1 !important;
   }
 }
