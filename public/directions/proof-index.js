@@ -1,207 +1,25 @@
 (()=>{
-  const root=document.querySelector('[data-proof-index]')
-  if(!root) return
-
-  const create=(tag,className,text)=>{
-    const node=document.createElement(tag)
-    if(className) node.className=className
-    if(text!==undefined) node.textContent=text
-    return node
-  }
-
-  const normalize=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()
-  const graph=document.querySelector('#proof-graph')
-  const svg=document.querySelector('#proof-lines')
-  const filters=[...document.querySelectorAll('.proof-filter')]
-  const summary={
-    projects:document.querySelector('[data-summary="projects"]'),
-    metrics:document.querySelector('[data-summary="metrics"]'),
-    artifacts:document.querySelector('[data-summary="artifacts"]'),
-    capabilities:document.querySelector('[data-summary="capabilities"]')
-  }
-  const columns={
-    metrics:document.querySelector('[data-list="metrics"]'),
-    projects:document.querySelector('[data-list="projects"]'),
-    capabilities:document.querySelector('[data-list="capabilities"]'),
-    artifacts:document.querySelector('[data-list="artifacts"]')
-  }
-  let profile=null
-  let projectGroups=new Map()
-  let activeFilter='all'
-
-  const groupKeywords={
-    product:['product','workflow','user flow','information architecture','interaction','prototype','usability','dashboard','tables','ux'],
-    systems:['design system','token','component','governance','accessibility','design qa','documentation','system'],
-    technical:['html','css','scss','vue','react','typescript','git','vite','responsive','engineering','code','implementation','component'],
-    ai:['ai','human in the loop','explainability','prompt','trust','assistant','confidence']
-  }
-
-  const resolveGroups=project=>{
-    const explicit=(project.capabilityGroups||[]).filter(group=>Boolean(profile?.capabilities?.[group]))
-    if(explicit.length) return [...new Set(explicit)]
-
-    const haystack=normalize([project.type,project.role,project.problem,project.method,project.result,...(project.tags||[])].join(' '))
-    const groups=Object.entries(groupKeywords).filter(([,keywords])=>keywords.some(keyword=>haystack.includes(normalize(keyword)))).map(([group])=>group)
-    if(!groups.length) groups.push('product')
-    return groups
-  }
-
-  const capabilityPreview=(group,items)=>{
-    const card=create('article','proof-node cap-group')
-    card.dataset.node=`cap-${group}`
-    card.dataset.group=group
-    card.append(create('small','',group))
-    const chips=create('div','cap-chips')
-    items.slice(0,5).forEach(item=>chips.append(create('span','',item)))
-    card.append(chips)
-    return card
-  }
-
-  const render=()=>{
-    Object.values(columns).forEach(column=>column.replaceChildren())
-    projectGroups=new Map()
-
-    const linkedMetrics=(profile.proof||[]).filter(item=>item.projectId)
-    const artifactCount=(profile.projects||[]).reduce((total,project)=>total+(project.evidence?.artifacts?.length||0),0)
-    summary.projects.textContent=String(profile.projects?.length||0).padStart(2,'0')
-    summary.metrics.textContent=String(linkedMetrics.length).padStart(2,'0')
-    summary.artifacts.textContent=String(artifactCount).padStart(2,'0')
-    summary.capabilities.textContent=String(Object.keys(profile.capabilities||{}).length).padStart(2,'0')
-
-    ;(profile.proof||[]).forEach((item,index)=>{
-      const metric=create('article','proof-node metric-node')
-      metric.dataset.node=`metric-${index}`
-      metric.dataset.metricProject=item.projectId||''
-      metric.dataset.linked=String(Boolean(item.projectId))
-      if(item.projectId) metric.dataset.projectId=item.projectId
-      metric.append(create('b','',item.value),create('span','',item.label))
-      columns.metrics.append(metric)
-    })
-
-    ;(profile.projects||[]).forEach((project,index)=>{
-      const groups=resolveGroups(project)
-      projectGroups.set(project.id,groups)
-      const card=create('article','proof-node project-node')
-      card.tabIndex=0
-      card.dataset.node=`project-${project.id}`
-      card.dataset.projectId=project.id
-      card.dataset.groups=groups.join(' ')
-      card.append(create('small','',`${String(index+1).padStart(2,'0')} / ${project.type}`))
-      card.append(create('h3','',project.name))
-      card.append(create('p','',project.impact))
-      const footer=create('footer')
-      footer.append(create('span','',`${groups.length} capability ${groups.length===1?'lane':'lanes'}`),create('span','','Open evidence ↗'))
-      card.append(footer)
-      columns.projects.append(card)
-    })
-
-    Object.entries(profile.capabilities||{}).forEach(([group,items])=>{
-      columns.capabilities.append(capabilityPreview(group,items))
-    })
-
-    ;(profile.projects||[]).forEach(project=>{
-      ;(project.evidence?.artifacts||[]).forEach((item,index)=>{
-        const artifact=create('article','proof-node artifact-node')
-        artifact.dataset.node=`artifact-${project.id}-${index}`
-        artifact.dataset.artifactProject=project.id
-        artifact.append(create('b','',item.type||'Artifact'),create('span','',item.label||'Evidence item'))
-        columns.artifacts.append(artifact)
-      })
-    })
-
-    if(window.CV_EVIDENCE_BOOT) window.CV_EVIDENCE_BOOT(profile)
-    applyFilter(activeFilter)
-  }
-
-  const matchesProject=(projectNode,filter)=>filter==='all'||projectNode.dataset.groups.split(' ').includes(filter)
-
-  const applyFilter=filter=>{
-    activeFilter=filter
-    filters.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.filter===filter)))
-    const projectNodes=[...columns.projects.querySelectorAll('.project-node')]
-    const visibleIds=new Set(projectNodes.filter(node=>matchesProject(node,filter)).map(node=>node.dataset.projectId))
-
-    projectNodes.forEach(node=>node.classList.toggle('filtered',!visibleIds.has(node.dataset.projectId)))
-    columns.metrics.querySelectorAll('.metric-node').forEach(node=>{
-      const linked=node.dataset.metricProject
-      node.classList.toggle('filtered',Boolean(linked)&&!visibleIds.has(linked))
-    })
-    columns.artifacts.querySelectorAll('.artifact-node').forEach(node=>node.classList.toggle('filtered',!visibleIds.has(node.dataset.artifactProject)))
-    columns.capabilities.querySelectorAll('.cap-group').forEach(node=>{
-      const group=node.dataset.group
-      const groupUsed=[...visibleIds].some(id=>(projectGroups.get(id)||[]).includes(group))
-      node.classList.toggle('filtered',filter!=='all'?!groupUsed:false)
-    })
-    root.dataset.filter=filter
-    requestAnimationFrame(drawLines)
-  }
-
-  const svgPoint=(node,side)=>{
-    const graphBox=graph.getBoundingClientRect()
-    const box=node.getBoundingClientRect()
-    return {
-      x:(side==='left'?box.left:box.right)-graphBox.left,
-      y:box.top-graphBox.top+(box.height/2)
-    }
-  }
-
-  const addPath=(from,to,className)=>{
-    const dx=Math.max(34,Math.abs(to.x-from.x)*.45)
-    const path=document.createElementNS('http://www.w3.org/2000/svg','path')
-    path.setAttribute('d',`M ${from.x} ${from.y} C ${from.x+dx} ${from.y}, ${to.x-dx} ${to.y}, ${to.x} ${to.y}`)
-    path.setAttribute('class',className)
-    svg.append(path)
-  }
-
-  const visible=node=>node&&!node.classList.contains('filtered')&&node.getClientRects().length>0
-
-  const drawLines=()=>{
-    if(!profile||window.innerWidth<=1050) return svg.replaceChildren()
-    svg.replaceChildren()
-    const height=Math.max(graph.scrollHeight,graph.getBoundingClientRect().height)
-    const width=graph.getBoundingClientRect().width
-    svg.setAttribute('viewBox',`0 0 ${width} ${height}`)
-    svg.setAttribute('preserveAspectRatio','none')
-
-    ;(profile.proof||[]).forEach((item,index)=>{
-      if(!item.projectId) return
-      const metric=columns.metrics.querySelector(`[data-node="metric-${index}"]`)
-      const project=columns.projects.querySelector(`[data-node="project-${item.projectId}"]`)
-      if(visible(metric)&&visible(project)) addPath(svgPoint(metric,'right'),svgPoint(project,'left'),'metric-link')
-    })
-
-    ;(profile.projects||[]).forEach(project=>{
-      const projectNode=columns.projects.querySelector(`[data-node="project-${project.id}"]`)
-      if(!visible(projectNode)) return
-      ;(projectGroups.get(project.id)||[]).forEach(group=>{
-        const cap=columns.capabilities.querySelector(`[data-node="cap-${group}"]`)
-        if(visible(cap)) addPath(svgPoint(projectNode,'right'),svgPoint(cap,'left'),'cap-link')
-      })
-      ;(project.evidence?.artifacts||[]).forEach((item,index)=>{
-        const artifact=columns.artifacts.querySelector(`[data-node="artifact-${project.id}-${index}"]`)
-        if(visible(artifact)) addPath(svgPoint(projectNode,'right'),svgPoint(artifact,'left'),'artifact-link')
-      })
-    })
-  }
-
-  filters.forEach(button=>button.addEventListener('click',()=>applyFilter(button.dataset.filter)))
-  window.addEventListener('resize',()=>requestAnimationFrame(drawLines),{passive:true})
-
-  document.documentElement.dataset.proofModel='loading'
-  fetch('./data/profile.json')
-    .then(response=>{
-      if(!response.ok) throw new Error(`Proof profile request failed: ${response.status}`)
-      return response.json()
-    })
-    .then(data=>{
-      profile=data
-      window.CV_PROFILE=profile
-      render()
-      document.documentElement.dataset.proofModel='ready'
-      requestAnimationFrame(()=>requestAnimationFrame(drawLines))
-    })
-    .catch(error=>{
-      document.documentElement.dataset.proofModel='error'
-      console.error('Proof Index failed to load',error)
-    })
+const root=document.querySelector('[data-proof-index]')
+if(!root) return
+const create=(tag,className,text)=>{const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node}
+const normalize=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()
+const directionsBase=()=>{const marker='/directions/',index=location.pathname.indexOf(marker);return index>=0?location.pathname.slice(0,index+marker.length):'/directions/'}
+const graph=document.querySelector('#proof-graph'),svg=document.querySelector('#proof-lines'),filters=[...document.querySelectorAll('.proof-filter')]
+const summary={projects:document.querySelector('[data-summary="projects"]'),metrics:document.querySelector('[data-summary="metrics"]'),artifacts:document.querySelector('[data-summary="artifacts"]'),capabilities:document.querySelector('[data-summary="capabilities"]')}
+const columns={metrics:document.querySelector('[data-list="metrics"]'),projects:document.querySelector('[data-list="projects"]'),capabilities:document.querySelector('[data-list="capabilities"]'),artifacts:document.querySelector('[data-list="artifacts"]')}
+const carrierCache=new Map();let profile=null,projectGroups=new Map(),activeFilter='all',mediaMap=new Map()
+const groupKeywords={product:['product','workflow','user flow','information architecture','interaction','prototype','usability','dashboard','tables','ux'],systems:['design system','token','component','governance','accessibility','design qa','documentation','system'],technical:['html','css','scss','vue','react','typescript','git','vite','responsive','engineering','code','implementation','component'],ai:['ai','human in the loop','explainability','prompt','trust','assistant','confidence']}
+const injectMediaStyles=()=>{if(document.getElementById('proof-media-styles'))return;const style=document.createElement('style');style.id='proof-media-styles';style.textContent='.proof-project-media,.proof-artifact-media{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:12px;margin:0 0 12px;background:#161920}.proof-media-board{margin:0 clamp(18px,4vw,60px);padding:44px 0 62px;border-top:1px solid rgba(255,255,255,.08)}.proof-media-head{display:flex;justify-content:space-between;gap:22px;margin-bottom:18px}.proof-media-head small{color:#65e6c4;font-size:8px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.proof-media-head h2{margin:8px 0 0;font-size:clamp(28px,4vw,52px)}.proof-media-head p{max-width:520px;margin:0;color:#7f838d;font-size:10px;line-height:1.7}.proof-media-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.proof-media-grid figure{margin:0;border:1px solid rgba(255,255,255,.09);border-radius:16px;overflow:hidden}.proof-media-grid img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}.proof-media-grid figcaption{padding:10px;color:#a4a7af;font-size:8px;text-transform:capitalize}@media(max-width:1000px){.proof-media-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:680px){.proof-media-head{flex-direction:column}.proof-media-grid{grid-template-columns:repeat(2,1fr)}}';document.head.append(style)}
+const loadCarrier=carrier=>{if(carrierCache.has(carrier))return carrierCache.get(carrier);const promise=fetch(`${directionsBase()}${carrier}`).then(r=>{if(!r.ok)throw new Error(`Media carrier failed: ${r.status} ${carrier}`);return r.text()}).then(text=>{const doc=new DOMParser().parseFromString(text,'image/svg+xml'),map=new Map();doc.querySelectorAll('#generated-media image').forEach(image=>{const href=image.getAttribute('href')||'';if(image.id&&href)map.set(image.id,href)});return map});carrierCache.set(carrier,promise);return promise}
+const resolveMediaSrc=async item=>item?.src||(!item?.carrier?'':(await loadCarrier(item.carrier)).get(item.spriteImageId||`media-${item.id}`)||'')
+const resolveMedia=async()=>{const entries=await Promise.all((profile.media||[]).map(async item=>[item.id,await resolveMediaSrc(item)]));mediaMap=new Map(entries.filter(([,src])=>src));window.CV_MEDIA_SOURCES=mediaMap;document.documentElement.dataset.mediaModel=mediaMap.size===profile.media?.length?'ready':'partial'}
+const mediaItem=id=>(profile.media||[]).find(item=>item.id===id),mediaImage=(id,className)=>{const item=mediaItem(id),src=mediaMap.get(id);if(!item||!src)return null;const image=create('img',className);image.src=src;image.alt=item.alt||'';image.loading='lazy';image.decoding='async';image.width=item.width||160;image.height=item.height||100;image.dataset.mediaId=id;return image}
+const resolveGroups=project=>{const explicit=(project.capabilityGroups||[]).filter(group=>profile?.capabilities?.[group]);if(explicit.length)return[...new Set(explicit)];const haystack=normalize([project.type,project.role,project.problem,project.method,project.result,...(project.tags||[])].join(' ')),groups=Object.entries(groupKeywords).filter(([,keywords])=>keywords.some(keyword=>haystack.includes(normalize(keyword)))).map(([group])=>group);return groups.length?groups:['product']}
+const capabilityPreview=(group,items)=>{const card=create('article','proof-node cap-group');card.dataset.node=`cap-${group}`;card.dataset.group=group;card.append(create('small','',group));const chips=create('div','cap-chips');items.slice(0,5).forEach(item=>chips.append(create('span','',item)));card.append(chips);return card}
+const renderMediaBoard=()=>{document.querySelector('.proof-media-board')?.remove();const board=create('section','proof-media-board'),head=create('header','proof-media-head'),heading=create('div'),title=create('h2','','10 visuals. One shared profile.'),grid=create('div','proof-media-grid');title.id='proof-media-title';heading.append(create('small','','Generated sample media'),title);head.append(heading,create('p','','Original demo imagery mapped to project covers, galleries and evidence artifacts through one shared media contract.'));(profile.mediaBoardIds||[]).forEach(id=>{const image=mediaImage(id,'');if(!image)return;const figure=create('figure');figure.dataset.mediaId=id;figure.append(image,create('figcaption','',id.replace(/-/g,' ')));grid.append(figure)});board.append(head,grid);const legend=document.querySelector('.proof-legend');if(legend)legend.before(board);else root.append(board)}
+const render=()=>{Object.values(columns).forEach(column=>column.replaceChildren());projectGroups=new Map();const linkedMetrics=(profile.proof||[]).filter(item=>item.projectId),artifactCount=(profile.projects||[]).reduce((total,project)=>total+(project.evidence?.artifacts?.length||0),0);summary.projects.textContent=String(profile.projects?.length||0).padStart(2,'0');summary.metrics.textContent=String(linkedMetrics.length).padStart(2,'0');summary.artifacts.textContent=String(artifactCount).padStart(2,'0');summary.capabilities.textContent=String(Object.keys(profile.capabilities||{}).length).padStart(2,'0');(profile.proof||[]).forEach((item,index)=>{const metric=create('article','proof-node metric-node');metric.dataset.node=`metric-${index}`;metric.dataset.metricProject=item.projectId||'';metric.dataset.linked=String(Boolean(item.projectId));if(item.projectId)metric.dataset.projectId=item.projectId;metric.append(create('b','',item.value),create('span','',item.label));columns.metrics.append(metric)});(profile.projects||[]).forEach((project,index)=>{const groups=resolveGroups(project),card=create('article','proof-node project-node');projectGroups.set(project.id,groups);card.tabIndex=0;card.dataset.node=`project-${project.id}`;card.dataset.projectId=project.id;card.dataset.groups=groups.join(' ');const cover=mediaImage(project.coverMediaId,'proof-project-media');if(cover)card.append(cover);card.append(create('small','',`${String(index+1).padStart(2,'0')} / ${project.type}`),create('h3','',project.name),create('p','',project.impact));const footer=create('footer');footer.append(create('span','',`${groups.length} capability ${groups.length===1?'lane':'lanes'}`),create('span','','Open evidence ↗'));card.append(footer);columns.projects.append(card)});Object.entries(profile.capabilities||{}).forEach(([group,items])=>columns.capabilities.append(capabilityPreview(group,items)));(profile.projects||[]).forEach(project=>(project.evidence?.artifacts||[]).forEach((item,index)=>{const artifact=create('article','proof-node artifact-node'),image=mediaImage(item.mediaId,'proof-artifact-media');artifact.dataset.node=`artifact-${project.id}-${index}`;artifact.dataset.artifactProject=project.id;if(image)artifact.append(image);artifact.append(create('b','',item.type||'Artifact'),create('span','',item.label||'Evidence item'));columns.artifacts.append(artifact)}));renderMediaBoard();if(window.CV_EVIDENCE_BOOT)window.CV_EVIDENCE_BOOT(profile);applyFilter(activeFilter)}
+const matchesProject=(node,filter)=>filter==='all'||node.dataset.groups.split(' ').includes(filter),applyFilter=filter=>{activeFilter=filter;filters.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.filter===filter)));const projectNodes=[...columns.projects.querySelectorAll('.project-node')],visibleIds=new Set(projectNodes.filter(node=>matchesProject(node,filter)).map(node=>node.dataset.projectId));projectNodes.forEach(node=>node.classList.toggle('filtered',!visibleIds.has(node.dataset.projectId)));columns.metrics.querySelectorAll('.metric-node').forEach(node=>node.classList.toggle('filtered',Boolean(node.dataset.metricProject)&&!visibleIds.has(node.dataset.metricProject)));columns.artifacts.querySelectorAll('.artifact-node').forEach(node=>node.classList.toggle('filtered',!visibleIds.has(node.dataset.artifactProject)));columns.capabilities.querySelectorAll('.cap-group').forEach(node=>node.classList.toggle('filtered',filter!=='all'&&![...visibleIds].some(id=>(projectGroups.get(id)||[]).includes(node.dataset.group))));root.dataset.filter=filter;requestAnimationFrame(drawLines)}
+const svgPoint=(node,side)=>{const g=graph.getBoundingClientRect(),b=node.getBoundingClientRect();return{x:(side==='left'?b.left:b.right)-g.left,y:b.top-g.top+b.height/2}},addPath=(from,to,className)=>{const dx=Math.max(34,Math.abs(to.x-from.x)*.45),path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',`M ${from.x} ${from.y} C ${from.x+dx} ${from.y}, ${to.x-dx} ${to.y}, ${to.x} ${to.y}`);path.setAttribute('class',className);svg.append(path)},visible=node=>node&&!node.classList.contains('filtered')&&node.getClientRects().length>0
+const drawLines=()=>{if(!profile||innerWidth<=1050)return svg.replaceChildren();svg.replaceChildren();svg.setAttribute('viewBox',`0 0 ${graph.getBoundingClientRect().width} ${Math.max(graph.scrollHeight,graph.getBoundingClientRect().height)}`);svg.setAttribute('preserveAspectRatio','none');(profile.proof||[]).forEach((item,index)=>{if(!item.projectId)return;const metric=columns.metrics.querySelector(`[data-node="metric-${index}"]`),project=columns.projects.querySelector(`[data-node="project-${item.projectId}"]`);if(visible(metric)&&visible(project))addPath(svgPoint(metric,'right'),svgPoint(project,'left'),'metric-link')});(profile.projects||[]).forEach(project=>{const projectNode=columns.projects.querySelector(`[data-node="project-${project.id}"]`);if(!visible(projectNode))return;(projectGroups.get(project.id)||[]).forEach(group=>{const cap=columns.capabilities.querySelector(`[data-node="cap-${group}"]`);if(visible(cap))addPath(svgPoint(projectNode,'right'),svgPoint(cap,'left'),'cap-link')});(project.evidence?.artifacts||[]).forEach((item,index)=>{const artifact=columns.artifacts.querySelector(`[data-node="artifact-${project.id}-${index}"]`);if(visible(artifact))addPath(svgPoint(projectNode,'right'),svgPoint(artifact,'left'),'artifact-link')})})}
+filters.forEach(button=>button.addEventListener('click',()=>applyFilter(button.dataset.filter)));addEventListener('resize',()=>requestAnimationFrame(drawLines),{passive:true});injectMediaStyles();document.documentElement.dataset.proofModel='loading';document.documentElement.dataset.mediaModel='loading';fetch('./data/profile.json').then(response=>{if(!response.ok)throw new Error(`Proof profile request failed: ${response.status}`);return response.json()}).then(async data=>{profile=data;window.CV_PROFILE=profile;await resolveMedia();render();document.documentElement.dataset.proofModel='ready';requestAnimationFrame(()=>requestAnimationFrame(drawLines))}).catch(error=>{document.documentElement.dataset.proofModel='error';document.documentElement.dataset.mediaModel='error';console.error('Proof Index failed to load',error)})
 })()
