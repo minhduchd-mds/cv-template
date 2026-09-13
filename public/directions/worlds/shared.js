@@ -49,11 +49,104 @@ const addRuntimeStyles=()=>{
 }
 
 const initials=name=>name.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase()
+const setText=(selector,value,root=document)=>{
+  const node=root.querySelector(selector)
+  if(node&&value) node.textContent=value
+}
+const proofValue=(profile,needle,fallback='')=>profile.proof.find(item=>item.label.toLowerCase().includes(needle.toLowerCase()))?.value||fallback
+const triageValue=profile=>{
+  const impact=profile.projects.find(project=>project.id==='signal-ai')?.impact||''
+  const match=impact.match(/from\s+(\d+)\s+to\s+(\d+)/i)
+  return match?`${match[1]}→${match[2]}`:'7→3'
+}
+
+const syncProjectCards=(cards,projects,{copy='result'}={})=>{
+  cards.forEach((card,index)=>{
+    const project=projects[index]
+    if(!project) return
+    setText('h3',project.name,card)
+    setText('p',project[copy]||project.result||project.impact,card)
+    const proof=card.querySelector('footer b')
+    if(proof) proof.textContent=project.impact
+    card.dataset.projectId=project.id
+  })
+}
+
+const syncWorld=profile=>{
+  const body=document.body
+  const projects=profile.projects||[]
+  body.dataset.sharedProfile='synced'
+
+  if(body.classList.contains('signal')){
+    setText('.stage-foot strong',`${profile.identity.name} / ${profile.identity.role.split('·')[0].trim()}`)
+    const metricValues=[proofValue(profile,'faster completion','31%'),proofValue(profile,'design-system adoption','85%'),proofValue(profile,'design-to-dev clarification','40%'),proofValue(profile,'products and major surfaces','18+')]
+    body.querySelectorAll('.metrics .metric b').forEach((node,index)=>{if(metricValues[index]) node.textContent=metricValues[index]})
+    syncProjectCards([...body.querySelectorAll('.case-grid .case')],projects)
+  }
+
+  if(body.classList.contains('thread')){
+    const metricValues=[proofValue(profile,'years designing','8+'),proofValue(profile,'design-system adoption','85%'),proofValue(profile,'design-to-dev clarification','40%'),proofValue(profile,'cross-functional teams','7')]
+    body.querySelectorAll('.metrics .metric b').forEach((node,index)=>{if(metricValues[index]) node.textContent=metricValues[index]})
+    syncProjectCards([...body.querySelectorAll('#crossings .case-grid .case')],projects)
+  }
+
+  if(body.classList.contains('focus')){
+    const flagship=projects.find(project=>project.id==='atlas-ops')||projects[0]
+    if(flagship){
+      setText('.lens-copy h3',flagship.name)
+      setText('.lens-copy p',flagship.problem)
+      setText('#case .section-intro',flagship.problem)
+      setText('#results .section-intro',flagship.result)
+      setText('#results .metrics .metric b',proofValue(profile,'faster completion','31%'))
+      const lens=body.querySelector('.lens-project')
+      if(lens) lens.dataset.projectId=flagship.id
+    }
+  }
+
+  if(body.classList.contains('relay-world')){
+    const cards=[...body.querySelectorAll('#work .evidence-card')]
+    cards.forEach((card,index)=>{
+      const project=projects[index]
+      if(!project) return
+      setText('h3',project.name,card)
+      const rows=[...card.querySelectorAll('.evidence-row b')]
+      const content=[project.problem,project.method,project.result,project.impact]
+      rows.forEach((row,rowIndex)=>{if(content[rowIndex]) row.textContent=content[rowIndex]})
+      card.dataset.projectId=project.id
+    })
+    const metricValues=[proofValue(profile,'faster completion','31%'),proofValue(profile,'design-system adoption','85%'),proofValue(profile,'design-to-dev clarification','40%'),triageValue(profile)]
+    body.querySelectorAll('#proof .metric b').forEach((node,index)=>{if(metricValues[index]) node.textContent=metricValues[index]})
+  }
+
+  if(body.querySelector('.vh')){
+    const name=profile.identity.name.split(/\s+/).join('\n')
+    const floatName=body.querySelector('.vh-float strong')
+    if(floatName){
+      floatName.replaceChildren(...name.split('\n').flatMap((part,index,array)=>index<array.length-1?[document.createTextNode(part),document.createElement('br')]:[document.createTextNode(part)]))
+    }
+    setText('.vh-tag',`Identity / ${profile.identity.role.split('·')[0].trim()}`)
+    const stats=[proofValue(profile,'years designing','8+'),proofValue(profile,'products and major surfaces','18+'),proofValue(profile,'design-to-dev clarification','40%'),proofValue(profile,'cross-functional teams','7')]
+    body.querySelectorAll('.vh-stat b').forEach((node,index)=>{if(stats[index]) node.textContent=stats[index]})
+    const selected=[projects.find(project=>project.id==='atlas-ops'),projects.find(project=>project.id==='northstar-system'),projects.find(project=>project.id==='pulse-dashboard')].filter(Boolean)
+    body.querySelectorAll('.vh-case').forEach((card,index)=>{
+      const project=selected[index]
+      if(!project) return
+      setText('h3',project.name,card)
+      setText('b',project.impact,card)
+      card.dataset.projectId=project.id
+    })
+    const panelMetrics=body.querySelectorAll('.vh-right .vh-caption h2')
+    if(panelMetrics[0]) panelMetrics[0].textContent=proofValue(profile,'design-system adoption','85%')
+    if(panelMetrics[1]) panelMetrics[1].textContent=proofValue(profile,'faster completion','31%')
+    if(panelMetrics[2]) panelMetrics[2].textContent=triageValue(profile)
+  }
+}
 
 const buildRecruiterMode=profile=>{
   addRuntimeStyles()
   window.CV_PROFILE=profile
   document.documentElement.dataset.profileModel='ready'
+  syncWorld(profile)
 
   const dock=el('aside','profile-dock')
   dock.setAttribute('aria-label','Shared profile controls')
