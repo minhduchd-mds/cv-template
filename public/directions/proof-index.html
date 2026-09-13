@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,follow" />
+  <meta name="description" content="A recruiter-first evidence graph linking portfolio outcomes to projects, capabilities and artifacts." />
+  <title>Proof Index · CV Studio</title>
+  <link rel="stylesheet" href="./proof-index.css" />
+  <script src="./worlds/evidence-runtime.js" defer></script>
+  <script src="./proof-index.js" defer></script>
+</head>
+<body>
+  <main class="proof-page" data-proof-index data-filter="all">
+    <header class="proof-top">
+      <a class="proof-brand" href="./"><span>PI</span><div><b>Proof Index</b><small>Evidence graph · recruiter scan</small></div></a>
+      <nav class="proof-nav" aria-label="Proof Index navigation">
+        <a href="./">Direction Lab</a>
+        <a href="./worlds/visual-hero.html">Visual Hero</a>
+        <a href="/#studio">CV Studio</a>
+      </nav>
+    </header>
+
+    <section class="proof-hero">
+      <div>
+        <span class="proof-eyebrow">ONE CAREER STORY / TRACEABLE EVIDENCE</span>
+        <h1>See the proof,<br><em>not the claims.</em></h1>
+        <p>Proof Index turns the same shared profile into a recruiter-facing evidence graph. Outcomes connect to the projects that produced them, projects connect to capability lanes, and each case exposes the artifact package behind the story.</p>
+      </div>
+      <div class="proof-summary" aria-label="Evidence summary">
+        <article><strong data-summary="projects">--</strong><small>Projects</small></article>
+        <article><strong data-summary="metrics">--</strong><small>Linked metrics</small></article>
+        <article><strong data-summary="artifacts">--</strong><small>Evidence artifacts</small></article>
+        <article><strong data-summary="capabilities">--</strong><small>Capability lanes</small></article>
+      </div>
+    </section>
+
+    <section class="proof-toolbar" aria-label="Filter evidence graph">
+      <div>
+        <button class="proof-filter" type="button" data-filter="all" aria-pressed="true">All evidence</button>
+        <button class="proof-filter" type="button" data-filter="product" aria-pressed="false">Product</button>
+        <button class="proof-filter" type="button" data-filter="systems" aria-pressed="false">Systems</button>
+        <button class="proof-filter" type="button" data-filter="technical" aria-pressed="false">Technical</button>
+        <button class="proof-filter" type="button" data-filter="ai" aria-pressed="false">AI</button>
+      </div>
+      <span>Click a linked project or metric to inspect its evidence chain</span>
+    </section>
+
+    <section class="proof-shell" aria-label="Evidence graph">
+      <svg class="proof-lines" id="proof-lines" aria-hidden="true"></svg>
+      <div class="proof-graph" id="proof-graph">
+        <section class="proof-column" data-column="metrics">
+          <header class="proof-column-head"><span>01 / OUTCOMES</span><h2>Measured proof</h2></header>
+          <div class="proof-column" data-list="metrics"></div>
+        </section>
+        <section class="proof-column" data-column="projects">
+          <header class="proof-column-head"><span>02 / PROJECTS</span><h2>Where value was created</h2></header>
+          <div class="proof-column" data-list="projects"></div>
+        </section>
+        <section class="proof-column" data-column="capabilities">
+          <header class="proof-column-head"><span>03 / CAPABILITY</span><h2>What the work proves</h2></header>
+          <div class="proof-column" data-list="capabilities"></div>
+        </section>
+        <section class="proof-column" data-column="artifacts">
+          <header class="proof-column-head"><span>04 / ARTIFACTS</span><h2>What can be inspected</h2></header>
+          <div class="proof-column" data-list="artifacts"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="proof-legend" aria-label="Evidence graph legend">
+      <span><i></i> Outcome → project</span>
+      <span><i></i> Project → capability</span>
+      <span><i></i> Project → artifact</span>
+    </section>
+
+    <footer class="proof-footer"><span>CV Studio / Proof Index</span><span>Shared profile · evidence contract · keyboard accessible · no subjective skill bars</span></footer>
+  </main>
+</body>
+</html>
