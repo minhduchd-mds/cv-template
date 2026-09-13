@@ -23,33 +23,51 @@ import ConceptExperience from './concepts/ConceptExperience.vue'
 
 const IDS = ['apple', 'bento', 'engineer', 'case-study', 'executive']
 const STUDIO_INTERNAL_HASHES = new Set(['#top', '#templates'])
+const CANONICAL_URL = 'https://cv-template-studio.vercel.app/'
+const SOCIAL_IMAGE = `${CANONICAL_URL}og-card.svg`
+const INDEX_ROBOTS = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
+const INTERNAL_ROBOTS = 'noindex,follow'
 const initialMode = (hash) => hash === '#studio' ? 'studio' : hash.startsWith('#concept-') ? 'concept' : 'landing'
 const META = {
   landing: {
+    lang: 'en',
+    robots: INDEX_ROBOTS,
     title: 'CV Studio · Portfolio & Resume System',
     description: 'Build one structured career profile, explore distinct CV and portfolio directions, and export an A4-ready resume locally in your browser.',
   },
   studio: {
+    lang: 'en',
+    robots: INTERNAL_ROBOTS,
     title: 'CV Builder · CV Studio',
     description: 'Edit, preview and export modern CV templates for UI/UX, Product Design and technology roles.',
   },
   apple: {
+    lang: 'vi',
+    robots: INTERNAL_ROBOTS,
     title: 'Apple Editorial CV · CV Studio',
     description: 'Typography-first editorial CV concept for senior UI/UX and product design roles.',
   },
   bento: {
+    lang: 'vi',
+    robots: INTERNAL_ROBOTS,
     title: 'Bento Product CV · CV Studio',
     description: 'Impact-driven bento CV concept with metrics, skills and selected product work.',
   },
   engineer: {
+    lang: 'vi',
+    robots: INTERNAL_ROBOTS,
     title: 'Design Engineer CV · CV Studio',
     description: 'Design and engineering hybrid CV concept for code-aware product designers and UX engineers.',
   },
   'case-study': {
+    lang: 'vi',
+    robots: INTERNAL_ROBOTS,
     title: 'Case Study Resume · CV Studio',
     description: 'Project-first resume concept built around problem, role, solution and measurable impact.',
   },
   executive: {
+    lang: 'vi',
+    robots: INTERNAL_ROBOTS,
     title: 'Executive Dark Glass CV · CV Studio',
     description: 'Premium dark leadership CV concept for design leads, product leads and senior roles.',
   },
@@ -107,17 +125,35 @@ export default {
       this.updateMeta()
       window.scrollTo({ top: 0, behavior: 'instant' })
     },
+    upsertMeta(attribute, key, value) {
+      let element = document.head.querySelector(`meta[${attribute}="${key}"]`)
+      if (!element) {
+        element = document.createElement('meta')
+        element.setAttribute(attribute, key)
+        document.head.appendChild(element)
+      }
+      element.setAttribute('content', value)
+    },
     updateMeta() {
       const key = this.isConceptRoute ? this.conceptId : this.isStudioRoute ? 'studio' : 'landing'
       const meta = META[key] || META.landing
+
+      document.documentElement.lang = meta.lang
       document.title = meta.title
-      let description = document.querySelector('meta[name="description"]')
-      if (!description) {
-        description = document.createElement('meta')
-        description.setAttribute('name', 'description')
-        document.head.appendChild(description)
-      }
-      description.setAttribute('content', meta.description)
+
+      this.upsertMeta('name', 'description', meta.description)
+      this.upsertMeta('name', 'robots', meta.robots)
+      this.upsertMeta('property', 'og:title', meta.title)
+      this.upsertMeta('property', 'og:description', meta.description)
+      this.upsertMeta('property', 'og:url', CANONICAL_URL)
+      this.upsertMeta('property', 'og:locale', meta.lang === 'vi' ? 'vi_VN' : 'en_US')
+      this.upsertMeta('property', 'og:image', SOCIAL_IMAGE)
+      this.upsertMeta('name', 'twitter:title', meta.title)
+      this.upsertMeta('name', 'twitter:description', meta.description)
+      this.upsertMeta('name', 'twitter:image', SOCIAL_IMAGE)
+
+      const canonical = document.head.querySelector('link[rel="canonical"]')
+      if (canonical) canonical.setAttribute('href', CANONICAL_URL)
     },
   },
 }
