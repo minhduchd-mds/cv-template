@@ -1,2 +1,5 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://cv-template-studio.vercel.app/sitemap.xml
+Host: cv-template-studio.vercel.app
