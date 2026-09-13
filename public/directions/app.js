@@ -1,15 +1,15 @@
 const directions=[
-{id:'signal-field',code:'SGN-01',name:'Signal Field',kind:'IDENTITY FIELD',intent:'Presence before pages',audience:'Product / UX / AI',story:'Start from a professional core, then reveal skills and evidence as signals with different relevance and intensity.',steps:[['Core','Name and role form the single anchor.'],['Signals','Skills, work and impact emerge by relevance.'],['Evidence','Each signal leads to proof instead of decoration.']]},
-{id:'prism-shift',code:'PRM-02',name:'Prism Shift',kind:'PERSPECTIVE SYSTEM',intent:'One person, many angles',audience:'Hybrid designer',story:'Reframe the same career through craft, system, code and impact so one project can be understood from several useful angles.',steps:[['Surface','Open with a concise professional statement.'],['Refraction','Split each project into decision layers.'],['Recombine','Bring those layers back into a capability profile.']]},
-{id:'orbit-ledger',code:'ORB-03',name:'Orbit Ledger',kind:'CAREER GRAVITY',intent:'Experience has gravity',audience:'Senior / Lead',story:'Replace the default vertical timeline with a gravity model where the most influential work sits closest to the professional core.',steps:[['Gravity','Core strengths define the center.'],['Orbit','Roles sit at different distances by influence.'],['Trajectory','Scope and ownership become visible over time.']]},
-{id:'threadscape',code:'THR-04',name:'Threadscape',kind:'CONNECTED WORK',intent:'Show the connections',audience:'Systems thinker',story:'Treat projects as crossings in longer threads of skill, decision-making and accumulated experience instead of isolated portfolio cards.',steps:[['Threads','Capabilities run across the whole story.'],['Crossings','Projects show where several threads meet.'],['Continuity','Patterns make long-term growth visible.']]},
-{id:'kinetic-type',code:'KNT-05',name:'Kinetic Type',kind:'TYPE CHOREOGRAPHY',intent:'Words carry motion',audience:'Visual / Brand / UI',story:'Use typography as the stage itself. Scale, rhythm and position carry the narrative before decorative interface elements are introduced.',steps:[['Statement','Begin with a memorable professional thesis.'],['Rhythm','Let type establish the pace of project reveals.'],['Signature','Close on one strong career statement.']]},
-{id:'atlas-flow',code:'ATL-06',name:'Atlas Flow',kind:'CAREER GEOGRAPHY',intent:'A career has terrain',audience:'Multi-domain designer',story:'Translate work history into abstract geography: roles are stops, scope changes are routes and major projects become landmarks.',steps:[['Origin','Establish the starting foundation.'],['Routes','Show how domains and roles connect.'],['Landmarks','Mark projects that changed capability or scope.']]},
-{id:'pulse-stack',code:'PLS-07',name:'Pulse Stack',kind:'IMPACT RHYTHM',intent:'Make impact feel alive',audience:'Product / Growth',story:'Lead with measurable impact as rhythm, then reveal the project context behind each result so outcomes are felt before they are explained.',steps:[['Pulse','Surface measurable outcomes immediately.'],['Context','Reveal the project behind every metric.'],['Pattern','Connect repeated impact across roles.']]},
-{id:'lattice',code:'LTC-08',name:'Lattice',kind:'CAPABILITY MATRIX',intent:'Capability over decoration',audience:'Design systems / Platform',story:'Build an evidence-linked capability network instead of percentage bars. Strength comes from connections between work, responsibility and artifacts.',steps:[['Cells','Every capability is a node with evidence.'],['Links','Projects activate multiple related nodes.'],['Coverage','Breadth and depth become readable at a glance.']]},
-{id:'focus-lens',code:'FCS-09',name:'Focus Lens',kind:'PROJECT IMMERSION',intent:'Depth over volume',audience:'Case-study heavy',story:'Keep only one flagship project in sharp focus while everything else recedes, reducing noise and encouraging deeper reading.',steps:[['Select','Choose a flagship project first.'],['Focus','Bring problem, role and decisions forward.'],['Resolve','End with impact and learning before switching.']]},
-{id:'relay',code:'RLY-10',name:'Relay',kind:'OUTCOME PIPELINE',intent:'Show how value moves',audience:'Design engineer / Product',story:'Frame the career as a transformation pipeline from challenge to thinking, design, shipped work and measurable outcome.',steps:[['Input','Start with context, constraints and challenge.'],['Transform','Show research, system thinking and craft.'],['Output','End on shipped result, metric and learning.']]},
-{id:'visual-hero',code:'VIS-11',name:'Visual Hero',kind:'IMAGE-FIRST COVER',intent:'Let the first 10 seconds be visual',audience:'Senior UI / Product / Creative tech',story:'Turn the opening viewport into a visual CV cover. Identity, system thinking, workflow craft and measurable outcomes are seen before the reader reaches dense biography.',steps:[['Cover','Use original project imagery as the first layer of meaning.'],['Proof','Overlay only essential role and outcome anchors.'],['Depth','Move detailed evidence below the fold after visual interest is earned.']]}
+  {id:'signal-field',code:'SGN-01',name:'Signal Field',kind:'IDENTITY FIELD',intent:'Presence before pages',audience:'Product / UX / AI',story:'Start from a professional core, then reveal skills and evidence as signals with different relevance and intensity.',steps:[['Core','Name and role form the single anchor.'],['Signals','Skills, work and impact emerge by relevance.'],['Evidence','Each signal leads to proof instead of decoration.']]},
+  {id:'prism-shift',code:'PRM-02',name:'Prism Shift',kind:'PERSPECTIVE SYSTEM',intent:'One person, many angles',audience:'Hybrid designer',story:'Reframe the same career through craft, system, code and impact so one project can be understood from several useful angles.',steps:[['Surface','Open with a concise professional statement.'],['Refraction','Split each project into decision layers.'],['Recombine','Bring those layers back into a capability profile.']]},
+  {id:'orbit-ledger',code:'ORB-03',name:'Orbit Ledger',kind:'CAREER GRAVITY',intent:'Experience has gravity',audience:'Senior / Lead',story:'Replace the default vertical timeline with a gravity model where the most influential work sits closest to the professional core.',steps:[['Gravity','Core strengths define the center.'],['Orbit','Roles sit at different distances by influence.'],['Trajectory','Scope and ownership become visible over time.']]},
+  {id:'threadscape',code:'THR-04',name:'Threadscape',kind:'CONNECTED WORK',intent:'Show the connections',audience:'Systems thinker',story:'Treat projects as crossings in longer threads of skill, decision-making and accumulated experience instead of isolated portfolio cards.',steps:[['Threads','Capabilities run across the whole story.'],['Crossings','Projects show where several threads meet.'],['Continuity','Patterns make long-term growth visible.']]},
+  {id:'kinetic-type',code:'KNT-05',name:'Kinetic Type',kind:'TYPE CHOREOGRAPHY',intent:'Words carry motion',audience:'Visual / Brand / UI',story:'Use typography as the stage itself. Scale, rhythm and position carry the narrative before decorative interface elements are introduced.',steps:[['Statement','Begin with a memorable professional thesis.'],['Rhythm','Let type establish the pace of project reveals.'],['Signature','Close on one strong career statement.']]},
+  {id:'atlas-flow',code:'ATL-06',name:'Atlas Flow',kind:'CAREER GEOGRAPHY',intent:'A career has terrain',audience:'Multi-domain designer',story:'Translate work history into abstract geography: roles are stops, scope changes are routes and major projects become landmarks.',steps:[['Origin','Establish the starting foundation.'],['Routes','Show how domains and roles connect.'],['Landmarks','Mark projects that changed capability or scope.']]},
+  {id:'pulse-stack',code:'PLS-07',name:'Pulse Stack',kind:'IMPACT RHYTHM',intent:'Make impact feel alive',audience:'Product / Growth',story:'Lead with measurable impact as rhythm, then reveal the project context behind each result so outcomes are felt before they are explained.',steps:[['Pulse','Surface measurable outcomes immediately.'],['Context','Reveal the project behind every metric.'],['Pattern','Connect repeated impact across roles.']]},
+  {id:'lattice',code:'LTC-08',name:'Lattice',kind:'CAPABILITY MATRIX',intent:'Capability over decoration',audience:'Design systems / Platform',story:'Build an evidence-linked capability network instead of percentage bars. Strength comes from connections between work, responsibility and artifacts.',steps:[['Cells','Every capability is a node with evidence.'],['Links','Projects activate multiple related nodes.'],['Coverage','Breadth and depth become readable at a glance.']]},
+  {id:'focus-lens',code:'FCS-09',name:'Focus Lens',kind:'PROJECT IMMERSION',intent:'Depth over volume',audience:'Case-study heavy',story:'Keep only one flagship project in sharp focus while everything else recedes, reducing noise and encouraging deeper reading.',steps:[['Select','Choose a flagship project first.'],['Focus','Bring problem, role and decisions forward.'],['Resolve','End with impact and learning before switching.']]},
+  {id:'relay',code:'RLY-10',name:'Relay',kind:'OUTCOME PIPELINE',intent:'Show how value moves',audience:'Design engineer / Product',story:'Frame the career as a transformation pipeline from challenge to thinking, design, shipped work and measurable outcome.',steps:[['Input','Start with context, constraints and challenge.'],['Transform','Show research, system thinking and craft.'],['Output','End on shipped result, metric and learning.']]},
+  {id:'visual-hero',code:'VIS-11',name:'Visual Hero',kind:'IMAGE-FIRST COVER',intent:'Let the first 10 seconds be visual',audience:'Senior UI / Product / Creative tech',story:'Turn the opening viewport into a visual CV cover. Identity, system thinking, workflow craft and measurable outcomes are seen before the reader reaches dense biography.',steps:[['Cover','Use original project imagery as the first layer of meaning.'],['Proof','Overlay only essential role and outcome anchors.'],['Depth','Move detailed evidence below the fold after visual interest is earned.']]}
 ]
 
 const fullWorlds={
@@ -20,13 +20,31 @@ const fullWorlds={
   'visual-hero':'./worlds/visual-hero.html'
 }
 
+const make=(tag,className,text)=>{
+  const node=document.createElement(tag)
+  if(className) node.className=className
+  if(text!==undefined) node.textContent=text
+  return node
+}
+
 const grid=document.querySelector('#direction-grid')
-const visualCard=document.createElement('button')
-visualCard.className='card'
+const visualCard=make('button','card')
+visualCard.type='button'
 visualCard.dataset.id='visual-hero'
 visualCard.dataset.index='10'
-visualCard.innerHTML='<div class="art art-visual"><span></span><span></span><span></span><span></span></div><span class="index">11</span><small>Image-first cover</small><h3>Visual Hero</h3><p>A CV hero built from original imagery before biography.</p><footer>visual scan <b>↗</b></footer>'
-grid.appendChild(visualCard)
+const visualArt=make('div','art art-visual')
+for(let index=0;index<4;index+=1) visualArt.append(make('span'))
+const visualFooter=make('footer','','visual scan ')
+visualFooter.append(make('b','','↗'))
+visualCard.append(
+  visualArt,
+  make('span','index','11'),
+  make('small','','Image-first cover'),
+  make('h3','','Visual Hero'),
+  make('p','','A CV hero built from original imagery before biography.'),
+  visualFooter,
+)
+grid.append(visualCard)
 
 const metaCount=document.querySelector('.meta span:first-child')
 if(metaCount) metaCount.textContent='11 directions'
@@ -44,31 +62,22 @@ const copy=document.querySelector('#story-copy')
 const storyGrid=document.querySelector('#story-grid')
 const next=document.querySelector('#next-direction')
 const stageFoot=document.querySelector('.stage-foot')
-const openWorld=document.createElement('button')
+const openWorld=make('button')
 openWorld.type='button'
 openWorld.id='open-world'
-const openLabel=document.createTextNode('Open full world ')
-const openArrow=document.createElement('span')
-openArrow.textContent='↗'
-openWorld.append(openLabel,openArrow)
+openWorld.append(document.createTextNode('Open full world '),make('span','','↗'))
 stageFoot.insertBefore(openWorld,next)
 let current=0
 
-function renderSteps(steps){
+const renderSteps=steps=>{
   storyGrid.replaceChildren(...steps.map((step,index)=>{
-    const article=document.createElement('article')
-    const number=document.createElement('span')
-    const heading=document.createElement('h3')
-    const paragraph=document.createElement('p')
-    number.textContent=`0${index+1}`
-    heading.textContent=step[0]
-    paragraph.textContent=step[1]
-    article.append(number,heading,paragraph)
+    const article=make('article')
+    article.append(make('span','',`0${index+1}`),make('h3','',step[0]),make('p','',step[1]))
     return article
   }))
 }
 
-function render(index){
+const render=index=>{
   current=(index+directions.length)%directions.length
   const item=directions[current]
   lab.dataset.direction=item.id
@@ -80,8 +89,8 @@ function render(index){
   title.textContent=item.name
   copy.textContent=item.story
   renderSteps(item.steps)
-  cards.forEach((card,i)=>{
-    const active=i===current
+  cards.forEach((card,cardIndex)=>{
+    const active=cardIndex===current
     card.classList.toggle('active',active)
     card.setAttribute('aria-pressed',String(active))
     if(fullWorlds[card.dataset.id]) card.dataset.complete='true'
@@ -102,8 +111,7 @@ cards.forEach((card,index)=>{
     if(!['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(event.key)) return
     event.preventDefault()
     const step=(event.key==='ArrowRight'||event.key==='ArrowDown')?1:-1
-    const target=(index+step+cards.length)%cards.length
-    cards[target].focus()
+    cards[(index+step+cards.length)%cards.length].focus()
   })
 })
 next.addEventListener('click',()=>render(current+1))
@@ -121,9 +129,7 @@ if(stage&&!reduceMotion){
     const y=((event.clientY-box.top)/box.height)*100
     stage.style.setProperty('--mx',`${x}%`)
     stage.style.setProperty('--my',`${y}%`)
-    const ry=(x-50)*.035
-    const rx=(50-y)*.03
-    stage.style.transform=`rotateX(${rx}deg) rotateY(${ry}deg)`
+    stage.style.transform=`rotateX(${(50-y)*.03}deg) rotateY(${(x-50)*.035}deg)`
   })
   stage.addEventListener('pointerleave',()=>{
     stage.style.transform='rotateX(0deg) rotateY(0deg)'
@@ -134,6 +140,6 @@ if(stage&&!reduceMotion){
 
 const style=document.createElement('style')
 style.textContent='.card[data-complete="true"]::after{content:"FULL WORLD";position:absolute;left:14px;top:14px;z-index:4;font-size:7px;letter-spacing:.14em;padding:6px 8px;border-radius:999px;background:#f1eee6;color:#111216;font-weight:800}.art-visual{display:grid;grid-template-columns:1.2fr .8fr;grid-template-rows:1fr 1fr;gap:4px;padding:4px}.art-visual span{display:block;border-radius:8px;background:linear-gradient(145deg,#8b7cff,#272a36)}.art-visual span:first-child{grid-row:1/3;background:radial-gradient(circle at 45% 30%,#f1c9ad 0 16%,#3b315f 17% 38%,#15171d 39%)}.art-visual span:nth-child(2){background:linear-gradient(135deg,#6ff0cf,#162b2a)}.art-visual span:nth-child(3){background:linear-gradient(135deg,#ffb06a,#302017)}.lab[data-direction="visual-hero"] .stage{background:linear-gradient(145deg,#0c0d11,#1d1e27)}.lab[data-direction="visual-hero"] .visual>*{opacity:0}.lab[data-direction="visual-hero"] .visual::before{content:"";position:absolute;inset:3%;border-radius:24px;background:linear-gradient(90deg,#8b7cff 0 48%,transparent 48% 50%,#6ff0cf 50% 73%,transparent 73% 75%,#ffb06a 75%);opacity:.78;box-shadow:0 0 70px #8b7cff22}.lab[data-direction="visual-hero"] .visual::after{content:"VISUAL / CAREER / COVER";position:absolute;left:8%;bottom:10%;font-size:clamp(28px,5vw,70px);font-weight:900;letter-spacing:-.07em;max-width:70%;line-height:.82}'
-document.head.appendChild(style)
+document.head.append(style)
 
 render(0)
