@@ -1,9 +1,13 @@
 @use 'tokens';
 
-// Legacy CSS is loaded through one Sass entrypoint while each area is migrated
-// into a first-class SCSS module. Keep this order aligned with the historical
-// main.js imports so cascade behavior stays stable during the migration.
-@use '../styles.css';
+// Core studio styles are first-class Sass modules. Keep this order stable:
+// base/reset -> shell -> template browser -> CV documents -> responsive.
+@use 'base-core';
+@use 'studio-core';
+@use 'template-browser';
+@use 'cv-template-core';
+@use 'studio-responsive';
+
 @use 'enhancements';
 @use 'editor';
 @use 'auto-complete';
@@ -11,7 +15,16 @@
 @use 'cv-sections';
 @use 'motion';
 @use 'quality';
-@use '../concepts/concepts.css';
+
+// Full-screen concepts are split by visual direction so each direction can
+// evolve without reopening one high-risk cascade file.
+@use '../concepts/styles/base';
+@use '../concepts/styles/apple';
+@use '../concepts/styles/bento';
+@use '../concepts/styles/engineer';
+@use '../concepts/styles/case-study';
+@use '../concepts/styles/executive';
+@use '../concepts/styles/responsive';
 @use 'concept-experience';
 @use 'concept-polish';
 
@@ -19,15 +32,11 @@
 @use 'app-shell';
 @use 'accessibility';
 
-// Current Apple HIG-inspired tokens, material, hierarchy, adaptive layout and
-// interaction behavior establish the visual system.
+// Shared HIG-inspired tokens/material/hierarchy and adaptive interaction layer.
 @use 'apple-ui';
 
-// Claude frontend-design refinement layers: text geometry, reading measure,
-// supporting copy frames, Builder readability and compact control microcopy.
+// Claude frontend-design refinement layers: text geometry, readable measure,
+// Builder microcopy and screenshot-driven finishing passes.
 @use 'text-frames';
 @use 'microcopy';
-
-// Screenshot-driven production polish. Kept last so responsive fixes address
-// real visual QA findings without creating a parallel design system.
 @use 'detail-polish';
