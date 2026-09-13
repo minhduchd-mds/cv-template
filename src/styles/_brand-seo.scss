@@ -1,0 +1,32 @@
+/* Shared CV Studio brand mark across landing, builder and concept navigation. */
+.brand-mark,
+.landing-brand__mark,
+.concept-brand > span:first-child {
+  color: transparent;
+  font-size: 0;
+  background-image: url('/logo.svg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  box-shadow: 0 8px 24px rgba(15,23,42,.16);
+}
+
+.concept-brand > span:first-child {
+  border-radius: 9px;
+}
+
+@media (prefers-contrast: more) {
+  .brand-mark,
+  .landing-brand__mark,
+  .concept-brand > span:first-child {
+    outline: 1px solid rgba(0,0,0,.32);
+  }
+}
+
+@media print {
+  .brand-mark,
+  .landing-brand__mark,
+  .concept-brand > span:first-child {
+    box-shadow: none;
+  }
+}
