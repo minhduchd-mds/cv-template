@@ -1,0 +1,199 @@
+/*
+ * Interaction-state system
+ * Keeps Builder feedback explicit without adding decorative chrome.
+ */
+
+:where(.editor-field, .builder-card, .avatar-builder, .layout-item) {
+  transition:
+    border-color var(--apple-fast) ease,
+    box-shadow var(--apple-fast) ease,
+    background-color var(--apple-fast) ease;
+}
+
+.editor-field:focus-within > span {
+  color: var(--apple-blue);
+}
+
+.editor-field input,
+.editor-field textarea {
+  caret-color: var(--apple-blue);
+}
+
+.editor-field input::placeholder,
+.editor-field textarea::placeholder {
+  color: var(--apple-tertiary);
+  opacity: .78;
+}
+
+.editor-field input:user-invalid,
+.editor-field textarea:user-invalid {
+  border-color: rgba(180,35,24,.55);
+  background: rgba(255,247,247,.96);
+  box-shadow: 0 0 0 3px rgba(180,35,24,.08);
+}
+
+.editor-field:has(input:user-invalid) > span,
+.editor-field:has(textarea:user-invalid) > span {
+  color: #b42318;
+}
+
+.builder-card:focus-within,
+.avatar-builder:focus-within {
+  border-color: rgba(0,113,227,.3);
+  box-shadow: 0 0 0 3px rgba(0,113,227,.07);
+  background: rgba(255,255,255,.96);
+}
+
+.builder-list:empty {
+  min-height: 108px;
+  border: 1px dashed var(--apple-separator-strong);
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(255,255,255,.42);
+}
+
+.builder-list:empty::before {
+  content: 'No entries yet · use Add below to create the first one.';
+  max-width: 34ch;
+  color: var(--apple-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.skill-preview:empty {
+  display: none;
+}
+
+.project-cover-preview.empty {
+  position: relative;
+  isolation: isolate;
+}
+
+.project-cover-preview.empty::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  z-index: -1;
+  border: 1px dashed rgba(110,110,115,.25);
+  border-radius: 8px;
+}
+
+.avatar-preview.empty {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.18),
+    0 8px 24px rgba(15,23,42,.12);
+}
+
+.builder-actions button,
+.layout-actions > button,
+.builder-add,
+.builder-add-inline,
+.image-upload-button,
+.image-clear,
+.editor-reset,
+.editor-done,
+.category-tab,
+.template-card {
+  transform-origin: center;
+}
+
+.builder-actions button:active:not(:disabled),
+.layout-actions > button:active:not(:disabled),
+.builder-add:active,
+.builder-add-inline:active,
+.image-upload-button:active,
+.image-clear:active,
+.editor-reset:active,
+.editor-done:active,
+.category-tab:active,
+.template-card:active {
+  transform: scale(.975);
+}
+
+.builder-actions button:disabled,
+.layout-actions > button:disabled {
+  opacity: .34;
+  cursor: not-allowed;
+  filter: saturate(.6);
+}
+
+.editor-reset:hover {
+  color: #b42318;
+  border-color: rgba(180,35,24,.22);
+  background: rgba(255,247,247,.92);
+}
+
+.editor-done:hover {
+  background: #2c2c2e;
+}
+
+.editor-footer-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--apple-secondary);
+}
+
+.editor-footer-meta > span::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: #34c759;
+  box-shadow: 0 0 0 3px rgba(52,199,89,.1);
+}
+
+.template-card:focus-visible {
+  border-color: rgba(0,113,227,.55);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0,113,227,.13), var(--apple-shadow-1);
+}
+
+.category-tab:focus-visible,
+.builder-add:focus-visible,
+.builder-add-inline:focus-visible,
+.image-upload-button:focus-within,
+.image-clear:focus-visible {
+  outline-offset: 2px;
+  outline: 3px solid rgba(0,113,227,.22);
+}
+
+@media (hover: none) {
+  .template-card:hover,
+  .builder-card:hover,
+  .quality-score:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .builder-list:empty {
+    min-height: 96px;
+    padding: 16px;
+  }
+
+  .builder-list:empty::before {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.editor-field, .builder-card, .avatar-builder, .layout-item),
+  .builder-actions button,
+  .layout-actions > button,
+  .builder-add,
+  .builder-add-inline,
+  .image-upload-button,
+  .image-clear,
+  .editor-reset,
+  .editor-done,
+  .category-tab,
+  .template-card {
+    transition: none !important;
+  }
+}
