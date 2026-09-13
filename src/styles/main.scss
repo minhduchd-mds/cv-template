@@ -40,3 +40,7 @@
 @use 'text-frames';
 @use 'microcopy';
 @use 'detail-polish';
+
+// Final production detail: CV print continuity and explicit interaction states.
+@use 'cv-detail';
+@use 'interaction-states';
