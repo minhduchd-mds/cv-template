@@ -8,15 +8,28 @@ const directions=[
 {id:'pulse-stack',code:'PLS-07',name:'Pulse Stack',kind:'IMPACT RHYTHM',intent:'Make impact feel alive',audience:'Product / Growth',story:'Lead with measurable impact as rhythm, then reveal the project context behind each result so outcomes are felt before they are explained.',steps:[['Pulse','Surface measurable outcomes immediately.'],['Context','Reveal the project behind every metric.'],['Pattern','Connect repeated impact across roles.']]},
 {id:'lattice',code:'LTC-08',name:'Lattice',kind:'CAPABILITY MATRIX',intent:'Capability over decoration',audience:'Design systems / Platform',story:'Build an evidence-linked capability network instead of percentage bars. Strength comes from connections between work, responsibility and artifacts.',steps:[['Cells','Every capability is a node with evidence.'],['Links','Projects activate multiple related nodes.'],['Coverage','Breadth and depth become readable at a glance.']]},
 {id:'focus-lens',code:'FCS-09',name:'Focus Lens',kind:'PROJECT IMMERSION',intent:'Depth over volume',audience:'Case-study heavy',story:'Keep only one flagship project in sharp focus while everything else recedes, reducing noise and encouraging deeper reading.',steps:[['Select','Choose a flagship project first.'],['Focus','Bring problem, role and decisions forward.'],['Resolve','End with impact and learning before switching.']]},
-{id:'relay',code:'RLY-10',name:'Relay',kind:'OUTCOME PIPELINE',intent:'Show how value moves',audience:'Design engineer / Product',story:'Frame the career as a transformation pipeline from challenge to thinking, design, shipped work and measurable outcome.',steps:[['Input','Start with context, constraints and challenge.'],['Transform','Show research, system thinking and craft.'],['Output','End on shipped result, metric and learning.']]}
+{id:'relay',code:'RLY-10',name:'Relay',kind:'OUTCOME PIPELINE',intent:'Show how value moves',audience:'Design engineer / Product',story:'Frame the career as a transformation pipeline from challenge to thinking, design, shipped work and measurable outcome.',steps:[['Input','Start with context, constraints and challenge.'],['Transform','Show research, system thinking and craft.'],['Output','End on shipped result, metric and learning.']]},
+{id:'visual-hero',code:'VIS-11',name:'Visual Hero',kind:'IMAGE-FIRST COVER',intent:'Let the first 10 seconds be visual',audience:'Senior UI / Product / Creative tech',story:'Turn the opening viewport into a visual CV cover. Identity, system thinking, workflow craft and measurable outcomes are seen before the reader reaches dense biography.',steps:[['Cover','Use original project imagery as the first layer of meaning.'],['Proof','Overlay only essential role and outcome anchors.'],['Depth','Move detailed evidence below the fold after visual interest is earned.']]}
 ]
 
 const fullWorlds={
   'signal-field':'./worlds/signal-field.html',
   'threadscape':'./worlds/threadscape.html',
   'focus-lens':'./worlds/focus-lens.html',
-  'relay':'./worlds/relay.html'
+  'relay':'./worlds/relay.html',
+  'visual-hero':'./worlds/visual-hero.html'
 }
+
+const grid=document.querySelector('#direction-grid')
+const visualCard=document.createElement('button')
+visualCard.className='card'
+visualCard.dataset.id='visual-hero'
+visualCard.dataset.index='10'
+visualCard.innerHTML='<div class="art art-visual"><span></span><span></span><span></span><span></span></div><span class="index">11</span><small>Image-first cover</small><h3>Visual Hero</h3><p>A CV hero built from original imagery before biography.</p><footer>visual scan <b>↗</b></footer>'
+grid.appendChild(visualCard)
+
+const metaCount=document.querySelector('.meta span:first-child')
+if(metaCount) metaCount.textContent='11 directions'
 
 const lab=document.querySelector('.lab')
 const stage=document.querySelector('.stage')
@@ -34,9 +47,26 @@ const stageFoot=document.querySelector('.stage-foot')
 const openWorld=document.createElement('button')
 openWorld.type='button'
 openWorld.id='open-world'
-openWorld.innerHTML='Open full world <span>↗</span>'
+const openLabel=document.createTextNode('Open full world ')
+const openArrow=document.createElement('span')
+openArrow.textContent='↗'
+openWorld.append(openLabel,openArrow)
 stageFoot.insertBefore(openWorld,next)
 let current=0
+
+function renderSteps(steps){
+  storyGrid.replaceChildren(...steps.map((step,index)=>{
+    const article=document.createElement('article')
+    const number=document.createElement('span')
+    const heading=document.createElement('h3')
+    const paragraph=document.createElement('p')
+    number.textContent=`0${index+1}`
+    heading.textContent=step[0]
+    paragraph.textContent=step[1]
+    article.append(number,heading,paragraph)
+    return article
+  }))
+}
 
 function render(index){
   current=(index+directions.length)%directions.length
@@ -49,16 +79,32 @@ function render(index){
   audience.textContent=item.audience
   title.textContent=item.name
   copy.textContent=item.story
-  storyGrid.innerHTML=item.steps.map((step,i)=>`<article><span>0${i+1}</span><h3>${step[0]}</h3><p>${step[1]}</p></article>`).join('')
-  cards.forEach((card,i)=>card.classList.toggle('active',i===current))
-  openWorld.hidden=!fullWorlds[item.id]
-  openWorld.setAttribute('aria-label',fullWorlds[item.id]?`Open ${item.name} full portfolio world`:'Full portfolio world not available yet')
+  renderSteps(item.steps)
+  cards.forEach((card,i)=>{
+    const active=i===current
+    card.classList.toggle('active',active)
+    card.setAttribute('aria-pressed',String(active))
+    if(fullWorlds[card.dataset.id]) card.dataset.complete='true'
+  })
+  const hasWorld=Boolean(fullWorlds[item.id])
+  openWorld.hidden=!hasWorld
+  openWorld.setAttribute('aria-label',hasWorld?`Open ${item.name} full portfolio world`:'Full portfolio world not available yet')
 }
 
 cards.forEach((card,index)=>{
   card.addEventListener('mouseenter',()=>render(index))
   card.addEventListener('focus',()=>render(index))
-  card.addEventListener('click',()=>{render(index);document.querySelector('.stage-shell').scrollIntoView({behavior:'smooth',block:'center'})})
+  card.addEventListener('click',()=>{
+    render(index)
+    document.querySelector('.stage-shell').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'})
+  })
+  card.addEventListener('keydown',event=>{
+    if(!['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(event.key)) return
+    event.preventDefault()
+    const step=(event.key==='ArrowRight'||event.key==='ArrowDown')?1:-1
+    const target=(index+step+cards.length)%cards.length
+    cards[target].focus()
+  })
 })
 next.addEventListener('click',()=>render(current+1))
 openWorld.addEventListener('click',()=>{
@@ -66,16 +112,28 @@ openWorld.addEventListener('click',()=>{
   if(route) window.location.href=route
 })
 
-stage.addEventListener('pointermove',(event)=>{
-  const box=stage.getBoundingClientRect()
-  const x=((event.clientX-box.left)/box.width)*100
-  const y=((event.clientY-box.top)/box.height)*100
-  stage.style.setProperty('--mx',`${x}%`)
-  stage.style.setProperty('--my',`${y}%`)
-  const ry=(x-50)*.035
-  const rx=(50-y)*.03
-  stage.style.transform=`rotateX(${rx}deg) rotateY(${ry}deg)`
-})
-stage.addEventListener('pointerleave',()=>{stage.style.transform='rotateX(0deg) rotateY(0deg)';stage.style.setProperty('--mx','50%');stage.style.setProperty('--my','40%')})
+const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches
+if(stage&&!reduceMotion){
+  stage.addEventListener('pointermove',event=>{
+    if(event.pointerType==='touch') return
+    const box=stage.getBoundingClientRect()
+    const x=((event.clientX-box.left)/box.width)*100
+    const y=((event.clientY-box.top)/box.height)*100
+    stage.style.setProperty('--mx',`${x}%`)
+    stage.style.setProperty('--my',`${y}%`)
+    const ry=(x-50)*.035
+    const rx=(50-y)*.03
+    stage.style.transform=`rotateX(${rx}deg) rotateY(${ry}deg)`
+  })
+  stage.addEventListener('pointerleave',()=>{
+    stage.style.transform='rotateX(0deg) rotateY(0deg)'
+    stage.style.setProperty('--mx','50%')
+    stage.style.setProperty('--my','40%')
+  })
+}
+
+const style=document.createElement('style')
+style.textContent='.card[data-complete="true"]::after{content:"FULL WORLD";position:absolute;left:14px;top:14px;z-index:4;font-size:7px;letter-spacing:.14em;padding:6px 8px;border-radius:999px;background:#f1eee6;color:#111216;font-weight:800}.art-visual{display:grid;grid-template-columns:1.2fr .8fr;grid-template-rows:1fr 1fr;gap:4px;padding:4px}.art-visual span{display:block;border-radius:8px;background:linear-gradient(145deg,#8b7cff,#272a36)}.art-visual span:first-child{grid-row:1/3;background:radial-gradient(circle at 45% 30%,#f1c9ad 0 16%,#3b315f 17% 38%,#15171d 39%)}.art-visual span:nth-child(2){background:linear-gradient(135deg,#6ff0cf,#162b2a)}.art-visual span:nth-child(3){background:linear-gradient(135deg,#ffb06a,#302017)}.lab[data-direction="visual-hero"] .stage{background:linear-gradient(145deg,#0c0d11,#1d1e27)}.lab[data-direction="visual-hero"] .visual>*{opacity:0}.lab[data-direction="visual-hero"] .visual::before{content:"";position:absolute;inset:3%;border-radius:24px;background:linear-gradient(90deg,#8b7cff 0 48%,transparent 48% 50%,#6ff0cf 50% 73%,transparent 73% 75%,#ffb06a 75%);opacity:.78;box-shadow:0 0 70px #8b7cff22}.lab[data-direction="visual-hero"] .visual::after{content:"VISUAL / CAREER / COVER";position:absolute;left:8%;bottom:10%;font-size:clamp(28px,5vw,70px);font-weight:900;letter-spacing:-.07em;max-width:70%;line-height:.82}'
+document.head.appendChild(style)
 
 render(0)
