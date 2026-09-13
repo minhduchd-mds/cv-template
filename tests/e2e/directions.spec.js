@@ -16,11 +16,8 @@ test.describe('original direction lab', () => {
     test(`${path} renders without broken local assets`, async ({ page }) => {
       const badResponses = []
       page.on('response', response => {
-        if (response.url().includes('/directions/') && response.status() >= 400) {
-          badResponses.push(`${response.status()} ${response.url()}`)
-        }
+        if (response.url().includes('/directions/') && response.status() >= 400) badResponses.push(`${response.status()} ${response.url()}`)
       })
-
       await page.goto(path, { waitUntil: 'networkidle' })
       await expect(page.locator('body')).toContainText(expectedText)
       expect(badResponses).toEqual([])
@@ -49,7 +46,6 @@ test.describe('original direction lab', () => {
     await page.goto('/directions/worlds/signal-field.html', { waitUntil: 'networkidle' })
     await expect(page.locator('html')).toHaveAttribute('data-profile-model', 'ready')
     await expect(page.locator('.profile-dock')).toContainText('Alex Chen')
-
     const trigger = page.getByRole('button', { name: '60s view' })
     await trigger.click()
     const dialog = page.getByRole('dialog', { name: 'Recruiter 60 second profile' })
@@ -59,7 +55,6 @@ test.describe('original direction lab', () => {
     await expect(dialog).toContainText('Northstar Design System')
     await expect(dialog).toContainText('Core capabilities')
     await expect(trigger).toHaveAttribute('aria-expanded', 'true')
-
     await page.keyboard.press('Escape')
     await expect(dialog).toBeHidden()
     await expect(trigger).toHaveAttribute('aria-expanded', 'false')
@@ -69,13 +64,11 @@ test.describe('original direction lab', () => {
   test('evidence drawer connects a visible metric to baseline, method, result and artifacts', async ({ page }) => {
     await page.goto('/directions/worlds/signal-field.html', { waitUntil: 'networkidle' })
     await expect(page.locator('html')).toHaveAttribute('data-evidence-model', 'ready')
-
     const metric = page.locator('.metrics .metric[data-evidence-project="atlas-ops"]').first()
     await expect(metric).toBeVisible()
     await expect(metric).toContainText('31%')
     await metric.focus()
     await page.keyboard.press('Enter')
-
     const dialog = page.getByRole('dialog', { name: 'Project evidence' })
     await expect(dialog).toBeVisible()
     await expect(dialog).toContainText('Atlas Ops')
@@ -83,27 +76,33 @@ test.describe('original direction lab', () => {
     await expect(dialog).toContainText('How it was measured')
     await expect(dialog).toContainText('Artifact package')
     await expect(dialog).toContainText('Before / after task-path comparison')
-
     await page.keyboard.press('Escape')
     await expect(dialog).toBeHidden()
     await expect(metric).toBeFocused()
   })
 
-  test('proof index maps outcomes to projects, capabilities and inspectable evidence', async ({ page }) => {
+  test('proof index maps outcomes to projects, capabilities, artifacts and ten generated visuals', async ({ page }) => {
     await page.goto('/directions/proof-index.html', { waitUntil: 'networkidle' })
     await expect(page.locator('html')).toHaveAttribute('data-proof-model', 'ready')
+    await expect(page.locator('html')).toHaveAttribute('data-media-model', 'ready')
     await expect(page.locator('[data-summary="projects"]')).toHaveText('04')
     await expect(page.locator('[data-summary="metrics"]')).toHaveText('03')
     await expect(page.locator('[data-summary="artifacts"]')).toHaveText('12')
     await expect(page.locator('[data-summary="capabilities"]')).toHaveText('04')
     await expect(page.locator('.project-node')).toHaveCount(4)
+    await expect(page.locator('.project-node .proof-project-media')).toHaveCount(4)
     await expect(page.locator('.artifact-node')).toHaveCount(12)
-
+    await expect(page.locator('.artifact-node .proof-artifact-media')).toHaveCount(12)
+    const sampleImages = page.locator('.proof-media-grid img')
+    await expect(sampleImages).toHaveCount(10)
+    for (let index = 0; index < 10; index += 1) {
+      await expect(sampleImages.nth(index)).toHaveAttribute('alt', /.+/)
+      await expect(sampleImages.nth(index)).toHaveAttribute('src', /.+/)
+    }
     await page.getByRole('button', { name: 'AI', exact: true }).click()
     await expect(page.locator('[data-proof-index]')).toHaveAttribute('data-filter', 'ai')
     await expect(page.locator('.project-node:not(.filtered)')).toHaveCount(1)
     await expect(page.locator('.project-node:not(.filtered)')).toContainText('Signal AI Assistant')
-
     await page.getByRole('button', { name: 'All evidence' }).click()
     const atlas = page.locator('.project-node[data-project-id="atlas-ops"]')
     await atlas.focus()
@@ -122,8 +121,6 @@ test.describe('original direction lab', () => {
     const images = page.locator('img')
     const count = await images.count()
     expect(count).toBeGreaterThan(10)
-    for (let index = 0; index < count; index += 1) {
-      await expect(images.nth(index)).toHaveAttribute('alt', /.+/)
-    }
+    for (let index = 0; index < count; index += 1) await expect(images.nth(index)).toHaveAttribute('alt', /.+/)
   })
 })
