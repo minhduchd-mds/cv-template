@@ -41,6 +41,8 @@
   const buildDrawer=profile=>{
     const backdrop=create('div','evidence-backdrop')
     backdrop.id=DRAWER_ID
+    backdrop.hidden=true
+    backdrop.setAttribute('aria-hidden','true')
     backdrop.setAttribute('role','presentation')
 
     const drawer=create('section','evidence-drawer')
@@ -132,13 +134,17 @@
     const open=(project,trigger)=>{
       lastFocus=trigger||document.activeElement
       render(project)
-      backdrop.classList.add('open')
+      backdrop.hidden=false
+      backdrop.setAttribute('aria-hidden','false')
+      requestAnimationFrame(()=>backdrop.classList.add('open'))
       document.body.classList.add('evidence-mode-lock')
       closeButton.focus()
     }
 
     const close=()=>{
       backdrop.classList.remove('open')
+      backdrop.setAttribute('aria-hidden','true')
+      backdrop.hidden=true
       document.body.classList.remove('evidence-mode-lock')
       if(lastFocus instanceof HTMLElement) lastFocus.focus()
     }
@@ -146,7 +152,7 @@
     closeButton.addEventListener('click',close)
     backdrop.addEventListener('click',event=>{if(event.target===backdrop) close()})
     document.addEventListener('keydown',event=>{
-      if(event.key==='Escape'&&backdrop.classList.contains('open')){
+      if(event.key==='Escape'&&!backdrop.hidden){
         event.preventDefault()
         event.stopImmediatePropagation()
         close()
