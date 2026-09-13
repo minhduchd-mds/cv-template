@@ -1,0 +1,127 @@
+.cv-sheet { width: 794px; min-height: 1123px; margin: 0 auto; background: #fff; color: #172033; box-shadow: 0 12px 38px rgba(15,23,42,.16); font-size: 11.5px; line-height: 1.55; }
+.cv-sheet h1, .cv-sheet h2, .cv-sheet h3, .cv-sheet p { margin-top: 0; }
+.cv-sheet h1 { letter-spacing: -.045em; }
+.cv-sheet h2 { font-size: 14px; letter-spacing: -.02em; }
+.cv-sheet ul { margin: 8px 0 0; padding-left: 17px; }
+.cv-sheet li + li { margin-top: 5px; }
+.cv-kicker { margin-bottom: 7px; color: var(--cv-accent); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; }
+.experience-head { display: flex; justify-content: space-between; gap: 18px; }
+.experience-head strong, .experience-head span { display: block; }
+.experience-head > span { color: #8b93a3; white-space: nowrap; font-size: 10px; }
+.experience-item + .experience-item { margin-top: 22px; }
+.aside-label { display: block; margin-bottom: 10px; color: #9aa2b1; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; }
+
+.cv-product { display: grid; grid-template-columns: 31% 69%; }
+.product-sidebar { padding: 48px 28px; color: #edf2ff; background: #101522; }
+.profile-monogram { width: 62px; height: 62px; margin-bottom: 31px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 20px; color: white; font-size: 20px; font-weight: 800; background: linear-gradient(145deg, color-mix(in srgb, var(--cv-accent) 72%, #101522), #101522); }
+.product-sidebar h1 { margin-bottom: 8px; color: white; font-size: 29px; line-height: 1.04; }
+.product-sidebar h3 { margin-bottom: 0; color: #b8c0d1; font-size: 12px; font-weight: 500; }
+.product-summary { margin: 22px 0; color: #b8c0d1; line-height: 1.65; }
+.product-contact { display: grid; gap: 6px; padding: 18px 0 24px; border-top: 1px solid rgba(255,255,255,.1); color: #d5dbea; font-size: 9.5px; }
+.product-sidebar section { margin-top: 26px; }
+.product-skills { display: flex; flex-wrap: wrap; gap: 6px; padding: 0!important; list-style: none; }
+.product-skills li { margin: 0!important; padding: 5px 7px; border-radius: 6px; color: #d8deeb; background: rgba(255,255,255,.07); font-size: 9px; }
+.product-sidebar article { display: grid; gap: 2px; margin-top: 11px; }
+.product-sidebar article span, .product-sidebar article small { color: #9ca7ba; font-size: 9px; }
+.product-main { padding: 48px 38px; }
+.product-topline { padding-bottom: 30px; border-bottom: 1px solid #e9edf3; }
+.product-topline > span { display: block; margin-bottom: 15px; color: #9aa2b1; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; }
+.product-highlights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.product-highlights div { display: grid; gap: 4px; }
+.product-highlights strong { color: var(--cv-accent); font-size: 23px; }
+.product-highlights span { color: #7b8496; font-size: 8.5px; line-height: 1.4; }
+.product-main section { margin-top: 31px; }
+.product-section-head { display: flex; align-items: baseline; gap: 9px; margin-bottom: 18px; }
+.product-section-head span { color: var(--cv-accent); font-size: 8px; font-weight: 800; }
+.product-section-head h2 { margin: 0; font-size: 17px; }
+.product-job .experience-head div span { color: #7b8496; font-size: 10px; }
+.product-projects { display: grid; gap: 10px; }
+.product-projects article { padding: 13px 14px; border: 1px solid #e8ecf2; border-radius: 11px; }
+.product-projects article > div { display: flex; justify-content: space-between; gap: 16px; }
+.product-projects article > div span { color: var(--cv-accent); font-size: 8px; text-transform: uppercase; letter-spacing: .1em; }
+.product-projects p { margin: 7px 0 6px; color: #657086; font-size: 9.5px; }
+.product-projects small { color: #929aab; font-size: 8.5px; }
+
+.cv-ats { padding: 48px 54px; }
+.ats-header { padding-bottom: 19px; border-bottom: 2px solid #1f2937; }
+.ats-header h1 { margin: 0; font-size: 31px; }
+.contact-row { display: flex; flex-wrap: wrap; gap: 7px 15px; margin-top: 13px; color: #667085; font-size: 9.5px; }
+.cv-ats section { margin-top: 24px; }
+.cv-ats section h2 { padding-bottom: 6px; border-bottom: 1px solid #dfe3e9; text-transform: uppercase; letter-spacing: .08em; }
+.ats-summary p { max-width: 90%; color: #4b5565; }
+.ats-experience .experience-head strong { font-size: 11.5px; }
+.ats-project-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+.ats-project-grid article { padding-right: 10px; border-right: 1px solid #e3e7ed; }
+.ats-project-grid article:last-child { border-right: 0; }
+.ats-project-grid strong, .ats-project-grid span { display: block; }
+.ats-project-grid span { margin: 3px 0 7px; color: var(--cv-accent); font-size: 8.5px; }
+.ats-project-grid p { color: #657086; font-size: 9px; }
+.ats-bottom-grid { display: grid; grid-template-columns: 1.3fr .7fr; gap: 28px; }
+.inline-list { color: #4b5565; line-height: 1.8; }
+
+.cv-creative { padding: 0; }
+.creative-header { min-height: 245px; display: grid; grid-template-columns: 48px 1fr auto; gap: 23px; padding: 47px 48px 38px; background: linear-gradient(135deg, color-mix(in srgb, var(--cv-accent) 17%, white), #fff 68%); border-bottom: 1px solid color-mix(in srgb, var(--cv-accent) 18%, #e6e8ee); }
+.creative-number { color: var(--cv-accent); font-size: 9px; font-weight: 800; }
+.creative-header h1 { margin-bottom: 8px; font-size: 38px; }
+.creative-header h3 { color: #667085; font-size: 14px; font-weight: 500; }
+.creative-contact { display: grid; align-content: end; gap: 5px; color: #697386; text-align: right; font-size: 9px; }
+.creative-intro { padding: 25px 48px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 38px; border-bottom: 1px solid #edf0f4; }
+.creative-intro > p { margin: 0; color: #4b5565; font-size: 11px; line-height: 1.7; }
+.highlight-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.highlight-strip strong, .highlight-strip span { display: block; }
+.highlight-strip strong { color: var(--cv-accent); font-size: 19px; }
+.highlight-strip span { color: #8a93a4; font-size: 8px; line-height: 1.35; }
+.creative-layout { display: grid; grid-template-columns: 1fr 205px; }
+.creative-layout main { padding: 30px 38px 38px 48px; }
+.creative-layout main section + section { margin-top: 30px; }
+.label-row { display: flex; align-items: baseline; gap: 11px; margin-bottom: 18px; }
+.label-row span { color: var(--cv-accent); font-size: 8px; font-weight: 800; }
+.label-row h2 { margin: 0; font-size: 17px; }
+.creative-job .experience-head div span { color: #7b8496; font-size: 9.5px; }
+.creative-projects { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.creative-projects article { padding: 14px; border-radius: 12px; background: #f6f7fa; }
+.creative-projects article > span { color: var(--cv-accent); font-size: 8px; text-transform: uppercase; }
+.creative-projects h3 { margin: 7px 0 3px; font-size: 12px; }
+.creative-projects strong { color: #697386; font-size: 8.5px; }
+.creative-projects p { margin: 8px 0 0; color: #697386; font-size: 9px; }
+.creative-aside { padding: 31px 24px; border-left: 1px solid #edf0f4; background: #fafbfc; }
+.creative-aside > div + div { margin-top: 29px; }
+.skill-list { display: grid; gap: 6px; padding: 0!important; list-style: none; }
+.skill-list li { margin: 0!important; font-size: 9.5px; }
+.creative-aside article { display: grid; gap: 2px; margin-top: 12px; }
+.creative-aside article span, .creative-aside article small { color: #8790a1; font-size: 8.5px; }
+
+.cv-executive { padding: 51px 52px; font-family: Georgia, 'Times New Roman', serif; color: #262626; }
+.executive-header { display: flex; justify-content: space-between; gap: 40px; }
+.executive-header h1 { margin-bottom: 8px; font-size: 36px; font-weight: 500; }
+.executive-header h3 { color: #6b625b; font-size: 13px; font-weight: 400; }
+.executive-contact { display: grid; align-content: end; gap: 4px; text-align: right; color: #756e68; font-family: Inter, sans-serif; font-size: 8.5px; }
+.executive-rule { height: 3px; margin: 22px 0; background: linear-gradient(90deg, var(--cv-accent), #252525); }
+.executive-summary { display: grid; grid-template-columns: 110px 1fr; gap: 24px; }
+.executive-summary span { color: var(--cv-accent); font-family: Inter, sans-serif; font-size: 8px; text-transform: uppercase; letter-spacing: .16em; }
+.executive-summary p { color: #554f4a; line-height: 1.75; }
+.executive-layout { display: grid; grid-template-columns: 1fr 190px; gap: 34px; margin-top: 28px; }
+.executive-layout section + section { margin-top: 28px; }
+.executive-layout h2 { padding-bottom: 6px; border-bottom: 1px solid #d9d3ce; font-size: 14px; font-weight: 500; }
+.executive-job .experience-head strong { font-size: 12px; }
+.executive-job .experience-head div span { color: #756e68; font-size: 9.5px; }
+.executive-project { display: grid; grid-template-columns: 160px 1fr; gap: 14px; padding: 10px 0; border-bottom: 1px solid #e8e3df; }
+.executive-project > div { display: grid; align-content: start; gap: 3px; }
+.executive-project > div span { color: var(--cv-accent); font-family: Inter, sans-serif; font-size: 8px; }
+.executive-project p { margin: 0; color: #625c57; font-size: 9.5px; }
+.executive-layout aside { padding-left: 22px; border-left: 1px solid #dfd9d4; }
+.executive-layout aside article { display: grid; gap: 2px; margin-top: 11px; }
+.executive-layout aside span, .executive-layout aside small, .executive-layout aside p { color: #706962; font-size: 9px; }
+.executive-skills { display: grid; gap: 5px; padding: 0!important; list-style: none; }
+.executive-skills li { margin: 0!important; }
+
+.principles { padding: 78px 7vw 88px; background: #101522; color: white; }
+.section-heading.compact { margin-bottom: 30px; }
+.principles .section-index { color: #6d5dfc; }
+.principle-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.principle-grid article { min-height: 190px; padding: 22px; border: 1px solid rgba(255,255,255,.09); border-radius: 18px; background: rgba(255,255,255,.035); }
+.principle-grid article > span { color: #8074ff; font-size: 9px; letter-spacing: .16em; }
+.principle-grid h3 { margin: 42px 0 10px; font-size: 15px; }
+.principle-grid p { margin: 0; color: #919bad; font-size: 11px; line-height: 1.6; }
+.site-footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px 7vw; color: #7b8496; background: #0b0f19; font-size: 10px; }
+.print-only { display: none; }
