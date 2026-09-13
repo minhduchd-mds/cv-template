@@ -3,12 +3,14 @@
     <ConceptExperience v-if="isConceptRoute" :concept-id="conceptId" @back="goStudio" />
     <template v-else-if="isStudioRoute">
       <StudioView />
-      <a class="studio-home-launch" href="./" aria-label="Back to CV Studio landing page" @click.prevent="goLanding">← Home</a>
-      <a class="concept-launch" href="#concept-apple" aria-label="Open five full-screen CV web concepts">
-        <span class="concept-launch-dot"></span>
-        <span><strong>5 Web Concepts</strong><small>Full-screen landing ideas</small></span>
-        <b>→</b>
-      </a>
+      <nav class="studio-route-dock" aria-label="Studio routes">
+        <a class="studio-home-launch" href="./" aria-label="Back to CV Studio landing page" @click.prevent="goLanding">← Home</a>
+        <a class="concept-launch" href="#concept-apple" aria-label="Open five full-screen CV web concepts">
+          <span class="concept-launch-dot"></span>
+          <span><strong>5 Web Concepts</strong><small>Full-screen landing ideas</small></span>
+          <b>→</b>
+        </a>
+      </nav>
     </template>
     <MarketingLanding v-else />
   </div>
