@@ -1,0 +1,62 @@
+/* CV detail polish: improve reading rhythm and prevent awkward PDF breaks. */
+
+.cv-sheet h1,
+.cv-sheet h2,
+.cv-sheet h3 {
+  text-wrap: balance;
+}
+
+.product-summary,
+.ats-summary p,
+.creative-intro > p,
+.executive-summary p,
+.product-projects p,
+.creative-projects p,
+.executive-project p,
+.experience-item li {
+  text-wrap: pretty;
+}
+
+.contact-row span,
+.product-contact span,
+.creative-contact span,
+.executive-contact span {
+  overflow-wrap: anywhere;
+}
+
+.experience-item,
+.product-projects article,
+.ats-project-grid article,
+.creative-projects article,
+.executive-project,
+.ats-highlights > div,
+.executive-impact-grid > div {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.cv-project-cover,
+.cv-avatar,
+.profile-monogram {
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+@media print {
+  .cv-sheet {
+    overflow: visible;
+  }
+
+  .experience-item,
+  .product-projects article,
+  .ats-project-grid article,
+  .creative-projects article,
+  .executive-project {
+    break-inside: avoid-page;
+  }
+
+  .cv-sheet a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
