@@ -285,26 +285,46 @@
 
   .studio-home-launch,
   .concept-launch {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
     bottom: max(12px, env(safe-area-inset-bottom));
+    padding: 0;
+    border-radius: 50%;
+    place-items: center;
   }
 
   .studio-home-launch {
     right: auto;
     left: 12px;
-    min-height: 40px;
-    padding-inline: 11px;
+    display: grid;
+    overflow: hidden;
+    font-size: 0;
+
+    &::before {
+      content: '←';
+      color: var(--apple-label);
+      font-size: 16px;
+      font-weight: 650;
+      line-height: 1;
+    }
   }
 
   .concept-launch {
     right: 12px;
-    min-height: 40px;
-    padding: 6px 9px;
+    justify-content: center;
+    gap: 0;
 
-    small { display: none; }
+    > span:nth-child(2),
+    > b {
+      display: none;
+    }
+
     .concept-launch-dot {
-      width: 20px;
-      height: 20px;
-      flex-basis: 20px;
+      width: 22px;
+      height: 22px;
+      flex-basis: 22px;
       border-radius: 7px;
     }
   }
@@ -320,16 +340,6 @@
   .principle-grid article {
     min-height: 0;
     padding: 18px;
-  }
-}
-
-@media (max-width: 420px) {
-  .concept-launch strong {
-    font-size: 10px;
-  }
-
-  .concept-launch > b {
-    display: none;
   }
 }
 
