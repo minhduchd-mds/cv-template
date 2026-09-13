@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 const worlds = [
   ['/directions/', 'Choose a visual world.'],
+  ['/directions/proof-index.html', 'See the proof,'],
   ['/directions/worlds/signal-field.html', 'Make the'],
   ['/directions/worlds/threadscape.html', 'Threadscape'],
   ['/directions/worlds/focus-lens.html', 'Focus Lens'],
@@ -26,12 +27,13 @@ test.describe('original direction lab', () => {
     })
   }
 
-  test('direction lab exposes completed worlds, shared profile and visual hero', async ({ page }) => {
+  test('direction lab exposes completed worlds, shared profile and proof index', async ({ page }) => {
     await page.goto('/directions/', { waitUntil: 'networkidle' })
     await expect(page.getByRole('button', { name: /Visual Hero/i })).toBeVisible()
     await expect(page.locator('.card[data-complete="true"]')).toHaveCount(5)
     await expect(page.locator('html')).toHaveAttribute('data-profile-model', 'ready')
-    await expect(page.locator('.profile-chip')).toContainText('Alex')
+    await expect(page.locator('.profile-chip').first()).toContainText('Alex')
+    await expect(page.locator('.proof-index-link')).toHaveAttribute('href', './proof-index.html')
   })
 
   test('direction choice persists when returning to the lab', async ({ page }) => {
@@ -85,6 +87,34 @@ test.describe('original direction lab', () => {
     await page.keyboard.press('Escape')
     await expect(dialog).toBeHidden()
     await expect(metric).toBeFocused()
+  })
+
+  test('proof index maps outcomes to projects, capabilities and inspectable evidence', async ({ page }) => {
+    await page.goto('/directions/proof-index.html', { waitUntil: 'networkidle' })
+    await expect(page.locator('html')).toHaveAttribute('data-proof-model', 'ready')
+    await expect(page.locator('[data-summary="projects"]')).toHaveText('04')
+    await expect(page.locator('[data-summary="metrics"]')).toHaveText('03')
+    await expect(page.locator('[data-summary="artifacts"]')).toHaveText('12')
+    await expect(page.locator('[data-summary="capabilities"]')).toHaveText('04')
+    await expect(page.locator('.project-node')).toHaveCount(4)
+    await expect(page.locator('.artifact-node')).toHaveCount(12)
+
+    await page.getByRole('button', { name: 'AI', exact: true }).click()
+    await expect(page.locator('[data-proof-index]')).toHaveAttribute('data-filter', 'ai')
+    await expect(page.locator('.project-node:not(.filtered)')).toHaveCount(1)
+    await expect(page.locator('.project-node:not(.filtered)')).toContainText('Signal AI Assistant')
+
+    await page.getByRole('button', { name: 'All evidence' }).click()
+    const atlas = page.locator('.project-node[data-project-id="atlas-ops"]')
+    await atlas.focus()
+    await page.keyboard.press('Enter')
+    const dialog = page.getByRole('dialog', { name: 'Project evidence' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog).toContainText('Atlas Ops')
+    await expect(dialog).toContainText('Before / after task-path comparison')
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+    await expect(atlas).toBeFocused()
   })
 
   test('visual hero variants keep meaningful alternative text', async ({ page }) => {
