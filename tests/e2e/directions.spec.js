@@ -64,6 +64,29 @@ test.describe('original direction lab', () => {
     await expect(trigger).toBeFocused()
   })
 
+  test('evidence drawer connects a visible metric to baseline, method, result and artifacts', async ({ page }) => {
+    await page.goto('/directions/worlds/signal-field.html', { waitUntil: 'networkidle' })
+    await expect(page.locator('html')).toHaveAttribute('data-evidence-model', 'ready')
+
+    const metric = page.locator('.metrics .metric[data-evidence-project="atlas-ops"]').first()
+    await expect(metric).toBeVisible()
+    await expect(metric).toContainText('31%')
+    await metric.focus()
+    await page.keyboard.press('Enter')
+
+    const dialog = page.getByRole('dialog', { name: 'Project evidence' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog).toContainText('Atlas Ops')
+    await expect(dialog).toContainText('Baseline')
+    await expect(dialog).toContainText('How it was measured')
+    await expect(dialog).toContainText('Artifact package')
+    await expect(dialog).toContainText('Before / after task-path comparison')
+
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+    await expect(metric).toBeFocused()
+  })
+
   test('visual hero variants keep meaningful alternative text', async ({ page }) => {
     await page.goto('/directions/worlds/visual-hero-variants.html')
     const images = page.locator('img')
