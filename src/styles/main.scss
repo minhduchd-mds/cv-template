@@ -44,3 +44,6 @@
 // Final production detail: CV print continuity and explicit interaction states.
 @use 'cv-detail';
 @use 'interaction-states';
+
+// Shared brand asset applied after concept/theme overrides.
+@use 'brand-seo';
