@@ -37,6 +37,9 @@
   }
 
   const resolveGroups=project=>{
+    const explicit=(project.capabilityGroups||[]).filter(group=>Boolean(profile?.capabilities?.[group]))
+    if(explicit.length) return [...new Set(explicit)]
+
     const haystack=normalize([project.type,project.role,project.problem,project.method,project.result,...(project.tags||[])].join(' '))
     const groups=Object.entries(groupKeywords).filter(([,keywords])=>keywords.some(keyword=>haystack.includes(normalize(keyword)))).map(([group])=>group)
     if(!groups.length) groups.push('product')
