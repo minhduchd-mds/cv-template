@@ -23,7 +23,7 @@ import ConceptExperience from './concepts/ConceptExperience.vue'
 
 const IDS = ['apple', 'bento', 'engineer', 'case-study', 'executive']
 const STUDIO_INTERNAL_HASHES = new Set(['#top', '#templates'])
-const CANONICAL_URL = 'https://cv-template-studio.vercel.app/'
+const CANONICAL_URL = 'https://minhduchd-mds.github.io/cv-template/'
 const SOCIAL_IMAGE = `${CANONICAL_URL}og-card.svg`
 const INDEX_ROBOTS = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
 const INTERNAL_ROBOTS = 'noindex,follow'
