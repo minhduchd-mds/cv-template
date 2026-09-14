@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://cv-template-studio.vercel.app/sitemap.xml
-Host: cv-template-studio.vercel.app
+Sitemap: https://minhduchd-mds.github.io/cv-template/sitemap.xml
