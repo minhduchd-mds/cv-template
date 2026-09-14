@@ -1,9 +1,9 @@
 name: Deploy Vite to GitHub Pages
 
+# Production currently uses GitHub Pages branch-source fallback because hosted
+# Actions runners are unavailable. Trigger this manually once runner access returns;
+# a successful run restores the full Vite application over the fallback.
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
 
 permissions:
@@ -53,14 +53,14 @@ jobs:
     needs: build
     timeout-minutes: 10
     steps:
-      - name: Wait for legacy Pages deployments
+      - name: Wait for branch-source Pages deployments
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPOSITORY: ${{ github.repository }}
         shell: bash
         run: |
           set -euo pipefail
-          echo "Waiting until no legacy Pages workflow on master can overwrite the Vite deployment..."
+          echo "Waiting until no branch-source Pages workflow on master can overwrite the Vite deployment..."
           quiet_checks=0
 
           for attempt in $(seq 1 30); do
@@ -70,24 +70,24 @@ jobs:
               -H "X-GitHub-Api-Version: 2026-03-10" \
               "https://api.github.com/repos/${GH_REPOSITORY}/actions/runs?branch=master&per_page=50")
 
-            legacy_pending=$(echo "$response" | jq '[.workflow_runs[] | select(.name == "pages build and deployment" and .status != "completed")] | length')
+            pages_pending=$(echo "$response" | jq '[.workflow_runs[] | select(.name == "pages build and deployment" and .status != "completed")] | length')
 
-            if [ "$legacy_pending" -eq 0 ]; then
+            if [ "$pages_pending" -eq 0 ]; then
               quiet_checks=$((quiet_checks + 1))
-              echo "Attempt ${attempt}/30: no active legacy Pages deployment (${quiet_checks}/2 confirmations)."
+              echo "Attempt ${attempt}/30: no active branch-source Pages deployment (${quiet_checks}/2 confirmations)."
               if [ "$quiet_checks" -ge 2 ]; then
-                echo "Legacy Pages is quiet. Publishing Vite dist last."
+                echo "Branch-source Pages is quiet. Publishing Vite dist last."
                 exit 0
               fi
             else
               quiet_checks=0
-              echo "Attempt ${attempt}/30: ${legacy_pending} legacy Pages deployment(s) still active."
+              echo "Attempt ${attempt}/30: ${pages_pending} branch-source Pages deployment(s) still active."
             fi
 
             sleep 5
           done
 
-          echo "::warning::Legacy Pages remained active for the full guard window. Continuing so the workflow cannot hang indefinitely."
+          echo "::warning::Branch-source Pages remained active for the full guard window. Continuing so the workflow cannot hang indefinitely."
 
       - name: Deploy to GitHub Pages
         id: deployment

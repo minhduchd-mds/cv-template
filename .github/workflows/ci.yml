@@ -1,12 +1,9 @@
 name: CV Studio CI
 
+# Hosted Actions are temporarily unavailable for this private repository.
+# Keep the full quality pipeline intact and manual-only until runner access is restored.
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+  workflow_dispatch:
 
 permissions:
   contents: read
