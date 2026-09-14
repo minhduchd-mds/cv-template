@@ -2,6 +2,12 @@
 
 A production-minded portfolio and resume system built with **Vue 3.5.42 + Vite 8.3.0**. One structured career profile can drive multiple A4 CV directions, five full-screen web identities and a marketing landing page without duplicating content.
 
+## Production
+
+**GitHub Pages:** https://minhduchd-mds.github.io/cv-template/
+
+GitHub Pages is the canonical and supported production deployment for this repository.
+
 ## Current stack
 
 - Vue **3.5.42**
@@ -11,7 +17,7 @@ A production-minded portfolio and resume system built with **Vue 3.5.42 + Vite 8
 - Playwright **1.63.0**
 - Lighthouse **13.4.1**
 - Node **22.23.2 LTS** in CI and Pages (`>=22.19.0` required by the project)
-- npm lockfile v3 + deterministic `npm ci` installs in CI, Pages and Vercel
+- npm lockfile v3 + deterministic `npm ci` installs in CI and Pages
 
 ## Product surfaces
 
@@ -44,34 +50,13 @@ A production-minded portfolio and resume system built with **Vue 3.5.42 + Vite 8
 
 ## Quality and security gates
 
-Every push to `master` is verified with:
+Every push to `master` is verified with dangerous frontend API linting, a production Vite build, JS/CSS bundle budgets, responsive Playwright E2E tests, visual QA captures, Lighthouse budgets and a separate CodeQL workflow.
 
-1. Dangerous frontend API linting.
-2. Production Vite build.
-3. JS/CSS bundle budgets.
-4. Chromium installation from the pinned Playwright dependency.
-5. Responsive end-to-end tests at desktop, tablet and mobile viewports.
-6. Visual QA captures for critical landing, Studio and concept surfaces.
-7. Lighthouse performance, accessibility, best-practices and SEO budgets.
-8. CodeQL JavaScript/TypeScript analysis in the separate security workflow.
+Application-level security includes safe image-source normalization and CI rejection of risky frontend patterns such as `eval`, `new Function`, `document.write`, direct `innerHTML`, `v-html` and remote script injection.
 
-The Lighthouse gate currently enforces:
-
-- Performance ≥ **82**
-- Accessibility ≥ **95**
-- Best Practices ≥ **95**
-- SEO ≥ **90**
-- LCP ≤ **4,000 ms**
-- TBT ≤ **400 ms**
-- CLS ≤ **0.10**
-
-The assertion script also prints scored non-perfect Accessibility / Best Practices / SEO audits so quality work can target specific findings instead of chasing a single aggregate score.
-
-Security controls include a restrictive production CSP, `nosniff`, clickjacking protection, Permissions Policy, HSTS on Vercel, safe image-source normalization and CI rejection of risky frontend patterns such as `eval`, `new Function`, `document.write`, direct `innerHTML`, `v-html` and remote script injection.
+GitHub Pages does not support repository-defined custom response headers such as CSP, HSTS or Permissions-Policy. Security controls that require origin response headers therefore need a custom edge/CDN layer if they are required in a future deployment architecture.
 
 ## Run locally
-
-Use the committed dependency graph:
 
 ```bash
 npm ci
@@ -87,78 +72,9 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Production preview:
-
-```bash
-npm run build
-npm run preview
-```
-
-## Project structure
-
-```text
-index.html
-vite.config.js
-package-lock.json
-playwright.config.js
-scripts/
-  security-lint.mjs
-  check-bundle-budget.mjs
-  assert-lighthouse.mjs
-tests/e2e/
-  studio.spec.js
-  visual-qa.spec.js
-public/sample/
-  alex-profile.svg
-  atlas-ops.svg
-  signal-ai.svg
-  northstar-system.svg
-  pulse-dashboard.svg
-src/
-  RootApp.vue
-  App.vue
-  main.js                      # imports one SCSS entrypoint
-  components/
-    CvDocument.vue
-    ProfileEditor.vue
-  data/
-    cv.js
-    sample-profile-360.js
-    sample-media.js
-    initialize-sample-media.js
-  security/
-    safe-media.js
-  landing/
-    MarketingLanding.vue
-  concepts/
-    ConceptExperience.vue
-    concepts.css
-    concept-experience.css
-    concept-polish.css
-  styles/
-    main.scss                   # single style entrypoint
-    _tokens.scss
-    _landing.scss
-    _app-shell.scss
-    _quality.scss
-    _cv-sections.scss
-    _enhancements.scss
-    _builder-advanced.scss
-```
-
-Legacy CSS is being migrated incrementally behind `src/styles/main.scss`. The entrypoint deliberately preserves historical cascade order while migrated areas move into first-class Sass modules. Responsive E2E and Lighthouse gates protect the UI during that refactor.
-
-## Template architecture
-
-Each A4 template in `src/data/cv.js` has a structural `variant` and an optional visual `theme`.
-
-- `variant`: `product`, `ats`, `creative`, or `executive`.
-- `theme`: changes visual direction without duplicating the document renderer.
-- Every A4 template reads the same candidate profile.
-- Web concepts reuse the same underlying career story but intentionally change hierarchy and presentation for different hiring contexts.
-
 ## Deployment
 
-- GitHub Pages builds the Vite `dist` output with Node 22.23.2 and `npm ci`.
-- The custom Pages workflow waits until legacy Pages jobs on `master` are quiet before publishing Vite last, preventing older deploys from overwriting current assets.
-- Vercel also uses the committed lockfile through `npm ci` and applies the production security headers declared in `vercel.json`.
+- GitHub Pages is the single production target.
+- The custom Pages workflow builds Vite `dist` with Node 22.23.2 and `npm ci`.
+- It waits until legacy Pages jobs on `master` are quiet before publishing Vite last, preventing older deployments from overwriting the current assets.
+- Canonical URL, Open Graph metadata, structured data, `robots.txt` and `sitemap.xml` all point to the GitHub Pages production URL.
