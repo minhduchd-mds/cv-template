@@ -70,9 +70,7 @@
             "description": "Build, preview and export structured CVs and portfolio-style resume experiences locally in the browser.",
             "image": "https://minhduchd-mds.github.io/cv-template/og-card.svg",
             "logo": "https://minhduchd-mds.github.io/cv-template/logo.svg",
-            "sameAs": [
-              "https://github.com/minhduchd-mds/cv-template"
-            ],
+            "sameAs": ["https://github.com/minhduchd-mds/cv-template"],
             "featureList": [
               "Structured CV profile editor",
               "Multiple CV templates",
@@ -85,9 +83,22 @@
         ]
       }
     </script>
+
+    <script>
+      // GitHub Pages can temporarily publish the branch source when hosted Actions
+      // runners are unavailable. In that mode the raw Vue SFC entry cannot mount
+      // in a browser, so fall back to the self-contained static Directions app.
+      // A normal Vite build mounts #app quickly and this guard becomes a no-op.
+      window.__cvStudioFallbackTimer = window.setTimeout(function () {
+        var app = document.getElementById('app')
+        if (app && app.childElementCount === 0) {
+          window.location.replace('./public/directions/')
+        }
+      }, 3000)
+    </script>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="./src/main.js"></script>
   </body>
 </html>
