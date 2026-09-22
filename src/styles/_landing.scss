@@ -204,6 +204,10 @@
 
 .landing-product {
   position: relative;
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
   z-index: 3;
   min-width: 0;
   border: 1px solid rgba(15,23,42,.13);
@@ -214,6 +218,21 @@
   transform-origin: center;
   overflow: hidden;
   animation: landing-product-in .72s $ease both;
+  transition:
+    transform .22s $ease,
+    box-shadow .22s ease,
+    border-color .22s ease;
+
+  &:hover {
+    border-color: rgba(0,103,201,.28);
+    box-shadow: 0 34px 90px rgba(15,23,42,.19);
+    transform: perspective(1800px) rotateY(-2.5deg) rotateX(.6deg) translateY(-3px);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(0,103,201,.28);
+    outline-offset: 4px;
+  }
 }
 
 .landing-product__chrome {
