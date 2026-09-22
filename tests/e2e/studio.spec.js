@@ -22,6 +22,9 @@ test('landing explains the product, uses local sample media and stays responsive
   await expect(page.getByText('Local-first', { exact: true })).toBeVisible()
   await expect(page.locator('.landing-product')).toBeVisible()
   await expect(page.locator('.landing-case-grid')).toBeVisible()
+  await page.locator('.landing-nav .landing-brand').click()
+  await expect(page).toHaveURL(/#studio$/)
+  await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
 
   const imageSources = await page.locator('.landing-page img').evaluateAll((images) => images.map((image) => image.getAttribute('src') || ''))
   expect(imageSources.length).toBeGreaterThan(0)
@@ -41,6 +44,14 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(page.getByRole('progressbar', { name: 'CV completeness' })).toBeVisible()
   await expect(page.getByRole('button', { name: /Profile.*Identity & contact/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Experience.*Roles & achievements/i })).toBeVisible()
+  await expect(page.locator('.template-card')).toHaveCount(12)
+
+  await page.getByRole('button', { name: /Design.*Type, density & shape/i }).click()
+  await page.locator('.editor-field').filter({ hasText: 'Typography' }).locator('select').selectOption('serif')
+  await page.locator('.editor-field').filter({ hasText: 'Content density' }).locator('select').selectOption('compact')
+  await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-font-serif/)
+  await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-density-compact/)
+  await page.getByRole('button', { name: /Profile.*Identity & contact/i }).click()
 
   const fullNameInput = page.locator('.editor-field').filter({ hasText: 'Full name' }).locator('input')
   await expect(fullNameInput).toHaveValue('Alex Chen')
@@ -85,7 +96,7 @@ test('Auto-complete CV fills only missing content and marks custom drafts for re
   })
 
   await page.goto('/#studio')
-  const autoComplete = page.getByRole('button', { name: /Auto-complete CV/i })
+  const autoComplete = page.getByRole('button', { name: /Complete missing CV fields/i })
   await expect(autoComplete).toBeVisible()
   await expect(autoComplete).not.toContainText('100%')
   await autoComplete.click()
