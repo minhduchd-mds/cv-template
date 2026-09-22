@@ -50,7 +50,7 @@ GitHub Pages is the canonical and supported production deployment for this repos
 
 ## Quality and security gates
 
-Every push to `master` is verified with dangerous frontend API linting, a production Vite build, JS/CSS bundle budgets, responsive Playwright E2E tests, visual QA captures, Lighthouse budgets and a separate CodeQL workflow.
+The full quality gate includes dangerous frontend API linting, a production Vite build, JS/CSS bundle budgets, responsive Playwright E2E tests, visual QA captures, Lighthouse budgets and CodeQL. Automatic hosted-runner checks are temporarily paused because GitHub is currently not assigning a hosted runner to this repository; both workflows remain available through `workflow_dispatch` and should be restored to push/PR triggers when runner access returns.
 
 Application-level security includes safe image-source normalization and CI rejection of risky frontend patterns such as `eval`, `new Function`, `document.write`, direct `innerHTML`, `v-html` and remote script injection.
 
@@ -75,6 +75,7 @@ npm run test:e2e
 ## Deployment
 
 - GitHub Pages is the single production target.
+- Automatic Vercel Git deployments are disabled in `vercel.json` so the legacy Vercel integration cannot create misleading blocked deployment checks.
 - The custom Pages workflow builds Vite `dist` with Node 22.23.2 and `npm ci`.
 - It waits until legacy Pages jobs on `master` are quiet before publishing Vite last, preventing older deployments from overwriting the current assets.
 - Canonical URL, Open Graph metadata, structured data, `robots.txt` and `sitemap.xml` all point to the GitHub Pages production URL.
