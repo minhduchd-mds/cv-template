@@ -38,6 +38,9 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
   await page.getByRole('button', { name: 'Edit CV' }).click()
   await expect(page.getByRole('heading', { name: /Edit once\. Update every CV/i })).toBeVisible()
+  await expect(page.getByRole('progressbar', { name: 'CV completeness' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Profile.*Identity & contact/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Experience.*Roles & achievements/i })).toBeVisible()
 
   const fullNameInput = page.locator('.editor-field').filter({ hasText: 'Full name' }).locator('input')
   await expect(fullNameInput).toHaveValue('Alex Chen')
