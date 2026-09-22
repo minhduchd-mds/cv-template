@@ -1,10 +1,9 @@
 name: Deploy Vite to GitHub Pages
 
-# Build and publish the Vite application on master. Manual dispatch remains
-# available for recovery/redeploys.
+# Hosted Actions runners are currently unavailable for this repository.
+# Keep the full Vite deployment available on demand; branch-source Pages
+# serves the static fallback Studio until runner access returns.
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
 
 permissions:
