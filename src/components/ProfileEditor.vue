@@ -160,9 +160,56 @@
           <label class="editor-field editor-field-wide editor-language-field"><span>Languages · one per line</span><textarea :value="profile.languages.join('\n')" rows="5" @input="updateArray('languages', lines($event.target.value))"></textarea></label>
         </section>
 
+        <section v-else-if="activeTab === 'design'" class="editor-section">
+          <div class="editor-section-heading">
+            <div><span>07</span><h3>Visual design</h3></div>
+            <p>Fine-tune the selected template without changing your CV content.</p>
+          </div>
+
+          <div class="editor-grid">
+            <label class="editor-field">
+              <span>Accent color</span>
+              <input :value="accent" type="color" aria-label="CV accent color" @input="$emit('update-accent', $event.target.value)" />
+            </label>
+            <label class="editor-field">
+              <span>Typography</span>
+              <select :value="appearance.font" @change="$emit('update-appearance', { key: 'font', value: $event.target.value })">
+                <option value="sans">Sans · Modern</option>
+                <option value="serif">Serif · Editorial</option>
+                <option value="mono">Mono · Technical</option>
+              </select>
+            </label>
+            <label class="editor-field">
+              <span>Content density</span>
+              <select :value="appearance.density" @change="$emit('update-appearance', { key: 'density', value: $event.target.value })">
+                <option value="compact">Compact</option>
+                <option value="balanced">Balanced</option>
+                <option value="spacious">Spacious</option>
+              </select>
+            </label>
+            <label class="editor-field">
+              <span>Corner style</span>
+              <select :value="appearance.radius" @change="$emit('update-appearance', { key: 'radius', value: $event.target.value })">
+                <option value="sharp">Sharp</option>
+                <option value="soft">Soft</option>
+                <option value="round">Rounded</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="design-presets">
+            <button type="button" @click="applyDesignPreset('recruiter')"><strong>Recruiter</strong><span>Sans · compact · sharp</span></button>
+            <button type="button" @click="applyDesignPreset('product')"><strong>Product</strong><span>Sans · balanced · soft</span></button>
+            <button type="button" @click="applyDesignPreset('editorial')"><strong>Editorial</strong><span>Serif · spacious · soft</span></button>
+            <button type="button" @click="applyDesignPreset('technical')"><strong>Technical</strong><span>Mono · compact · sharp</span></button>
+          </div>
+
+          <div class="editor-note"><strong>Template + appearance</strong><p>Template controls the composition. These controls change typography, density and shape language on top of that template, so one direction can produce several usable variants.</p></div>
+        </section>
+
         <section v-else class="editor-section">
           <div class="editor-section-heading">
-            <div><span>07</span><h3>Section layout</h3></div>
+            <div><span>08</span><h3>Section layout</h3></div>
             <p>Drag sections to reorder them. Turn a section off to hide it from every CV template.</p>
           </div>
           <div class="layout-list">
@@ -208,8 +255,13 @@ export default {
     open: { type: Boolean, default: false },
     profile: { type: Object, required: true },
     completion: { type: Number, default: 0 },
+    appearance: {
+      type: Object,
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft' }),
+    },
+    accent: { type: String, default: '#6d5dfc' },
   },
-  emits: ['close', 'update-field', 'update-item', 'update-array', 'add-item', 'remove-item', 'move-item', 'reset'],
+  emits: ['close', 'update-field', 'update-item', 'update-array', 'add-item', 'remove-item', 'move-item', 'update-appearance', 'update-accent', 'reset'],
   data() {
     return {
       activeTab: 'profile',
@@ -222,7 +274,8 @@ export default {
         { id: 'projects', label: 'Projects', hint: 'Selected work', icon: '04' },
         { id: 'education', label: 'Education', hint: 'Study & credentials', icon: '05' },
         { id: 'skills', label: 'Skills', hint: 'Keywords & languages', icon: '06' },
-        { id: 'layout', label: 'Layout', hint: 'Order & visibility', icon: '07' },
+        { id: 'design', label: 'Design', hint: 'Type, density & shape', icon: '07' },
+        { id: 'layout', label: 'Layout', hint: 'Order & visibility', icon: '08' },
       ],
     }
   },
@@ -237,6 +290,17 @@ export default {
     updateArray(key, value) { this.$emit('update-array', { key, value }) },
     remove(section, index) { this.$emit('remove-item', { section, index }) },
     move(section, index, direction) { this.$emit('move-item', { section, index, direction }) },
+    applyDesignPreset(preset) {
+      const presets = {
+        recruiter: { font: 'sans', density: 'compact', radius: 'sharp' },
+        product: { font: 'sans', density: 'balanced', radius: 'soft' },
+        editorial: { font: 'serif', density: 'spacious', radius: 'soft' },
+        technical: { font: 'mono', density: 'compact', radius: 'sharp' },
+      }
+      const config = presets[preset]
+      if (!config) return
+      Object.entries(config).forEach(([key, value]) => this.$emit('update-appearance', { key, value }))
+    },
     lines(value) { return value.split(/\n+/).map((item) => item.trim()).filter(Boolean) },
     tokenList(value) { return value.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean) },
     imageStyle(url) { return url ? { backgroundImage: `linear-gradient(rgba(15,23,42,.04), rgba(15,23,42,.04)), url("${String(url).replace(/"/g, '%22')}")` } : {} },
