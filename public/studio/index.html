@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,follow" />
+  <meta name="description" content="Static fallback CV Studio builder for GitHub Pages." />
+  <title>CV Studio · Builder</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="studio">
+    <header class="topbar no-print">
+      <a class="brand" href="../../"><span>CV</span><div><strong>CV Studio</strong><small>Fallback Builder · local-first</small></div></a>
+      <div class="topbar-actions">
+        <button id="reset" type="button" class="button ghost">Reset</button>
+        <button id="print" type="button" class="button ghost">Export PDF ↗</button>
+        <button id="toggleEditor" type="button" class="button primary">Edit CV</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="templates no-print">
+        <div class="panel-heading">
+          <span>01</span>
+          <div><strong>Templates</strong><small>12 directions</small></div>
+        </div>
+        <div id="templateList" class="template-list"></div>
+      </aside>
+
+      <section class="preview">
+        <div class="preview-toolbar no-print">
+          <div><span>02</span><div><strong>Live preview</strong><small id="activeTemplateLabel"></small></div></div>
+          <div class="preview-actions">
+            <label>Zoom
+              <select id="zoom">
+                <option value="0.75">75%</option>
+                <option value="0.85" selected>85%</option>
+                <option value="1">100%</option>
+              </select>
+            </label>
+            <label>Accent <input id="accent" type="color" value="#6d5dfc" /></label>
+          </div>
+        </div>
+        <div class="paper-stage">
+          <article id="paper" class="paper"></article>
+        </div>
+      </section>
+
+      <aside id="editor" class="editor no-print">
+        <div class="panel-heading">
+          <span>03</span>
+          <div><strong>Edit CV</strong><small>Changes save locally</small></div>
+        </div>
+
+        <div class="editor-tabs">
+          <button class="tab active" data-tab="content" type="button">Content</button>
+          <button class="tab" data-tab="design" type="button">Design</button>
+          <button class="tab" data-tab="layout" type="button">Layout</button>
+        </div>
+
+        <section class="editor-pane active" data-pane="content">
+          <label>Full name<input id="name" type="text" /></label>
+          <label>Role / headline<input id="role" type="text" /></label>
+          <div class="field-grid">
+            <label>Email<input id="email" type="email" /></label>
+            <label>Phone<input id="phone" type="text" /></label>
+          </div>
+          <div class="field-grid">
+            <label>Location<input id="location" type="text" /></label>
+            <label>Website<input id="website" type="text" /></label>
+          </div>
+          <label>Professional summary<textarea id="summary" rows="6"></textarea></label>
+          <label>Skills · one per line<textarea id="skills" rows="6"></textarea></label>
+
+          <div class="section-editor">
+            <div class="section-editor-head"><strong>Experience</strong><button id="addExperience" type="button">+ Add</button></div>
+            <div id="experienceEditor"></div>
+          </div>
+
+          <div class="section-editor">
+            <div class="section-editor-head"><strong>Projects</strong><button id="addProject" type="button">+ Add</button></div>
+            <div id="projectEditor"></div>
+          </div>
+        </section>
+
+        <section class="editor-pane" data-pane="design">
+          <label>Typography
+            <select id="font">
+              <option value="sans">Sans · Modern</option>
+              <option value="serif">Serif · Editorial</option>
+              <option value="mono">Mono · Technical</option>
+            </select>
+          </label>
+          <label>Density
+            <select id="density">
+              <option value="compact">Compact</option>
+              <option value="balanced">Balanced</option>
+              <option value="spacious">Spacious</option>
+            </select>
+          </label>
+          <label>Corner style
+            <select id="radius">
+              <option value="sharp">Sharp</option>
+              <option value="soft">Soft</option>
+              <option value="round">Rounded</option>
+            </select>
+          </label>
+          <div class="preset-grid">
+            <button type="button" data-preset="recruiter"><strong>Recruiter</strong><span>compact / clean</span></button>
+            <button type="button" data-preset="product"><strong>Product</strong><span>balanced / modern</span></button>
+            <button type="button" data-preset="editorial"><strong>Editorial</strong><span>serif / spacious</span></button>
+            <button type="button" data-preset="technical"><strong>Technical</strong><span>mono / compact</span></button>
+          </div>
+        </section>
+
+        <section class="editor-pane" data-pane="layout">
+          <label class="toggle"><input id="showSummary" type="checkbox" checked /><span>Show summary</span></label>
+          <label class="toggle"><input id="showSkills" type="checkbox" checked /><span>Show skills</span></label>
+          <label class="toggle"><input id="showExperience" type="checkbox" checked /><span>Show experience</span></label>
+          <label class="toggle"><input id="showProjects" type="checkbox" checked /><span>Show projects</span></label>
+          <p class="note">The full Vue Studio adds section ordering, images, certificates, education and deeper controls. This fallback keeps the Builder usable while hosted Actions runners are unavailable.</p>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
