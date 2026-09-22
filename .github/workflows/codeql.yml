@@ -1,12 +1,9 @@
 name: CodeQL
 
+# Hosted Actions runners are currently unavailable for this repository.
+# Keep CodeQL available on demand without generating false-red push/schedule
+# checks until runner access is restored.
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
-  schedule:
-    - cron: '23 2 * * 1'
   workflow_dispatch:
 
 permissions:
