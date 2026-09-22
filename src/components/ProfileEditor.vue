@@ -3,26 +3,35 @@
     <div class="editor-backdrop" @click="$emit('close')"></div>
     <div class="editor-panel">
       <header class="editor-header">
-        <div>
+        <div class="editor-header-copy">
           <span class="editor-kicker">CV Builder</span>
           <h2>Edit once. Update every CV and web concept.</h2>
+          <div class="editor-progress" role="progressbar" aria-label="CV completeness" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="completion">
+            <div class="editor-progress-meta">
+              <span>CV completeness</span>
+              <strong>{{ completion }}%</strong>
+            </div>
+            <span class="editor-progress-track"><span :style="{ width: `${completion}%` }"></span></span>
+          </div>
         </div>
         <button type="button" class="editor-close" aria-label="Close CV builder" @click="$emit('close')">×</button>
       </header>
 
-      <nav class="editor-tabs" aria-label="CV builder sections">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          type="button"
-          :class="{ active: activeTab === tab.id }"
-          @click="activeTab = tab.id"
-        >
-          <span>{{ tab.icon }}</span>{{ tab.label }}
-        </button>
-      </nav>
+      <div class="editor-workspace">
+        <nav class="editor-tabs" aria-label="CV builder sections">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            type="button"
+            :class="{ active: activeTab === tab.id }"
+            @click="activeTab = tab.id"
+          >
+            <span class="editor-tab-icon">{{ tab.icon }}</span>
+            <span class="editor-tab-copy"><strong>{{ tab.label }}</strong><small>{{ tab.hint }}</small></span>
+          </button>
+        </nav>
 
-      <div class="editor-body">
+        <div class="editor-body">
         <p v-if="imageError" class="editor-error" role="alert">{{ imageError }}</p>
 
         <section v-if="activeTab === 'profile'" class="editor-section">
@@ -179,6 +188,7 @@
           </div>
           <div class="editor-note"><strong>Template-aware ordering</strong><p>Each template keeps its core visual structure. Your order is respected within the main and sidebar flows, while disabled sections are hidden everywhere.</p></div>
         </section>
+        </div>
       </div>
 
       <footer class="editor-footer">
@@ -194,7 +204,11 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024
 
 export default {
   name: 'ProfileEditor',
-  props: { open: { type: Boolean, default: false }, profile: { type: Object, required: true } },
+  props: {
+    open: { type: Boolean, default: false },
+    profile: { type: Object, required: true },
+    completion: { type: Number, default: 0 },
+  },
   emits: ['close', 'update-field', 'update-item', 'update-array', 'add-item', 'remove-item', 'move-item', 'reset'],
   data() {
     return {
@@ -202,13 +216,13 @@ export default {
       imageError: '',
       dragIndex: null,
       tabs: [
-        { id: 'profile', label: 'Profile', icon: '◉' },
-        { id: 'impact', label: 'Impact', icon: '↗' },
-        { id: 'experience', label: 'Experience', icon: '▤' },
-        { id: 'projects', label: 'Projects', icon: '◇' },
-        { id: 'education', label: 'Education', icon: '◎' },
-        { id: 'skills', label: 'Skills', icon: '⌘' },
-        { id: 'layout', label: 'Layout', icon: '↕' },
+        { id: 'profile', label: 'Profile', hint: 'Identity & contact', icon: '01' },
+        { id: 'impact', label: 'Impact', hint: 'Metrics & outcomes', icon: '02' },
+        { id: 'experience', label: 'Experience', hint: 'Roles & achievements', icon: '03' },
+        { id: 'projects', label: 'Projects', hint: 'Selected work', icon: '04' },
+        { id: 'education', label: 'Education', hint: 'Study & credentials', icon: '05' },
+        { id: 'skills', label: 'Skills', hint: 'Keywords & languages', icon: '06' },
+        { id: 'layout', label: 'Layout', hint: 'Order & visibility', icon: '07' },
       ],
     }
   },
