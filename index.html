@@ -92,9 +92,12 @@
       window.__cvStudioFallbackTimer = window.setTimeout(function () {
         var app = document.getElementById('app')
         if (app && app.childElementCount === 0) {
-          window.location.replace('./public/directions/')
+          var target = window.location.hash === '#studio'
+            ? './public/studio/'
+            : './public/directions/'
+          window.location.replace(target)
         }
-      }, 3000)
+      }, 1800)
     </script>
   </head>
   <body>
