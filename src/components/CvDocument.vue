@@ -1,7 +1,7 @@
 <template>
   <article
     class="cv-sheet"
-    :class="[`cv-${template.variant}`, template.theme ? `theme-${template.theme}` : '']"
+    :class="[`cv-${template.variant}`, template.theme ? `theme-${template.theme}` : '', ...appearanceClasses]"
     :style="{ '--cv-accent': accent }"
   >
     <template v-if="template.variant === 'ats'">
@@ -129,8 +129,18 @@ export default {
     profile: { type: Object, required: true },
     template: { type: Object, required: true },
     accent: { type: String, required: true },
+    appearance: {
+      type: Object,
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft' }),
+    },
   },
   computed: {
+    appearanceClasses() {
+      const font = ['sans', 'serif', 'mono'].includes(this.appearance?.font) ? this.appearance.font : 'sans'
+      const density = ['compact', 'balanced', 'spacious'].includes(this.appearance?.density) ? this.appearance.density : 'balanced'
+      const radius = ['sharp', 'soft', 'round'].includes(this.appearance?.radius) ? this.appearance.radius : 'soft'
+      return [`cv-font-${font}`, `cv-density-${density}`, `cv-radius-${radius}`]
+    },
     monogram() {
       return String(this.profile.name || 'CV').split(' ').filter(Boolean).slice(-2).map((word) => word.charAt(0)).join('')
     },
