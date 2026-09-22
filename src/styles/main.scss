@@ -47,3 +47,6 @@
 
 // Shared brand asset applied after concept/theme overrides.
 @use 'brand-seo';
+
+// CV Builder v2: focused editor hierarchy layered after legacy/theme overrides.
+@use 'editor-v2';
