@@ -1,0 +1,291 @@
+.completion-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--apple-separator);
+  border-radius: var(--apple-radius-control);
+  padding: 9px 11px;
+  color: var(--apple-label);
+  background: var(--apple-fill);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  transition:
+    transform var(--apple-fast) var(--apple-ease-control),
+    background-color var(--apple-fast) ease,
+    border-color var(--apple-fast) ease;
+
+  strong {
+    min-width: 34px;
+    padding: 4px 7px;
+    border-radius: 999px;
+    color: var(--apple-blue);
+    background: rgba(0, 103, 201, .08);
+    font-size: 9px;
+    text-align: center;
+  }
+
+  &:hover {
+    border-color: rgba(0, 103, 201, .22);
+    background: var(--apple-fill-strong);
+  }
+
+  &:active { transform: scale(.975); }
+}
+
+.editor-trigger.primary-button {
+  border: 0;
+  color: #fff;
+  background: var(--apple-blue);
+}
+
+.editor-trigger.primary-button:hover {
+  background: var(--apple-blue-hover);
+}
+
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-panel {
+  width: min(820px,100%);
+  grid-template-rows: auto minmax(0,1fr) auto;
+}
+
+.editor-header {
+  align-items: flex-start;
+  padding: 24px 28px 20px;
+}
+
+.editor-header-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.editor-progress {
+  max-width: 360px;
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+}
+
+.editor-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--apple-secondary);
+  font-size: 9px;
+
+  strong {
+    color: var(--apple-label);
+    font-size: 10px;
+  }
+}
+
+.editor-progress-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--apple-fill-strong);
+
+  > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--apple-blue);
+    transition: width .24s ease;
+  }
+}
+
+.editor-workspace {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 188px minmax(0,1fr);
+  overflow: hidden;
+}
+
+.editor-tabs {
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 16px 12px;
+  border-right: 1px solid var(--apple-separator);
+  border-bottom: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.editor-tabs button {
+  width: 100%;
+  min-height: 54px;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.editor-tab-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--apple-secondary);
+  background: var(--apple-fill);
+  font-size: 8px !important;
+  font-weight: 750;
+  letter-spacing: .02em;
+}
+
+.editor-tab-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+
+  strong {
+    color: inherit;
+    font-size: 10.5px;
+    line-height: 1.2;
+  }
+
+  small {
+    overflow: hidden;
+    color: var(--apple-tertiary);
+    font-size: 8px;
+    font-weight: 500;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.editor-tabs button.active .editor-tab-icon {
+  color: #fff;
+  background: var(--apple-blue);
+}
+
+.editor-tabs button.active .editor-tab-copy small {
+  color: var(--apple-secondary);
+}
+
+.editor-body {
+  min-width: 0;
+  padding: 24px 28px 42px;
+}
+
+.editor-footer {
+  min-height: 66px;
+}
+
+.editor-footer-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.editor-footer-meta > span::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #28a745;
+  box-shadow: 0 0 0 3px rgba(40,167,69,.10);
+}
+
+@media (max-width: 900px) {
+  .shortcut-hint { display: none; }
+}
+
+@media (max-width: 760px) {
+  .editor-panel {
+    width: 100%;
+  }
+
+  .editor-header {
+    padding: max(18px,env(safe-area-inset-top)) 17px 16px;
+  }
+
+  .editor-header h2 {
+    max-width: 430px;
+    font-size: 20px;
+  }
+
+  .editor-progress {
+    max-width: none;
+    margin-top: 13px;
+  }
+
+  .editor-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0,1fr);
+  }
+
+  .editor-tabs {
+    flex-direction: row;
+    gap: 5px;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--apple-separator);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .editor-tabs button {
+    width: auto;
+    min-width: 104px;
+    min-height: 46px;
+    flex: 0 0 auto;
+    padding: 7px 9px;
+  }
+
+  .editor-tab-icon {
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
+    border-radius: 8px;
+  }
+
+  .editor-tab-copy small { display: none; }
+
+  .editor-body {
+    padding: 20px 17px max(34px,env(safe-area-inset-bottom));
+  }
+
+  .editor-footer {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar-actions .completion-button {
+    display: none;
+  }
+
+  .editor-trigger.primary-button {
+    display: inline-flex;
+  }
+
+  .editor-footer {
+    align-items: stretch;
+  }
+
+  .editor-footer-meta {
+    margin-left: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .completion-button,
+  .editor-progress-track > span {
+    transition: none !important;
+  }
+}
