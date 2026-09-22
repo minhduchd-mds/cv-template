@@ -1,10 +1,9 @@
 name: CV Studio CI
 
+# Hosted Actions runners are currently unavailable for this repository.
+# Keep the full quality gate available on demand without emitting false-red
+# push checks until runner access is restored.
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
   workflow_dispatch:
 
 permissions:
