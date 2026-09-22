@@ -1,0 +1,233 @@
+.theme-ivory.cv-product {
+  background: #fbfaf6;
+}
+
+.theme-ivory .product-sidebar {
+  color: #24332f;
+  background: #f0ede3;
+  border-right: 1px solid #ddd7c8;
+}
+
+.theme-ivory .product-sidebar h1,
+.theme-ivory .product-sidebar h3,
+.theme-ivory .product-summary,
+.theme-ivory .product-contact,
+.theme-ivory .product-skills li {
+  color: #24332f;
+}
+
+.theme-ivory .product-contact {
+  border-top-color: #d8d1c2;
+}
+
+.theme-ivory .product-skills li {
+  background: rgba(49,92,85,.08);
+}
+
+.theme-ivory .product-main {
+  background: #fbfaf6;
+}
+
+.theme-midnight.cv-product {
+  color: #eef2ff;
+  background: #11131a;
+}
+
+.theme-midnight .product-sidebar {
+  background: #090b10;
+}
+
+.theme-midnight .product-main {
+  background: #11131a;
+}
+
+.theme-midnight .product-topline,
+.theme-midnight .product-projects article {
+  border-color: rgba(255,255,255,.1);
+}
+
+.theme-midnight .product-main h2,
+.theme-midnight .product-job strong,
+.theme-midnight .product-projects strong {
+  color: #f6f7fb;
+}
+
+.theme-midnight .product-main p,
+.theme-midnight .product-job span,
+.theme-midnight .product-projects p,
+.theme-midnight .product-projects small,
+.theme-midnight .product-highlights span {
+  color: #a7afc2;
+}
+
+.theme-midnight .product-projects article {
+  background: rgba(255,255,255,.025);
+}
+
+.theme-compact.cv-ats {
+  padding: 34px 42px;
+  font-size: 10.4px;
+  line-height: 1.43;
+}
+
+.theme-compact .ats-header {
+  padding-bottom: 13px;
+}
+
+.theme-compact.cv-ats section {
+  margin-top: 17px;
+}
+
+.theme-compact .experience-item + .experience-item {
+  margin-top: 14px;
+}
+
+.theme-compact .ats-project-grid {
+  gap: 10px;
+}
+
+.theme-serif.cv-ats {
+  color: #2d241f;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.theme-serif .ats-header {
+  border-bottom-color: #7c2d12;
+}
+
+.theme-serif .contact-row,
+.theme-serif .cv-kicker,
+.theme-serif .ats-project-grid span {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.theme-swiss.cv-creative {
+  color: #111;
+}
+
+.theme-swiss .creative-header {
+  min-height: 220px;
+  background: #fff;
+  border-top: 14px solid var(--cv-accent);
+  border-bottom: 2px solid #111;
+}
+
+.theme-swiss .creative-number,
+.theme-swiss .label-row span {
+  color: #111;
+}
+
+.theme-swiss .creative-projects article {
+  border: 1px solid #111;
+  border-radius: 0;
+  background: #fff;
+}
+
+.theme-swiss .creative-aside {
+  border-left: 2px solid #111;
+  background: #f5f5f2;
+}
+
+.theme-navy.cv-executive {
+  color: #17283a;
+  background: #f8fafc;
+}
+
+.theme-navy .executive-rule {
+  background: linear-gradient(90deg, var(--cv-accent), #17283a);
+}
+
+.theme-navy .executive-layout h2,
+.theme-navy .executive-layout aside {
+  border-color: #cfd9e4;
+}
+
+.cv-font-sans {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.cv-font-serif {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.cv-font-mono {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.cv-density-compact {
+  font-size: 10.6px;
+  line-height: 1.42;
+}
+
+.cv-density-compact .experience-item + .experience-item {
+  margin-top: 14px;
+}
+
+.cv-density-compact .product-main section,
+.cv-density-compact.cv-ats section,
+.cv-density-compact .creative-layout main section + section,
+.cv-density-compact .executive-layout section + section {
+  margin-top: 20px;
+}
+
+.cv-density-spacious {
+  font-size: 12px;
+  line-height: 1.66;
+}
+
+.cv-density-spacious .experience-item + .experience-item {
+  margin-top: 28px;
+}
+
+.cv-density-spacious .product-main section,
+.cv-density-spacious.cv-ats section,
+.cv-density-spacious .creative-layout main section + section,
+.cv-density-spacious .executive-layout section + section {
+  margin-top: 36px;
+}
+
+.cv-radius-sharp {
+  --cv-radius: 0px;
+}
+
+.cv-radius-soft {
+  --cv-radius: 10px;
+}
+
+.cv-radius-round {
+  --cv-radius: 18px;
+}
+
+.cv-sheet {
+  .profile-monogram,
+  .product-projects article,
+  .creative-projects article,
+  .cv-project-cover,
+  .product-skills li {
+    border-radius: var(--cv-radius, 10px);
+  }
+}
+
+.thumb-theme-ivory {
+  background: #fbfaf6;
+}
+
+.thumb-theme-midnight {
+  background: #11131a;
+}
+
+.thumb-theme-compact {
+  background: #fff;
+}
+
+.thumb-theme-serif {
+  background: #fbf7f2;
+}
+
+.thumb-theme-swiss {
+  background: linear-gradient(180deg, #e10600 0 12px, #fff 12px 100%);
+}
+
+.thumb-theme-navy {
+  background: #f8fafc;
+}
