@@ -1,7 +1,7 @@
 <template>
   <main class="landing-page">
     <header class="landing-nav" aria-label="Primary navigation">
-      <a class="landing-brand" href="#top" aria-label="CV Studio home">
+      <a class="landing-brand" href="#studio" aria-label="Open CV Studio builder">
         <span class="landing-brand__mark">CV</span>
         <span><strong>CV Studio</strong><small>Portfolio & resume system</small></span>
       </a>
@@ -143,7 +143,7 @@
       <div><p>No account required. Edit locally, choose a direction and export when the story feels right.</p><a class="landing-primary-button landing-primary-button--light" href="#studio">Open CV Studio <span>→</span></a></div>
     </section>
 
-    <footer class="landing-footer"><a class="landing-brand" href="#top"><span class="landing-brand__mark">CV</span><span><strong>CV Studio</strong><small>Vue · Vite · SCSS</small></span></a><div><a href="#templates">Templates</a><a href="#studio">Builder</a><a href="#concept-apple">Concepts</a><a href="https://github.com/minhduchd-mds/cv-template" target="_blank" rel="noreferrer noopener">GitHub</a></div><span>Local-first · Motion-aware · Print-ready</span></footer>
+    <footer class="landing-footer"><a class="landing-brand" href="#studio"><span class="landing-brand__mark">CV</span><span><strong>CV Studio</strong><small>Vue · Vite · SCSS</small></span></a><div><a href="#templates">Templates</a><a href="#studio">Builder</a><a href="#concept-apple">Concepts</a><a href="https://github.com/minhduchd-mds/cv-template" target="_blank" rel="noreferrer noopener">GitHub</a></div><span>Local-first · Motion-aware · Print-ready</span></footer>
   </main>
 </template>
 
