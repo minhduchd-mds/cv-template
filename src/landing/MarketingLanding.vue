@@ -34,7 +34,7 @@
         </div>
       </div>
 
-      <div class="landing-product" aria-label="CV Studio product preview">
+      <a class="landing-product" href="#studio" aria-label="Open CV Studio builder preview">
         <div class="landing-product__chrome"><i></i><i></i><i></i><span>CV Studio / Builder</span><b>100%</b></div>
         <div class="landing-product__body">
           <aside class="landing-product__rail" aria-hidden="true">
@@ -63,7 +63,7 @@
           </section>
           <aside class="landing-product__inspector" aria-hidden="true"><small>DESIGN</small><label>Accent<span class="landing-color-dot"></span></label><label>Layout<b>Editorial</b></label><label>Spacing<b>Comfortable</b></label><label>Output<b>A4 / Web</b></label><div class="landing-product__export">Export PDF ↗</div></aside>
         </div>
-      </div>
+      </a>
     </section>
 
     <section class="landing-proof" aria-label="Product capabilities">
