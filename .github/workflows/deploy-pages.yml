@@ -1,9 +1,10 @@
 name: Deploy Vite to GitHub Pages
 
-# Production currently uses GitHub Pages branch-source fallback because hosted
-# Actions runners are unavailable. Trigger this manually once runner access returns;
-# a successful run restores the full Vite application over the fallback.
+# Build and publish the Vite application on master. Manual dispatch remains
+# available for recovery/redeploys.
 on:
+  push:
+    branches: [master]
   workflow_dispatch:
 
 permissions:
