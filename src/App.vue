@@ -34,7 +34,7 @@
           <div class="eyebrow"><span></span> CV system · 2026 edition</div>
           <h1>One profile.<br /><em>Multiple CV directions.</em></h1>
           <p>A modern, code-aware resume studio built for Senior UI/UX, Product Design and technology roles. Pick a template, edit your profile, tune the accent and export an A4-ready CV.</p>
-          <div class="hero-meta"><div><strong>6</strong><span>starter templates</span></div><div><strong>A4</strong><span>print-ready layout</span></div><div><strong>360°</strong><span>sample profile data</span></div></div>
+          <div class="hero-meta"><div><strong>{{ templates.length }}</strong><span>starter templates</span></div><div><strong>A4</strong><span>print-ready layout</span></div><div><strong>360°</strong><span>sample profile data</span></div></div>
         </div>
         <div class="hero-orbit" aria-hidden="true"><div class="orbit-card orbit-card-a"><span>01</span><b>ATS Clean</b></div><div class="orbit-card orbit-card-b"><span>02</span><b>Product</b></div><div class="orbit-card orbit-card-c"><span>03</span><b>Design Engineer</b></div><div class="hero-badge">A4<br /><small>PDF</small></div></div>
       </section>
@@ -64,7 +64,7 @@
               <label class="color-control"><span>Accent</span><input v-model="accent" type="color" aria-label="Change CV accent color" /></label>
             </div>
           </div>
-          <div class="preview-stage"><div class="preview-zoom" :style="{ '--preview-zoom': zoom }"><CvDocument :key="selectedTemplate.id" :profile="candidate" :template="selectedTemplate" :accent="accent" /></div></div>
+          <div class="preview-stage"><div class="preview-zoom" :style="{ '--preview-zoom': zoom }"><CvDocument :key="selectedTemplate.id" :profile="candidate" :template="selectedTemplate" :accent="accent" :appearance="appearance" /></div></div>
         </div>
       </section>
 
@@ -74,13 +74,15 @@
       </section>
 
       <footer class="site-footer studio-only"><span>CV Studio · Vue 3.5.42 · Vite 8.3.0</span><span>Editable · Responsive · Motion-aware · Print ready</span></footer>
-      <div class="print-only print-document"><CvDocument :profile="candidate" :template="selectedTemplate" :accent="accent" /></div>
+      <div class="print-only print-document"><CvDocument :profile="candidate" :template="selectedTemplate" :accent="accent" :appearance="appearance" /></div>
     </main>
 
     <ProfileEditor
       :open="editorOpen"
       :profile="candidate"
       :completion="completionPercent"
+      :appearance="appearance"
+      :accent="accent"
       @close="editorOpen = false"
       @update-field="updateProfileField"
       @update-item="updateProfileItem"
@@ -88,6 +90,8 @@
       @add-item="addProfileItem"
       @remove-item="removeProfileItem"
       @move-item="moveProfileItem"
+      @update-appearance="updateAppearance"
+      @update-accent="accent = $event"
       @reset="resetCandidate"
     />
   </div>
@@ -137,7 +141,18 @@ export default {
   name: 'App',
   components: { CvDocument, ProfileEditor },
   data() {
-    return { candidate: sanitizeProfileMedia(cloneCandidate()), templates, selectedId: templates[0].id, category: 'All', accent: templates[0].accent, zoom: 0.85, editorOpen: false, focusMode: false, autoCompleteResult: null }
+    return {
+      candidate: sanitizeProfileMedia(cloneCandidate()),
+      templates,
+      selectedId: templates[0].id,
+      category: 'All',
+      accent: templates[0].accent,
+      zoom: 0.85,
+      appearance: { font: 'sans', density: 'balanced', radius: 'soft' },
+      editorOpen: false,
+      focusMode: false,
+      autoCompleteResult: null,
+    }
   },
   computed: {
     categories() { return ['All'].concat(Array.from(new Set(this.templates.map((item) => item.category)))) },
@@ -166,7 +181,10 @@ export default {
   },
   watch: {
     candidate: { deep: true, handler(value) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)) } catch (error) { console.warn('Unable to persist CV profile locally. Uploaded images may exceed browser storage.', error) } } },
-    selectedId: 'persistStudioSettings', accent: 'persistStudioSettings', zoom: 'persistStudioSettings',
+    selectedId: 'persistStudioSettings',
+    accent: 'persistStudioSettings',
+    zoom: 'persistStudioSettings',
+    appearance: { deep: true, handler: 'persistStudioSettings' },
   },
   mounted() {
     try {
@@ -179,6 +197,9 @@ export default {
       if (this.templates.some((item) => item.id === studioSettings.selectedId)) this.selectedId = studioSettings.selectedId
       if (typeof studioSettings.accent === 'string') this.accent = studioSettings.accent
       if ([0.75, 0.85, 1].includes(studioSettings.zoom)) this.zoom = studioSettings.zoom
+      if (studioSettings.appearance && typeof studioSettings.appearance === 'object') {
+        this.appearance = { ...this.appearance, ...studioSettings.appearance }
+      }
     } catch (error) { console.warn('Unable to restore saved CV Studio state.', error); this.candidate = sanitizeProfileMedia(cloneCandidate()) }
     window.addEventListener('keydown', this.handleShortcut)
   },
@@ -203,7 +224,22 @@ export default {
       else if (key === 'p') { event.preventDefault(); this.printCv() }
       else if (key === 'escape') { this.editorOpen = false; this.focusMode = false }
     },
-    persistStudioSettings() { try { localStorage.setItem(STUDIO_KEY, JSON.stringify({ selectedId: this.selectedId, accent: this.accent, zoom: this.zoom })) } catch (error) { console.warn('Unable to persist CV Studio settings.', error) } },
+    persistStudioSettings() {
+      try {
+        localStorage.setItem(STUDIO_KEY, JSON.stringify({
+          selectedId: this.selectedId,
+          accent: this.accent,
+          zoom: this.zoom,
+          appearance: this.appearance,
+        }))
+      } catch (error) {
+        console.warn('Unable to persist CV Studio settings.', error)
+      }
+    },
+    updateAppearance({ key, value }) {
+      if (!['font', 'density', 'radius'].includes(key)) return
+      this.appearance = { ...this.appearance, [key]: value }
+    },
     updateProfileField({ key, value }) {
       if (!Object.prototype.hasOwnProperty.call(this.candidate, key)) return
       this.candidate[key] = key === 'avatar' ? safeImageSource(value) : value
