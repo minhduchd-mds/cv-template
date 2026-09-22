@@ -8,11 +8,11 @@
       <div class="topbar-actions">
         <span class="shortcut-hint" aria-label="Keyboard shortcuts"><kbd>E</kbd> Edit <kbd>F</kbd> Focus <kbd>N</kbd> Next</span>
         <a class="ghost-button" href="#templates">Templates</a>
-        <button class="auto-complete-button" type="button" :aria-label="`Auto-complete CV · ${completionPercent}% complete`" @click="runAutoComplete">
-          <span>Auto-complete CV</span><strong>{{ completionPercent }}%</strong>
+        <button class="completion-button" type="button" :aria-label="`Complete missing CV fields · ${completionPercent}% complete`" @click="runAutoComplete">
+          <span>Complete gaps</span><strong>{{ completionPercent }}%</strong>
         </button>
-        <button class="editor-trigger" type="button" @click="editorOpen = true">Edit CV</button>
-        <button class="primary-button" type="button" @click="printCv"><span>Export / Print PDF</span><span aria-hidden="true">↗</span></button>
+        <button class="editor-trigger primary-button" type="button" @click="editorOpen = true">Edit CV</button>
+        <button class="ghost-button export-button" type="button" @click="printCv"><span>Export PDF</span><span aria-hidden="true">↗</span></button>
       </div>
     </header>
 
@@ -80,6 +80,7 @@
     <ProfileEditor
       :open="editorOpen"
       :profile="candidate"
+      :completion="completionPercent"
       @close="editorOpen = false"
       @update-field="updateProfileField"
       @update-item="updateProfileItem"
