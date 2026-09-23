@@ -17,36 +17,46 @@
     { id: 'ats-serif', name: 'ATS Serif', category: 'ATS', variant: 'ats', accent: '#7c2d12' },
     { id: 'creative-swiss', name: 'Swiss Grid', category: 'Creative', variant: 'creative', accent: '#e10600' },
     { id: 'executive-navy', name: 'Executive Navy', category: 'Leadership', variant: 'executive', accent: '#244a73' },
+    { id: 'modern-split', name: 'Modern Split', category: 'Modern', variant: 'product', accent: '#2563eb' },
+    { id: 'modern-clarity', name: 'Clarity Pro', category: 'Modern', variant: 'ats', accent: '#0891b2' },
+    { id: 'modern-bento', name: 'Bento Resume', category: 'Modern', variant: 'creative', accent: '#7c3aed' },
+    { id: 'modern-gradient', name: 'Gradient Editorial', category: 'Modern', variant: 'creative', accent: '#8b5cf6' },
+    { id: 'modern-timeline', name: 'Timeline Pro', category: 'Modern', variant: 'executive', accent: '#0f766e' },
+    { id: 'modern-mono', name: 'Mono Grid', category: 'Modern', variant: 'ats', accent: '#111827' },
   ]
 
   const rolePresets = {
     recruiter: {
-      templateId: 'ats-clean',
-      accent: '#0f766e',
+      templateId: 'modern-clarity',
+      accent: '#0891b2',
       font: 'sans',
       density: 'compact',
       radius: 'sharp',
+      projectLayout: 'list',
     },
     uiux: {
-      templateId: 'product-slate',
-      accent: '#6d5dfc',
+      templateId: 'modern-bento',
+      accent: '#7c3aed',
       font: 'sans',
       density: 'balanced',
       radius: 'soft',
+      projectLayout: 'cards',
     },
     engineer: {
-      templateId: 'design-engineer',
+      templateId: 'modern-mono',
       accent: '#111827',
       font: 'mono',
       density: 'compact',
       radius: 'sharp',
+      projectLayout: 'list',
     },
     lead: {
-      templateId: 'executive-navy',
-      accent: '#244a73',
+      templateId: 'modern-timeline',
+      accent: '#0f766e',
       font: 'serif',
       density: 'spacious',
       radius: 'soft',
+      projectLayout: 'list',
     },
   }
 
@@ -125,6 +135,7 @@
     font: 'sans',
     density: 'balanced',
     radius: 'soft',
+    projectLayout: 'cards',
     showSummary: true,
     showSkills: true,
     showExperience: true,
@@ -260,7 +271,7 @@
           ? 'ats'
           : template.variant
 
-    paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius}`
+    paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'}`
     paper.style.setProperty('--accent', settings.accent)
     paper.style.setProperty('--zoom', String(settings.zoom))
 
@@ -273,7 +284,7 @@
       : ''
 
     const projects = settings.showProjects
-      ? `<section data-edit-pane="content" data-edit-focus="#projectEditor"><h3 class="section-title">Selected work</h3>${renderProjects()}</section>`
+      ? `<section class="project-section" data-edit-pane="content" data-edit-focus="#projectEditor"><h3 class="section-title">Selected work</h3><div class="project-items">${renderProjects()}</div></section>`
       : ''
 
     const skills = settings.showSkills
@@ -414,6 +425,10 @@
     $('#showSkills').checked = settings.showSkills
     $('#showExperience').checked = settings.showExperience
     $('#showProjects').checked = settings.showProjects
+    $('#projectCards').setAttribute('aria-pressed', settings.projectLayout !== 'list' ? 'true' : 'false')
+    $('#projectList').setAttribute('aria-pressed', settings.projectLayout === 'list' ? 'true' : 'false')
+    $('#projectCards').classList.toggle('active', settings.projectLayout !== 'list')
+    $('#projectList').classList.toggle('active', settings.projectLayout === 'list')
   }
 
   const renderEditors = () => {
@@ -513,6 +528,16 @@
 
   $('#radius').addEventListener('change', (event) => {
     settings.radius = event.currentTarget.value
+    renderAll()
+  })
+
+  $('#projectCards').addEventListener('click', () => {
+    settings.projectLayout = 'cards'
+    renderAll()
+  })
+
+  $('#projectList').addEventListener('click', () => {
+    settings.projectLayout = 'list'
     renderAll()
   })
 
