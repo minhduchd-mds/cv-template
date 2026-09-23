@@ -1,83 +1,596 @@
 (() => {
-  const STORAGE='cv-studio-static-v1';
-  const SETTINGS='cv-studio-static-settings-v1';
-  const templates=[
-    ['product-slate','Senior Product Designer','Product','product','#6d5dfc'],
-    ['ats-clean','ATS Clean','ATS','ats','#0f766e'],
-    ['creative-grid','Creative Portfolio','Creative','creative','#e44d7a'],
-    ['executive-ink','Executive Minimal','Leadership','executive','#b7791f'],
-    ['design-system-lead','Design System Lead','Product','system','#2563eb'],
-    ['design-engineer','Design Engineer','Tech','tech','#111827'],
-    ['product-ivory','Product Ivory','Product','product','#315C55'],
-    ['product-midnight','Product Midnight','Product','product','#7C6DFF'],
-    ['ats-compact','ATS Compact','ATS','ats','#334155'],
-    ['ats-serif','ATS Serif','ATS','ats','#7C2D12'],
-    ['creative-swiss','Swiss Grid','Creative','creative','#E10600'],
-    ['executive-navy','Executive Navy','Leadership','executive','#244A73']
-  ].map(([id,name,category,variant,accent])=>({id,name,category,variant,accent}));
-  const demo={
-    name:'Alex Chen',role:'Senior Product Designer',email:'alex.chen@example.com',phone:'+84 900 000 000',location:'Hanoi, Vietnam',website:'alexchen.design',
-    summary:'Senior product designer focused on complex enterprise workflows, design systems and code-aware delivery. I connect product thinking, interface craft and implementation constraints to ship clearer digital products.',
-    metrics:[['8+','Years experience'],['18+','Products shipped'],['85%','System adoption']],
-    experience:[
-      {role:'Senior Product Designer',company:'Product Platform',period:'2022 — Present',bullets:['Led workflow redesign across complex enterprise surfaces.','Built reusable design-system patterns with engineering.','Improved design-to-development handoff through shared component contracts.']},
-      {role:'UI/UX Designer',company:'Digital Products',period:'2019 — 2022',bullets:['Designed responsive web applications and dashboards.','Ran usability reviews and accessibility-focused UI QA.']}
+  'use strict'
+
+  const PROFILE_KEY = 'cv-studio-static-v2'
+  const SETTINGS_KEY = 'cv-studio-static-settings-v2'
+
+  const templates = [
+    { id: 'product-slate', name: 'Senior Product Designer', category: 'Product', variant: 'product', accent: '#6d5dfc' },
+    { id: 'ats-clean', name: 'ATS Clean', category: 'ATS', variant: 'ats', accent: '#0f766e' },
+    { id: 'creative-grid', name: 'Creative Portfolio', category: 'Creative', variant: 'creative', accent: '#e44d7a' },
+    { id: 'executive-ink', name: 'Executive Minimal', category: 'Leadership', variant: 'executive', accent: '#b7791f' },
+    { id: 'design-system-lead', name: 'Design System Lead', category: 'Product', variant: 'system', accent: '#2563eb' },
+    { id: 'design-engineer', name: 'Design Engineer', category: 'Tech', variant: 'tech', accent: '#111827' },
+    { id: 'product-ivory', name: 'Product Ivory', category: 'Product', variant: 'product', accent: '#315c55' },
+    { id: 'product-midnight', name: 'Product Midnight', category: 'Product', variant: 'product', accent: '#7c6dff' },
+    { id: 'ats-compact', name: 'ATS Compact', category: 'ATS', variant: 'ats', accent: '#334155' },
+    { id: 'ats-serif', name: 'ATS Serif', category: 'ATS', variant: 'ats', accent: '#7c2d12' },
+    { id: 'creative-swiss', name: 'Swiss Grid', category: 'Creative', variant: 'creative', accent: '#e10600' },
+    { id: 'executive-navy', name: 'Executive Navy', category: 'Leadership', variant: 'executive', accent: '#244a73' },
+  ]
+
+  const rolePresets = {
+    recruiter: {
+      templateId: 'ats-clean',
+      accent: '#0f766e',
+      font: 'sans',
+      density: 'compact',
+      radius: 'sharp',
+    },
+    uiux: {
+      templateId: 'product-slate',
+      accent: '#6d5dfc',
+      font: 'sans',
+      density: 'balanced',
+      radius: 'soft',
+    },
+    engineer: {
+      templateId: 'design-engineer',
+      accent: '#111827',
+      font: 'mono',
+      density: 'compact',
+      radius: 'sharp',
+    },
+    lead: {
+      templateId: 'executive-navy',
+      accent: '#244a73',
+      font: 'serif',
+      density: 'spacious',
+      radius: 'soft',
+    },
+  }
+
+  const appearancePresets = {
+    recruiter: { font: 'sans', density: 'compact', radius: 'sharp' },
+    product: { font: 'sans', density: 'balanced', radius: 'soft' },
+    editorial: { font: 'serif', density: 'spacious', radius: 'soft' },
+    technical: { font: 'mono', density: 'compact', radius: 'sharp' },
+  }
+
+  const demoProfile = {
+    name: 'Alex Chen',
+    role: 'Senior Product Designer',
+    email: 'alex.chen@example.com',
+    phone: '+84 900 000 000',
+    location: 'Hanoi, Vietnam',
+    website: 'alexchen.design',
+    summary:
+      'Senior product designer focused on complex enterprise workflows, design systems and code-aware delivery. I connect product thinking, interface craft and implementation constraints to ship clearer digital products.',
+    experience: [
+      {
+        role: 'Senior Product Designer',
+        company: 'Product Platform',
+        period: '2022 — Present',
+        location: 'Hanoi',
+        bullets: [
+          'Led workflow redesign across complex enterprise surfaces.',
+          'Built reusable design-system patterns with engineering.',
+          'Improved design-to-development handoff through shared component contracts.',
+        ],
+      },
+      {
+        role: 'UI/UX Designer',
+        company: 'Digital Products',
+        period: '2019 — 2022',
+        location: 'Hanoi',
+        bullets: [
+          'Designed responsive web applications and dashboards.',
+          'Ran usability reviews and accessibility-focused UI QA.',
+        ],
+      },
     ],
-    projects:[
-      {name:'Design QA Agent',type:'AI · Design Ops',impact:'Faster UI review',description:'Design-to-code review workflow with evidence, severity and exportable findings.'},
-      {name:'Enterprise Dashboard',type:'Data · Platform',impact:'Unified reporting',description:'Decision-focused analytics workspace with progressive drill-down.'}
+    projects: [
+      {
+        name: 'Design QA Agent',
+        type: 'AI · Design Ops',
+        impact: 'Faster UI review',
+        description:
+          'Design-to-code review workflow with evidence, severity and exportable findings.',
+      },
+      {
+        name: 'Enterprise Dashboard',
+        type: 'Data · Platform',
+        impact: 'Unified reporting',
+        description:
+          'Decision-focused analytics workspace with progressive drill-down.',
+      },
     ],
-    skills:['Product strategy','UI/UX Design','Design Systems','Accessibility','Figma','Vue / React','HTML / CSS','AI Product UX'],
-    languages:['Vietnamese · Native','English · Professional']
-  };
-  let profile=load(STORAGE,demo);
-  let settings=load(SETTINGS,{templateId:'product-slate',accent:'#6d5dfc',zoom:.85,font:'sans',density:'balanced',radius:'soft'});
-  const $=(q,el=document)=>el.querySelector(q), $$=(q,el=document)=>Array.from(el.querySelectorAll(q));
-  function load(key,fallback){try{return {...structuredClone(fallback),...(JSON.parse(localStorage.getItem(key)||'null')||{})}}catch{return structuredClone(fallback)}}
-  function save(){localStorage.setItem(STORAGE,JSON.stringify(profile));localStorage.setItem(SETTINGS,JSON.stringify(settings))}
-  function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-  function activeTemplate(){return templates.find(t=>t.id===settings.templateId)||templates[0]}
-  function renderTemplates(){
-    const list=$('#template-list'); list.innerHTML='';
-    templates.forEach(t=>{const b=document.createElement('button');b.className='template-card'+(t.id===settings.templateId?' active':'');b.innerHTML=`<span class="template-thumb" style="--accent:${t.accent}"></span><span><b>${t.name}</b><small>${t.category}</small></span>`;b.onclick=()=>{settings.templateId=t.id;settings.accent=t.accent;syncControls();renderAll()};list.appendChild(b)})
+    skills: [
+      'Product strategy',
+      'UI/UX Design',
+      'Design Systems',
+      'Accessibility',
+      'Figma',
+      'Vue / React',
+      'HTML / CSS',
+      'AI Product UX',
+    ],
+    languages: ['Vietnamese · Native', 'English · Professional'],
   }
-  function renderCv(target){
-    const t=activeTemplate();
-    const metrics=(profile.metrics||demo.metrics).slice(0,3).map(x=>`<div class="metric card"><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div>`).join('');
-    const jobs=(profile.experience||[]).map(j=>`<article class="job"><div class="job-head"><b>${esc(j.role)} · ${esc(j.company)}</b><span>${esc(j.period)}</span></div><ul>${(j.bullets||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></article>`).join('');
-    const projects=(profile.projects||[]).map(p=>`<article class="project"><b>${esc(p.name)}</b><span>${esc(p.type)} · ${esc(p.impact)}</span><p>${esc(p.description)}</p></article>`).join('');
-    const skills=(profile.skills||[]).map(s=>`<span class="tag card">${esc(s)}</span>`).join('');
-    const langs=(profile.languages||[]).map(s=>`<p>${esc(s)}</p>`).join('');
-    target.className=`cv-sheet theme-${t.variant} font-${settings.font} density-${settings.density} radius-${settings.radius}`;
-    target.style.setProperty('--cv-accent',settings.accent);
-    target.innerHTML=`
-      <header class="cv-head"><div><div class="cv-kicker">${esc(profile.role)}</div><h1>${esc(profile.name)}</h1><h3>${esc(profile.role)}</h3></div><div class="contact"><span>${esc(profile.location)}</span><span>${esc(profile.email)}</span><span>${esc(profile.phone)}</span><span>${esc(profile.website)}</span></div></header>
-      <p class="summary">${esc(profile.summary)}</p>
-      <div class="metrics">${metrics}</div>
-      <div class="cv-grid"><div><section class="section"><h2>Experience</h2>${jobs}</section><section class="section"><h2>Selected work</h2>${projects}</section></div><aside><section class="section"><h2>Core skills</h2><div class="tags">${skills}</div></section><section class="section"><h2>Languages</h2>${langs}</section></aside></div>`;
+
+  const defaultSettings = {
+    templateId: 'product-slate',
+    accent: '#6d5dfc',
+    zoom: 0.85,
+    font: 'sans',
+    density: 'balanced',
+    radius: 'soft',
+    showSummary: true,
+    showSkills: true,
+    showExperience: true,
+    showProjects: true,
   }
-  function renderEditor(){
-    $$('[data-field]').forEach(el=>{el.value=profile[el.dataset.field]||''});
-    $('#skills-input').value=(profile.skills||[]).join('\n'); $('#languages-input').value=(profile.languages||[]).join('\n');
-    const ex=$('#experience-editor');ex.innerHTML='';(profile.experience||[]).forEach((j,i)=>{const box=document.createElement('div');box.className='item-editor';box.innerHTML=`<header><b>Experience ${i+1}</b><button type="button">Remove</button></header><label>Role<input data-k="role" value="${esc(j.role)}"></label><label>Company<input data-k="company" value="${esc(j.company)}"></label><label>Period<input data-k="period" value="${esc(j.period)}"></label><label>Bullets<textarea data-k="bullets" rows="5">${esc((j.bullets||[]).join('\n'))}</textarea></label>`;box.querySelector('button').onclick=()=>{profile.experience.splice(i,1);renderEditor();renderAll()};$$('[data-k]',box).forEach(el=>el.oninput=()=>{j[el.dataset.k]=el.dataset.k==='bullets'?el.value.split('\n').map(x=>x.trim()).filter(Boolean):el.value;renderAll()});ex.appendChild(box)});
-    const pr=$('#projects-editor');pr.innerHTML='';(profile.projects||[]).forEach((p,i)=>{const box=document.createElement('div');box.className='item-editor';box.innerHTML=`<header><b>Project ${i+1}</b><button type="button">Remove</button></header><label>Name<input data-k="name" value="${esc(p.name)}"></label><label>Type<input data-k="type" value="${esc(p.type)}"></label><label>Impact<input data-k="impact" value="${esc(p.impact)}"></label><label>Description<textarea data-k="description" rows="5">${esc(p.description)}</textarea></label>`;box.querySelector('button').onclick=()=>{profile.projects.splice(i,1);renderEditor();renderAll()};$$('[data-k]',box).forEach(el=>el.oninput=()=>{p[el.dataset.k]=el.value;renderAll()});pr.appendChild(box)});
+
+  const clone = (value) => JSON.parse(JSON.stringify(value))
+  const $ = (selector, root = document) => root.querySelector(selector)
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector))
+
+  const safeParse = (value) => {
+    try {
+      return JSON.parse(value)
+    } catch {
+      return null
+    }
   }
-  function syncControls(){
-    $('#accent-input').value=settings.accent;$('#editor-accent').value=settings.accent;$('#zoom-select').value=String(settings.zoom);$('#font-select').value=settings.font;$('#density-select').value=settings.density;$('#radius-select').value=settings.radius;$('#active-template-name').textContent=activeTemplate().name;$('#preview-zoom').style.transform=`scale(${settings.zoom})`
+
+  const restoreObject = (key, fallback) => {
+    const saved = safeParse(localStorage.getItem(key) || '')
+    if (!saved || typeof saved !== 'object') return clone(fallback)
+    return { ...clone(fallback), ...saved }
   }
-  function renderAll(){save();renderTemplates();renderCv($('#cv-sheet'));renderCv($('#print-sheet'));syncControls()}
-  $$('[data-field]').forEach(el=>el.oninput=()=>{profile[el.dataset.field]=el.value;renderAll()});
-  $('#skills-input').oninput=e=>{profile.skills=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);renderAll()};
-  $('#languages-input').oninput=e=>{profile.languages=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);renderAll()};
-  $('#add-experience').onclick=()=>{profile.experience.push({role:'New role',company:'Company',period:'2026 — Present',bullets:['Describe measurable impact.']});renderEditor();renderAll()};
-  $('#add-project').onclick=()=>{profile.projects.push({name:'New project',type:'Product · Design',impact:'Key impact',description:'Problem, role, solution and result.'});renderEditor();renderAll()};
-  $('#edit-toggle').onclick=()=>$('#editor').classList.add('open');$('#editor-close').onclick=$('#done-editing').onclick=()=>$('#editor').classList.remove('open');
-  $('#print-btn').onclick=()=>window.print();
-  $('#zoom-select').onchange=e=>{settings.zoom=Number(e.target.value);renderAll()};
-  $('#accent-input').oninput=$('#editor-accent').oninput=e=>{settings.accent=e.target.value;renderAll()};
-  $('#font-select').onchange=e=>{settings.font=e.target.value;renderAll()};$('#density-select').onchange=e=>{settings.density=e.target.value;renderAll()};$('#radius-select').onchange=e=>{settings.radius=e.target.value;renderAll()};
-  $('#reset-profile').onclick=()=>{profile=structuredClone(demo);settings={templateId:'product-slate',accent:'#6d5dfc',zoom:.85,font:'sans',density:'balanced',radius:'soft'};renderEditor();renderAll()};
-  $$('#editor-tabs button').forEach(btn=>btn.onclick=()=>{$$('#editor-tabs button').forEach(x=>x.classList.toggle('active',x===btn));$$('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==btn.dataset.tab)});
-  window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='e'&&!/input|textarea|select/i.test(document.activeElement.tagName))$('#editor').classList.toggle('open');if(e.key.toLowerCase()==='p'&&!/input|textarea|select/i.test(document.activeElement.tagName))window.print()});
-  renderEditor();renderAll();
-})();
+
+  const escapeHtml = (value) =>
+    String(value ?? '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;',
+    }[char]))
+
+  let profile = restoreObject(PROFILE_KEY, demoProfile)
+  let settings = restoreObject(SETTINGS_KEY, defaultSettings)
+
+  if (!Array.isArray(profile.experience)) profile.experience = clone(demoProfile.experience)
+  if (!Array.isArray(profile.projects)) profile.projects = clone(demoProfile.projects)
+  if (!Array.isArray(profile.skills)) profile.skills = clone(demoProfile.skills)
+  if (!Array.isArray(profile.languages)) profile.languages = clone(demoProfile.languages)
+  if (!templates.some((item) => item.id === settings.templateId)) settings.templateId = defaultSettings.templateId
+
+  const activeTemplate = () =>
+    templates.find((item) => item.id === settings.templateId) || templates[0]
+
+  const persist = () => {
+    try {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+    } catch (error) {
+      console.warn('Unable to persist CV Studio fallback state.', error)
+    }
+  }
+
+  const setEditorOpen = (open) => {
+    $('#editor').classList.toggle('collapsed', !open)
+  }
+
+  const activatePane = (name, focusSelector = '') => {
+    $$('.tab').forEach((button) => {
+      button.classList.toggle('active', button.dataset.tab === name)
+    })
+    $$('.editor-pane').forEach((pane) => {
+      pane.classList.toggle('active', pane.dataset.pane === name)
+    })
+    setEditorOpen(true)
+    if (focusSelector) {
+      window.requestAnimationFrame(() => {
+        const target = $(focusSelector)
+        target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
+    }
+  }
+
+  const renderTemplates = () => {
+    const list = $('#templateList')
+    list.innerHTML = ''
+
+    templates.forEach((template) => {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = `template-card${template.id === settings.templateId ? ' active' : ''}`
+      button.setAttribute('aria-pressed', template.id === settings.templateId ? 'true' : 'false')
+      button.innerHTML = `
+        <span class="template-thumb" style="--thumb-accent:${template.accent}"></span>
+        <span><strong>${escapeHtml(template.name)}</strong><small>${escapeHtml(template.category)}</small></span>
+      `
+      button.addEventListener('click', () => {
+        settings.templateId = template.id
+        settings.accent = template.accent
+        renderAll()
+      })
+      list.appendChild(button)
+    })
+  }
+
+  const renderExperience = () =>
+    profile.experience
+      .map(
+        (job) => `
+          <article class="job">
+            <div class="job-head">
+              <strong>${escapeHtml(job.role)} · ${escapeHtml(job.company)}</strong>
+              <span>${escapeHtml(job.period)}</span>
+            </div>
+            <small>${escapeHtml(job.location || '')}</small>
+            <ul>${(job.bullets || []).map((bullet) => `<li>${escapeHtml(bullet)}</li>`).join('')}</ul>
+          </article>
+        `,
+      )
+      .join('')
+
+  const renderProjects = () =>
+    profile.projects
+      .map(
+        (project) => `
+          <article class="project">
+            <strong>${escapeHtml(project.name)}</strong>
+            <b>${escapeHtml(project.type)} · ${escapeHtml(project.impact)}</b>
+            <p>${escapeHtml(project.description)}</p>
+          </article>
+        `,
+      )
+      .join('')
+
+  const renderPaper = () => {
+    const paper = $('#paper')
+    const template = activeTemplate()
+    const layoutVariant =
+      template.variant === 'system'
+        ? 'product'
+        : template.variant === 'tech'
+          ? 'ats'
+          : template.variant
+
+    paper.className = `paper template-${layoutVariant} template-theme-${template.variant} font-${settings.font} density-${settings.density} radius-${settings.radius}`
+    paper.style.setProperty('--accent', settings.accent)
+    paper.style.setProperty('--zoom', String(settings.zoom))
+
+    const summary = settings.showSummary
+      ? `<section class="summary" data-edit-pane="content" data-edit-focus="#summary"><p>${escapeHtml(profile.summary)}</p></section>`
+      : ''
+
+    const experience = settings.showExperience
+      ? `<section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3 class="section-title">Experience</h3>${renderExperience()}</section>`
+      : ''
+
+    const projects = settings.showProjects
+      ? `<section data-edit-pane="content" data-edit-focus="#projectEditor"><h3 class="section-title">Selected work</h3>${renderProjects()}</section>`
+      : ''
+
+    const skills = settings.showSkills
+      ? `<section data-edit-pane="content" data-edit-focus="#skills"><h3 class="section-title">Core skills</h3><div class="skills">${profile.skills.map((skill) => `<span>${escapeHtml(skill)}</span>`).join('')}</div></section>`
+      : ''
+
+    const languages = `
+      <section data-edit-pane="content" data-edit-focus="#languages">
+        <h3 class="section-title">Languages</h3>
+        <div class="languages">${profile.languages.map((language) => `<span>${escapeHtml(language)}</span>`).join('')}</div>
+      </section>
+    `
+
+    paper.innerHTML = `
+      <header class="cv-head" data-edit-pane="content" data-edit-focus="#name">
+        <div class="cv-kicker">${escapeHtml(profile.role)}</div>
+        <h1>${escapeHtml(profile.name)}</h1>
+        <h2>${escapeHtml(profile.role)}</h2>
+        <div class="contact">
+          <span>${escapeHtml(profile.location)}</span>
+          <span>${escapeHtml(profile.email)}</span>
+          <span>${escapeHtml(profile.phone)}</span>
+          <span>${escapeHtml(profile.website)}</span>
+        </div>
+      </header>
+      <div class="cv-body">
+        <main class="cv-main">
+          ${summary}
+          ${experience}
+          ${projects}
+        </main>
+        <aside class="cv-side">
+          ${skills}
+          ${languages}
+        </aside>
+      </div>
+    `
+
+    $('#activeTemplateLabel').textContent = `${template.name} · A4`
+  }
+
+  const renderExperienceEditor = () => {
+    const host = $('#experienceEditor')
+    host.innerHTML = ''
+
+    profile.experience.forEach((job, index) => {
+      const card = document.createElement('article')
+      card.className = 'editor-card'
+      card.innerHTML = `
+        <div class="editor-card-head">
+          <strong>Experience ${index + 1}</strong>
+          <button type="button" data-remove>Remove</button>
+        </div>
+        <label>Role<input data-key="role" value="${escapeHtml(job.role)}" /></label>
+        <label>Company<input data-key="company" value="${escapeHtml(job.company)}" /></label>
+        <div class="field-grid">
+          <label>Period<input data-key="period" value="${escapeHtml(job.period)}" /></label>
+          <label>Location<input data-key="location" value="${escapeHtml(job.location || '')}" /></label>
+        </div>
+        <label>Achievements · one per line<textarea data-key="bullets" rows="5">${escapeHtml((job.bullets || []).join('\n'))}</textarea></label>
+      `
+
+      $('[data-remove]', card).addEventListener('click', () => {
+        profile.experience.splice(index, 1)
+        renderAll()
+        renderEditors()
+      })
+
+      $$('[data-key]', card).forEach((input) => {
+        input.addEventListener('input', () => {
+          const key = input.dataset.key
+          job[key] =
+            key === 'bullets'
+              ? input.value.split(/\n+/).map((item) => item.trim()).filter(Boolean)
+              : input.value
+          persist()
+          renderPaper()
+        })
+      })
+
+      host.appendChild(card)
+    })
+  }
+
+  const renderProjectsEditor = () => {
+    const host = $('#projectEditor')
+    host.innerHTML = ''
+
+    profile.projects.forEach((project, index) => {
+      const card = document.createElement('article')
+      card.className = 'editor-card'
+      card.innerHTML = `
+        <div class="editor-card-head">
+          <strong>Project ${index + 1}</strong>
+          <button type="button" data-remove>Remove</button>
+        </div>
+        <label>Name<input data-key="name" value="${escapeHtml(project.name)}" /></label>
+        <div class="field-grid">
+          <label>Type<input data-key="type" value="${escapeHtml(project.type)}" /></label>
+          <label>Impact<input data-key="impact" value="${escapeHtml(project.impact)}" /></label>
+        </div>
+        <label>Description<textarea data-key="description" rows="5">${escapeHtml(project.description)}</textarea></label>
+      `
+
+      $('[data-remove]', card).addEventListener('click', () => {
+        profile.projects.splice(index, 1)
+        renderAll()
+        renderEditors()
+      })
+
+      $$('[data-key]', card).forEach((input) => {
+        input.addEventListener('input', () => {
+          project[input.dataset.key] = input.value
+          persist()
+          renderPaper()
+        })
+      })
+
+      host.appendChild(card)
+    })
+  }
+
+  const syncEditorFields = () => {
+    ;['name', 'role', 'email', 'phone', 'location', 'website', 'summary'].forEach((key) => {
+      const input = $('#' + key)
+      if (input) input.value = profile[key] || ''
+    })
+    $('#skills').value = profile.skills.join('\n')
+    $('#languages').value = profile.languages.join('\n')
+
+    $('#font').value = settings.font
+    $('#density').value = settings.density
+    $('#radius').value = settings.radius
+    $('#zoom').value = String(settings.zoom)
+    $('#accent').value = settings.accent
+
+    $('#showSummary').checked = settings.showSummary
+    $('#showSkills').checked = settings.showSkills
+    $('#showExperience').checked = settings.showExperience
+    $('#showProjects').checked = settings.showProjects
+  }
+
+  const renderEditors = () => {
+    syncEditorFields()
+    renderExperienceEditor()
+    renderProjectsEditor()
+  }
+
+  const renderAll = () => {
+    persist()
+    renderTemplates()
+    renderPaper()
+    syncEditorFields()
+  }
+
+  ;['name', 'role', 'email', 'phone', 'location', 'website', 'summary'].forEach((key) => {
+    $('#' + key).addEventListener('input', (event) => {
+      profile[key] = event.currentTarget.value
+      persist()
+      renderPaper()
+    })
+  })
+
+  $('#skills').addEventListener('input', (event) => {
+    profile.skills = event.currentTarget.value
+      .split(/\n+/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+    persist()
+    renderPaper()
+  })
+
+  $('#languages').addEventListener('input', (event) => {
+    profile.languages = event.currentTarget.value
+      .split(/\n+/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+    persist()
+    renderPaper()
+  })
+
+  $('#addExperience').addEventListener('click', () => {
+    profile.experience.push({
+      role: 'New role',
+      company: 'Company',
+      period: '2026 — Present',
+      location: '',
+      bullets: ['Describe measurable impact.'],
+    })
+    renderAll()
+    renderEditors()
+  })
+
+  $('#addProject').addEventListener('click', () => {
+    profile.projects.push({
+      name: 'New project',
+      type: 'Product · Design',
+      impact: 'Key measurable impact',
+      description: 'Describe the problem, your role, the solution and what changed.',
+    })
+    renderAll()
+    renderEditors()
+  })
+
+  $('#toggleEditor').addEventListener('click', () => {
+    setEditorOpen($('#editor').classList.contains('collapsed'))
+  })
+
+  $('#print').addEventListener('click', () => window.print())
+
+  $('#reset').addEventListener('click', () => {
+    profile = clone(demoProfile)
+    settings = clone(defaultSettings)
+    renderEditors()
+    renderAll()
+  })
+
+  $('#zoom').addEventListener('change', (event) => {
+    settings.zoom = Number(event.currentTarget.value)
+    renderAll()
+  })
+
+  $('#accent').addEventListener('input', (event) => {
+    settings.accent = event.currentTarget.value
+    renderAll()
+  })
+
+  $('#font').addEventListener('change', (event) => {
+    settings.font = event.currentTarget.value
+    renderAll()
+  })
+
+  $('#density').addEventListener('change', (event) => {
+    settings.density = event.currentTarget.value
+    renderAll()
+  })
+
+  $('#radius').addEventListener('change', (event) => {
+    settings.radius = event.currentTarget.value
+    renderAll()
+  })
+
+  ;[
+    ['showSummary', 'showSummary'],
+    ['showSkills', 'showSkills'],
+    ['showExperience', 'showExperience'],
+    ['showProjects', 'showProjects'],
+  ].forEach(([id, key]) => {
+    $('#' + id).addEventListener('change', (event) => {
+      settings[key] = event.currentTarget.checked
+      renderAll()
+    })
+  })
+
+  $$('.tab').forEach((button) => {
+    button.addEventListener('click', () => activatePane(button.dataset.tab))
+  })
+
+  $$('[data-preset]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const preset = appearancePresets[button.dataset.preset]
+      if (!preset) return
+      settings = { ...settings, ...preset }
+      renderAll()
+    })
+  })
+
+  $$('[data-target-preset]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const preset = rolePresets[button.dataset.targetPreset]
+      if (!preset) return
+      settings = { ...settings, ...preset }
+      renderAll()
+    })
+  })
+
+  $('#paper').addEventListener('click', (event) => {
+    const target = event.target.closest('[data-edit-pane]')
+    if (!target) return
+    activatePane(target.dataset.editPane || 'content', target.dataset.editFocus || '')
+  })
+
+  $('#paper').addEventListener('keydown', (event) => {
+    if (!['Enter', ' '].includes(event.key)) return
+    const target = event.target.closest('[data-edit-pane]')
+    if (!target) return
+    event.preventDefault()
+    activatePane(target.dataset.editPane || 'content', target.dataset.editFocus || '')
+  })
+
+  const enhancePreviewAccessibility = () => {
+    $$('[data-edit-pane]', $('#paper')).forEach((node) => {
+      node.tabIndex = 0
+      node.setAttribute('role', 'button')
+      node.setAttribute('aria-label', 'Edit this CV section')
+    })
+  }
+
+  const originalRenderPaper = renderPaper
+  renderPaper = () => {
+    originalRenderPaper()
+    enhancePreviewAccessibility()
+  }
+
+  window.addEventListener('keydown', (event) => {
+    const tag = document.activeElement?.tagName || ''
+    const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)
+    if (typing || event.metaKey || event.ctrlKey || event.altKey) return
+
+    if (event.key.toLowerCase() === 'e') setEditorOpen(true)
+    if (event.key.toLowerCase() === 'p') {
+      event.preventDefault()
+      window.print()
+    }
+    if (event.key === 'Escape') setEditorOpen(false)
+  })
+
+  renderEditors()
+  renderAll()
+})()
