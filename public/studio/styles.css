@@ -2577,3 +2577,41 @@ button{cursor:pointer}
     grid-template-columns:1fr;
   }
 }
+
+
+/* Retained-template containment audit */
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards){
+  overflow-x:hidden;
+}
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards)
+  :where(.cv-head,.cv-body,.cv-main,.cv-side,section,article,.job,.project,.project-items,.skills,.contact){
+  min-width:0;
+}
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards)
+  :where(h1,h2,h3,p,strong,span,b,small){
+  overflow-wrap:anywhere;
+}
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .job-head>div{
+  min-width:0;
+}
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .job-head span{
+  max-width:42%;
+  white-space:normal;
+  text-align:right;
+}
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .contact{
+  flex-wrap:wrap;
+}
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .contact span{
+  max-width:100%;
+  overflow-wrap:anywhere;
+}
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .project{
+  min-width:0;
+  overflow:hidden;
+}
+
+/* Executive Edge reference has four achievement slots in the source visual */
+.ref-achievement-row{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
