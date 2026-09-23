@@ -3127,3 +3127,231 @@ button{cursor:pointer}
     z-index:70;
   }
 }
+
+
+/* Expansion 2026 — five additional professional CV themes */
+
+/* 16. Strategy Brief — consulting / advisory */
+.theme-strategy-brief{
+  background:#f8fafc;
+  color:#172033;
+}
+.theme-strategy-brief .cv-head{
+  margin:18px 20px 0;
+  padding:28px 30px 24px;
+  border:0;
+  border-left:6px solid var(--accent);
+  border-radius:4px;
+  background:linear-gradient(135deg,#eff6ff,#fff 72%);
+}
+.theme-strategy-brief .cv-head h1{
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-weight:800;
+  letter-spacing:-.045em;
+}
+.theme-strategy-brief .cv-head h2{
+  color:#344054;
+}
+.theme-strategy-brief .cv-body{
+  grid-template-columns:minmax(0,1fr) 205px;
+  padding-top:24px;
+  background:#f8fafc;
+}
+.theme-strategy-brief .section-title{
+  padding-bottom:6px;
+  border-bottom:1px solid #dbe6f4;
+  color:#1d4ed8;
+  letter-spacing:.08em;
+}
+.theme-strategy-brief .cv-side{
+  border-left:0;
+  padding:18px;
+  border-radius:12px;
+  background:#eef4fb;
+}
+.theme-strategy-brief .project{
+  border-color:#d9e4f2;
+  background:#fff;
+}
+
+/* 17. Clinical Clean — healthcare / medical */
+.theme-clinical-clean{
+  background:#fbfefd;
+  color:#173f3b;
+}
+.theme-clinical-clean .cv-head{
+  padding:36px 42px 24px;
+  border-bottom:3px solid #0f766e;
+  background:linear-gradient(180deg,#ecfdf8,#fff 78%);
+}
+.theme-clinical-clean .cv-head h1{
+  letter-spacing:-.035em;
+}
+.theme-clinical-clean .cv-head h2,
+.theme-clinical-clean .contact{
+  color:#4b6b67;
+}
+.theme-clinical-clean .cv-body{
+  padding:26px 42px 38px;
+}
+.theme-clinical-clean .section-title{
+  color:#0f766e;
+  letter-spacing:.08em;
+}
+.theme-clinical-clean .summary{
+  padding:12px 14px;
+  border-left:3px solid #5eead4;
+  background:#f0fdfa;
+}
+.theme-clinical-clean .project{
+  border-color:#cfe8e4;
+  background:#f8fffd;
+}
+.theme-clinical-clean .skills span{
+  color:#285b55;
+  background:#e9f8f5;
+}
+
+/* 18. Finance Ledger — banking / investment */
+.theme-finance-ledger{
+  background:#fbfaf5;
+  color:#27251f;
+}
+.theme-finance-ledger .cv-head,
+.theme-finance-ledger .cv-body{
+  background:#fbfaf5;
+}
+.theme-finance-ledger .cv-head{
+  padding-top:38px;
+  border-top:8px solid #173f35;
+  border-bottom:1px solid #d8cfb8;
+}
+.theme-finance-ledger .cv-head h1{
+  color:#173f35;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:36px;
+  font-weight:500;
+  letter-spacing:-.025em;
+}
+.theme-finance-ledger .cv-kicker,
+.theme-finance-ledger .section-title{
+  color:#8b6b2e;
+}
+.theme-finance-ledger .cv-body{
+  grid-template-columns:minmax(0,1fr) 210px;
+}
+.theme-finance-ledger .cv-side{
+  border-left:1px solid #d8cfb8;
+  background:#f5f1e7;
+  padding:18px;
+}
+.theme-finance-ledger .project{
+  border-color:#ded5bf;
+  background:#fffdf8;
+}
+.theme-finance-ledger .job+.job{
+  border-top-color:#e2dccd;
+}
+
+/* 19. Studio Director — creative leadership */
+.theme-studio-director{
+  background:#fff;
+}
+.theme-studio-director .cv-head{
+  min-height:210px;
+  padding:34px 42px;
+  border-top:14px solid #e11d48;
+  border-bottom:0;
+  color:#fff;
+  background:
+    radial-gradient(circle at 84% 22%,rgba(225,29,72,.34),transparent 26%),
+    #171717;
+}
+.theme-studio-director .cv-head h1{
+  max-width:72%;
+  color:#fff;
+  font-size:42px;
+  letter-spacing:-.06em;
+}
+.theme-studio-director .cv-head h2,
+.theme-studio-director .contact{
+  color:#d6d3d1;
+}
+.theme-studio-director .cv-body{
+  grid-template-columns:minmax(0,1.25fr) minmax(180px,.75fr);
+  gap:22px;
+  background:#fff;
+}
+.theme-studio-director .section-title{
+  color:#111;
+  font-size:11px;
+  letter-spacing:.15em;
+}
+.theme-studio-director .cv-side{
+  border-left:0;
+  padding:18px;
+  border-radius:16px;
+  background:#fff1f4;
+}
+.theme-studio-director .project{
+  border:0;
+  border-radius:14px;
+  background:#fff3f5;
+}
+.theme-studio-director .skills span{
+  color:#881337;
+  background:#ffe4e9;
+}
+
+/* 20. Research Scholar — academic / research */
+.theme-research-scholar{
+  color:#2f2622;
+  background:#fffdf9;
+  font-family:Georgia,"Times New Roman",serif;
+}
+.theme-research-scholar .cv-head{
+  padding:38px 44px 22px;
+  border-top:4px double #7c2d12;
+  border-bottom:3px double #7c2d12;
+  background:#fffdf9;
+}
+.theme-research-scholar .cv-kicker,
+.theme-research-scholar .contact,
+.theme-research-scholar .section-title,
+.theme-research-scholar .skills,
+.theme-research-scholar .languages{
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.theme-research-scholar .cv-head h1{
+  font-weight:500;
+  letter-spacing:-.02em;
+}
+.theme-research-scholar .section-title{
+  color:#7c2d12;
+  font-size:11px;
+  letter-spacing:.12em;
+}
+.theme-research-scholar .cv-body{
+  padding:26px 44px 38px;
+}
+.theme-research-scholar .summary{
+  max-width:92%;
+  color:#51443e;
+}
+.theme-research-scholar .project{
+  border:0;
+  border-left:2px solid #d8c0b6;
+  border-radius:0;
+  background:transparent;
+}
+.theme-research-scholar .skills span{
+  border:1px solid #eadfd9;
+  background:#fff;
+}
+
+/* Expansion thumbnails */
+.thumb-strategy-brief{background:linear-gradient(90deg,#2563eb 0 7px,#eef4fb 7px 34%,#fff 34%)}
+.thumb-clinical-clean{background:linear-gradient(180deg,#dff7f2 0 24%,#fff 24%)}
+.thumb-finance-ledger{background:linear-gradient(90deg,#173f35 0 10px,#fbfaf5 10px)}
+.thumb-studio-director{background:linear-gradient(180deg,#171717 0 30%,#fff 30%)}
+.thumb-research-scholar{background:linear-gradient(180deg,#7c2d12 0 4px,#fffdf9 4px)}
