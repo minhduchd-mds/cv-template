@@ -72,6 +72,10 @@
                 <div class="avatar-shape-segmented" role="group" aria-label="Avatar shape">
                   <button v-for="shape in avatarShapes" :key="shape.id" type="button" :class="{ active: avatarShape === shape.id }" :aria-pressed="avatarShape === shape.id" @click="updateAvatarAppearance('avatarShape', shape.id)">{{ shape.label }}</button>
                 </div>
+                <div class="avatar-size-segmented" role="group" aria-label="Avatar size">
+                  <span>Size</span>
+                  <button v-for="size in avatarSizes" :key="size.id" type="button" :class="{ active: avatarSize === size.id }" :aria-pressed="avatarSize === size.id" @click="updateAvatarAppearance('avatarSize', size.id)">{{ size.label }}</button>
+                </div>
                 <label><span>X</span><input type="range" min="0" max="100" :value="avatarX" @input="updateAvatarAppearance('avatarX', Number($event.target.value))" /></label>
                 <label><span>Y</span><input type="range" min="0" max="100" :value="avatarY" @input="updateAvatarAppearance('avatarY', Number($event.target.value))" /></label>
                 <label><span>Zoom</span><input type="range" min="100" max="250" :value="Math.round(avatarZoom * 100)" @input="updateAvatarAppearance('avatarZoom', Number($event.target.value) / 100)" /></label>
@@ -209,7 +213,7 @@ export default {
       category: 'All',
       accent: templates[0].accent,
       zoom: 0.85,
-      appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 },
+      appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 },
       editorOpen: false,
       editorTab: 'profile',
       rolePresets: [
@@ -225,6 +229,11 @@ export default {
         { id: 'circle', label: 'Circle' },
         { id: 'rounded', label: 'Rounded' },
         { id: 'square', label: 'Square' },
+      ],
+      avatarSizes: [
+        { id: 'small', label: 'S' },
+        { id: 'medium', label: 'M' },
+        { id: 'large', label: 'L' },
       ],
       avatarDragging: false,
       avatarDragStart: null,
@@ -244,6 +253,9 @@ export default {
     },
     avatarShape() {
       return ['circle', 'rounded', 'square'].includes(this.appearance.avatarShape) ? this.appearance.avatarShape : 'circle'
+    },
+    avatarSize() {
+      return ['small', 'medium', 'large'].includes(this.appearance.avatarSize) ? this.appearance.avatarSize : 'medium'
     },
     avatarX() {
       return Number.isFinite(Number(this.appearance.avatarX)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarX))) : 50
@@ -345,13 +357,13 @@ export default {
       this.avatarError = ''
     },
     updateAvatarAppearance(key, value) {
-      if (!['avatarShape', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
+      if (!['avatarShape', 'avatarSize', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
       this.checkpointHistory('Adjust profile photo', { coalesce: true })
       this.appearance = { ...this.appearance, [key]: value }
     },
     resetAvatarFraming() {
       this.checkpointHistory('Reset profile photo framing')
-      this.appearance = { ...this.appearance, avatarShape: 'circle', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }
+      this.appearance = { ...this.appearance, avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }
     },
     startAvatarDrag(event) {
       if (!this.candidate.avatar || event.button !== 0) return
@@ -541,7 +553,7 @@ export default {
       }
     },
     updateAppearance({ key, value }) {
-      if (!['font', 'density', 'radius', 'projectLayout', 'avatarShape', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
+      if (!['font', 'density', 'radius', 'projectLayout', 'avatarShape', 'avatarSize', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
       this.checkpointHistory('Change CV appearance', { coalesce: ['avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key) })
       this.appearance = { ...this.appearance, [key]: value }
     },
