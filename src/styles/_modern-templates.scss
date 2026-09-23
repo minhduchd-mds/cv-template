@@ -383,3 +383,21 @@
     display: none !important;
   }
 }
+
+
+.ats-header-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.ats-avatar {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  border-radius: 50%;
+  background-position: center;
+  background-size: cover;
+  border: 1px solid color-mix(in srgb,var(--cv-accent) 22%,#d9dee7);
+}
