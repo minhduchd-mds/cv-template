@@ -174,7 +174,7 @@ export default {
     accent: { type: String, required: true },
     appearance: {
       type: Object,
-      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }),
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', textScale: 1, headingScale: 1, sectionSpacing: 'balanced', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }),
     },
     interactive: { type: Boolean, default: false },
   },
@@ -204,9 +204,22 @@ export default {
       const density = ['compact', 'balanced', 'spacious'].includes(this.appearance?.density) ? this.appearance.density : 'balanced'
       const radius = ['sharp', 'soft', 'round'].includes(this.appearance?.radius) ? this.appearance.radius : 'soft'
       const projectLayout = ['cards', 'list'].includes(this.appearance?.projectLayout) ? this.appearance.projectLayout : 'cards'
+      const spacing = ['compact', 'balanced', 'airy'].includes(this.appearance?.sectionSpacing) ? this.appearance.sectionSpacing : 'balanced'
+      const textScale = Number.isFinite(Number(this.appearance?.textScale)) ? Math.round(Math.min(1.15, Math.max(.9, Number(this.appearance.textScale))) * 100) : 100
+      const headingScale = Number.isFinite(Number(this.appearance?.headingScale)) ? Math.round(Math.min(1.2, Math.max(.9, Number(this.appearance.headingScale))) * 100) : 100
       const avatarShape = ['circle', 'rounded', 'square'].includes(this.appearance?.avatarShape) ? this.appearance.avatarShape : 'circle'
       const avatarSize = ['small', 'medium', 'large'].includes(this.appearance?.avatarSize) ? this.appearance.avatarSize : 'medium'
-      return [`cv-font-${font}`, `cv-density-${density}`, `cv-radius-${radius}`, `cv-projects-${projectLayout}`, `cv-avatar-${avatarShape}`, `cv-avatar-size-${avatarSize}`]
+      return [
+        `cv-font-${font}`,
+        `cv-density-${density}`,
+        `cv-radius-${radius}`,
+        `cv-projects-${projectLayout}`,
+        `cv-spacing-${spacing}`,
+        `cv-text-${textScale}`,
+        `cv-heading-${headingScale}`,
+        `cv-avatar-${avatarShape}`,
+        `cv-avatar-size-${avatarSize}`,
+      ]
     },
     monogram() {
       return String(this.profile.name || 'CV').split(' ').filter(Boolean).slice(-2).map((word) => word.charAt(0)).join('')
