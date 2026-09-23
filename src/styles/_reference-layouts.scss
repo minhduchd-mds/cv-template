@@ -1081,3 +1081,54 @@
   .ref-product-rail,.ref-brand-rail{min-height:297mm}
   .ref-cv section,.ref-cv article{break-inside:avoid;page-break-inside:avoid}
 }
+
+
+/* Reference-template avatar sizing */
+.paper.avatar-size-small .ref-soft-avatar,
+.paper.avatar-size-small .ref-product-avatar,
+.paper.avatar-size-small .ref-brand-avatar,
+.paper.avatar-size-small .ref-sales-avatar,
+.paper.avatar-size-small .ref-people-avatar,
+.paper.avatar-size-small .ref-next-avatar {
+  transform: scale(.84);
+  transform-origin: center center;
+}
+
+.paper.avatar-size-large .ref-soft-avatar,
+.paper.avatar-size-large .ref-product-avatar,
+.paper.avatar-size-large .ref-brand-avatar,
+.paper.avatar-size-large .ref-sales-avatar,
+.paper.avatar-size-large .ref-people-avatar,
+.paper.avatar-size-large .ref-next-avatar {
+  transform: scale(1.12);
+  transform-origin: center center;
+}
+
+.paper.avatar-size-small .ref-soft-portrait,
+.paper.avatar-size-small .ref-people-portrait {
+  transform: scale(.94);
+  transform-origin: center center;
+}
+
+.paper.avatar-size-large .ref-soft-portrait,
+.paper.avatar-size-large .ref-people-portrait {
+  transform: scale(1.04);
+  transform-origin: center center;
+}
+
+@media print {
+  .paper.avatar-size-small .ref-soft-avatar,
+  .paper.avatar-size-small .ref-product-avatar,
+  .paper.avatar-size-small .ref-brand-avatar,
+  .paper.avatar-size-small .ref-sales-avatar,
+  .paper.avatar-size-small .ref-people-avatar,
+  .paper.avatar-size-small .ref-next-avatar,
+  .paper.avatar-size-large .ref-soft-avatar,
+  .paper.avatar-size-large .ref-product-avatar,
+  .paper.avatar-size-large .ref-brand-avatar,
+  .paper.avatar-size-large .ref-sales-avatar,
+  .paper.avatar-size-large .ref-people-avatar,
+  .paper.avatar-size-large .ref-next-avatar {
+    break-inside: avoid;
+  }
+}
