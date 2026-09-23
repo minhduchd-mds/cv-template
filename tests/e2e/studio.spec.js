@@ -214,6 +214,23 @@ test('static fallback builder keeps core editing and template controls functiona
 
   await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
   await expect(page.locator('.template-card')).toHaveCount(15)
+  await expect(page.locator('.templates')).toHaveCSS('overflow-y', 'auto')
+
+  const flagshipChecks = [
+    ['Soft Portfolio', 'soft-portfolio-pro', '.decor-soft'],
+    ['Product Operator', 'product-operator', '.decor-product'],
+    ['Insight Grid', 'insight-grid', '.decor-insight'],
+    ['Brand Motion', 'brand-motion', '.decor-brand'],
+    ['Next Start', 'next-start', '.decor-start'],
+  ]
+
+  for (const [label, themeId, decorSelector] of flagshipChecks) {
+    await page.locator('.template-card').filter({ hasText: label }).click()
+    await expect(page.locator('#paper')).toHaveClass(new RegExp(`theme-${themeId}`))
+    await expect(page.locator(`#paper ${decorSelector}`)).toHaveCount(1)
+  }
+
+  await page.locator('.template-card').filter({ hasText: 'Soft Portfolio' }).click()
 
   const avatarPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
   await page.locator('#staticAvatarInput').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: avatarPng })
