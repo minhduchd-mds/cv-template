@@ -60,3 +60,6 @@
 
 // Shared avatar crop/shape controls across Studio and PDF.
 @use 'avatar-framing';
+
+// Undo/redo controls and direct canvas section reordering.
+@use 'history-reorder';
