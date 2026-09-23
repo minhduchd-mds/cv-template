@@ -218,7 +218,7 @@ export default {
       editorTab: 'profile',
       rolePresets: [
         { id: 'recruiter', label: 'Recruiter', note: 'ATS first', templateId: 'ats-clean', accent: '#0f766e', appearance: { font: 'sans', density: 'compact', radius: 'sharp', projectLayout: 'list' } },
-        { id: 'uiux', label: 'Senior UI/UX', note: 'Portfolio led', templateId: 'modern-bento', accent: '#7C3AED', appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards' } },
+        { id: 'uiux', label: 'Senior UI/UX', note: 'Portfolio led', templateId: 'young-soft-portfolio', accent: '#7C6DFF', appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarSize: 'large' } },
         { id: 'engineer', label: 'Design Engineer', note: 'Code aware', templateId: 'modern-mono', accent: '#111827', appearance: { font: 'mono', density: 'compact', radius: 'sharp', projectLayout: 'list' } },
         { id: 'lead', label: 'Leadership', note: 'Outcome led', templateId: 'modern-timeline', accent: '#0F766E', appearance: { font: 'serif', density: 'spacious', radius: 'soft', projectLayout: 'list' } },
       ],
