@@ -217,11 +217,11 @@ test('static fallback builder keeps core editing and template controls functiona
   await expect(page.locator('.templates')).toHaveCSS('overflow-y', 'auto')
 
   const flagshipChecks = [
-    ['Soft Portfolio', 'soft-portfolio-pro', '.decor-soft'],
-    ['Product Operator', 'product-operator', '.decor-product'],
-    ['Insight Grid', 'insight-grid', '.decor-insight'],
-    ['Brand Motion', 'brand-motion', '.decor-brand'],
-    ['Next Start', 'next-start', '.decor-start'],
+    ['Soft Portfolio', 'soft-portfolio-pro', '.ref-soft-portfolio'],
+    ['Product Operator', 'product-operator', '.ref-product-operator'],
+    ['Insight Grid', 'insight-grid', '.ref-insight-grid'],
+    ['Brand Motion', 'brand-motion', '.ref-brand-motion'],
+    ['Next Start', 'next-start', '.ref-next-start'],
   ]
 
   for (const [label, themeId, decorSelector] of flagshipChecks) {
@@ -235,7 +235,7 @@ test('static fallback builder keeps core editing and template controls functiona
   const avatarPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
   await page.locator('#staticAvatarInput').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: avatarPng })
   await expect(page.locator('[data-preset-avatar] img')).toHaveCount(4)
-  await expect(page.locator('#paper .paper-avatar img')).toHaveCount(1)
+  await expect(page.locator('#paper .ref-soft-avatar img')).toHaveCount(1)
 
   await page.locator('[data-avatar-shape="square"]').click()
   await page.locator('[data-avatar-size="small"]').click()
@@ -245,8 +245,8 @@ test('static fallback builder keeps core editing and template controls functiona
   await page.locator('#avatarZoom').evaluate((input) => { input.value = '175'; input.dispatchEvent(new Event('input', { bubbles: true })) })
   await page.locator('#avatarRotate').evaluate((input) => { input.value = '-18'; input.dispatchEvent(new Event('input', { bubbles: true })) })
   await expect(page.locator('#paper')).toHaveClass(/avatar-square/)
-  await expect(page.locator('#paper .paper-avatar img')).toHaveCSS('object-position', '20% 80%')
-  await expect(page.locator('#paper .paper-avatar img')).toHaveAttribute('style', /scale\(1\.75\).*rotate\(-18deg\)/)
+  await expect(page.locator('#paper .ref-soft-avatar img')).toHaveCSS('object-position', '20% 80%')
+  await expect(page.locator('#paper .ref-soft-avatar img')).toHaveAttribute('style', /scale\(1\.75\).*rotate\(-18deg\)/)
 
   const fallbackAvatarBox = await page.locator('#staticAvatarPreview').boundingBox()
   expect(fallbackAvatarBox).not.toBeNull()
@@ -272,6 +272,7 @@ test('static fallback builder keeps core editing and template controls functiona
   await expect(page.locator('#paper')).toHaveClass(/font-mono/)
   await expect(page.locator('#paper')).toHaveClass(/density-compact/)
 
+  await page.locator('.template-card').filter({ hasText: 'Mono Grid' }).click()
   const fallbackOrderBefore = await page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-static-settings-v2') || '{}').sectionOrder)
   await page.locator('#paper [data-section-key="projects"]').dragTo(page.locator('#paper [data-section-key="experience"]'))
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-static-settings-v2') || '{}').sectionOrder)).not.toEqual(fallbackOrderBefore)
