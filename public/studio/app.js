@@ -472,7 +472,7 @@
       <section class="ref-section ref-summary" data-edit-pane="content" data-edit-focus="#summary"><h3>Executive Summary</h3><p>${escapeHtml(profile.summary)}</p></section>
       <section class="ref-section" data-edit-pane="content"><h3>Leadership Impact</h3>${refHighlights('ref-exec-impact')}</section>
       <section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-exec-experience')}</section>
-      <section class="ref-section"><h3>Selected Achievements</h3>${refProjects('ref-achievement-row')}</section>
+      <section class="ref-section" data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Selected Achievements</h3>${refProjects('ref-achievement-row')}</section>
       ${refEducation() ? '<section class="ref-section"><h3>Education & Professional Development</h3>' + refEducation() + '</section>' : ''}
     </div>
   `
@@ -506,8 +506,8 @@
         <h2>${escapeHtml(profile.role)}</h2>
         <p>${escapeHtml(profile.summary)}</p>
         ${refContact()}
-        <div class="ref-rail-label">Core Skills</div>
-        ${refSkills('ref-rail-skills')}
+        <div data-edit-pane="content" data-edit-focus="#skills"><div class="ref-rail-label">Core Skills</div>
+        ${refSkills('ref-rail-skills')}</div>
       </aside>
       <main class="ref-product-main">
         <header><h1>From Insight to Impact</h1><span>PEOPLE · PRODUCTS · PROGRESS</span></header>
@@ -532,8 +532,8 @@
         <div class="ref-code-poster">DESIGN<br>×<br>CODE<br>×<br>PEOPLE<br>=<br><b>BETTER PRODUCTS</b></div>
       </div>
       <section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>02 / EXPERIENCE</h3>${refExperience('ref-code-experience')}</section>
-      <section class="ref-section"><h3>03 / SKILLS</h3><div class="ref-code-skills">${(profile.skills || []).map((skill, index) => '<div><span>' + escapeHtml(skill) + '</span><i style="--level:' + Math.max(3, 7 - (index % 5)) + '"></i></div>').join('')}</div></section>
-      <section class="ref-section"><h3>04 / SELECTED WORK</h3>${refProjects('ref-code-work')}</section>
+      <section class="ref-section" data-edit-pane="content" data-edit-focus="#skills"><h3>03 / SKILLS</h3><div class="ref-code-skills">${(profile.skills || []).map((skill, index) => '<div><span>' + escapeHtml(skill) + '</span><i style="--level:' + Math.max(3, 7 - (index % 5)) + '"></i></div>').join('')}</div></section>
+      <section class="ref-section" data-edit-pane="content" data-edit-focus="#projectEditor"><h3>04 / SELECTED WORK</h3>${refProjects('ref-code-work')}</section>
     </div>
   `
 
@@ -573,10 +573,10 @@
         ${refContact()}
         <blockquote>Brands grow when<br>people feel something.</blockquote>
         <div data-edit-pane="content" data-edit-focus="#skills"><h3>Skills</h3>${refSkills('ref-brand-skills')}</div>
-        <h3>Languages</h3><div class="ref-brand-languages">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div>
+        <div data-edit-pane="content" data-edit-focus="#languages"><h3>Languages</h3><div class="ref-brand-languages">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div></div>
       </aside>
       <main class="ref-brand-main">
-        <header><span>Ideas · People · Impact</span><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>${escapeHtml(profile.summary)}</p><em>BRANDS<br>PEOPLE<br>STORIES<br>GROWTH</em></header>
+        <header data-edit-pane="content" data-edit-focus="#name"><span>Ideas · People · Impact</span><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>${escapeHtml(profile.summary)}</p><em>BRANDS<br>PEOPLE<br>STORIES<br>GROWTH</em></header>
         ${refHighlights('ref-brand-metrics')}
         <section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Work Experience</h3>${refExperience('ref-brand-experience')}</section>
         <section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Selected Campaigns</h3>${refProjects('ref-brand-projects')}</section>
@@ -592,7 +592,7 @@
         <main>
           <section data-edit-pane="content" data-edit-focus="#summary"><h3>Professional Summary</h3><p>${escapeHtml(profile.summary)}</p></section>
           <section data-edit-pane="content" data-edit-focus="#summary"><h3>Key Performance Highlights</h3>${refHighlights('ref-sales-metrics')}</section>
-          <section><h3>Professional Experience</h3>${refExperience('ref-sales-experience')}</section>
+          <section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-sales-experience')}</section>
         </main>
         <aside data-edit-pane="content" data-edit-focus="#skills"><h3>Core Skills</h3>${refSkills('ref-sales-skills')}<h3>Selected Clients</h3><div class="ref-client-grid"><span>Microsoft</span><span>Vodafone</span><span>Sage</span><span>DELL</span><span>HSBC</span><span>Atlassian</span></div><blockquote>“I don't just meet targets.<br>I create momentum.”</blockquote></aside>
       </div>
@@ -608,7 +608,7 @@
       ${refContact()}
       <div class="ref-people-body">
         <aside data-edit-pane="content" data-edit-focus="#skills"><h3>Key Competencies</h3>${refSkills('ref-people-skills')}${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}</aside>
-        <main data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-people-experience')}<h3>Additional Information</h3><div class="ref-people-extra">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div></main>
+        <main><div data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-people-experience')}</div><div data-edit-pane="content" data-edit-focus="#languages"><h3>Additional Information</h3><div class="ref-people-extra">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div></div></main>
       </div>
     </div>
   `
@@ -617,7 +617,7 @@
     <div class="ref-cv ref-next-start">
       <header data-edit-pane="content" data-edit-focus="#name"><div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>Curious learner · Problem solver · Ready to make an impact</p></div><span class="ref-next-note">A Brighter<br>You Ahead</span></header>
       <div class="ref-next-body">
-        <aside data-edit-pane="content" data-edit-focus="#skills">${avatarMarkup('ref-next-avatar')}<blockquote>Eager to learn,<br>excited to build,<br>ready for what's next.</blockquote>${refContact()}<h3>Skills</h3>${refSkills('ref-next-skills')}</aside>
+        <aside><div data-edit-pane="content" data-edit-focus="#name">${avatarMarkup('ref-next-avatar')}<blockquote>Eager to learn,<br>excited to build,<br>ready for what's next.</blockquote>${refContact()}</div><div data-edit-pane="content" data-edit-focus="#skills"><h3>Skills</h3>${refSkills('ref-next-skills')}</div></aside>
         <main>
           ${refEducation() ? '<section><h3>Education</h3>' + refEducation() + '</section>' : ''}
           <section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Projects</h3>${refProjects('ref-next-projects')}</section>
