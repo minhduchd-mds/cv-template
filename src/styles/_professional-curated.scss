@@ -569,3 +569,273 @@
     display: none !important;
   }
 }
+
+
+/* Flagship polish pass — richer hierarchy for the five visual-first templates */
+
+/* Soft Portfolio */
+.theme-soft-portfolio-pro .product-sidebar {
+  padding-top: 34px;
+}
+
+.theme-soft-portfolio-pro .profile-monogram {
+  width: 84px;
+  height: 84px;
+  border: 4px solid rgba(255,255,255,.9);
+}
+
+.theme-soft-portfolio-pro .product-topline {
+  padding: 14px 16px;
+  box-shadow: inset 0 0 0 1px rgba(139,92,246,.08);
+}
+
+.theme-soft-portfolio-pro .product-highlights {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+}
+
+.theme-soft-portfolio-pro .product-highlights > div {
+  min-width: 0;
+  padding-inline: 10px;
+}
+
+.theme-soft-portfolio-pro .product-highlights > div + div {
+  border-left: 1px solid #e4defa;
+}
+
+.theme-soft-portfolio-pro .product-projects article {
+  overflow: hidden;
+  min-height: 132px;
+}
+
+.theme-soft-portfolio-pro .product-projects article::after {
+  content: '↗';
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #6f56d9;
+  background: #f0ecff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.theme-soft-portfolio-pro .product-projects article {
+  position: relative;
+}
+
+/* Product Operator */
+.theme-product-operator .product-sidebar {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-product-operator .product-sidebar::after {
+  content: 'STRATEGY\A EXECUTION\A IMPACT';
+  white-space: pre;
+  position: absolute;
+  right: 14px;
+  bottom: 18px;
+  color: rgba(119,226,235,.36);
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 1.65;
+  letter-spacing: .16em;
+  text-align: right;
+}
+
+.theme-product-operator .product-topline {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-product-operator .product-topline::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 8px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,#0e9eac 0 34%,#79cfd5 34% 67%,#c9ecef 67%);
+}
+
+.theme-product-operator .product-highlights {
+  padding-bottom: 9px;
+}
+
+.theme-product-operator .product-job {
+  border-left: 2px solid #dcecef;
+  padding-left: 14px;
+}
+
+.theme-product-operator .product-job::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  position: absolute;
+  left: -5px;
+  top: 5px;
+  border-radius: 50%;
+  background: #0e9eac;
+}
+
+.theme-product-operator .product-job {
+  position: relative;
+}
+
+/* Insight Grid */
+.theme-insight-grid .product-topline {
+  overflow: hidden;
+  position: relative;
+  padding-right: 92px;
+}
+
+.theme-insight-grid .product-topline::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  bottom: 11px;
+  width: 58px;
+  height: 34px;
+  background:
+    linear-gradient(to top,#2563eb 0 100%) 0 100% / 7px 10px no-repeat,
+    linear-gradient(to top,#5b8ff0 0 100%) 13px 100% / 7px 17px no-repeat,
+    linear-gradient(to top,#7ea8f5 0 100%) 26px 100% / 7px 24px no-repeat,
+    linear-gradient(to top,#4c82e7 0 100%) 39px 100% / 7px 20px no-repeat,
+    linear-gradient(to top,#2563eb 0 100%) 52px 100% / 7px 31px no-repeat;
+}
+
+.theme-insight-grid .product-section-head {
+  border-bottom: 1px solid #d9e6f9;
+  padding-bottom: 5px;
+}
+
+.theme-insight-grid .product-projects article {
+  border: 1px solid #dbe8fb;
+  border-radius: 12px;
+  background: rgba(255,255,255,.86);
+}
+
+.theme-insight-grid .product-skills li::after {
+  box-shadow: 8px 0 0 rgba(110,162,243,.35);
+}
+
+/* Brand Motion */
+.theme-brand-motion .creative-header::after {
+  content: 'Ideas\A People\A Stories\A Growth';
+  white-space: pre;
+  position: absolute;
+  right: 28px;
+  top: 26px;
+  color: #282d43;
+  font-family: Georgia,"Times New Roman",serif;
+  font-size: 8px;
+  font-style: italic;
+  line-height: 1.5;
+  transform: rotate(-4deg);
+}
+
+.theme-brand-motion .creative-header {
+  position: relative;
+}
+
+.theme-brand-motion .highlight-strip {
+  gap: 8px;
+}
+
+.theme-brand-motion .highlight-strip > div {
+  padding: 13px 10px;
+  border: 0;
+  border-radius: 12px;
+}
+
+.theme-brand-motion .highlight-strip strong {
+  font-size: 18px;
+}
+
+.theme-brand-motion .creative-projects {
+  grid-template-columns: repeat(3,minmax(0,1fr));
+}
+
+.theme-brand-motion .creative-projects article {
+  min-width: 0;
+  padding: 10px;
+}
+
+.theme-brand-motion .creative-projects article:nth-child(2) {
+  background: linear-gradient(180deg,#f5fffb,#fff);
+}
+
+.theme-brand-motion .creative-projects article:nth-child(3) {
+  background: linear-gradient(180deg,#f7f5ff,#fff);
+}
+
+/* Next Start */
+.theme-next-start .creative-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-next-start .creative-header::before {
+  content: '';
+  position: absolute;
+  right: -28px;
+  bottom: -46px;
+  width: 180px;
+  height: 96px;
+  border-radius: 50% 50% 0 0;
+  background: linear-gradient(160deg,#d9ebff,#89bffa);
+  opacity: .76;
+}
+
+.theme-next-start .creative-header::after {
+  content: 'A brighter next step ↗';
+  position: absolute;
+  right: 34px;
+  top: 26px;
+  color: #2563eb;
+  font-family: Georgia,"Times New Roman",serif;
+  font-size: 10px;
+  font-style: italic;
+  transform: rotate(-5deg);
+}
+
+.theme-next-start .creative-layout {
+  grid-template-columns: 1.5fr .72fr;
+}
+
+.theme-next-start .creative-job {
+  border-left: 2px solid #d7e8fd;
+  padding-left: 14px;
+  position: relative;
+}
+
+.theme-next-start .creative-job::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #63a4ef;
+}
+
+.theme-next-start .creative-projects article {
+  border-radius: 14px;
+}
+
+@media print {
+  .theme-soft-portfolio-pro .product-projects article,
+  .theme-product-operator .product-job,
+  .theme-insight-grid .product-projects article,
+  .theme-brand-motion .creative-projects article,
+  .theme-next-start .creative-job {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
