@@ -41,8 +41,16 @@
           </div>
 
           <div class="avatar-builder">
-            <div class="avatar-preview" :class="[{ empty: !profile.avatar }, avatarShapeClass]" :style="avatarPreviewStyle(profile.avatar)">
-              <span v-if="!profile.avatar">{{ initials }}</span>
+            <div
+              class="avatar-preview"
+              :class="[{ empty: !profile.avatar, dragging: avatarDragging }, avatarShapeClass]"
+              @pointerdown="startAvatarDrag"
+              @pointermove="moveAvatarDrag"
+              @pointerup="endAvatarDrag"
+              @pointercancel="endAvatarDrag"
+            >
+              <img v-if="profile.avatar" :src="profile.avatar" alt="" :style="avatarImageStyle" />
+              <span v-else>{{ initials }}</span>
             </div>
             <div>
               <strong>Profile photo</strong>
@@ -82,6 +90,14 @@
               <label class="editor-field">
                 <span>Vertical · {{ avatarY }}%</span>
                 <input type="range" min="0" max="100" :value="avatarY" @input="$emit('update-appearance', { key: 'avatarY', value: Number($event.target.value) })" />
+              </label>
+              <label class="editor-field">
+                <span>Zoom · {{ Math.round(avatarZoom * 100) }}%</span>
+                <input type="range" min="100" max="250" :value="Math.round(avatarZoom * 100)" @input="$emit('update-appearance', { key: 'avatarZoom', value: Number($event.target.value) / 100 })" />
+              </label>
+              <label class="editor-field">
+                <span>Rotate · {{ avatarRotate }}°</span>
+                <input type="range" min="-180" max="180" :value="avatarRotate" @input="$emit('update-appearance', { key: 'avatarRotate', value: Number($event.target.value) })" />
               </label>
             </div>
           </div>
@@ -314,7 +330,7 @@ export default {
     completion: { type: Number, default: 0 },
     appearance: {
       type: Object,
-      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50 }),
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }),
     },
     accent: { type: String, default: '#6d5dfc' },
     requestedTab: { type: String, default: 'profile' },
@@ -325,6 +341,8 @@ export default {
       activeTab: 'profile',
       imageError: '',
       dragIndex: null,
+      avatarDragging: false,
+      avatarDragStart: null,
       avatarShapes: [
         { id: 'circle', label: 'Circle' },
         { id: 'rounded', label: 'Rounded' },
@@ -355,8 +373,20 @@ export default {
     avatarY() {
       return Number.isFinite(Number(this.appearance.avatarY)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarY))) : 50
     },
+    avatarZoom() {
+      return Number.isFinite(Number(this.appearance.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(this.appearance.avatarZoom))) : 1
+    },
+    avatarRotate() {
+      return Number.isFinite(Number(this.appearance.avatarRotate)) ? Math.min(180, Math.max(-180, Number(this.appearance.avatarRotate))) : 0
+    },
     avatarShapeClass() {
       return `avatar-shape-${this.avatarShape}`
+    },
+    avatarImageStyle() {
+      return {
+        objectPosition: `${this.avatarX}% ${this.avatarY}%`,
+        transform: `scale(${this.avatarZoom}) rotate(${this.avatarRotate}deg)`,
+      }
     },
   },
   watch: {
@@ -390,17 +420,43 @@ export default {
     lines(value) { return value.split(/\n+/).map((item) => item.trim()).filter(Boolean) },
     tokenList(value) { return value.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean) },
     imageStyle(url) { return url ? { backgroundImage: `linear-gradient(rgba(15,23,42,.04), rgba(15,23,42,.04)), url("${String(url).replace(/"/g, '%22')}")` } : {} },
-    avatarPreviewStyle(url) {
-      if (!url) return {}
-      return {
-        backgroundImage: `linear-gradient(rgba(15,23,42,.04), rgba(15,23,42,.04)), url("${String(url).replace(/"/g, '%22')}")`,
-        backgroundPosition: `${this.avatarX}% ${this.avatarY}%`,
-      }
-    },
     resetAvatarFraming() {
       this.$emit('update-appearance', { key: 'avatarShape', value: 'circle' })
       this.$emit('update-appearance', { key: 'avatarX', value: 50 })
       this.$emit('update-appearance', { key: 'avatarY', value: 50 })
+      this.$emit('update-appearance', { key: 'avatarZoom', value: 1 })
+      this.$emit('update-appearance', { key: 'avatarRotate', value: 0 })
+    },
+    startAvatarDrag(event) {
+      if (!this.profile.avatar || event.button !== 0) return
+      const rect = event.currentTarget.getBoundingClientRect()
+      this.avatarDragging = true
+      this.avatarDragStart = {
+        pointerId: event.pointerId,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        x: this.avatarX,
+        y: this.avatarY,
+        width: Math.max(1, rect.width),
+        height: Math.max(1, rect.height),
+      }
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+      event.preventDefault()
+    },
+    moveAvatarDrag(event) {
+      if (!this.avatarDragging || !this.avatarDragStart || event.pointerId !== this.avatarDragStart.pointerId) return
+      const dx = event.clientX - this.avatarDragStart.clientX
+      const dy = event.clientY - this.avatarDragStart.clientY
+      const nextX = Math.min(100, Math.max(0, this.avatarDragStart.x - (dx / this.avatarDragStart.width) * 100 / this.avatarZoom))
+      const nextY = Math.min(100, Math.max(0, this.avatarDragStart.y - (dy / this.avatarDragStart.height) * 100 / this.avatarZoom))
+      this.$emit('update-appearance', { key: 'avatarX', value: Math.round(nextX) })
+      this.$emit('update-appearance', { key: 'avatarY', value: Math.round(nextY) })
+    },
+    endAvatarDrag(event) {
+      if (!this.avatarDragging) return
+      event.currentTarget?.releasePointerCapture?.(event.pointerId)
+      this.avatarDragging = false
+      this.avatarDragStart = null
     },
     externalImageValue(value) { return String(value || '').startsWith('data:') ? '' : (value || '') },
     async uploadAvatar(event) {
