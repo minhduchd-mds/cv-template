@@ -299,7 +299,7 @@
       button.className = `template-card${template.id === settings.templateId ? ' active' : ''}`
       button.setAttribute('aria-pressed', template.id === settings.templateId ? 'true' : 'false')
       button.innerHTML = `
-        <span class="template-thumb" style="--thumb-accent:${template.accent}"></span>
+        <span class="template-thumb thumb-${template.id}" style="--thumb-accent:${template.accent}"><i></i><i></i><i></i></span>
         <span><strong>${escapeHtml(template.name)}</strong><small>${escapeHtml(template.category)}</small></span>
       `
       button.addEventListener('click', () => {
