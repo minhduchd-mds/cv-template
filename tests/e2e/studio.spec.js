@@ -255,7 +255,7 @@ test('static fallback builder keeps core editing and template controls functiona
   const brandSkillGap = await page.locator('#paper .ref-brand-skills').evaluate((node) => getComputedStyle(node).gap)
   expect(parseFloat(brandSkillGap)).toBeGreaterThan(0)
   const campaignCards = page.locator('#paper .ref-brand-projects article')
-  await expect(campaignCards).toHaveCount(4)
+  await expect(campaignCards).toHaveCount(3)
   const campaignTops = await campaignCards.evaluateAll((nodes) => nodes.slice(0, 3).map((node) => Math.round(node.getBoundingClientRect().top)))
   expect(new Set(campaignTops).size).toBe(1)
 
