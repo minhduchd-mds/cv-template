@@ -216,18 +216,38 @@ test('static fallback builder keeps core editing and template controls functiona
   await expect(page.locator('.template-card')).toHaveCount(15)
   await expect(page.locator('.templates')).toHaveCSS('overflow-y', 'auto')
 
-  const flagshipChecks = [
+  const referenceChecks = [
+    ['Executive Edge', 'executive-edge', '.ref-executive-edge'],
     ['Soft Portfolio', 'soft-portfolio-pro', '.ref-soft-portfolio'],
     ['Product Operator', 'product-operator', '.ref-product-operator'],
+    ['Code Aware', 'code-aware', '.ref-code-aware'],
+    ['ATS Precision', 'ats-precision', '.ref-ats-precision'],
     ['Insight Grid', 'insight-grid', '.ref-insight-grid'],
     ['Brand Motion', 'brand-motion', '.ref-brand-motion'],
+    ['Revenue Driver', 'revenue-driver', '.ref-revenue-driver'],
+    ['People First', 'people-first', '.ref-people-first'],
     ['Next Start', 'next-start', '.ref-next-start'],
   ]
 
-  for (const [label, themeId, decorSelector] of flagshipChecks) {
+  for (const [label, themeId, rootSelector] of referenceChecks) {
     await page.locator('.template-card').filter({ hasText: label }).click()
     await expect(page.locator('#paper')).toHaveClass(new RegExp(`theme-${themeId}`))
-    await expect(page.locator(`#paper ${decorSelector}`)).toHaveCount(1)
+    const root = page.locator(`#paper ${rootSelector}`)
+    await expect(root).toHaveCount(1)
+    const overflow = await root.evaluate((node) => ({
+      scrollWidth: node.scrollWidth,
+      clientWidth: node.clientWidth,
+      left: node.getBoundingClientRect().left,
+      right: node.getBoundingClientRect().right,
+      paperLeft: node.parentElement.getBoundingClientRect().left,
+      paperRight: node.parentElement.getBoundingClientRect().right,
+    }))
+    expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1)
+    expect(overflow.left).toBeGreaterThanOrEqual(overflow.paperLeft - 1)
+    expect(overflow.right).toBeLessThanOrEqual(overflow.paperRight + 1)
+    await expect(root.locator('[data-edit-pane]').first()).toBeVisible()
+    await root.locator('[data-edit-pane]').first().click()
+    await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
   }
 
   await page.locator('.template-card').filter({ hasText: 'Soft Portfolio' }).click()
