@@ -467,7 +467,7 @@
     $('#avatarY').value = String(avatarY)
     $('#avatarZoom').value = String(Math.round(avatarZoom * 100))
     $('#avatarRotate').value = String(avatarRotate)
-    $('[data-avatar-shape]').forEach((button) => {
+    $$('[data-avatar-shape]').forEach((button) => {
       const active = button.dataset.avatarShape === avatarShape
       button.classList.toggle('active', active)
       button.setAttribute('aria-pressed', active ? 'true' : 'false')
@@ -591,7 +591,7 @@
     renderAll()
   })
 
-  $('[data-avatar-shape]').forEach((button) => {
+  $$('[data-avatar-shape]').forEach((button) => {
     button.addEventListener('click', () => {
       settings.avatarShape = button.dataset.avatarShape
       renderAll()
