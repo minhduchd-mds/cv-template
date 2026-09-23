@@ -142,6 +142,7 @@
     avatarY: 50,
     avatarZoom: 1,
     avatarRotate: 0,
+    sectionOrder: ['summary', 'experience', 'projects', 'skills', 'languages'],
     showSummary: true,
     showSkills: true,
     showExperience: true,
@@ -185,6 +186,8 @@
   let profile = restoreObject(PROFILE_KEY, demoProfile)
   let settings = restoreObject(SETTINGS_KEY, defaultSettings)
   let avatarDrag = null
+  let sectionDrag = null
+  let sectionDragJustEnded = false
   let undoStack = []
   let redoStack = []
   let historyRestoring = false
@@ -195,6 +198,7 @@
   if (!Array.isArray(profile.skills)) profile.skills = clone(demoProfile.skills)
   if (!Array.isArray(profile.languages)) profile.languages = clone(demoProfile.languages)
   if (!templates.some((item) => item.id === settings.templateId)) settings.templateId = defaultSettings.templateId
+  if (!Array.isArray(settings.sectionOrder) || !settings.sectionOrder.length) settings.sectionOrder = clone(defaultSettings.sectionOrder)
 
   const activeTemplate = () =>
     templates.find((item) => item.id === settings.templateId) || templates[0]
@@ -232,6 +236,7 @@
     historyRestoring = true
     profile = { ...clone(demoProfile), ...(state.profile || {}) }
     settings = { ...clone(defaultSettings), ...(state.settings || {}) }
+    if (!Array.isArray(settings.sectionOrder) || !settings.sectionOrder.length) settings.sectionOrder = clone(defaultSettings.sectionOrder)
     if (!Array.isArray(profile.experience)) profile.experience = clone(demoProfile.experience)
     if (!Array.isArray(profile.projects)) profile.projects = clone(demoProfile.projects)
     if (!Array.isArray(profile.skills)) profile.skills = clone(demoProfile.skills)
@@ -301,6 +306,11 @@
     })
   }
 
+  const sectionOrderIndex = (id) => {
+    const index = (settings.sectionOrder || []).indexOf(id)
+    return index === -1 ? 99 : index
+  }
+
   const renderExperience = () =>
     profile.experience
       .map(
@@ -350,19 +360,19 @@
     paper.style.setProperty('--zoom', String(settings.zoom))
 
     const summary = settings.showSummary
-      ? `<section class="summary" data-edit-pane="content" data-edit-focus="#summary"><p>${escapeHtml(profile.summary)}</p></section>`
+      ? `<section class="summary draggable-section" draggable="true" data-section-key="summary" data-section-group="main" style="order:${sectionOrderIndex('summary')}" data-edit-pane="content" data-edit-focus="#summary"><p>${escapeHtml(profile.summary)}</p></section>`
       : ''
 
     const experience = settings.showExperience
-      ? `<section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3 class="section-title">Experience</h3>${renderExperience()}</section>`
+      ? `<section class="draggable-section" draggable="true" data-section-key="experience" data-section-group="main" style="order:${sectionOrderIndex('experience')}" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3 class="section-title">Experience</h3>${renderExperience()}</section>`
       : ''
 
     const projects = settings.showProjects
-      ? `<section class="project-section" data-edit-pane="content" data-edit-focus="#projectEditor"><h3 class="section-title">Selected work</h3><div class="project-items">${renderProjects()}</div></section>`
+      ? `<section class="project-section draggable-section" draggable="true" data-section-key="projects" data-section-group="main" style="order:${sectionOrderIndex('projects')}" data-edit-pane="content" data-edit-focus="#projectEditor"><h3 class="section-title">Selected work</h3><div class="project-items">${renderProjects()}</div></section>`
       : ''
 
     const skills = settings.showSkills
-      ? `<section data-edit-pane="content" data-edit-focus="#skills"><h3 class="section-title">Core skills</h3><div class="skills">${profile.skills.map((skill) => `<span>${escapeHtml(skill)}</span>`).join('')}</div></section>`
+      ? `<section class="draggable-section" draggable="true" data-section-key="skills" data-section-group="side" style="order:${sectionOrderIndex('skills')}" data-edit-pane="content" data-edit-focus="#skills"><h3 class="section-title">Core skills</h3><div class="skills">${profile.skills.map((skill) => `<span>${escapeHtml(skill)}</span>`).join('')}</div></section>`
       : ''
 
     const avatar = safeAvatar(profile.avatar)
@@ -370,7 +380,7 @@
       : ''
 
     const languages = `
-      <section data-edit-pane="content" data-edit-focus="#languages">
+      <section class="draggable-section" draggable="true" data-section-key="languages" data-section-group="side" style="order:${sectionOrderIndex('languages')}" data-edit-pane="content" data-edit-focus="#languages">
         <h3 class="section-title">Languages</h3>
         <div class="languages">${profile.languages.map((language) => `<span>${escapeHtml(language)}</span>`).join('')}</div>
       </section>
@@ -827,7 +837,56 @@
     })
   })
 
+  $('#paper').addEventListener('dragstart', (event) => {
+    const target = event.target.closest('[data-section-key]')
+    if (!target) return
+    sectionDrag = {
+      id: target.dataset.sectionKey,
+      group: target.dataset.sectionGroup,
+    }
+    target.classList.add('section-dragging')
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move'
+      event.dataTransfer.setData('text/plain', sectionDrag.id)
+    }
+  })
+
+  $('#paper').addEventListener('dragover', (event) => {
+    if (!sectionDrag) return
+    const target = event.target.closest('[data-section-key]')
+    if (!target || target.dataset.sectionGroup !== sectionDrag.group || target.dataset.sectionKey === sectionDrag.id) return
+    event.preventDefault()
+    $('.section-drop-target', $('#paper')).forEach((node) => node.classList.remove('section-drop-target'))
+    target.classList.add('section-drop-target')
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  })
+
+  $('#paper').addEventListener('drop', (event) => {
+    if (!sectionDrag) return
+    const target = event.target.closest('[data-section-key]')
+    if (!target || target.dataset.sectionGroup !== sectionDrag.group || target.dataset.sectionKey === sectionDrag.id) return
+    event.preventDefault()
+    const order = [...settings.sectionOrder]
+    const fromIndex = order.indexOf(sectionDrag.id)
+    const targetIndex = order.indexOf(target.dataset.sectionKey)
+    if (fromIndex >= 0 && targetIndex >= 0) {
+      const [moved] = order.splice(fromIndex, 1)
+      order.splice(targetIndex, 0, moved)
+      settings.sectionOrder = order
+      renderAll()
+    }
+    $('.section-drop-target', $('#paper')).forEach((node) => node.classList.remove('section-drop-target'))
+  })
+
+  $('#paper').addEventListener('dragend', () => {
+    $('.section-dragging, .section-drop-target', $('#paper')).forEach((node) => node.classList.remove('section-dragging', 'section-drop-target'))
+    sectionDrag = null
+    sectionDragJustEnded = true
+    window.setTimeout(() => { sectionDragJustEnded = false }, 0)
+  })
+
   $('#paper').addEventListener('click', (event) => {
+    if (sectionDragJustEnded) return
     const target = event.target.closest('[data-edit-pane]')
     if (!target) return
     activatePane(target.dataset.editPane || 'content', target.dataset.editFocus || '')
