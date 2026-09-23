@@ -397,7 +397,7 @@ export default {
         { id: 'projects', label: 'Projects', hint: 'Selected work', icon: '04' },
         { id: 'education', label: 'Education', hint: 'Study & credentials', icon: '05' },
         { id: 'skills', label: 'Skills', hint: 'Keywords & languages', icon: '06' },
-        { id: 'design', label: 'Design', hint: 'Type, density & shape', icon: '07' },
+        { id: 'design', label: 'Design', hint: 'Type, scale & layout', icon: '07' },
         { id: 'layout', label: 'Layout', hint: 'Order & visibility', icon: '08' },
       ],
     }
