@@ -124,3 +124,130 @@
     transition: none !important;
   }
 }
+
+
+.role-avatar-panel {
+  display: grid;
+  grid-template-columns: 58px minmax(0,1fr);
+  gap: 12px;
+  align-items: center;
+  margin: 14px 0 10px;
+  padding: 12px;
+  border: 1px solid var(--apple-separator);
+  border-radius: 14px;
+  background: var(--apple-fill);
+}
+
+.role-avatar-preview,
+.role-preset-avatar {
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(145deg,#eef2f7,#fff);
+  color: var(--apple-secondary);
+  font-weight: 800;
+}
+
+.role-avatar-preview {
+  width: 58px;
+  height: 58px;
+  border: 1px solid var(--apple-separator);
+}
+
+.role-preset-avatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 1px solid var(--apple-separator);
+  font-size: 8px;
+}
+
+.role-avatar-preview img,
+.role-preset-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.role-avatar-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.role-avatar-copy > strong {
+  font-size: 10px;
+}
+
+.role-avatar-copy > span,
+.role-avatar-copy > small {
+  color: var(--apple-secondary);
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.role-avatar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.role-avatar-upload,
+.role-avatar-remove {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 9px;
+  border-radius: 8px;
+  font-size: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.role-avatar-upload {
+  color: #fff;
+  background: #111;
+}
+
+.role-avatar-upload input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.role-avatar-remove {
+  border: 1px solid var(--apple-separator);
+  color: #b42318;
+  background: #fff;
+}
+
+.role-avatar-error {
+  color: #b42318 !important;
+}
+
+.role-presets button {
+  grid-template-columns: auto minmax(0,1fr);
+  align-items: center;
+}
+
+.role-preset-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+@media (max-width: 760px) {
+  .role-avatar-panel {
+    grid-template-columns: 48px minmax(0,1fr);
+  }
+
+  .role-avatar-preview {
+    width: 48px;
+    height: 48px;
+  }
+}
