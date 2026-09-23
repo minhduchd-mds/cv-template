@@ -250,6 +250,15 @@ test('static fallback builder keeps core editing and template controls functiona
     await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
   }
 
+  await page.locator('.template-card').filter({ hasText: 'Brand Motion' }).click()
+  await expect(page.locator('#paper .ref-brand-skills')).toHaveCSS('display', 'flex')
+  const brandSkillGap = await page.locator('#paper .ref-brand-skills').evaluate((node) => getComputedStyle(node).gap)
+  expect(parseFloat(brandSkillGap)).toBeGreaterThan(0)
+  const campaignCards = page.locator('#paper .ref-brand-projects article')
+  await expect(campaignCards).toHaveCount(4)
+  const campaignTops = await campaignCards.evaluateAll((nodes) => nodes.slice(0, 3).map((node) => Math.round(node.getBoundingClientRect().top)))
+  expect(new Set(campaignTops).size).toBe(1)
+
   await page.locator('.template-card').filter({ hasText: 'Soft Portfolio' }).click()
 
   const avatarPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
