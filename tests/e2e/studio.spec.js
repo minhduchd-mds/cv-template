@@ -75,7 +75,7 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-settings-v1') || '{}').appearance?.avatarZoom)).toBe(1.6)
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-settings-v1') || '{}').appearance?.avatarRotate)).toBe(25)
 
-  await page.getByRole('button', { name: /Design.*Type, density & shape/i }).click()
+  await page.getByRole('button', { name: /Design.*Type, scale & layout/i }).click()
   await page.locator('.editor-field').filter({ hasText: 'Typography' }).locator('select').selectOption('serif')
   await page.locator('.editor-field').filter({ hasText: 'Content density' }).locator('select').selectOption('compact')
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-font-serif/)
@@ -287,10 +287,35 @@ test('static fallback builder keeps core editing and template controls functiona
   await page.getByRole('button', { name: 'Edit CV' }).click()
   await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
 
+  await page.locator('.tab[data-tab="design"]').click()
+  await page.locator('#textScale').fill('110')
+  await page.locator('#headingScale').fill('115')
+  await expect(page.locator('#textScaleValue')).toHaveText('110%')
+  await expect(page.locator('#headingScaleValue')).toHaveText('115%')
+  await expect.poll(async () => page.locator('#paper').evaluate((node) => getComputedStyle(node).getPropertyValue('--text-scale').trim())).toBe('1.1')
+  await expect.poll(async () => page.locator('#paper').evaluate((node) => getComputedStyle(node).getPropertyValue('--heading-scale').trim())).toBe('1.15')
+
+  await page.locator('.template-card').filter({ hasText: 'Brand Motion' }).click()
+  await page.locator('.tab[data-tab="design"]').click()
+  const brandCards = page.locator('#paper .ref-brand-projects article')
+  const cardTops = await brandCards.evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().top)))
+  expect(new Set(cardTops).size).toBe(1)
+
   await page.locator('#projectList').click()
   await expect(page.locator('#paper')).toHaveClass(/projects-list/)
+  const listTops = await brandCards.evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().top)))
+  expect(listTops[1]).toBeGreaterThan(listTops[0])
+
   await page.locator('#projectCards').click()
   await expect(page.locator('#paper')).toHaveClass(/projects-cards/)
+  const cardTopsAgain = await brandCards.evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().top)))
+  expect(new Set(cardTopsAgain).size).toBe(1)
+
+  await page.locator('.template-card').filter({ hasText: 'Revenue Driver' }).click()
+  await page.locator('.tab[data-tab="design"]').click()
+  await expect(page.locator('#projectCards')).toBeDisabled()
+  await expect(page.locator('#projectList')).toBeDisabled()
+  await expect(page.locator('#projectDisplayHint')).toContainText('does not use a project section')
 
   await page.locator('[data-target-preset="uiux"]').click()
   await expect(page.locator('#activeTemplateLabel')).toContainText('Soft Portfolio')
