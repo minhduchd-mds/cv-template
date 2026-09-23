@@ -453,6 +453,11 @@ export default {
         'revenue-driver': { label: 'Sales', structure: 'Sales hero → Summary → KPI highlights → Experience → Skills & clients', projects: false },
         'people-first': { label: 'People / HR', structure: 'People hero → Competencies → Experience → Education → Additional info', projects: false },
         'next-start': { label: 'Fresh graduate', structure: 'Graduate hero → Skills rail → Education → Projects → Internships → Activities', projects: true },
+        'strategy-brief': { label: 'Consulting', structure: 'Executive profile → Summary → Engagement impact → Experience → Selected work → Expertise', projects: true },
+        'clinical-clean': { label: 'Healthcare', structure: 'Clinical profile → Experience → Selected work → Skills → Credentials & languages', projects: true },
+        'finance-ledger': { label: 'Finance', structure: 'Executive profile → Summary → Quantified impact → Experience → Selected work → Expertise', projects: true },
+        'studio-director': { label: 'Creative leadership', structure: 'Editorial hero → Summary → Experience → Portfolio work → Capabilities', projects: true },
+        'research-scholar': { label: 'Academic', structure: 'Research profile → Experience → Selected work → Skills → Education & credentials', projects: true },
       }
       return map[this.template?.id] || { label: this.template?.category || 'Template', structure: 'Profile → Experience → Projects → Skills', projects: true }
     },
