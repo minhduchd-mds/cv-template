@@ -876,7 +876,7 @@
     const target = event.target.closest('[data-section-key]')
     if (!target || target.dataset.sectionGroup !== sectionDrag.group || target.dataset.sectionKey === sectionDrag.id) return
     event.preventDefault()
-    $('.section-drop-target', $('#paper')).forEach((node) => node.classList.remove('section-drop-target'))
+    $$('.section-drop-target', $('#paper')).forEach((node) => node.classList.remove('section-drop-target'))
     target.classList.add('section-drop-target')
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
   })
@@ -895,11 +895,11 @@
       settings.sectionOrder = order
       renderAll()
     }
-    $('.section-drop-target', $('#paper')).forEach((node) => node.classList.remove('section-drop-target'))
+    $$('.section-drop-target', $('#paper')).forEach((node) => node.classList.remove('section-drop-target'))
   })
 
   $('#paper').addEventListener('dragend', () => {
-    $('.section-dragging, .section-drop-target', $('#paper')).forEach((node) => node.classList.remove('section-dragging', 'section-drop-target'))
+    $$('.section-dragging, .section-drop-target', $('#paper')).forEach((node) => node.classList.remove('section-dragging', 'section-drop-target'))
     sectionDrag = null
     sectionDragJustEnded = true
     window.setTimeout(() => { sectionDragJustEnded = false }, 0)
