@@ -292,3 +292,163 @@ button{cursor:pointer}
   .draggable-section{cursor:default!important;outline:0!important}
   .draggable-section:before{display:none!important}
 }
+
+
+/* Young designer refresh + preset overflow fixes */
+.templates{container-type:inline-size}
+.static-avatar-panel{
+  grid-template-columns:88px minmax(0,1fr);
+  gap:14px;
+  align-items:start;
+  padding:14px;
+  border-radius:16px;
+  background:radial-gradient(circle at 0 0,rgba(37,99,235,.08),transparent 42%),#f8f9fb
+}
+.static-avatar-preview{
+  width:88px;
+  height:88px;
+  box-shadow:0 8px 24px rgba(15,23,42,.08)
+}
+.static-avatar-panel>div:last-child{min-width:0}
+.static-avatar-panel>div:last-child>strong{font-size:10px}
+.static-avatar-panel>div:last-child>span{display:block;max-width:28ch;line-height:1.45}
+.static-avatar-size{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:auto repeat(3,32px);
+  align-items:center;
+  gap:4px
+}
+.static-avatar-size>span{margin-right:3px;color:#667085;font-size:7.5px;font-weight:700}
+.static-avatar-size button{
+  min-height:28px;
+  border:0;
+  border-radius:7px;
+  background:#eceff3;
+  color:#667085;
+  font-size:7.5px;
+  font-weight:800
+}
+.static-avatar-size button.active{background:#111;color:#fff}
+
+.target-preset-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px
+}
+.target-preset-grid button{
+  min-width:0;
+  min-height:66px;
+  overflow:hidden;
+  border-radius:13px
+}
+.target-preset-grid button>span:last-child{
+  min-width:0;
+  overflow:hidden
+}
+.target-preset-grid button strong{
+  display:-webkit-box;
+  overflow:hidden;
+  font-size:9px;
+  line-height:1.25;
+  text-overflow:ellipsis;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2
+}
+.target-preset-grid button small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+
+/* Actual CV avatar frame size */
+.avatar-size-small .paper-avatar{width:42px;height:42px;flex-basis:42px}
+.avatar-size-medium .paper-avatar{width:58px;height:58px;flex-basis:58px}
+.avatar-size-large .paper-avatar{width:78px;height:78px;flex-basis:78px}
+
+/* Young 01 — Neo Pop */
+.theme-young-neo-pop{
+  background:#fff8fb
+}
+.theme-young-neo-pop .cv-head{
+  margin:16px;
+  padding:28px;
+  border:2px solid #111827;
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 88% 18%,#ffd84d 0 38px,transparent 39px),
+    radial-gradient(circle at 78% 78%,#9ef0df 0 48px,transparent 49px),
+    linear-gradient(135deg,#ffeff6,#fff 68%);
+  box-shadow:6px 6px 0 #111827
+}
+.theme-young-neo-pop .cv-head h1{max-width:72%;font-size:40px;letter-spacing:-.05em}
+.theme-young-neo-pop .project{
+  border:2px solid #111827;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:4px 4px 0 var(--accent)
+}
+
+/* Young 02 — Soft Portfolio */
+.theme-young-soft-portfolio{
+  background:#f8f7ff
+}
+.theme-young-soft-portfolio .cv-head{
+  background:radial-gradient(circle at 18% 10%,rgba(124,109,255,.16),transparent 26%),linear-gradient(180deg,#efedff,#f8f7ff)
+}
+.theme-young-soft-portfolio .cv-body{
+  margin:14px;
+  padding:22px;
+  border:1px solid #e5e1ff;
+  border-radius:20px;
+  background:rgba(255,255,255,.94)
+}
+.theme-young-soft-portfolio .project{
+  border:1px solid #e6e2ff;
+  border-radius:16px;
+  background:linear-gradient(180deg,#fff,#faf9ff);
+  box-shadow:0 8px 22px rgba(81,70,160,.07)
+}
+
+/* Young 03 — Creator Cards */
+.theme-young-creator-cards{
+  background:linear-gradient(180deg,#effcfb 0 178px,#f8fafc 178px)
+}
+.theme-young-creator-cards .cv-head{
+  color:#fff;
+  background:linear-gradient(120deg,#0ea5a4,#54d4bd);
+  border-bottom:0
+}
+.theme-young-creator-cards .cv-head h1,
+.theme-young-creator-cards .cv-head h2,
+.theme-young-creator-cards .contact{color:#fff}
+.theme-young-creator-cards .cv-body{
+  margin-top:-14px;
+  position:relative;
+  z-index:2
+}
+.theme-young-creator-cards .project{
+  border:0;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 9px 24px rgba(15,23,42,.08)
+}
+
+/* Make template options feel more visual */
+.template-card{align-items:stretch;overflow:hidden}
+.template-thumb{min-height:58px}
+.template-card strong{line-height:1.25}
+.template-card small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+
+@container (max-width:340px){
+  .static-avatar-panel{grid-template-columns:1fr}
+  .static-avatar-preview{width:104px;height:104px;justify-self:center}
+  .static-avatar-framing{grid-template-columns:1fr}
+  .static-avatar-shapes,.static-avatar-size,#avatarResetFrame{grid-column:1}
+  .target-preset-grid{grid-template-columns:1fr}
+  .target-preset-grid button{grid-template-columns:38px minmax(0,1fr);min-height:60px}
+  .preset-avatar{width:38px;height:38px}
+}
