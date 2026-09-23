@@ -1,0 +1,39 @@
+/* Safety layer for the five retained legacy templates. */
+
+.cv-sheet:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards){
+  overflow-x:hidden;
+}
+
+.cv-sheet:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards)
+  :where(.cv-head,.cv-body,.cv-main,.cv-side,section,article,.job,.project,.project-items,.skills,.contact){
+  min-width:0;
+}
+
+.cv-sheet:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards)
+  :where(h1,h2,h3,p,strong,span,b,small){
+  overflow-wrap:anywhere;
+}
+
+.cv-sheet:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .job-head>div{
+  min-width:0;
+}
+
+.cv-sheet:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .job-head span{
+  max-width:42%;
+  white-space:normal;
+  text-align:right;
+}
+
+.cv-sheet:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .contact{
+  flex-wrap:wrap;
+}
+
+.cv-sheet:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .contact span{
+  max-width:100%;
+  overflow-wrap:anywhere;
+}
+
+.cv-sheet:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .project{
+  min-width:0;
+  overflow:hidden;
+}
