@@ -42,10 +42,34 @@
       <section id="templates" class="workspace studio-only">
         <aside class="template-panel">
           <div class="section-heading"><div><span class="section-index">01</span><h2>Choose a direction</h2></div><p>Each template uses the same structured profile data, so content stays consistent.</p></div>
+          <div class="role-avatar-panel">
+            <div class="role-avatar-preview" :class="{ empty: !candidate.avatar }">
+              <img v-if="candidate.avatar" :src="candidate.avatar" alt="" />
+              <span v-else>{{ candidateInitials }}</span>
+            </div>
+            <div class="role-avatar-copy">
+              <strong>Profile photo</strong>
+              <span>Shared across all 4 role presets and CV templates.</span>
+              <div class="role-avatar-actions">
+                <label class="role-avatar-upload">
+                  <input type="file" accept="image/jpeg,image/png,image/webp" @change="uploadQuickAvatar" />
+                  {{ candidate.avatar ? 'Replace photo' : 'Upload photo' }}
+                </label>
+                <button v-if="candidate.avatar" type="button" class="role-avatar-remove" @click="removeQuickAvatar">Remove</button>
+              </div>
+              <small v-if="avatarError" class="role-avatar-error" role="alert">{{ avatarError }}</small>
+            </div>
+          </div>
           <div class="role-presets" aria-label="Role presets">
             <button v-for="preset in rolePresets" :key="preset.id" type="button" @click="applyRolePreset(preset)">
-              <strong>{{ preset.label }}</strong>
-              <span>{{ preset.note }}</span>
+              <span class="role-preset-avatar" :class="{ empty: !candidate.avatar }">
+                <img v-if="candidate.avatar" :src="candidate.avatar" alt="" />
+                <span v-else>{{ candidateInitials }}</span>
+              </span>
+              <span class="role-preset-copy">
+                <strong>{{ preset.label }}</strong>
+                <span>{{ preset.note }}</span>
+              </span>
             </button>
           </div>
           <div class="category-tabs" role="tablist" aria-label="CV template categories">
@@ -174,12 +198,16 @@ export default {
       ],
       focusMode: false,
       autoCompleteResult: null,
+      avatarError: '',
     }
   },
   computed: {
     categories() { return ['All'].concat(Array.from(new Set(this.templates.map((item) => item.category)))) },
     filteredTemplates() { return this.category === 'All' ? this.templates : this.templates.filter((item) => item.category === this.category) },
     selectedTemplate() { return this.templates.find((item) => item.id === this.selectedId) || this.templates[0] },
+    candidateInitials() {
+      return String(this.candidate.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
+    },
     completionPercent() { return candidateCompletionReport(this.candidate).percent },
     cvScore() {
       const profile = this.candidate
@@ -231,6 +259,53 @@ export default {
       const allowed = ['profile', 'impact', 'experience', 'projects', 'education', 'skills', 'design', 'layout']
       this.editorTab = allowed.includes(tab) ? tab : 'profile'
       this.editorOpen = true
+    },
+    async uploadQuickAvatar(event) {
+      const file = event.target.files?.[0]
+      if (!file) return
+      try {
+        const image = await this.compressAvatar(file)
+        this.candidate.avatar = safeImageSource(image)
+        this.avatarError = ''
+      } catch (error) {
+        this.avatarError = error.message || 'Unable to process this image.'
+      } finally {
+        event.target.value = ''
+      }
+    },
+    removeQuickAvatar() {
+      this.candidate.avatar = ''
+      this.avatarError = ''
+    },
+    compressAvatar(file) {
+      if (!file.type.startsWith('image/')) return Promise.reject(new Error('Please choose an image file.'))
+      if (file.size > 10 * 1024 * 1024) return Promise.reject(new Error('Image is too large. Please choose a file under 10 MB.'))
+
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onerror = () => reject(new Error('Unable to read this image.'))
+        reader.onload = () => {
+          const image = new Image()
+          image.onerror = () => reject(new Error('This image format could not be decoded.'))
+          image.onload = () => {
+            const maxDimension = 720
+            const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight))
+            const width = Math.max(1, Math.round(image.naturalWidth * scale))
+            const height = Math.max(1, Math.round(image.naturalHeight * scale))
+            const canvas = document.createElement('canvas')
+            canvas.width = width
+            canvas.height = height
+            const context = canvas.getContext('2d')
+            if (!context) return reject(new Error('Image processing is not available in this browser.'))
+            context.imageSmoothingEnabled = true
+            context.imageSmoothingQuality = 'high'
+            context.drawImage(image, 0, 0, width, height)
+            resolve(canvas.toDataURL('image/webp', 0.82))
+          }
+          image.src = reader.result
+        }
+        reader.readAsDataURL(file)
+      })
     },
     applyRolePreset(preset) {
       const template = this.templates.find((item) => item.id === preset.templateId)
