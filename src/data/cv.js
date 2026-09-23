@@ -172,6 +172,33 @@ export const templates = [
     accent: '#111827',
     description: 'Minimal monochrome grid for design engineer, systems and technical product roles.',
   },
+  {
+    id: 'young-neo-pop',
+    name: 'Neo Pop',
+    category: 'Young',
+    variant: 'creative',
+    theme: 'young-neo-pop',
+    accent: '#FF4D8D',
+    description: 'Bold youthful portfolio CV with playful color blocks, oversized type and energetic project cards.',
+  },
+  {
+    id: 'young-soft-portfolio',
+    name: 'Soft Portfolio',
+    category: 'Young',
+    variant: 'product',
+    theme: 'young-soft-portfolio',
+    accent: '#7C6DFF',
+    description: 'Friendly pastel product CV for junior designers, interns and visual storytellers.',
+  },
+  {
+    id: 'young-creator-cards',
+    name: 'Creator Cards',
+    category: 'Young',
+    variant: 'creative',
+    theme: 'young-creator-cards',
+    accent: '#0EA5A4',
+    description: 'Creator-first modular CV with card-based projects, soft gradients and stronger visual personality.',
+  },
 ]
 
 export const candidate = completeCandidate(resumeCandidateFrom360(sampleProfile360), {
