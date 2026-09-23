@@ -242,6 +242,14 @@ test('static fallback builder keeps core editing and template controls functiona
   await expect(page.locator('#paper')).toHaveClass(/font-mono/)
   await expect(page.locator('#paper')).toHaveClass(/density-compact/)
 
+  const fallbackOrderBefore = await page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-static-settings-v2') || '{}').sectionOrder)
+  await page.locator('#paper [data-section-key="projects"]').dragTo(page.locator('#paper [data-section-key="experience"]'))
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-static-settings-v2') || '{}').sectionOrder)).not.toEqual(fallbackOrderBefore)
+
+  await page.locator('#undoStatic').click()
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-static-settings-v2') || '{}').sectionOrder)).toEqual(fallbackOrderBefore)
+  await page.locator('#redoStatic').click()
+
   await page.locator('#paper [data-edit-focus="#experienceEditor"]').click()
   await expect(page.locator('[data-pane="content"]')).toHaveClass(/active/)
 
