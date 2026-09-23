@@ -1,0 +1,87 @@
+/* UI expert audit v4 — sticky preview and readability polish. */
+
+.preview-panel {
+  overflow: visible;
+}
+
+.preview-toolbar-v3,
+.preview-toolbar {
+  position: sticky;
+  top: 76px;
+  z-index: 40;
+  isolation: isolate;
+  background: rgba(250,250,252,.9);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+.preview-toolbar-v3::after,
+.preview-toolbar::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -8px;
+  height: 8px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(15,23,42,.07), transparent);
+}
+
+.preview-stage {
+  scrollbar-gutter: stable both-edges;
+}
+
+.editor-field > span,
+.editor-section-heading p,
+.editor-tab-copy small {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.editor-field input,
+.editor-field textarea,
+.editor-field select {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.editor-tab-copy strong {
+  font-size: 12px;
+}
+
+.editor-tabs button {
+  min-height: 58px;
+}
+
+.design-presets strong {
+  font-size: 12px;
+}
+
+.design-presets span {
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.project-layout-control.disabled {
+  border-style: dashed;
+}
+
+.project-layout-control button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.template-card:focus-visible,
+.editor-tabs button:focus-visible,
+.design-presets button:focus-visible,
+.project-layout-segmented button:focus-visible {
+  outline: 2px solid var(--apple-blue);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .preview-toolbar-v3,
+  .preview-toolbar {
+    top: 68px;
+  }
+}
