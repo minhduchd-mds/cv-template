@@ -133,7 +133,7 @@ export default {
     accent: { type: String, required: true },
     appearance: {
       type: Object,
-      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft' }),
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards' }),
     },
     interactive: { type: Boolean, default: false },
   },
@@ -143,7 +143,8 @@ export default {
       const font = ['sans', 'serif', 'mono'].includes(this.appearance?.font) ? this.appearance.font : 'sans'
       const density = ['compact', 'balanced', 'spacious'].includes(this.appearance?.density) ? this.appearance.density : 'balanced'
       const radius = ['sharp', 'soft', 'round'].includes(this.appearance?.radius) ? this.appearance.radius : 'soft'
-      return [`cv-font-${font}`, `cv-density-${density}`, `cv-radius-${radius}`]
+      const projectLayout = ['cards', 'list'].includes(this.appearance?.projectLayout) ? this.appearance.projectLayout : 'cards'
+      return [`cv-font-${font}`, `cv-density-${density}`, `cv-radius-${radius}`, `cv-projects-${projectLayout}`]
     },
     monogram() {
       return String(this.profile.name || 'CV').split(' ').filter(Boolean).slice(-2).map((word) => word.charAt(0)).join('')
