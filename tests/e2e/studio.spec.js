@@ -53,6 +53,11 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-density-compact/)
   await page.getByRole('button', { name: /Profile.*Identity & contact/i }).click()
 
+  await page.getByRole('button', { name: /Design Engineer.*Code aware/i }).click()
+  await expect(page.locator('.preview-toolbar')).toContainText('Design Engineer')
+  await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-font-mono/)
+  await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-density-compact/)
+
   const fullNameInput = page.locator('.editor-field').filter({ hasText: 'Full name' }).locator('input')
   await expect(fullNameInput).toHaveValue('Alex Chen')
   await fullNameInput.fill('Alex Chen QA')
@@ -62,6 +67,12 @@ test('builder opens from its route, edits shared data and persists locally', asy
 
   await page.getByRole('button', { name: 'Close CV builder' }).click()
   await expect(page.locator('.profile-editor')).not.toHaveClass(/open/)
+
+  await page.locator('.cv-sheet.is-editable [data-edit-section="experience"]').first().click()
+  await expect(page.locator('.profile-editor')).toHaveClass(/open/)
+  await expect(page.locator('.editor-tabs button.active')).toContainText('Experience')
+  await page.getByRole('button', { name: 'Close CV builder' }).click()
+
   await expectNoHorizontalOverflow(page)
   expect(runtimeErrors).toEqual([])
 })
