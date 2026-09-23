@@ -36,6 +36,11 @@ export const referenceTemplateMixin = {
       const shape = ['circle', 'rounded', 'square'].includes(this.appearance?.avatarShape) ? this.appearance.avatarShape : 'circle'
       return [`cv-avatar-size-${size}`, `cv-avatar-${shape}`]
     },
+    referenceAppearanceClasses() {
+      const size = ['small', 'medium', 'large'].includes(this.appearance?.avatarSize) ? this.appearance.avatarSize : 'medium'
+      const shape = ['circle', 'rounded', 'square'].includes(this.appearance?.avatarShape) ? this.appearance.avatarShape : 'circle'
+      return [`cv-avatar-size-${size}`, `cv-avatar-${shape}`]
+    },
   },
   methods: {
     imageStyle(url) {
