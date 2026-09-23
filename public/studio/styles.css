@@ -164,3 +164,41 @@ button{cursor:pointer}
 .avatar-shape-circle{border-radius:50%!important}.avatar-shape-rounded{border-radius:20%!important}.avatar-shape-square{border-radius:4px!important}
 .avatar-circle .paper-avatar{border-radius:50%!important}.avatar-rounded .paper-avatar{border-radius:20%!important}.avatar-square .paper-avatar{border-radius:4px!important}
 @media(max-width:760px){.static-avatar-framing{grid-template-columns:1fr}#avatarResetFrame{justify-self:start}}
+
+
+/* Avatar zoom / rotate / direct crop */
+.static-avatar-preview {
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.static-avatar-preview:not(:empty) {
+  cursor: grab;
+}
+
+.static-avatar-preview.dragging {
+  cursor: grabbing;
+}
+
+.static-avatar-preview img,
+.preset-avatar img,
+.paper-avatar img {
+  transform-origin: center center;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.static-avatar-framing {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+}
+
+.static-avatar-framing .static-avatar-shapes,
+.static-avatar-framing #avatarResetFrame {
+  grid-column: 1 / -1;
+}
+
+@media(max-width:760px){
+  .static-avatar-framing{grid-template-columns:1fr}
+}
