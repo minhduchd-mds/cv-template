@@ -1,0 +1,281 @@
+/* Design controls v3 — shared by Vue Studio and dedicated CV layouts. */
+
+.design-context-card {
+  margin: 0 0 16px;
+  padding: 13px 14px;
+  border: 1px solid #e2e6ec;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #f8f9fc, #fff);
+}
+.design-context-card > span {
+  display: inline-flex;
+  margin-bottom: 5px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eef1f5;
+  color: #5e6471;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.design-context-card strong {
+  display: block;
+  font-size: 14px;
+}
+.design-context-card p {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.design-section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 18px 0 10px;
+  padding-top: 14px;
+  border-top: 1px solid #eceff3;
+}
+.design-section-label span {
+  color: #252a33;
+  font-size: 12px;
+  font-weight: 800;
+}
+.design-section-label small {
+  color: #98a2b3;
+  font-size: 11px;
+}
+
+.design-range-grid {
+  display: grid;
+  gap: 10px;
+}
+.design-range-grid .editor-field {
+  padding: 10px 11px;
+  border: 1px solid #e4e8ee;
+  border-radius: 12px;
+  background: #fafbfc;
+}
+.range-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.range-head output {
+  min-width: 48px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #e3e7ed;
+  color: #111;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+.design-range-grid input[type='range'] {
+  width: 100%;
+  accent-color: #111827;
+}
+
+.design-style-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.design-style-grid button {
+  min-height: 82px;
+  align-content: start;
+}
+.preset-swatch {
+  display: block;
+  width: 34px;
+  height: 19px;
+  margin-bottom: 8px;
+  border: 1px solid #dfe3e8;
+  border-radius: 5px;
+  background: #fff;
+}
+.preset-swatch.classic { background: linear-gradient(90deg, #b08a48 0 3px, #fbf9f4 3px); }
+.preset-swatch.modern { background: linear-gradient(135deg, #e9eef6, #fff); }
+.preset-swatch.editorial { background: linear-gradient(135deg, #f5ede8, #fff 68%); }
+.preset-swatch.technical {
+  background:
+    linear-gradient(#e5e7eb 1px, transparent 1px),
+    linear-gradient(90deg, #e5e7eb 1px, transparent 1px),
+    #fff;
+  background-size: 5px 5px;
+}
+.preset-swatch.portfolio { background: linear-gradient(135deg, #e7e1ff, #f8efff); }
+.preset-swatch.compact { background: linear-gradient(180deg, #eff4f7 0 3px, #fff 3px); }
+
+.project-layout-control.disabled {
+  opacity: .52;
+  background: #f5f6f8;
+}
+.project-layout-control button:disabled {
+  cursor: not-allowed;
+}
+
+/* Compact preview toolbar. */
+.preview-toolbar-v3 {
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  border: 1px solid #dfe4ea;
+  border-radius: 14px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 8px 24px rgba(15,23,42,.06);
+}
+.preview-toolbar-v3 .preview-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.preview-toolbar-v3 .preview-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.preview-toolbar-v3 .preview-status span {
+  padding: 5px 8px;
+  border: 1px solid #e5e9ef;
+  border-radius: 999px;
+  background: #fafbfc;
+  color: #7a8392;
+  font-size: 11px;
+  font-weight: 700;
+}
+.preview-toolbar-v3 .toolbar-control {
+  min-height: 34px;
+  padding: 4px 6px 4px 9px;
+  border: 1px solid #e1e6ec;
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* Appearance scale variables. */
+.cv-text-90 { --text-scale: .9; }
+.cv-text-95 { --text-scale: .95; }
+.cv-text-100 { --text-scale: 1; }
+.cv-text-105 { --text-scale: 1.05; }
+.cv-text-110 { --text-scale: 1.1; }
+.cv-text-115 { --text-scale: 1.15; }
+
+.cv-heading-90 { --heading-scale: .9; }
+.cv-heading-95 { --heading-scale: .95; }
+.cv-heading-100 { --heading-scale: 1; }
+.cv-heading-105 { --heading-scale: 1.05; }
+.cv-heading-110 { --heading-scale: 1.1; }
+.cv-heading-115 { --heading-scale: 1.15; }
+.cv-heading-120 { --heading-scale: 1.2; }
+
+.cv-sheet {
+  --text-scale: 1;
+  --heading-scale: 1;
+}
+
+/* Legacy CV text scaling. */
+.cv-sheet :where(.summary-copy, .experience-copy, .project-copy, .cv-summary, .job p, .project p) {
+  font-size: calc(1em * var(--text-scale));
+}
+.cv-sheet :where(.cv-name, .hero-name) {
+  font-size: calc(1em * var(--heading-scale));
+}
+.cv-sheet :where(.section-title, .cv-section-title) {
+  font-size: calc(1em * var(--heading-scale));
+}
+
+/* Dedicated reference templates: stable base values multiplied by the controls. */
+.ref-cv :where(p, li) {
+  font-size: calc(9px * var(--text-scale)) !important;
+}
+.ref-cv :where(.ref-contact, .ref-contact span, .ref-job-head span, .ref-job-head time, .ref-projects article span, .ref-projects article small, .ref-skills span, .ref-education span, .ref-education small, .ref-certificates span, .ref-certificates small) {
+  font-size: calc(8px * var(--text-scale)) !important;
+}
+.ref-cv :where(.ref-job-head strong, .ref-projects article strong, .ref-education strong, .ref-certificates strong) {
+  font-size: calc(10px * var(--text-scale)) !important;
+}
+.ref-executive-edge .ref-exec-head h1 { font-size: calc(30px * var(--heading-scale)) !important; }
+.ref-executive-edge .ref-exec-head h2 { font-size: calc(11px * var(--heading-scale)) !important; }
+.ref-soft-portfolio .ref-soft-copy h1 { font-size: calc(36px * var(--heading-scale)) !important; }
+.ref-soft-portfolio .ref-soft-copy h2 { font-size: calc(13px * var(--heading-scale)) !important; }
+.ref-product-operator .ref-product-rail h1 { font-size: calc(22px * var(--heading-scale)) !important; }
+.ref-product-operator .ref-product-main > header h1 { font-size: calc(26px * var(--heading-scale)) !important; }
+.ref-code-aware .ref-code-head h1 { font-size: calc(40px * var(--heading-scale)) !important; }
+.ref-ats-precision .ref-ats-head h1 { font-size: calc(28px * var(--heading-scale)) !important; }
+.ref-insight-grid .ref-insight-head h1 { font-size: calc(29px * var(--heading-scale)) !important; }
+.ref-brand-motion .ref-brand-main > header h1 { font-size: calc(38px * var(--heading-scale)) !important; }
+.ref-revenue-driver > header h1 { font-size: calc(29px * var(--heading-scale)) !important; }
+.ref-people-first > header h1 { font-size: calc(34px * var(--heading-scale)) !important; }
+.ref-next-start > header h1 { font-size: calc(30px * var(--heading-scale)) !important; }
+.ref-cv h3 { font-size: calc(11px * var(--heading-scale)) !important; }
+
+/* Spacing control. */
+.cv-spacing-compact .ref-section { padding-bottom: 12px; }
+.cv-spacing-balanced .ref-section { padding-bottom: 18px; }
+.cv-spacing-airy .ref-section { padding-bottom: 24px; }
+.cv-spacing-compact :where(.ref-brand-main section + section, .ref-next-body main section + section, .ref-sales-body main section + section) { margin-top: 10px; }
+.cv-spacing-balanced :where(.ref-brand-main section + section, .ref-next-body main section + section, .ref-sales-body main section + section) { margin-top: 16px; }
+.cv-spacing-airy :where(.ref-brand-main section + section, .ref-next-body main section + section, .ref-sales-body main section + section) { margin-top: 22px; }
+
+/* Project list mode for dedicated templates. */
+.cv-projects-list .ref-projects {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 0 !important;
+}
+.cv-projects-list .ref-projects article {
+  display: grid !important;
+  grid-template-columns: 30px minmax(0, 1fr) auto !important;
+  gap: 3px 10px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 10px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e6e9ee !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.cv-projects-list .ref-projects article:last-child {
+  border-bottom: 0 !important;
+}
+.cv-projects-list .ref-projects article::before,
+.cv-projects-list .ref-projects article::after {
+  display: none !important;
+}
+.cv-projects-list .ref-projects .ref-project-index {
+  position: static !important;
+  grid-row: 1 / 4 !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  border: 1px solid #e2e6ec !important;
+  border-radius: 7px !important;
+  background: #f7f8fa !important;
+  color: #697386 !important;
+}
+.cv-projects-list .ref-projects article > div:nth-child(2) {
+  grid-column: 2 !important;
+  padding-right: 0 !important;
+}
+.cv-projects-list .ref-projects article p {
+  display: block !important;
+  grid-column: 2 / -1 !important;
+  margin: 2px 0 0 !important;
+}
+.cv-projects-list .ref-projects article small {
+  grid-column: 3 !important;
+  grid-row: 1 / 3 !important;
+  align-self: start !important;
+  margin: 0 !important;
+  text-align: right !important;
+}
+
+@media (max-width: 1100px) {
+  .preview-toolbar-v3 .preview-status { display: none; }
+}
