@@ -1331,3 +1331,9 @@
     grid-template-columns:1fr;
   }
 }
+
+
+/* Executive Edge four-slot achievement row */
+.ref-achievement-row{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
