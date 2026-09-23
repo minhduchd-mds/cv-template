@@ -68,6 +68,7 @@
   }
 
   const demoProfile = {
+    avatar: '',
     name: 'Alex Chen',
     role: 'Senior Product Designer',
     email: 'alex.chen@example.com',
@@ -159,6 +160,13 @@
     if (!saved || typeof saved !== 'object') return clone(fallback)
     return { ...clone(fallback), ...saved }
   }
+
+  const safeAvatar = (value) => (
+    typeof value === 'string' && /^data:image\/(?:png|jpe?g|webp);base64,/i.test(value) ? value : ''
+  )
+
+  const profileInitials = () =>
+    String(profile.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
 
   const escapeHtml = (value) =>
     String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -291,6 +299,10 @@
       ? `<section data-edit-pane="content" data-edit-focus="#skills"><h3 class="section-title">Core skills</h3><div class="skills">${profile.skills.map((skill) => `<span>${escapeHtml(skill)}</span>`).join('')}</div></section>`
       : ''
 
+    const avatar = safeAvatar(profile.avatar)
+      ? '<div class="paper-avatar"><img src="' + escapeHtml(safeAvatar(profile.avatar)) + '" alt="" /></div>'
+      : ''
+
     const languages = `
       <section data-edit-pane="content" data-edit-focus="#languages">
         <h3 class="section-title">Languages</h3>
@@ -300,9 +312,14 @@
 
     paper.innerHTML = `
       <header class="cv-head" data-edit-pane="content" data-edit-focus="#name">
+        <div class="cv-head-main">
+          <div>
         <div class="cv-kicker">${escapeHtml(profile.role)}</div>
         <h1>${escapeHtml(profile.name)}</h1>
         <h2>${escapeHtml(profile.role)}</h2>
+          </div>
+          ${avatar}
+        </div>
         <div class="contact">
           <span>${escapeHtml(profile.location)}</span>
           <span>${escapeHtml(profile.email)}</span>
@@ -431,10 +448,30 @@
     $('#projectList').classList.toggle('active', settings.projectLayout === 'list')
   }
 
+  const renderQuickAvatar = () => {
+    const avatar = safeAvatar(profile.avatar)
+    const initials = profileInitials()
+    const nodes = [$('#staticAvatarPreview'), ...$('[data-preset-avatar]')].filter(Boolean)
+    nodes.forEach((node) => {
+      node.innerHTML = ''
+      if (avatar) {
+        const image = document.createElement('img')
+        image.src = avatar
+        image.alt = ''
+        node.appendChild(image)
+      } else {
+        node.textContent = initials
+      }
+    })
+    const removeButton = $('#staticAvatarRemove')
+    if (removeButton) removeButton.hidden = !avatar
+  }
+
   const renderEditors = () => {
     syncEditorFields()
     renderExperienceEditor()
     renderProjectsEditor()
+    renderQuickAvatar()
   }
 
   const renderAll = () => {
@@ -442,6 +479,7 @@
     renderTemplates()
     renderPaper()
     syncEditorFields()
+    renderQuickAvatar()
   }
 
   ;['name', 'role', 'email', 'phone', 'location', 'website', 'summary'].forEach((key) => {
@@ -449,6 +487,7 @@
       profile[key] = event.currentTarget.value
       persist()
       renderPaper()
+      if (key === 'name') renderQuickAvatar()
     })
   })
 
@@ -468,6 +507,51 @@
       .filter(Boolean)
     persist()
     renderPaper()
+  })
+
+  const compressAvatar = (file) => new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) return reject(new Error('Please choose an image file.'))
+    if (file.size > 10 * 1024 * 1024) return reject(new Error('Image is too large. Please use a file under 10 MB.'))
+
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('Unable to read this image.'))
+    reader.onload = () => {
+      const image = new Image()
+      image.onerror = () => reject(new Error('Unable to decode this image.'))
+      image.onload = () => {
+        const maxDimension = 720
+        const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale))
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale))
+        const context = canvas.getContext('2d')
+        if (!context) return reject(new Error('Image processing is unavailable.'))
+        context.imageSmoothingEnabled = true
+        context.imageSmoothingQuality = 'high'
+        context.drawImage(image, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/webp', 0.82))
+      }
+      image.src = reader.result
+    }
+    reader.readAsDataURL(file)
+  })
+
+  $('#staticAvatarInput').addEventListener('change', async (event) => {
+    const imageFile = event.currentTarget.files?.[0]
+    if (!imageFile) return
+    try {
+      profile.avatar = await compressAvatar(imageFile)
+      renderAll()
+    } catch (error) {
+      window.alert(error.message || 'Unable to process this image.')
+    } finally {
+      event.currentTarget.value = ''
+    }
+  })
+
+  $('#staticAvatarRemove').addEventListener('click', () => {
+    profile.avatar = ''
+    renderAll()
   })
 
   $('#addExperience').addEventListener('click', () => {
