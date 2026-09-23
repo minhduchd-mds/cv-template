@@ -326,6 +326,62 @@
       )
       .join('')
 
+  const templateEnhancement = (template) => {
+    const roleCount = Array.isArray(profile.experience) ? profile.experience.length : 0
+    const projectCount = Array.isArray(profile.projects) ? profile.projects.length : 0
+    const skillCount = Array.isArray(profile.skills) ? profile.skills.length : 0
+    const languageCount = Array.isArray(profile.languages) ? profile.languages.length : 0
+
+    if (template.id === 'soft-portfolio-pro') {
+      return `
+        <div class="template-decor decor-soft" aria-hidden="true">
+          <div><strong>${roleCount}</strong><span>Roles</span></div>
+          <div><strong>${projectCount}</strong><span>Projects</span></div>
+          <div><strong>${skillCount}</strong><span>Core skills</span></div>
+          <div><strong>${languageCount}</strong><span>Languages</span></div>
+        </div>
+      `
+    }
+
+    if (template.id === 'product-operator') {
+      return `
+        <div class="template-decor decor-product" aria-hidden="true">
+          <span>Strategy</span><i></i><span>Execution</span><i></i><span>Impact</span>
+        </div>
+      `
+    }
+
+    if (template.id === 'insight-grid') {
+      return `
+        <div class="template-decor decor-insight" aria-hidden="true">
+          <div class="mini-bars"><i></i><i></i><i></i><i></i><i></i></div>
+          <div><strong>${projectCount}</strong><span>Projects</span></div>
+          <div><strong>${skillCount}</strong><span>Skills</span></div>
+          <div><strong>${roleCount}</strong><span>Roles</span></div>
+        </div>
+      `
+    }
+
+    if (template.id === 'brand-motion') {
+      return `
+        <div class="template-decor decor-brand" aria-hidden="true">
+          <span>Ideas</span><span>People</span><span>Stories</span><span>Impact</span>
+        </div>
+      `
+    }
+
+    if (template.id === 'next-start') {
+      return `
+        <div class="template-decor decor-start" aria-hidden="true">
+          <span>Learn</span><i>→</i><span>Build</span><i>→</i><span>Grow</span>
+          <b>${projectCount} projects · ${skillCount} skills</b>
+        </div>
+      `
+    }
+
+    return ''
+  }
+
   const renderProjects = () =>
     profile.projects
       .map(
@@ -358,6 +414,8 @@
     paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'} avatar-${avatarShape} avatar-size-${avatarSize}`
     paper.style.setProperty('--accent', settings.accent)
     paper.style.setProperty('--zoom', String(settings.zoom))
+
+    const enhancement = templateEnhancement(template)
 
     const summary = settings.showSummary
       ? `<section class="summary draggable-section" draggable="true" data-section-key="summary" data-section-group="main" style="order:${sectionOrderIndex('summary')}" data-edit-pane="content" data-edit-focus="#summary"><p>${escapeHtml(profile.summary)}</p></section>`
@@ -403,6 +461,7 @@
           <span>${escapeHtml(profile.website)}</span>
         </div>
       </header>
+      ${enhancement}
       <div class="cv-body">
         <main class="cv-main">
           ${summary}
