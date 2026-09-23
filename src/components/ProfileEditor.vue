@@ -82,6 +82,21 @@
                 {{ shape.label }}
               </button>
             </div>
+            <div class="avatar-size-control">
+              <span>Avatar size</span>
+              <div class="avatar-size-segmented" role="group" aria-label="Avatar size">
+                <button
+                  v-for="size in avatarSizes"
+                  :key="size.id"
+                  type="button"
+                  :class="{ active: avatarSize === size.id }"
+                  :aria-pressed="avatarSize === size.id"
+                  @click="$emit('update-appearance', { key: 'avatarSize', value: size.id })"
+                >
+                  {{ size.label }}
+                </button>
+              </div>
+            </div>
             <div class="avatar-position-grid">
               <label class="editor-field">
                 <span>Horizontal · {{ avatarX }}%</span>
@@ -330,7 +345,7 @@ export default {
     completion: { type: Number, default: 0 },
     appearance: {
       type: Object,
-      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }),
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }),
     },
     accent: { type: String, default: '#6d5dfc' },
     requestedTab: { type: String, default: 'profile' },
@@ -347,6 +362,11 @@ export default {
         { id: 'circle', label: 'Circle' },
         { id: 'rounded', label: 'Rounded' },
         { id: 'square', label: 'Square' },
+      ],
+      avatarSizes: [
+        { id: 'small', label: 'S' },
+        { id: 'medium', label: 'M' },
+        { id: 'large', label: 'L' },
       ],
       tabs: [
         { id: 'profile', label: 'Profile', hint: 'Identity & contact', icon: '01' },
@@ -366,6 +386,9 @@ export default {
     },
     avatarShape() {
       return ['circle', 'rounded', 'square'].includes(this.appearance.avatarShape) ? this.appearance.avatarShape : 'circle'
+    },
+    avatarSize() {
+      return ['small', 'medium', 'large'].includes(this.appearance.avatarSize) ? this.appearance.avatarSize : 'medium'
     },
     avatarX() {
       return Number.isFinite(Number(this.appearance.avatarX)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarX))) : 50
@@ -422,6 +445,7 @@ export default {
     imageStyle(url) { return url ? { backgroundImage: `linear-gradient(rgba(15,23,42,.04), rgba(15,23,42,.04)), url("${String(url).replace(/"/g, '%22')}")` } : {} },
     resetAvatarFraming() {
       this.$emit('update-appearance', { key: 'avatarShape', value: 'circle' })
+      this.$emit('update-appearance', { key: 'avatarSize', value: 'medium' })
       this.$emit('update-appearance', { key: 'avatarX', value: 50 })
       this.$emit('update-appearance', { key: 'avatarY', value: 50 })
       this.$emit('update-appearance', { key: 'avatarZoom', value: 1 })
