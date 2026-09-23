@@ -34,6 +34,16 @@
               <label><input id="staticAvatarInput" type="file" accept="image/jpeg,image/png,image/webp" />Upload / Replace</label>
               <button id="staticAvatarRemove" type="button">Remove</button>
             </div>
+            <div id="staticAvatarFraming" class="static-avatar-framing">
+              <div class="static-avatar-shapes" role="group" aria-label="Avatar shape">
+                <button type="button" data-avatar-shape="circle">Circle</button>
+                <button type="button" data-avatar-shape="rounded">Rounded</button>
+                <button type="button" data-avatar-shape="square">Square</button>
+              </div>
+              <label><span>X</span><input id="avatarX" type="range" min="0" max="100" value="50" /></label>
+              <label><span>Y</span><input id="avatarY" type="range" min="0" max="100" value="50" /></label>
+              <button id="avatarResetFrame" type="button">Reset framing</button>
+            </div>
           </div>
         </div>
         <div class="target-preset-grid" aria-label="Role presets">
