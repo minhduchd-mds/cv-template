@@ -94,11 +94,25 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(fullNameInput).toHaveValue('Alex Chen')
   await fullNameInput.fill('Alex Chen QA')
   await expect(page.locator('.cv-sheet').first()).toContainText('Alex Chen QA')
-
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}').name)).toBe('Alex Chen QA')
 
   await page.getByRole('button', { name: 'Close CV builder' }).click()
   await expect(page.locator('.profile-editor')).not.toHaveClass(/open/)
+
+  await page.getByRole('button', { name: 'Undo last change' }).click()
+  await expect(page.locator('.cv-sheet').first()).toContainText('Alex Chen')
+  await page.getByRole('button', { name: 'Redo last change' }).click()
+  await expect(page.locator('.cv-sheet').first()).toContainText('Alex Chen QA')
+
+  const sectionsBeforeDrag = await page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}').sections.map((section) => section.id))
+  const projectsSection = page.locator('.cv-sheet.is-editable [data-section-id="projects"]').first()
+  const experienceSection = page.locator('.cv-sheet.is-editable [data-section-id="experience"]').first()
+  await projectsSection.dragTo(experienceSection)
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}').sections.map((section) => section.id))).not.toEqual(sectionsBeforeDrag)
+
+  await page.getByRole('button', { name: 'Undo last change' }).click()
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}').sections.map((section) => section.id))).toEqual(sectionsBeforeDrag)
+  await page.getByRole('button', { name: 'Redo last change' }).click()
 
   await page.locator('.cv-sheet.is-editable [data-edit-section="experience"]').first().click()
   await expect(page.locator('.profile-editor')).toHaveClass(/open/)
@@ -233,8 +247,13 @@ test('static fallback builder keeps core editing and template controls functiona
 
   await page.locator('#name').fill('Alex Chen Static QA')
   await expect(page.locator('#paper')).toContainText('Alex Chen Static QA')
-
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-static-v2') || '{}').name)).toBe('Alex Chen Static QA')
+
+  await page.locator('#undoStatic').click()
+  await expect(page.locator('#paper')).toContainText('Alex Chen')
+  await page.locator('#redoStatic').click()
+  await expect(page.locator('#paper')).toContainText('Alex Chen Static QA')
+
   await expectNoHorizontalOverflow(page)
   expect(runtimeErrors).toEqual([])
 })
