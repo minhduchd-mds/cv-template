@@ -491,10 +491,10 @@
       </header>
       ${refHighlights('ref-soft-metrics')}
       <div class="ref-soft-body">
-        <main><div class="ref-section-title">Selected Case Studies</div>${refProjects('ref-soft-projects')}</main>
-        <aside><div class="ref-section-title">Core Skills</div>${refSkills('ref-soft-skills')}<div class="ref-section-title">Tools</div>${refSkills('ref-tool-grid')}</aside>
+        <main data-edit-pane="content" data-edit-focus="#projectEditor"><div class="ref-section-title">Selected Case Studies</div>${refProjects('ref-soft-projects')}</main>
+        <aside data-edit-pane="content" data-edit-focus="#skills"><div class="ref-section-title">Core Skills</div>${refSkills('ref-soft-skills')}<div class="ref-section-title">Tools</div>${refSkills('ref-tool-grid')}</aside>
       </div>
-      <section class="ref-soft-highlights"><div class="ref-section-title">Experience Highlights</div>${refExperience('ref-soft-experience')}</section>
+      <section class="ref-soft-highlights" data-edit-pane="content" data-edit-focus="#experienceEditor"><div class="ref-section-title">Experience Highlights</div>${refExperience('ref-soft-experience')}</section>
     </div>
   `
 
@@ -514,7 +514,7 @@
         ${refHighlights('ref-product-metrics')}
         <section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Experience</h3>${refExperience('ref-product-experience')}</section>
         <div class="ref-product-lower">
-          <section><h3>Product Highlights</h3>${refProjects('ref-product-highlights')}</section>
+          <section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Product Highlights</h3>${refProjects('ref-product-highlights')}</section>
           <section><h3>Roadmap Mindset</h3><div class="ref-roadmap"><div><b>Discover</b><span>Understand</span></div><div><b>Define</b><span>Set strategy</span></div><div><b>Deliver</b><span>Build & test</span></div><div><b>Scale</b><span>Measure impact</span></div></div></section>
         </div>
       </main>
@@ -544,8 +544,8 @@
         ${refContact()}
       </header>
       <div class="ref-ats-body">
-        <main><section><h3>Experience</h3>${refExperience('ref-ats-experience')}</section>${refEducation() ? '<section><h3>Education</h3>' + refEducation() + '</section>' : ''}</main>
-        <aside><section><h3>Skills</h3>${refSkills('ref-ats-skills')}</section><section><h3>Selected Projects</h3>${refProjects('ref-ats-projects')}</section>${refCertificates() ? '<section><h3>Certifications</h3>' + refCertificates() + '</section>' : ''}</aside>
+        <main><section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Experience</h3>${refExperience('ref-ats-experience')}</section>${refEducation() ? '<section><h3>Education</h3>' + refEducation() + '</section>' : ''}</main>
+        <aside><section data-edit-pane="content" data-edit-focus="#skills"><h3>Skills</h3>${refSkills('ref-ats-skills')}</section><section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Selected Projects</h3>${refProjects('ref-ats-projects')}</section>${refCertificates() ? '<section><h3>Certifications</h3>' + refCertificates() + '</section>' : ''}</aside>
       </div>
     </div>
   `
@@ -556,13 +556,13 @@
         <div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2>${refContact()}</div>
         <div class="ref-chart-bars"><i></i><i></i><i></i><i></i><i></i><strong>Turning Data<br>Into Decisions</strong></div>
       </header>
-      <section class="ref-insight-summary"><div><h3>Professional Summary</h3><p>${escapeHtml(profile.summary)}</p></div>${refHighlights('ref-insight-metrics')}</section>
+      <section class="ref-insight-summary" data-edit-pane="content" data-edit-focus="#summary"><div><h3>Professional Summary</h3><p>${escapeHtml(profile.summary)}</p></div>${refHighlights('ref-insight-metrics')}</section>
       <div class="ref-insight-grid-body">
-        <section><h3>Core Skills</h3><div class="ref-skill-bars">${(profile.skills || []).map((skill, index) => '<div><span>' + escapeHtml(skill) + '</span><i><b style="width:' + Math.max(62, 92 - index * 4) + '%"></b></i></div>').join('')}</div></section>
-        <section><h3>Key Achievements</h3>${refProjects('ref-insight-achievements')}</section>
+        <section data-edit-pane="content" data-edit-focus="#skills"><h3>Core Skills</h3><div class="ref-skill-bars">${(profile.skills || []).map((skill, index) => '<div><span>' + escapeHtml(skill) + '</span><i><b style="width:' + Math.max(62, 92 - index * 4) + '%"></b></i></div>').join('')}</div></section>
+        <section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Key Achievements</h3>${refProjects('ref-insight-achievements')}</section>
         <section><h3>Tools & Technologies</h3>${refSkills('ref-insight-tools')}</section>
       </div>
-      <div class="ref-insight-bottom"><section><h3>Professional Experience</h3>${refExperience('ref-insight-experience')}</section><aside>${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}${refCertificates() ? '<h3>Certifications</h3>' + refCertificates() : ''}</aside></div>
+      <div class="ref-insight-bottom"><section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-insight-experience')}</section><aside>${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}${refCertificates() ? '<h3>Certifications</h3>' + refCertificates() : ''}</aside></div>
     </div>
   `
 
@@ -572,14 +572,14 @@
         ${avatarMarkup('ref-brand-avatar')}
         ${refContact()}
         <blockquote>Brands grow when<br>people feel something.</blockquote>
-        <h3>Skills</h3>${refSkills('ref-brand-skills')}
+        <div data-edit-pane="content" data-edit-focus="#skills"><h3>Skills</h3>${refSkills('ref-brand-skills')}</div>
         <h3>Languages</h3><div class="ref-brand-languages">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div>
       </aside>
       <main class="ref-brand-main">
         <header><span>Ideas · People · Impact</span><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>${escapeHtml(profile.summary)}</p><em>BRANDS<br>PEOPLE<br>STORIES<br>GROWTH</em></header>
         ${refHighlights('ref-brand-metrics')}
-        <section><h3>Work Experience</h3>${refExperience('ref-brand-experience')}</section>
-        <section><h3>Selected Campaigns</h3>${refProjects('ref-brand-projects')}</section>
+        <section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Work Experience</h3>${refExperience('ref-brand-experience')}</section>
+        <section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Selected Campaigns</h3>${refProjects('ref-brand-projects')}</section>
       </main>
     </div>
   `
@@ -590,11 +590,11 @@
       ${refContact()}
       <div class="ref-sales-body">
         <main>
-          <section><h3>Professional Summary</h3><p>${escapeHtml(profile.summary)}</p></section>
-          <section><h3>Key Performance Highlights</h3>${refHighlights('ref-sales-metrics')}</section>
+          <section data-edit-pane="content" data-edit-focus="#summary"><h3>Professional Summary</h3><p>${escapeHtml(profile.summary)}</p></section>
+          <section data-edit-pane="content" data-edit-focus="#summary"><h3>Key Performance Highlights</h3>${refHighlights('ref-sales-metrics')}</section>
           <section><h3>Professional Experience</h3>${refExperience('ref-sales-experience')}</section>
         </main>
-        <aside><h3>Core Skills</h3>${refSkills('ref-sales-skills')}<h3>Selected Clients</h3><div class="ref-client-grid"><span>Microsoft</span><span>Vodafone</span><span>Sage</span><span>DELL</span><span>HSBC</span><span>Atlassian</span></div><blockquote>“I don't just meet targets.<br>I create momentum.”</blockquote></aside>
+        <aside data-edit-pane="content" data-edit-focus="#skills"><h3>Core Skills</h3>${refSkills('ref-sales-skills')}<h3>Selected Clients</h3><div class="ref-client-grid"><span>Microsoft</span><span>Vodafone</span><span>Sage</span><span>DELL</span><span>HSBC</span><span>Atlassian</span></div><blockquote>“I don't just meet targets.<br>I create momentum.”</blockquote></aside>
       </div>
     </div>
   `
@@ -607,8 +607,8 @@
       </header>
       ${refContact()}
       <div class="ref-people-body">
-        <aside><h3>Key Competencies</h3>${refSkills('ref-people-skills')}${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}</aside>
-        <main><h3>Professional Experience</h3>${refExperience('ref-people-experience')}<h3>Additional Information</h3><div class="ref-people-extra">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div></main>
+        <aside data-edit-pane="content" data-edit-focus="#skills"><h3>Key Competencies</h3>${refSkills('ref-people-skills')}${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}</aside>
+        <main data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-people-experience')}<h3>Additional Information</h3><div class="ref-people-extra">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div></main>
       </div>
     </div>
   `
@@ -617,11 +617,11 @@
     <div class="ref-cv ref-next-start">
       <header data-edit-pane="content" data-edit-focus="#name"><div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>Curious learner · Problem solver · Ready to make an impact</p></div><span class="ref-next-note">A Brighter<br>You Ahead</span></header>
       <div class="ref-next-body">
-        <aside>${avatarMarkup('ref-next-avatar')}<blockquote>Eager to learn,<br>excited to build,<br>ready for what's next.</blockquote>${refContact()}<h3>Skills</h3>${refSkills('ref-next-skills')}</aside>
+        <aside data-edit-pane="content" data-edit-focus="#skills">${avatarMarkup('ref-next-avatar')}<blockquote>Eager to learn,<br>excited to build,<br>ready for what's next.</blockquote>${refContact()}<h3>Skills</h3>${refSkills('ref-next-skills')}</aside>
         <main>
           ${refEducation() ? '<section><h3>Education</h3>' + refEducation() + '</section>' : ''}
-          <section><h3>Projects</h3>${refProjects('ref-next-projects')}</section>
-          <section><h3>Internships</h3>${refExperience('ref-next-experience')}</section>
+          <section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Projects</h3>${refProjects('ref-next-projects')}</section>
+          <section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Internships</h3>${refExperience('ref-next-experience')}</section>
           <section><h3>Activities</h3><div class="ref-next-activities"><span>Community involvement</span><span>Team projects</span><span>Continuous learning</span></div></section>
         </main>
       </div>
