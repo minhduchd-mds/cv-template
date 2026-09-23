@@ -358,3 +358,48 @@ test('static fallback keeps 1366 workspace aligned with editor open', async ({ p
   expect(layout.templates.top).toBeGreaterThanOrEqual(67)
   expect(layout.templates.bottom).toBeLessThanOrEqual(769)
 })
+
+
+test('all 15 curated templates stay inside A4 and remain editable', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 })
+  await page.goto('/studio/')
+
+  const names = [
+    'Executive Edge',
+    'Soft Portfolio',
+    'Product Operator',
+    'Code Aware',
+    'ATS Precision',
+    'Insight Grid',
+    'Brand Motion',
+    'Revenue Driver',
+    'People First',
+    'Next Start',
+    'Bento Resume',
+    'Executive Navy',
+    'ATS Clean',
+    'Mono Grid',
+    'Creator Cards',
+  ]
+
+  for (const name of names) {
+    const card = page.locator('.template-card').filter({ hasText: name })
+    await expect(card).toHaveCount(1)
+    await card.click()
+
+    const paper = page.locator('#paper')
+    const metrics = await paper.evaluate((node) => ({
+      scrollWidth: node.scrollWidth,
+      clientWidth: node.clientWidth,
+      left: node.getBoundingClientRect().left,
+      right: node.getBoundingClientRect().right,
+      bodyScrollWidth: document.documentElement.scrollWidth,
+      bodyClientWidth: document.documentElement.clientWidth,
+      editZones: node.querySelectorAll('[data-edit-pane]').length,
+    }))
+
+    expect(metrics.scrollWidth, `${name} horizontal paper overflow`).toBeLessThanOrEqual(metrics.clientWidth + 2)
+    expect(metrics.bodyScrollWidth, `${name} horizontal page overflow`).toBeLessThanOrEqual(metrics.bodyClientWidth + 2)
+    expect(metrics.editZones, `${name} missing edit zones`).toBeGreaterThan(0)
+  }
+})
