@@ -13,7 +13,7 @@
             <p class="cv-kicker">{{ profile.role }}</p>
             <h1>{{ profile.name }}</h1>
           </div>
-          <div v-if="profile.avatar" class="cv-avatar ats-avatar" :style="avatarStyle(profile.avatar)"></div>
+          <div v-if="profile.avatar" class="cv-avatar ats-avatar"><img :src="profile.avatar" alt="" :style="avatarImageStyle" /></div>
         </div>
         <div class="contact-row">
           <span>{{ profile.location }}</span><span>{{ profile.email }}</span><span>{{ profile.phone }}</span><span>{{ profile.website }}</span>
@@ -57,7 +57,7 @@
           <h1>{{ profile.name }}</h1>
           <h3>{{ profile.role }}</h3>
         </div>
-        <div v-if="profile.avatar" class="cv-avatar creative-avatar" :style="avatarStyle(profile.avatar)"></div>
+        <div v-if="profile.avatar" class="cv-avatar creative-avatar"><img :src="profile.avatar" alt="" :style="avatarImageStyle" /></div>
         <div class="creative-contact"><span>{{ profile.email }}</span><span>{{ profile.website }}</span><span>{{ profile.location }}</span></div>
       </header>
       <div class="creative-intro section-flow">
@@ -87,7 +87,7 @@
 
     <template v-else-if="template.variant === 'executive'">
       <header class="executive-header" v-bind="editAttrs('profile')">
-        <div class="executive-identity"><div v-if="profile.avatar" class="cv-avatar executive-avatar" :style="avatarStyle(profile.avatar)"></div><div><p class="cv-kicker">Curriculum vitae</p><h1>{{ profile.name }}</h1><h3>{{ profile.role }}</h3></div></div>
+        <div class="executive-identity"><div v-if="profile.avatar" class="cv-avatar executive-avatar"><img :src="profile.avatar" alt="" :style="avatarImageStyle" /></div><div><p class="cv-kicker">Curriculum vitae</p><h1>{{ profile.name }}</h1><h3>{{ profile.role }}</h3></div></div>
         <div class="executive-contact"><span>{{ profile.email }}</span><span>{{ profile.phone }}</span><span>{{ profile.website }}</span><span>{{ profile.location }}</span></div>
       </header>
       <div class="executive-rule"></div>
@@ -109,7 +109,7 @@
 
     <template v-else>
       <aside class="product-sidebar section-flow">
-        <div class="profile-monogram" :class="{ 'has-avatar': profile.avatar }" :style="profile.avatar ? avatarStyle(profile.avatar) : {}" v-bind="editAttrs('profile')"><span v-if="!profile.avatar">{{ monogram }}</span></div>
+        <div class="profile-monogram" :class="{ 'has-avatar': profile.avatar }" v-bind="editAttrs('profile')"><img v-if="profile.avatar" :src="profile.avatar" alt="" :style="avatarImageStyle" /><span v-else>{{ monogram }}</span></div>
         <div v-bind="editAttrs('profile')"><p class="cv-kicker">Senior profile</p><h1>{{ profile.name }}</h1><h3>{{ profile.role }}</h3></div>
         <p v-if="visible('summary')" class="product-summary" :style="sectionStyle('summary')" v-bind="editAttrs('profile')">{{ profile.summary }}</p>
         <div class="product-contact" v-bind="editAttrs('profile')"><span>{{ profile.location }}</span><span>{{ profile.email }}</span><span>{{ profile.phone }}</span><span>{{ profile.website }}</span></div>
@@ -136,12 +136,22 @@ export default {
     accent: { type: String, required: true },
     appearance: {
       type: Object,
-      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50 }),
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }),
     },
     interactive: { type: Boolean, default: false },
   },
   emits: ['edit-section'],
   computed: {
+    avatarImageStyle() {
+      const x = Number.isFinite(Number(this.appearance?.avatarX)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarX))) : 50
+      const y = Number.isFinite(Number(this.appearance?.avatarY)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarY))) : 50
+      const zoom = Number.isFinite(Number(this.appearance?.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(this.appearance.avatarZoom))) : 1
+      const rotate = Number.isFinite(Number(this.appearance?.avatarRotate)) ? Math.min(180, Math.max(-180, Number(this.appearance.avatarRotate))) : 0
+      return {
+        objectPosition: `${x}% ${y}%`,
+        transform: `scale(${zoom}) rotate(${rotate}deg)`,
+      }
+    },
     appearanceClasses() {
       const font = ['sans', 'serif', 'mono'].includes(this.appearance?.font) ? this.appearance.font : 'sans'
       const density = ['compact', 'balanced', 'spacious'].includes(this.appearance?.density) ? this.appearance.density : 'balanced'
@@ -194,15 +204,7 @@ export default {
       if (!url) return {}
       return { backgroundImage: `url("${String(url).replace(/"/g, '%22')}")` }
     },
-    avatarStyle(url) {
-      if (!url) return {}
-      const x = Number.isFinite(Number(this.appearance?.avatarX)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarX))) : 50
-      const y = Number.isFinite(Number(this.appearance?.avatarY)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarY))) : 50
-      return {
-        backgroundImage: `url("${String(url).replace(/"/g, '%22')}")`,
-        backgroundPosition: `${x}% ${y}%`,
-      }
-    },
+
   },
 }
 </script>
