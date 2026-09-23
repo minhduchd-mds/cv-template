@@ -202,3 +202,26 @@ button{cursor:pointer}
 @media(max-width:760px){
   .static-avatar-framing{grid-template-columns:1fr}
 }
+
+
+/* Static fallback history */
+.static-history-controls{
+  display:inline-grid;
+  grid-template-columns:repeat(2,38px);
+  gap:4px;
+  padding:3px;
+  border-radius:10px;
+  background:#eef1f4
+}
+.static-history-controls .button{
+  min-width:38px;
+  min-height:38px;
+  padding:0;
+  display:grid;
+  place-items:center;
+  font-size:15px
+}
+.static-history-controls .button:disabled{
+  opacity:.38;
+  cursor:not-allowed
+}
