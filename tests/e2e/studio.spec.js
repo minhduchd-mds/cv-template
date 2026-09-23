@@ -44,13 +44,19 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(page.getByRole('progressbar', { name: 'CV completeness' })).toBeVisible()
   await expect(page.getByRole('button', { name: /Profile.*Identity & contact/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Experience.*Roles & achievements/i })).toBeVisible()
-  await expect(page.locator('.template-card')).toHaveCount(12)
+  await expect(page.locator('.template-card')).toHaveCount(18)
 
   await page.getByRole('button', { name: /Design.*Type, density & shape/i }).click()
   await page.locator('.editor-field').filter({ hasText: 'Typography' }).locator('select').selectOption('serif')
   await page.locator('.editor-field').filter({ hasText: 'Content density' }).locator('select').selectOption('compact')
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-font-serif/)
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-density-compact/)
+  await page.getByRole('button', { name: /Projects.*Selected work/i }).click()
+  await page.getByRole('button', { name: /List/i }).click()
+  await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-projects-list/)
+  await page.getByRole('button', { name: /Card/i }).click()
+  await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-projects-cards/)
+
   await page.getByRole('button', { name: /Profile.*Identity & contact/i }).click()
 
   await page.getByRole('button', { name: /Design Engineer.*Code aware/i }).click()
@@ -160,10 +166,15 @@ test('static fallback builder keeps core editing and template controls functiona
   await page.goto('/studio/')
 
   await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
-  await expect(page.locator('.template-card')).toHaveCount(12)
+  await expect(page.locator('.template-card')).toHaveCount(18)
 
   await page.getByRole('button', { name: 'Edit CV' }).click()
   await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
+
+  await page.locator('#projectList').click()
+  await expect(page.locator('#paper')).toHaveClass(/projects-list/)
+  await page.locator('#projectCards').click()
+  await expect(page.locator('#paper')).toHaveClass(/projects-cards/)
 
   await page.locator('[data-target-preset="engineer"]').click()
   await expect(page.locator('#activeTemplateLabel')).toContainText('Design Engineer')
