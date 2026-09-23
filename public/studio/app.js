@@ -137,6 +137,9 @@
     density: 'balanced',
     radius: 'soft',
     projectLayout: 'cards',
+    avatarShape: 'circle',
+    avatarX: 50,
+    avatarY: 50,
     showSummary: true,
     showSkills: true,
     showExperience: true,
@@ -279,7 +282,10 @@
           ? 'ats'
           : template.variant
 
-    paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'}`
+    const avatarShape = ['circle', 'rounded', 'square'].includes(settings.avatarShape) ? settings.avatarShape : 'circle'
+    const avatarX = Number.isFinite(Number(settings.avatarX)) ? Math.min(100, Math.max(0, Number(settings.avatarX))) : 50
+    const avatarY = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
+    paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'} avatar-${avatarShape}`
     paper.style.setProperty('--accent', settings.accent)
     paper.style.setProperty('--zoom', String(settings.zoom))
 
@@ -300,7 +306,7 @@
       : ''
 
     const avatar = safeAvatar(profile.avatar)
-      ? '<div class="paper-avatar"><img src="' + escapeHtml(safeAvatar(profile.avatar)) + '" alt="" /></div>'
+      ? '<div class="paper-avatar avatar-shape-' + avatarShape + '"><img src="' + escapeHtml(safeAvatar(profile.avatar)) + '" alt="" style="object-position:' + avatarX + '% ' + avatarY + '%" /></div>'
       : ''
 
     const languages = `
@@ -446,25 +452,44 @@
     $('#projectList').setAttribute('aria-pressed', settings.projectLayout === 'list' ? 'true' : 'false')
     $('#projectCards').classList.toggle('active', settings.projectLayout !== 'list')
     $('#projectList').classList.toggle('active', settings.projectLayout === 'list')
+
+    const avatarShape = ['circle', 'rounded', 'square'].includes(settings.avatarShape) ? settings.avatarShape : 'circle'
+    const avatarX = Number.isFinite(Number(settings.avatarX)) ? Math.min(100, Math.max(0, Number(settings.avatarX))) : 50
+    const avatarY = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
+    $('#avatarX').value = String(avatarX)
+    $('#avatarY').value = String(avatarY)
+    $('[data-avatar-shape]').forEach((button) => {
+      const active = button.dataset.avatarShape === avatarShape
+      button.classList.toggle('active', active)
+      button.setAttribute('aria-pressed', active ? 'true' : 'false')
+    })
   }
 
   const renderQuickAvatar = () => {
     const avatar = safeAvatar(profile.avatar)
     const initials = profileInitials()
     const nodes = [$('#staticAvatarPreview'), ...$('[data-preset-avatar]')].filter(Boolean)
+    const shape = ['circle', 'rounded', 'square'].includes(settings.avatarShape) ? settings.avatarShape : 'circle'
+    const x = Number.isFinite(Number(settings.avatarX)) ? Math.min(100, Math.max(0, Number(settings.avatarX))) : 50
+    const y = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
     nodes.forEach((node) => {
       node.innerHTML = ''
+      node.classList.remove('avatar-shape-circle', 'avatar-shape-rounded', 'avatar-shape-square')
+      node.classList.add(`avatar-shape-${shape}`)
       if (avatar) {
         const image = document.createElement('img')
         image.src = avatar
         image.alt = ''
+        image.style.objectPosition = `${x}% ${y}%`
         node.appendChild(image)
       } else {
         node.textContent = initials
       }
     })
     const removeButton = $('#staticAvatarRemove')
+    const framing = $('#staticAvatarFraming')
     if (removeButton) removeButton.hidden = !avatar
+    if (framing) framing.hidden = !avatar
   }
 
   const renderEditors = () => {
@@ -551,6 +576,30 @@
 
   $('#staticAvatarRemove').addEventListener('click', () => {
     profile.avatar = ''
+    renderAll()
+  })
+
+  $('[data-avatar-shape]').forEach((button) => {
+    button.addEventListener('click', () => {
+      settings.avatarShape = button.dataset.avatarShape
+      renderAll()
+    })
+  })
+
+  $('#avatarX').addEventListener('input', (event) => {
+    settings.avatarX = Number(event.currentTarget.value)
+    renderAll()
+  })
+
+  $('#avatarY').addEventListener('input', (event) => {
+    settings.avatarY = Number(event.currentTarget.value)
+    renderAll()
+  })
+
+  $('#avatarResetFrame').addEventListener('click', () => {
+    settings.avatarShape = 'circle'
+    settings.avatarX = 50
+    settings.avatarY = 50
     renderAll()
   })
 
