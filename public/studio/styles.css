@@ -804,3 +804,302 @@ button{cursor:pointer}
     overflow:visible
   }
 }
+
+
+/* Premium accents for the five flagship curated templates */
+.template-decor{
+  margin:0 34px 18px;
+  break-inside:avoid;
+  page-break-inside:avoid
+}
+
+/* Soft Portfolio — compact portfolio KPI strip */
+.decor-soft{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0;
+  overflow:hidden;
+  border:1px solid #e6e1ff;
+  border-radius:16px;
+  background:linear-gradient(90deg,#f5f2ff,#fff,#f8f6ff)
+}
+.decor-soft>div{
+  min-width:0;
+  padding:13px 12px;
+  text-align:center
+}
+.decor-soft>div+div{border-left:1px solid #e9e5f7}
+.decor-soft strong{
+  display:block;
+  color:#6f56d9;
+  font-size:18px;
+  line-height:1
+}
+.decor-soft span{
+  display:block;
+  margin-top:4px;
+  color:#7a748f;
+  font-size:7.5px;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase
+}
+.theme-soft-portfolio-pro .cv-head{
+  position:relative;
+  padding-bottom:24px
+}
+.theme-soft-portfolio-pro .cv-head:after{
+  content:"Portfolio / Product / Systems";
+  position:absolute;
+  right:34px;
+  bottom:18px;
+  color:#8b5cf6;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.14em;
+  text-transform:uppercase
+}
+.theme-soft-portfolio-pro .cv-side{
+  border-left:0;
+  padding-left:18px;
+  border-radius:16px;
+  background:#faf9ff
+}
+
+/* Product Operator — strategic flow rail */
+.decor-product{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:10px 14px;
+  border:1px solid #d8ecef;
+  border-radius:999px;
+  background:#f5fbfc
+}
+.decor-product span{
+  color:#0b5965;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase
+}
+.decor-product i{
+  flex:1;
+  height:1px;
+  position:relative;
+  background:#89c8cf
+}
+.decor-product i:after{
+  content:"";
+  position:absolute;
+  right:-1px;
+  top:-2px;
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#0e9eac
+}
+.theme-product-operator .cv-body{
+  grid-template-columns:1.52fr .72fr
+}
+.theme-product-operator .cv-side{
+  border-left:1px solid #d8ecef;
+  background:#f7fbfc
+}
+.theme-product-operator .project{
+  position:relative;
+  overflow:hidden;
+  border-radius:12px
+}
+.theme-product-operator .project:before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:3px;
+  background:#0e9eac
+}
+
+/* Insight Grid — data summary + decorative bars */
+.decor-insight{
+  display:grid;
+  grid-template-columns:1.35fr repeat(3,.65fr);
+  align-items:center;
+  gap:0;
+  overflow:hidden;
+  border:1px solid #dbe8fb;
+  border-radius:14px;
+  background:linear-gradient(90deg,#f4f8ff,#fff)
+}
+.decor-insight>div{
+  min-width:0;
+  padding:12px
+}
+.decor-insight>div+div{
+  border-left:1px solid #e1eaf7;
+  text-align:center
+}
+.decor-insight strong{
+  display:block;
+  color:#2563eb;
+  font-size:17px;
+  line-height:1
+}
+.decor-insight span{
+  display:block;
+  margin-top:4px;
+  color:#6b7a96;
+  font-size:7px;
+  font-weight:700;
+  text-transform:uppercase
+}
+.mini-bars{
+  height:40px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  gap:5px
+}
+.mini-bars i{
+  width:8px;
+  border-radius:3px 3px 0 0;
+  background:linear-gradient(180deg,#8cb7ff,#2563eb)
+}
+.mini-bars i:nth-child(1){height:12px}
+.mini-bars i:nth-child(2){height:20px}
+.mini-bars i:nth-child(3){height:17px}
+.mini-bars i:nth-child(4){height:29px}
+.mini-bars i:nth-child(5){height:36px}
+.theme-insight-grid .cv-side{
+  border-left:1px solid #dbe8fb;
+  background:rgba(248,251,255,.88)
+}
+.theme-insight-grid .skills span{
+  position:relative;
+  padding-right:28px
+}
+.theme-insight-grid .skills span:after{
+  content:"";
+  position:absolute;
+  right:8px;
+  top:50%;
+  width:14px;
+  height:3px;
+  border-radius:999px;
+  background:#72a2f2
+}
+
+/* Brand Motion — editorial personality without faking achievements */
+.decor-brand{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:-8px;
+  padding-right:22px
+}
+.decor-brand span{
+  position:relative;
+  color:#29304a;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:9px;
+  font-style:italic
+}
+.decor-brand span+span:before{
+  content:"/";
+  margin-right:10px;
+  color:#f25f5c
+}
+.theme-brand-motion .cv-head{
+  position:relative;
+  overflow:hidden
+}
+.theme-brand-motion .cv-head:after{
+  content:"Ideas\A People\A Stories\A Growth";
+  white-space:pre;
+  position:absolute;
+  right:26px;
+  top:24px;
+  color:#20263a;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:8px;
+  font-style:italic;
+  line-height:1.5;
+  transform:rotate(-4deg)
+}
+.theme-brand-motion .project{
+  overflow:hidden;
+  background:linear-gradient(180deg,#fff,#fffaf8)
+}
+.theme-brand-motion .project:nth-child(2){
+  background:linear-gradient(180deg,#f8fffd,#fff)
+}
+
+/* Next Start — learning path / fresh graduate energy */
+.decor-start{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border:1px solid #dbe8fb;
+  border-radius:14px;
+  background:linear-gradient(90deg,#f4f8ff,#fff)
+}
+.decor-start span{
+  color:#245cb1;
+  font-size:8px;
+  font-weight:800;
+  text-transform:uppercase
+}
+.decor-start i{
+  color:#79a8ef;
+  font-style:normal
+}
+.decor-start b{
+  margin-left:auto;
+  color:#5f7090;
+  font-size:7.5px;
+  font-weight:700
+}
+.theme-next-start .cv-head{
+  position:relative
+}
+.theme-next-start .cv-head:after{
+  content:"A brighter next step ↗";
+  position:absolute;
+  right:34px;
+  top:28px;
+  color:#2563eb;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:10px;
+  font-style:italic;
+  transform:rotate(-5deg)
+}
+.theme-next-start .cv-side{
+  border-left:1px solid #dbe8fb;
+  background:#f8fbff
+}
+.theme-next-start .project{
+  border-color:#dbe8fb;
+  border-radius:14px;
+  background:#fff
+}
+
+@media(max-width:760px){
+  .template-decor{margin:0 20px 14px}
+  .decor-soft{grid-template-columns:repeat(2,1fr)}
+  .decor-soft>div:nth-child(3){border-left:0;border-top:1px solid #e9e5f7}
+  .decor-soft>div:nth-child(4){border-top:1px solid #e9e5f7}
+  .decor-insight{grid-template-columns:1fr 1fr}
+  .decor-insight .mini-bars{grid-column:1/-1}
+  .decor-insight>div:nth-child(2){border-left:0;border-top:1px solid #e1eaf7}
+  .decor-insight>div:nth-child(3),.decor-insight>div:nth-child(4){border-top:1px solid #e1eaf7}
+  .decor-start{flex-wrap:wrap}
+  .decor-start b{width:100%;margin-left:0}
+}
+
+@media print{
+  .template-decor{
+    break-inside:avoid;
+    page-break-inside:avoid
+  }
+}
