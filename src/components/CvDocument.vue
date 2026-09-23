@@ -140,7 +140,7 @@ export default {
     accent: { type: String, required: true },
     appearance: {
       type: Object,
-      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }),
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }),
     },
     interactive: { type: Boolean, default: false },
   },
@@ -168,7 +168,8 @@ export default {
       const radius = ['sharp', 'soft', 'round'].includes(this.appearance?.radius) ? this.appearance.radius : 'soft'
       const projectLayout = ['cards', 'list'].includes(this.appearance?.projectLayout) ? this.appearance.projectLayout : 'cards'
       const avatarShape = ['circle', 'rounded', 'square'].includes(this.appearance?.avatarShape) ? this.appearance.avatarShape : 'circle'
-      return [`cv-font-${font}`, `cv-density-${density}`, `cv-radius-${radius}`, `cv-projects-${projectLayout}`, `cv-avatar-${avatarShape}`]
+      const avatarSize = ['small', 'medium', 'large'].includes(this.appearance?.avatarSize) ? this.appearance.avatarSize : 'medium'
+      return [`cv-font-${font}`, `cv-density-${density}`, `cv-radius-${radius}`, `cv-projects-${projectLayout}`, `cv-avatar-${avatarShape}`, `cv-avatar-size-${avatarSize}`]
     },
     monogram() {
       return String(this.profile.name || 'CV').split(' ').filter(Boolean).slice(-2).map((word) => word.charAt(0)).join('')
