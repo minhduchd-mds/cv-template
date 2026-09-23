@@ -31,6 +31,11 @@ export const referenceTemplateMixin = {
     initials() {
       return String(this.profile.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
     },
+    referenceAppearanceClasses() {
+      const size = ['small', 'medium', 'large'].includes(this.appearance?.avatarSize) ? this.appearance.avatarSize : 'medium'
+      const shape = ['circle', 'rounded', 'square'].includes(this.appearance?.avatarShape) ? this.appearance.avatarShape : 'circle'
+      return [`cv-avatar-size-${size}`, `cv-avatar-${shape}`]
+    },
   },
   methods: {
     imageStyle(url) {
