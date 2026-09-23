@@ -476,3 +476,18 @@ test('five expansion templates expose distinct theme classes', async ({ page }) 
     await expect(page.locator('#paper')).toHaveClass(new RegExp(themeClass))
   }
 })
+
+
+test('static template search filters the 20-template library', async ({ page }) => {
+  await page.goto('/studio/')
+  await expect(page.locator('.template-card')).toHaveCount(20)
+
+  await page.locator('#templateSearch').fill('Healthcare')
+  await expect(page.locator('.template-card')).toHaveCount(1)
+  await expect(page.locator('.template-card').first()).toContainText('Clinical Clean')
+  await expect(page.locator('#templateCountLabel')).toContainText('1 of 20 templates')
+
+  await page.locator('#templateSearch').fill('')
+  await expect(page.locator('.template-card')).toHaveCount(20)
+  await expect(page.locator('#templateCountLabel')).toContainText('20 curated templates')
+})
