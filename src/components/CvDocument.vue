@@ -105,11 +105,11 @@
     </template>
 
     <template v-else>
-      <aside class="product-sidebar section-flow" v-bind="editAttrs('profile')">
-        <div class="profile-monogram" :class="{ 'has-avatar': profile.avatar }" :style="profile.avatar ? imageStyle(profile.avatar) : {}"><span v-if="!profile.avatar">{{ monogram }}</span></div>
-        <div><p class="cv-kicker">Senior profile</p><h1>{{ profile.name }}</h1><h3>{{ profile.role }}</h3></div>
+      <aside class="product-sidebar section-flow">
+        <div class="profile-monogram" :class="{ 'has-avatar': profile.avatar }" :style="profile.avatar ? imageStyle(profile.avatar) : {}" v-bind="editAttrs('profile')"><span v-if="!profile.avatar">{{ monogram }}</span></div>
+        <div v-bind="editAttrs('profile')"><p class="cv-kicker">Senior profile</p><h1>{{ profile.name }}</h1><h3>{{ profile.role }}</h3></div>
         <p v-if="visible('summary')" class="product-summary" :style="sectionStyle('summary')" v-bind="editAttrs('profile')">{{ profile.summary }}</p>
-        <div class="product-contact"><span>{{ profile.location }}</span><span>{{ profile.email }}</span><span>{{ profile.phone }}</span><span>{{ profile.website }}</span></div>
+        <div class="product-contact" v-bind="editAttrs('profile')"><span>{{ profile.location }}</span><span>{{ profile.email }}</span><span>{{ profile.phone }}</span><span>{{ profile.website }}</span></div>
         <section v-if="visible('skills')" :style="sectionStyle('skills')" v-bind="editAttrs('skills')"><span class="aside-label">Core stack</span><ul class="product-skills"><li v-for="skill in profile.skills" :key="skill">{{ skill }}</li></ul></section>
         <section v-if="visible('education')" :style="sectionStyle('education')" v-bind="editAttrs('education')"><span class="aside-label">Education</span><article v-for="item in profile.education" :key="`${item.title}-${item.place}`"><strong>{{ item.title }}</strong><span>{{ item.place }}</span><small>{{ item.period }}</small></article></section>
         <section v-if="visible('certificates')" :style="sectionStyle('certificates')" v-bind="editAttrs('education')"><span class="aside-label">Certificates</span><article v-for="item in profile.certificates" :key="`${item.title}-${item.issuer}`"><strong>{{ item.title }}</strong><span>{{ item.issuer }}</span><small>{{ item.period }}</small></article></section>
