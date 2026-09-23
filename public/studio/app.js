@@ -140,6 +140,8 @@
     avatarShape: 'circle',
     avatarX: 50,
     avatarY: 50,
+    avatarZoom: 1,
+    avatarRotate: 0,
     showSummary: true,
     showSkills: true,
     showExperience: true,
@@ -182,6 +184,7 @@
 
   let profile = restoreObject(PROFILE_KEY, demoProfile)
   let settings = restoreObject(SETTINGS_KEY, defaultSettings)
+  let avatarDrag = null
 
   if (!Array.isArray(profile.experience)) profile.experience = clone(demoProfile.experience)
   if (!Array.isArray(profile.projects)) profile.projects = clone(demoProfile.projects)
@@ -285,6 +288,8 @@
     const avatarShape = ['circle', 'rounded', 'square'].includes(settings.avatarShape) ? settings.avatarShape : 'circle'
     const avatarX = Number.isFinite(Number(settings.avatarX)) ? Math.min(100, Math.max(0, Number(settings.avatarX))) : 50
     const avatarY = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
+    const avatarZoom = Number.isFinite(Number(settings.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(settings.avatarZoom))) : 1
+    const avatarRotate = Number.isFinite(Number(settings.avatarRotate)) ? Math.min(180, Math.max(-180, Number(settings.avatarRotate))) : 0
     paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'} avatar-${avatarShape}`
     paper.style.setProperty('--accent', settings.accent)
     paper.style.setProperty('--zoom', String(settings.zoom))
@@ -306,7 +311,7 @@
       : ''
 
     const avatar = safeAvatar(profile.avatar)
-      ? '<div class="paper-avatar avatar-shape-' + avatarShape + '"><img src="' + escapeHtml(safeAvatar(profile.avatar)) + '" alt="" style="object-position:' + avatarX + '% ' + avatarY + '%" /></div>'
+      ? '<div class="paper-avatar avatar-shape-' + avatarShape + '"><img src="' + escapeHtml(safeAvatar(profile.avatar)) + '" alt="" style="object-position:' + avatarX + '% ' + avatarY + '%;transform:scale(' + avatarZoom + ') rotate(' + avatarRotate + 'deg)" /></div>'
       : ''
 
     const languages = `
@@ -456,8 +461,12 @@
     const avatarShape = ['circle', 'rounded', 'square'].includes(settings.avatarShape) ? settings.avatarShape : 'circle'
     const avatarX = Number.isFinite(Number(settings.avatarX)) ? Math.min(100, Math.max(0, Number(settings.avatarX))) : 50
     const avatarY = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
+    const avatarZoom = Number.isFinite(Number(settings.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(settings.avatarZoom))) : 1
+    const avatarRotate = Number.isFinite(Number(settings.avatarRotate)) ? Math.min(180, Math.max(-180, Number(settings.avatarRotate))) : 0
     $('#avatarX').value = String(avatarX)
     $('#avatarY').value = String(avatarY)
+    $('#avatarZoom').value = String(Math.round(avatarZoom * 100))
+    $('#avatarRotate').value = String(avatarRotate)
     $('[data-avatar-shape]').forEach((button) => {
       const active = button.dataset.avatarShape === avatarShape
       button.classList.toggle('active', active)
@@ -472,6 +481,8 @@
     const shape = ['circle', 'rounded', 'square'].includes(settings.avatarShape) ? settings.avatarShape : 'circle'
     const x = Number.isFinite(Number(settings.avatarX)) ? Math.min(100, Math.max(0, Number(settings.avatarX))) : 50
     const y = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
+    const zoom = Number.isFinite(Number(settings.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(settings.avatarZoom))) : 1
+    const rotate = Number.isFinite(Number(settings.avatarRotate)) ? Math.min(180, Math.max(-180, Number(settings.avatarRotate))) : 0
     nodes.forEach((node) => {
       node.innerHTML = ''
       node.classList.remove('avatar-shape-circle', 'avatar-shape-rounded', 'avatar-shape-square')
@@ -481,6 +492,7 @@
         image.src = avatar
         image.alt = ''
         image.style.objectPosition = `${x}% ${y}%`
+        image.style.transform = `scale(${zoom}) rotate(${rotate}deg)`
         node.appendChild(image)
       } else {
         node.textContent = initials
@@ -596,12 +608,61 @@
     renderAll()
   })
 
+  $('#avatarZoom').addEventListener('input', (event) => {
+    settings.avatarZoom = Number(event.currentTarget.value) / 100
+    renderAll()
+  })
+
+  $('#avatarRotate').addEventListener('input', (event) => {
+    settings.avatarRotate = Number(event.currentTarget.value)
+    renderAll()
+  })
+
   $('#avatarResetFrame').addEventListener('click', () => {
     settings.avatarShape = 'circle'
     settings.avatarX = 50
     settings.avatarY = 50
+    settings.avatarZoom = 1
+    settings.avatarRotate = 0
     renderAll()
   })
+
+  $('#staticAvatarPreview').addEventListener('pointerdown', (event) => {
+    if (!safeAvatar(profile.avatar) || event.button !== 0) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    avatarDrag = {
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      x: Number(settings.avatarX) || 50,
+      y: Number(settings.avatarY) || 50,
+      width: Math.max(1, rect.width),
+      height: Math.max(1, rect.height),
+    }
+    event.currentTarget.classList.add('dragging')
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    event.preventDefault()
+  })
+
+  $('#staticAvatarPreview').addEventListener('pointermove', (event) => {
+    if (!avatarDrag || event.pointerId !== avatarDrag.pointerId) return
+    const zoom = Math.min(2.5, Math.max(1, Number(settings.avatarZoom) || 1))
+    const dx = event.clientX - avatarDrag.clientX
+    const dy = event.clientY - avatarDrag.clientY
+    settings.avatarX = Math.round(Math.min(100, Math.max(0, avatarDrag.x - (dx / avatarDrag.width) * 100 / zoom)))
+    settings.avatarY = Math.round(Math.min(100, Math.max(0, avatarDrag.y - (dy / avatarDrag.height) * 100 / zoom)))
+    renderAll()
+  })
+
+  const endAvatarDrag = (event) => {
+    if (!avatarDrag) return
+    event.currentTarget?.releasePointerCapture?.(event.pointerId)
+    event.currentTarget?.classList.remove('dragging')
+    avatarDrag = null
+  }
+
+  $('#staticAvatarPreview').addEventListener('pointerup', endAvatarDrag)
+  $('#staticAvatarPreview').addEventListener('pointercancel', endAvatarDrag)
 
   $('#addExperience').addEventListener('click', () => {
     profile.experience.push({
