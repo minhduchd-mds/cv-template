@@ -330,9 +330,25 @@
 
   const renderTemplates = () => {
     const list = $('#templateList')
+    const query = String($('#templateSearch')?.value || '').trim().toLowerCase()
+    const visibleTemplates = templates.filter((template) => {
+      if (!query) return true
+      return [template.name, template.category, template.role].some((value) => String(value || '').toLowerCase().includes(query))
+    })
+    const countLabel = $('#templateCountLabel')
+    if (countLabel) {
+      countLabel.textContent = query
+        ? `${visibleTemplates.length} of ${templates.length} templates · 4 role presets`
+        : `${templates.length} curated templates · 4 role presets`
+    }
     list.innerHTML = ''
 
-    templates.forEach((template) => {
+    if (!visibleTemplates.length) {
+      list.innerHTML = '<div class="template-list-empty">No template matches this search.<br>Try a role, industry or style name.</div>'
+      return
+    }
+
+    visibleTemplates.forEach((template) => {
       const button = document.createElement('button')
       button.type = 'button'
       button.className = `template-card${template.id === settings.templateId ? ' active' : ''}`
@@ -1168,6 +1184,10 @@
   $('#zoom').addEventListener('change', (event) => {
     settings.zoom = Number(event.currentTarget.value)
     renderAll()
+  })
+
+  $('#templateSearch')?.addEventListener('input', () => {
+    renderTemplates()
   })
 
   $('#accent').addEventListener('input', (event) => {
