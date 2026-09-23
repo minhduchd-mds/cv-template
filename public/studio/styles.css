@@ -3355,3 +3355,19 @@ button{cursor:pointer}
 .thumb-finance-ledger{background:linear-gradient(90deg,#173f35 0 10px,#fbfaf5 10px)}
 .thumb-studio-director{background:linear-gradient(180deg,#171717 0 30%,#fff 30%)}
 .thumb-research-scholar{background:linear-gradient(180deg,#7c2d12 0 4px,#fffdf9 4px)}
+
+
+/* Finance Ledger composition refinement: left rail + main ledger */
+.theme-finance-ledger .cv-body{
+  grid-template-columns:210px minmax(0,1fr);
+}
+.theme-finance-ledger .cv-main{
+  order:2;
+}
+.theme-finance-ledger .cv-side{
+  order:1;
+  border-left:0;
+  border-right:1px solid #d8cfb8;
+  padding:18px 18px 18px 0;
+  background:transparent;
+}
