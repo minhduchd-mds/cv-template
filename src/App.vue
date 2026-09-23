@@ -232,6 +232,30 @@ export default {
     candidateInitials() {
       return String(this.candidate.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
     },
+    avatarShape() {
+      return ['circle', 'rounded', 'square'].includes(this.appearance.avatarShape) ? this.appearance.avatarShape : 'circle'
+    },
+    avatarX() {
+      return Number.isFinite(Number(this.appearance.avatarX)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarX))) : 50
+    },
+    avatarY() {
+      return Number.isFinite(Number(this.appearance.avatarY)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarY))) : 50
+    },
+    avatarZoom() {
+      return Number.isFinite(Number(this.appearance.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(this.appearance.avatarZoom))) : 1
+    },
+    avatarRotate() {
+      return Number.isFinite(Number(this.appearance.avatarRotate)) ? Math.min(180, Math.max(-180, Number(this.appearance.avatarRotate))) : 0
+    },
+    avatarShapeClass() {
+      return `avatar-shape-${this.avatarShape}`
+    },
+    avatarImageStyle() {
+      return {
+        objectPosition: `${this.avatarX}% ${this.avatarY}%`,
+        transform: `scale(${this.avatarZoom}) rotate(${this.avatarRotate}deg)`,
+      }
+    },
     completionPercent() { return candidateCompletionReport(this.candidate).percent },
     cvScore() {
       const profile = this.candidate
