@@ -41,7 +41,7 @@
           </div>
 
           <div class="avatar-builder">
-            <div class="avatar-preview" :class="{ empty: !profile.avatar }" :style="imageStyle(profile.avatar)">
+            <div class="avatar-preview" :class="[{ empty: !profile.avatar }, avatarShapeClass]" :style="avatarPreviewStyle(profile.avatar)">
               <span v-if="!profile.avatar">{{ initials }}</span>
             </div>
             <div>
@@ -54,6 +54,35 @@
                 </label>
                 <button v-if="profile.avatar" type="button" class="image-clear" @click="update('avatar', '')">Remove</button>
               </div>
+            </div>
+          </div>
+
+          <div v-if="profile.avatar" class="avatar-framing-control">
+            <div class="avatar-framing-head">
+              <div><strong>Avatar framing</strong><span>Shape and focal point are shared across every template.</span></div>
+              <button type="button" @click="resetAvatarFraming">Reset</button>
+            </div>
+            <div class="avatar-shape-segmented" role="group" aria-label="Avatar shape">
+              <button
+                v-for="shape in avatarShapes"
+                :key="shape.id"
+                type="button"
+                :class="{ active: avatarShape === shape.id }"
+                :aria-pressed="avatarShape === shape.id"
+                @click="$emit('update-appearance', { key: 'avatarShape', value: shape.id })"
+              >
+                {{ shape.label }}
+              </button>
+            </div>
+            <div class="avatar-position-grid">
+              <label class="editor-field">
+                <span>Horizontal · {{ avatarX }}%</span>
+                <input type="range" min="0" max="100" :value="avatarX" @input="$emit('update-appearance', { key: 'avatarX', value: Number($event.target.value) })" />
+              </label>
+              <label class="editor-field">
+                <span>Vertical · {{ avatarY }}%</span>
+                <input type="range" min="0" max="100" :value="avatarY" @input="$emit('update-appearance', { key: 'avatarY', value: Number($event.target.value) })" />
+              </label>
             </div>
           </div>
 
@@ -285,7 +314,7 @@ export default {
     completion: { type: Number, default: 0 },
     appearance: {
       type: Object,
-      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards' }),
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50 }),
     },
     accent: { type: String, default: '#6d5dfc' },
     requestedTab: { type: String, default: 'profile' },
@@ -296,6 +325,11 @@ export default {
       activeTab: 'profile',
       imageError: '',
       dragIndex: null,
+      avatarShapes: [
+        { id: 'circle', label: 'Circle' },
+        { id: 'rounded', label: 'Rounded' },
+        { id: 'square', label: 'Square' },
+      ],
       tabs: [
         { id: 'profile', label: 'Profile', hint: 'Identity & contact', icon: '01' },
         { id: 'impact', label: 'Impact', hint: 'Metrics & outcomes', icon: '02' },
@@ -311,6 +345,18 @@ export default {
   computed: {
     initials() {
       return String(this.profile.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
+    },
+    avatarShape() {
+      return ['circle', 'rounded', 'square'].includes(this.appearance.avatarShape) ? this.appearance.avatarShape : 'circle'
+    },
+    avatarX() {
+      return Number.isFinite(Number(this.appearance.avatarX)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarX))) : 50
+    },
+    avatarY() {
+      return Number.isFinite(Number(this.appearance.avatarY)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarY))) : 50
+    },
+    avatarShapeClass() {
+      return `avatar-shape-${this.avatarShape}`
     },
   },
   watch: {
@@ -344,6 +390,18 @@ export default {
     lines(value) { return value.split(/\n+/).map((item) => item.trim()).filter(Boolean) },
     tokenList(value) { return value.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean) },
     imageStyle(url) { return url ? { backgroundImage: `linear-gradient(rgba(15,23,42,.04), rgba(15,23,42,.04)), url("${String(url).replace(/"/g, '%22')}")` } : {} },
+    avatarPreviewStyle(url) {
+      if (!url) return {}
+      return {
+        backgroundImage: `linear-gradient(rgba(15,23,42,.04), rgba(15,23,42,.04)), url("${String(url).replace(/"/g, '%22')}")`,
+        backgroundPosition: `${this.avatarX}% ${this.avatarY}%`,
+      }
+    },
+    resetAvatarFraming() {
+      this.$emit('update-appearance', { key: 'avatarShape', value: 'circle' })
+      this.$emit('update-appearance', { key: 'avatarX', value: 50 })
+      this.$emit('update-appearance', { key: 'avatarY', value: 50 })
+    },
     externalImageValue(value) { return String(value || '').startsWith('data:') ? '' : (value || '') },
     async uploadAvatar(event) {
       const file = event.target.files?.[0]
