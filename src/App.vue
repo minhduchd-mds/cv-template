@@ -155,6 +155,7 @@
       :profile="candidate"
       :completion="completionPercent"
       :appearance="appearance"
+      :template="selectedTemplate"
       :requested-tab="editorTab"
       :accent="accent"
       @close="editorOpen = false"
@@ -222,14 +223,14 @@ export default {
       category: 'All',
       accent: templates[0].accent,
       zoom: 0.85,
-      appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 },
+      appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', textScale: 1, headingScale: 1, sectionSpacing: 'balanced', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 },
       editorOpen: false,
       editorTab: 'profile',
       rolePresets: [
-        { id: 'recruiter', label: 'Recruiter', note: 'ATS first', templateId: 'ats-precision', accent: '#15803D', appearance: { font: 'sans', density: 'compact', radius: 'sharp', projectLayout: 'list' } },
-        { id: 'uiux', label: 'Senior UI/UX', note: 'Portfolio led', templateId: 'soft-portfolio-pro', accent: '#8B5CF6', appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarSize: 'large' } },
-        { id: 'engineer', label: 'Design Engineer', note: 'Code aware', templateId: 'code-aware', accent: '#2563EB', appearance: { font: 'mono', density: 'compact', radius: 'sharp', projectLayout: 'list' } },
-        { id: 'lead', label: 'Leadership', note: 'Outcome led', templateId: 'executive-edge', accent: '#B58A3A', appearance: { font: 'serif', density: 'spacious', radius: 'soft', projectLayout: 'list' } },
+        { id: 'recruiter', label: 'Recruiter', note: 'ATS first', templateId: 'ats-precision', accent: '#15803D', appearance: { font: 'sans', density: 'compact', radius: 'sharp', projectLayout: 'list', textScale: .95, headingScale: .95, sectionSpacing: 'compact' } },
+        { id: 'uiux', label: 'Senior UI/UX', note: 'Portfolio led', templateId: 'soft-portfolio-pro', accent: '#8B5CF6', appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', textScale: 1, headingScale: 1.05, sectionSpacing: 'balanced', avatarSize: 'large' } },
+        { id: 'engineer', label: 'Design Engineer', note: 'Code aware', templateId: 'code-aware', accent: '#2563EB', appearance: { font: 'mono', density: 'compact', radius: 'sharp', projectLayout: 'list', textScale: .95, headingScale: 1, sectionSpacing: 'compact' } },
+        { id: 'lead', label: 'Leadership', note: 'Outcome led', templateId: 'executive-edge', accent: '#B58A3A', appearance: { font: 'serif', density: 'spacious', radius: 'soft', projectLayout: 'list', textScale: 1, headingScale: 1.05, sectionSpacing: 'airy' } },
       ],
       focusMode: false,
       autoCompleteResult: null,
@@ -562,7 +563,7 @@ export default {
       }
     },
     updateAppearance({ key, value }) {
-      if (!['font', 'density', 'radius', 'projectLayout', 'avatarShape', 'avatarSize', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
+      if (!['font', 'density', 'radius', 'projectLayout', 'textScale', 'headingScale', 'sectionSpacing', 'avatarShape', 'avatarSize', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
       this.checkpointHistory('Change CV appearance', { coalesce: ['avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key) })
       this.appearance = { ...this.appearance, [key]: value }
     },
