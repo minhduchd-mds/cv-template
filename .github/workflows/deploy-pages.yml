@@ -1,12 +1,9 @@
 name: Deploy Vite to GitHub Pages
 
-# Always publish the compiled Vite dist after GitHub's branch-source Pages
-# deployment. The deploy job below waits for branch-source Pages to go quiet,
-# then publishes dist last so raw Vue source can never be the final site.
+# Hosted Actions runners are currently unavailable for this repository.
+# Keep the compiled Vite deployment available on demand. Branch-source Pages
+# serves the self-contained static Studio fallback until runner access returns.
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
 
 permissions:
