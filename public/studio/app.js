@@ -539,12 +539,12 @@
     $('#avatarY').value = String(avatarY)
     $('#avatarZoom').value = String(Math.round(avatarZoom * 100))
     $('#avatarRotate').value = String(avatarRotate)
-    $('[data-avatar-shape]').forEach((button) => {
+    $$('[data-avatar-shape]').forEach((button) => {
       const active = button.dataset.avatarShape === avatarShape
       button.classList.toggle('active', active)
       button.setAttribute('aria-pressed', active ? 'true' : 'false')
     })
-    $('[data-avatar-size]').forEach((button) => {
+    $$('[data-avatar-size]').forEach((button) => {
       const active = button.dataset.avatarSize === avatarSize
       button.classList.toggle('active', active)
       button.setAttribute('aria-pressed', active ? 'true' : 'false')
@@ -554,7 +554,7 @@
   const renderQuickAvatar = () => {
     const avatar = safeAvatar(profile.avatar)
     const initials = profileInitials()
-    const nodes = [$('#staticAvatarPreview'), ...$('[data-preset-avatar]')].filter(Boolean)
+    const nodes = [$('#staticAvatarPreview'), ...$$('[data-preset-avatar]')].filter(Boolean)
     const shape = ['circle', 'rounded', 'square'].includes(settings.avatarShape) ? settings.avatarShape : 'circle'
     const x = Number.isFinite(Number(settings.avatarX)) ? Math.min(100, Math.max(0, Number(settings.avatarX))) : 50
     const y = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
@@ -668,14 +668,14 @@
     renderAll()
   })
 
-  $('[data-avatar-shape]').forEach((button) => {
+  $$('[data-avatar-shape]').forEach((button) => {
     button.addEventListener('click', () => {
       settings.avatarShape = button.dataset.avatarShape
       renderAll()
     })
   })
 
-  $('[data-avatar-size]').forEach((button) => {
+  $$('[data-avatar-size]').forEach((button) => {
     button.addEventListener('click', () => {
       settings.avatarSize = button.dataset.avatarSize
       renderAll()
