@@ -185,6 +185,10 @@
   let profile = restoreObject(PROFILE_KEY, demoProfile)
   let settings = restoreObject(SETTINGS_KEY, defaultSettings)
   let avatarDrag = null
+  let undoStack = []
+  let redoStack = []
+  let historyRestoring = false
+  let lastHistoryState = null
 
   if (!Array.isArray(profile.experience)) profile.experience = clone(demoProfile.experience)
   if (!Array.isArray(profile.projects)) profile.projects = clone(demoProfile.projects)
@@ -195,13 +199,64 @@
   const activeTemplate = () =>
     templates.find((item) => item.id === settings.templateId) || templates[0]
 
+  const captureHistoryState = () => JSON.stringify({ profile, settings })
+
+  const syncHistoryControls = () => {
+    const undo = $('#undoStatic')
+    const redo = $('#redoStatic')
+    if (undo) undo.disabled = undoStack.length === 0
+    if (redo) redo.disabled = redoStack.length === 0
+  }
+
   const persist = () => {
+    const currentState = captureHistoryState()
+    if (!historyRestoring && lastHistoryState && currentState !== lastHistoryState) {
+      undoStack.push(lastHistoryState)
+      if (undoStack.length > 30) undoStack.shift()
+      redoStack = []
+    }
+    lastHistoryState = currentState
+    syncHistoryControls()
+
     try {
       localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
     } catch (error) {
       console.warn('Unable to persist CV Studio fallback state.', error)
     }
+  }
+
+  const restoreHistoryState = (serialized) => {
+    const state = safeParse(serialized)
+    if (!state || typeof state !== 'object') return
+    historyRestoring = true
+    profile = { ...clone(demoProfile), ...(state.profile || {}) }
+    settings = { ...clone(defaultSettings), ...(state.settings || {}) }
+    if (!Array.isArray(profile.experience)) profile.experience = clone(demoProfile.experience)
+    if (!Array.isArray(profile.projects)) profile.projects = clone(demoProfile.projects)
+    if (!Array.isArray(profile.skills)) profile.skills = clone(demoProfile.skills)
+    if (!Array.isArray(profile.languages)) profile.languages = clone(demoProfile.languages)
+    renderEditors()
+    renderAll()
+    lastHistoryState = captureHistoryState()
+    historyRestoring = false
+    syncHistoryControls()
+  }
+
+  const undo = () => {
+    if (!undoStack.length) return
+    const previous = undoStack.pop()
+    redoStack.push(captureHistoryState())
+    if (redoStack.length > 30) redoStack.shift()
+    restoreHistoryState(previous)
+  }
+
+  const redo = () => {
+    if (!redoStack.length) return
+    const next = redoStack.pop()
+    undoStack.push(captureHistoryState())
+    if (undoStack.length > 30) undoStack.shift()
+    restoreHistoryState(next)
   }
 
   const setEditorOpen = (open) => {
@@ -687,6 +742,9 @@
     renderEditors()
   })
 
+  $('#undoStatic').addEventListener('click', undo)
+  $('#redoStatic').addEventListener('click', redo)
+
   $('#toggleEditor').addEventListener('click', () => {
     setEditorOpen($('#editor').classList.contains('collapsed'))
   })
@@ -800,16 +858,32 @@
   window.addEventListener('keydown', (event) => {
     const tag = document.activeElement?.tagName || ''
     const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)
+    const key = event.key.toLowerCase()
+
+    if ((event.metaKey || event.ctrlKey) && !event.altKey && key === 'z' && !typing) {
+      event.preventDefault()
+      if (event.shiftKey) redo()
+      else undo()
+      return
+    }
+    if ((event.metaKey || event.ctrlKey) && !event.altKey && key === 'y' && !typing) {
+      event.preventDefault()
+      redo()
+      return
+    }
     if (typing || event.metaKey || event.ctrlKey || event.altKey) return
 
-    if (event.key.toLowerCase() === 'e') setEditorOpen(true)
-    if (event.key.toLowerCase() === 'p') {
+    if (key === 'e') setEditorOpen(true)
+    if (key === 'p') {
       event.preventDefault()
       window.print()
     }
     if (event.key === 'Escape') setEditorOpen(false)
   })
 
+  lastHistoryState = captureHistoryState()
   renderEditors()
   renderAll()
+  lastHistoryState = captureHistoryState()
+  syncHistoryControls()
 })()
