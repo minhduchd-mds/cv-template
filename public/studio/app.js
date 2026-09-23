@@ -395,6 +395,253 @@
       )
       .join('')
 
+
+  const avatarMarkup = (className = 'ref-avatar') => {
+    const avatar = safeAvatar(profile.avatar)
+    const initials = profileInitials()
+    const shape = ['circle', 'rounded', 'square'].includes(settings.avatarShape) ? settings.avatarShape : 'circle'
+    const x = Number.isFinite(Number(settings.avatarX)) ? Math.min(100, Math.max(0, Number(settings.avatarX))) : 50
+    const y = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
+    const zoom = Number.isFinite(Number(settings.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(settings.avatarZoom))) : 1
+    const rotate = Number.isFinite(Number(settings.avatarRotate)) ? Math.min(180, Math.max(-180, Number(settings.avatarRotate))) : 0
+    if (avatar) {
+      return '<div class="' + className + ' avatar-shape-' + shape + '"><img src="' + escapeHtml(avatar) + '" alt="" style="object-position:' + x + '% ' + y + '%;transform:scale(' + zoom + ') rotate(' + rotate + 'deg)" /></div>'
+    }
+    return '<div class="' + className + ' avatar-shape-' + shape + '"><span>' + escapeHtml(initials) + '</span></div>'
+  }
+
+  const refContact = () => `
+    <div class="ref-contact">
+      <span>${escapeHtml(profile.email)}</span>
+      <span>${escapeHtml(profile.phone)}</span>
+      <span>${escapeHtml(profile.location)}</span>
+      <span>${escapeHtml(profile.website)}</span>
+    </div>
+  `
+
+  const refHighlights = (className = 'ref-metrics') => {
+    const items = [
+      { value: (profile.experience || []).length + '+', label: 'Roles' },
+      { value: (profile.projects || []).length + '+', label: 'Projects' },
+      { value: (profile.skills || []).length + '+', label: 'Skills' },
+      { value: (profile.languages || []).length + '+', label: 'Languages' },
+    ]
+    return '<div class="' + className + '">' + items.map((item) => '<div><strong>' + escapeHtml(item.value) + '</strong><span>' + escapeHtml(item.label) + '</span></div>').join('') + '</div>'
+  }
+
+  const refExperience = (className = 'ref-experience') =>
+    '<div class="' + className + '">' + (profile.experience || []).map((job) => `
+      <article>
+        <div class="ref-job-head"><div><strong>${escapeHtml(job.role)}</strong><span>${escapeHtml(job.company)}${job.location ? ' · ' + escapeHtml(job.location) : ''}</span></div><time>${escapeHtml(job.period)}</time></div>
+        <ul>${(job.bullets || []).map((bullet) => '<li>' + escapeHtml(bullet) + '</li>').join('')}</ul>
+      </article>
+    `).join('') + '</div>'
+
+  const refProjects = (className = 'ref-projects') =>
+    '<div class="' + className + '">' + (profile.projects || []).map((project, index) => `
+      <article>
+        <div class="ref-project-index">0${index + 1}</div>
+        <div><span>${escapeHtml(project.type || 'Project')}</span><strong>${escapeHtml(project.name)}</strong></div>
+        <p>${escapeHtml(project.description)}</p>
+        <small>${escapeHtml(project.impact || '')}</small>
+      </article>
+    `).join('') + '</div>'
+
+  const refSkills = (className = 'ref-skills') =>
+    '<div class="' + className + '">' + (profile.skills || []).map((skill) => '<span>' + escapeHtml(skill) + '</span>').join('') + '</div>'
+
+  const refEducation = () => {
+    const education = Array.isArray(profile.education) ? profile.education : []
+    if (!education.length) return ''
+    return '<div class="ref-education">' + education.map((item) => '<article><strong>' + escapeHtml(item.title) + '</strong><span>' + escapeHtml(item.place || '') + '</span><small>' + escapeHtml(item.period || '') + '</small></article>').join('') + '</div>'
+  }
+
+  const refCertificates = () => {
+    const items = Array.isArray(profile.certificates) ? profile.certificates : []
+    if (!items.length) return ''
+    return '<div class="ref-certificates">' + items.map((item) => '<article><strong>' + escapeHtml(item.title) + '</strong><span>' + escapeHtml(item.issuer || '') + '</span><small>' + escapeHtml(item.period || '') + '</small></article>').join('') + '</div>'
+  }
+
+  const renderExecutiveEdge = () => `
+    <div class="ref-cv ref-executive-edge">
+      <header class="ref-exec-head" data-edit-pane="content" data-edit-focus="#name">
+        <div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2></div>
+        <div class="ref-exec-motto">PEOPLE<br>STRATEGY<br>GROWTH<br>LASTING IMPACT</div>
+      </header>
+      ${refContact()}
+      <section class="ref-section ref-summary" data-edit-pane="content" data-edit-focus="#summary"><h3>Executive Summary</h3><p>${escapeHtml(profile.summary)}</p></section>
+      <section class="ref-section" data-edit-pane="content"><h3>Leadership Impact</h3>${refHighlights('ref-exec-impact')}</section>
+      <section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-exec-experience')}</section>
+      <section class="ref-section"><h3>Selected Achievements</h3>${refProjects('ref-achievement-row')}</section>
+      ${refEducation() ? '<section class="ref-section"><h3>Education & Professional Development</h3>' + refEducation() + '</section>' : ''}
+    </div>
+  `
+
+  const renderSoftPortfolio = () => `
+    <div class="ref-cv ref-soft-portfolio">
+      <header class="ref-soft-hero" data-edit-pane="content" data-edit-focus="#name">
+        <div class="ref-soft-copy">
+          <span class="ref-eyebrow">Senior UI/UX Designer</span>
+          <h1>${escapeHtml(profile.name)}</h1>
+          <h2>${escapeHtml(profile.role)}</h2>
+          <p>${escapeHtml(profile.summary)}</p>
+          ${refContact()}
+        </div>
+        <div class="ref-soft-portrait">${avatarMarkup('ref-soft-avatar')}<span class="ref-hand-note">Good design<br>builds better<br>tomorrows.</span></div>
+      </header>
+      ${refHighlights('ref-soft-metrics')}
+      <div class="ref-soft-body">
+        <main><div class="ref-section-title">Selected Case Studies</div>${refProjects('ref-soft-projects')}</main>
+        <aside><div class="ref-section-title">Core Skills</div>${refSkills('ref-soft-skills')}<div class="ref-section-title">Tools</div>${refSkills('ref-tool-grid')}</aside>
+      </div>
+      <section class="ref-soft-highlights"><div class="ref-section-title">Experience Highlights</div>${refExperience('ref-soft-experience')}</section>
+    </div>
+  `
+
+  const renderProductOperator = () => `
+    <div class="ref-cv ref-product-operator">
+      <aside class="ref-product-rail" data-edit-pane="content" data-edit-focus="#name">
+        ${avatarMarkup('ref-product-avatar')}
+        <h1>${escapeHtml(profile.name)}</h1>
+        <h2>${escapeHtml(profile.role)}</h2>
+        <p>${escapeHtml(profile.summary)}</p>
+        ${refContact()}
+        <div class="ref-rail-label">Core Skills</div>
+        ${refSkills('ref-rail-skills')}
+      </aside>
+      <main class="ref-product-main">
+        <header><h1>From Insight to Impact</h1><span>PEOPLE · PRODUCTS · PROGRESS</span></header>
+        ${refHighlights('ref-product-metrics')}
+        <section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Experience</h3>${refExperience('ref-product-experience')}</section>
+        <div class="ref-product-lower">
+          <section><h3>Product Highlights</h3>${refProjects('ref-product-highlights')}</section>
+          <section><h3>Roadmap Mindset</h3><div class="ref-roadmap"><div><b>Discover</b><span>Understand</span></div><div><b>Define</b><span>Set strategy</span></div><div><b>Deliver</b><span>Build & test</span></div><div><b>Scale</b><span>Measure impact</span></div></div></section>
+        </div>
+      </main>
+    </div>
+  `
+
+  const renderCodeAware = () => `
+    <div class="ref-cv ref-code-aware">
+      <header class="ref-code-head" data-edit-pane="content" data-edit-focus="#name">
+        <div><span>&lt; CV /&gt;</span><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2></div>
+        <div><span>// Build interfaces</span><span>// for a more human web.</span>${refContact()}</div>
+      </header>
+      <div class="ref-code-grid">
+        <section class="ref-code-about" data-edit-pane="content" data-edit-focus="#summary"><h3>01 / ABOUT</h3><p>${escapeHtml(profile.summary)}</p></section>
+        <div class="ref-code-poster">DESIGN<br>×<br>CODE<br>×<br>PEOPLE<br>=<br><b>BETTER PRODUCTS</b></div>
+      </div>
+      <section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>02 / EXPERIENCE</h3>${refExperience('ref-code-experience')}</section>
+      <section class="ref-section"><h3>03 / SKILLS</h3><div class="ref-code-skills">${(profile.skills || []).map((skill, index) => '<div><span>' + escapeHtml(skill) + '</span><i style="--level:' + Math.max(3, 7 - (index % 5)) + '"></i></div>').join('')}</div></section>
+      <section class="ref-section"><h3>04 / SELECTED WORK</h3>${refProjects('ref-code-work')}</section>
+    </div>
+  `
+
+  const renderAtsPrecision = () => `
+    <div class="ref-cv ref-ats-precision">
+      <header class="ref-ats-head" data-edit-pane="content" data-edit-focus="#name">
+        <div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>${escapeHtml(profile.summary)}</p></div>
+        ${refContact()}
+      </header>
+      <div class="ref-ats-body">
+        <main><section><h3>Experience</h3>${refExperience('ref-ats-experience')}</section>${refEducation() ? '<section><h3>Education</h3>' + refEducation() + '</section>' : ''}</main>
+        <aside><section><h3>Skills</h3>${refSkills('ref-ats-skills')}</section><section><h3>Selected Projects</h3>${refProjects('ref-ats-projects')}</section>${refCertificates() ? '<section><h3>Certifications</h3>' + refCertificates() + '</section>' : ''}</aside>
+      </div>
+    </div>
+  `
+
+  const renderInsightGrid = () => `
+    <div class="ref-cv ref-insight-grid">
+      <header class="ref-insight-head" data-edit-pane="content" data-edit-focus="#name">
+        <div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2>${refContact()}</div>
+        <div class="ref-chart-bars"><i></i><i></i><i></i><i></i><i></i><strong>Turning Data<br>Into Decisions</strong></div>
+      </header>
+      <section class="ref-insight-summary"><div><h3>Professional Summary</h3><p>${escapeHtml(profile.summary)}</p></div>${refHighlights('ref-insight-metrics')}</section>
+      <div class="ref-insight-grid-body">
+        <section><h3>Core Skills</h3><div class="ref-skill-bars">${(profile.skills || []).map((skill, index) => '<div><span>' + escapeHtml(skill) + '</span><i><b style="width:' + Math.max(62, 92 - index * 4) + '%"></b></i></div>').join('')}</div></section>
+        <section><h3>Key Achievements</h3>${refProjects('ref-insight-achievements')}</section>
+        <section><h3>Tools & Technologies</h3>${refSkills('ref-insight-tools')}</section>
+      </div>
+      <div class="ref-insight-bottom"><section><h3>Professional Experience</h3>${refExperience('ref-insight-experience')}</section><aside>${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}${refCertificates() ? '<h3>Certifications</h3>' + refCertificates() : ''}</aside></div>
+    </div>
+  `
+
+  const renderBrandMotion = () => `
+    <div class="ref-cv ref-brand-motion">
+      <aside class="ref-brand-rail">
+        ${avatarMarkup('ref-brand-avatar')}
+        ${refContact()}
+        <blockquote>Brands grow when<br>people feel something.</blockquote>
+        <h3>Skills</h3>${refSkills('ref-brand-skills')}
+        <h3>Languages</h3><div class="ref-brand-languages">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div>
+      </aside>
+      <main class="ref-brand-main">
+        <header><span>Ideas · People · Impact</span><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>${escapeHtml(profile.summary)}</p><em>BRANDS<br>PEOPLE<br>STORIES<br>GROWTH</em></header>
+        ${refHighlights('ref-brand-metrics')}
+        <section><h3>Work Experience</h3>${refExperience('ref-brand-experience')}</section>
+        <section><h3>Selected Campaigns</h3>${refProjects('ref-brand-projects')}</section>
+      </main>
+    </div>
+  `
+
+  const renderRevenueDriver = () => `
+    <div class="ref-cv ref-revenue-driver">
+      <header data-edit-pane="content" data-edit-focus="#name"><div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>Driving revenue. Building partnerships. Creating opportunity.</p></div>${avatarMarkup('ref-sales-avatar')}</header>
+      ${refContact()}
+      <div class="ref-sales-body">
+        <main>
+          <section><h3>Professional Summary</h3><p>${escapeHtml(profile.summary)}</p></section>
+          <section><h3>Key Performance Highlights</h3>${refHighlights('ref-sales-metrics')}</section>
+          <section><h3>Professional Experience</h3>${refExperience('ref-sales-experience')}</section>
+        </main>
+        <aside><h3>Core Skills</h3>${refSkills('ref-sales-skills')}<h3>Selected Clients</h3><div class="ref-client-grid"><span>Microsoft</span><span>Vodafone</span><span>Sage</span><span>DELL</span><span>HSBC</span><span>Atlassian</span></div><blockquote>“I don't just meet targets.<br>I create momentum.”</blockquote></aside>
+      </div>
+    </div>
+  `
+
+  const renderPeopleFirst = () => `
+    <div class="ref-cv ref-people-first">
+      <header data-edit-pane="content" data-edit-focus="#name">
+        <div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>${escapeHtml(profile.summary)}</p></div>
+        <div class="ref-people-portrait">${avatarMarkup('ref-people-avatar')}<span>People<br>Build<br>Brighter<br>Workplaces ♡</span></div>
+      </header>
+      ${refContact()}
+      <div class="ref-people-body">
+        <aside><h3>Key Competencies</h3>${refSkills('ref-people-skills')}${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}</aside>
+        <main><h3>Professional Experience</h3>${refExperience('ref-people-experience')}<h3>Additional Information</h3><div class="ref-people-extra">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div></main>
+      </div>
+    </div>
+  `
+
+  const renderNextStart = () => `
+    <div class="ref-cv ref-next-start">
+      <header data-edit-pane="content" data-edit-focus="#name"><div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>Curious learner · Problem solver · Ready to make an impact</p></div><span class="ref-next-note">A Brighter<br>You Ahead</span></header>
+      <div class="ref-next-body">
+        <aside>${avatarMarkup('ref-next-avatar')}<blockquote>Eager to learn,<br>excited to build,<br>ready for what's next.</blockquote>${refContact()}<h3>Skills</h3>${refSkills('ref-next-skills')}</aside>
+        <main>
+          ${refEducation() ? '<section><h3>Education</h3>' + refEducation() + '</section>' : ''}
+          <section><h3>Projects</h3>${refProjects('ref-next-projects')}</section>
+          <section><h3>Internships</h3>${refExperience('ref-next-experience')}</section>
+          <section><h3>Activities</h3><div class="ref-next-activities"><span>Community involvement</span><span>Team projects</span><span>Continuous learning</span></div></section>
+        </main>
+      </div>
+      <div class="ref-next-wave"><span>Small Steps<br>Big Impact ↗</span><b>Next Start · Brighter Tomorrow</b></div>
+    </div>
+  `
+
+  const referenceRenderers = {
+    'executive-edge': renderExecutiveEdge,
+    'soft-portfolio-pro': renderSoftPortfolio,
+    'product-operator': renderProductOperator,
+    'code-aware': renderCodeAware,
+    'ats-precision': renderAtsPrecision,
+    'insight-grid': renderInsightGrid,
+    'brand-motion': renderBrandMotion,
+    'revenue-driver': renderRevenueDriver,
+    'people-first': renderPeopleFirst,
+    'next-start': renderNextStart,
+  }
+
   let renderPaper = () => {
     const paper = $('#paper')
     const template = activeTemplate()
@@ -414,6 +661,13 @@
     paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'} avatar-${avatarShape} avatar-size-${avatarSize}`
     paper.style.setProperty('--accent', settings.accent)
     paper.style.setProperty('--zoom', String(settings.zoom))
+
+    const dedicatedRenderer = referenceRenderers[template.id]
+    if (dedicatedRenderer) {
+      paper.innerHTML = dedicatedRenderer()
+      $('#activeTemplateLabel').textContent = `${template.name} · A4`
+      return
+    }
 
     const enhancement = templateEnhancement(template)
 
