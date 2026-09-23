@@ -43,7 +43,14 @@
         <aside class="template-panel">
           <div class="section-heading"><div><span class="section-index">01</span><h2>Choose a direction</h2></div><p>Each template uses the same structured profile data, so content stays consistent.</p></div>
           <div class="role-avatar-panel">
-            <div class="role-avatar-preview" :class="[{ empty: !candidate.avatar }, avatarShapeClass]">
+            <div
+              class="role-avatar-preview"
+              :class="[{ empty: !candidate.avatar, dragging: avatarDragging }, avatarShapeClass]"
+              @pointerdown="startAvatarDrag"
+              @pointermove="moveAvatarDrag"
+              @pointerup="endAvatarDrag"
+              @pointercancel="endAvatarDrag"
+            >
               <img v-if="candidate.avatar" :src="candidate.avatar" alt="" :style="avatarImageStyle" />
               <span v-else>{{ candidateInitials }}</span>
             </div>
@@ -63,6 +70,8 @@
                 </div>
                 <label><span>X</span><input type="range" min="0" max="100" :value="avatarX" @input="updateAvatarAppearance('avatarX', Number($event.target.value))" /></label>
                 <label><span>Y</span><input type="range" min="0" max="100" :value="avatarY" @input="updateAvatarAppearance('avatarY', Number($event.target.value))" /></label>
+                <label><span>Zoom</span><input type="range" min="100" max="250" :value="Math.round(avatarZoom * 100)" @input="updateAvatarAppearance('avatarZoom', Number($event.target.value) / 100)" /></label>
+                <label><span>Rotate</span><input type="range" min="-180" max="180" :value="avatarRotate" @input="updateAvatarAppearance('avatarRotate', Number($event.target.value))" /></label>
                 <button type="button" class="avatar-reset-frame" @click="resetAvatarFraming">Reset</button>
               </div>
               <small v-if="avatarError" class="role-avatar-error" role="alert">{{ avatarError }}</small>
@@ -195,7 +204,7 @@ export default {
       category: 'All',
       accent: templates[0].accent,
       zoom: 0.85,
-      appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50 },
+      appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 },
       editorOpen: false,
       editorTab: 'profile',
       rolePresets: [
@@ -212,6 +221,8 @@ export default {
         { id: 'rounded', label: 'Rounded' },
         { id: 'square', label: 'Square' },
       ],
+      avatarDragging: false,
+      avatarDragStart: null,
     }
   },
   computed: {
@@ -291,11 +302,42 @@ export default {
       this.avatarError = ''
     },
     updateAvatarAppearance(key, value) {
-      if (!['avatarShape', 'avatarX', 'avatarY'].includes(key)) return
+      if (!['avatarShape', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
       this.appearance = { ...this.appearance, [key]: value }
     },
     resetAvatarFraming() {
-      this.appearance = { ...this.appearance, avatarShape: 'circle', avatarX: 50, avatarY: 50 }
+      this.appearance = { ...this.appearance, avatarShape: 'circle', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }
+    },
+    startAvatarDrag(event) {
+      if (!this.candidate.avatar || event.button !== 0) return
+      const target = event.currentTarget
+      const rect = target.getBoundingClientRect()
+      this.avatarDragging = true
+      this.avatarDragStart = {
+        pointerId: event.pointerId,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        x: this.avatarX,
+        y: this.avatarY,
+        width: Math.max(1, rect.width),
+        height: Math.max(1, rect.height),
+      }
+      target.setPointerCapture?.(event.pointerId)
+      event.preventDefault()
+    },
+    moveAvatarDrag(event) {
+      if (!this.avatarDragging || !this.avatarDragStart || event.pointerId !== this.avatarDragStart.pointerId) return
+      const dx = event.clientX - this.avatarDragStart.clientX
+      const dy = event.clientY - this.avatarDragStart.clientY
+      const nextX = Math.min(100, Math.max(0, this.avatarDragStart.x - (dx / this.avatarDragStart.width) * 100 / this.avatarZoom))
+      const nextY = Math.min(100, Math.max(0, this.avatarDragStart.y - (dy / this.avatarDragStart.height) * 100 / this.avatarZoom))
+      this.appearance = { ...this.appearance, avatarX: Math.round(nextX), avatarY: Math.round(nextY) }
+    },
+    endAvatarDrag(event) {
+      if (!this.avatarDragging) return
+      event.currentTarget?.releasePointerCapture?.(event.pointerId)
+      this.avatarDragging = false
+      this.avatarDragStart = null
     },
     compressAvatar(file) {
       if (!file.type.startsWith('image/')) return Promise.reject(new Error('Please choose an image file.'))
@@ -366,7 +408,7 @@ export default {
       }
     },
     updateAppearance({ key, value }) {
-      if (!['font', 'density', 'radius', 'projectLayout', 'avatarShape', 'avatarX', 'avatarY'].includes(key)) return
+      if (!['font', 'density', 'radius', 'projectLayout', 'avatarShape', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
       this.appearance = { ...this.appearance, [key]: value }
     },
     updateProfileField({ key, value }) {
