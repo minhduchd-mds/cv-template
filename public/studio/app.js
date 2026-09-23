@@ -20,6 +20,11 @@
     { id: 'ats-clean', name: 'ATS Clean', category: 'ATS', role: 'All-purpose ATS', variant: 'ats', accent: '#0f766e' },
     { id: 'modern-mono', name: 'Mono Grid', category: 'Engineering', role: 'Technical & Systems', variant: 'ats', accent: '#111827' },
     { id: 'young-creator-cards', name: 'Creator Cards', category: 'Creative', role: 'Creative & Portfolio', variant: 'creative', accent: '#0ea5a4' },
+    { id: 'strategy-brief', name: 'Strategy Brief', category: 'Consulting', role: 'Strategy, Consulting & Advisory', variant: 'executive', accent: '#2563eb' },
+    { id: 'clinical-clean', name: 'Clinical Clean', category: 'Healthcare', role: 'Healthcare, Medical & Clinical', variant: 'ats', accent: '#0f766e' },
+    { id: 'finance-ledger', name: 'Finance Ledger', category: 'Finance', role: 'Finance, Banking & Investment', variant: 'executive', accent: '#8b6b2e' },
+    { id: 'studio-director', name: 'Studio Director', category: 'Creative', role: 'Creative Director & Brand Leadership', variant: 'creative', accent: '#e11d48' },
+    { id: 'research-scholar', name: 'Research Scholar', category: 'Academic', role: 'Research, Education & Academia', variant: 'ats', accent: '#7c2d12' },
   ]
 
   const rolePresets = {
@@ -95,6 +100,11 @@
     'ats-clean': { label: 'ATS', structure: 'Recruiter-first profile → Experience → Projects → Skills & languages', projects: true },
     'modern-mono': { label: 'Engineering', structure: 'Technical profile → Experience → Projects → Skills & languages', projects: true },
     'young-creator-cards': { label: 'Creative', structure: 'Creative profile → Experience → Portfolio projects → Skills', projects: true },
+    'strategy-brief': { label: 'Consulting', structure: 'Executive profile → Summary → Engagement impact → Experience → Selected work → Expertise', projects: true },
+    'clinical-clean': { label: 'Healthcare', structure: 'Clinical profile → Experience → Selected work → Skills → Credentials & languages', projects: true },
+    'finance-ledger': { label: 'Finance', structure: 'Executive profile → Summary → Quantified impact → Experience → Selected work → Expertise', projects: true },
+    'studio-director': { label: 'Creative leadership', structure: 'Editorial hero → Summary → Experience → Portfolio work → Capabilities', projects: true },
+    'research-scholar': { label: 'Academic', structure: 'Research profile → Experience → Selected work → Skills → Education & credentials', projects: true },
   }
 
   const demoProfile = {
