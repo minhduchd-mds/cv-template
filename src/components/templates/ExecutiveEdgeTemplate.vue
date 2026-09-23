@@ -1,5 +1,5 @@
 <template>
-  <article class="cv-sheet ref-cv ref-executive-edge" :style="{ '--cv-accent': accent }" @click="handleEditRequest" @keydown="handleKeydown" @dragstart="handleDragStart" @dragover="handleDragOver" @drop="handleDrop" @dragend="handleDragEnd">
+  <article class="cv-sheet ref-cv ref-executive-edge" :class="referenceAppearanceClasses" :style="{ '--cv-accent': accent }" @click="handleEditRequest" @keydown="handleKeydown" @dragstart="handleDragStart" @dragover="handleDragOver" @drop="handleDrop" @dragend="handleDragEnd">
     <header class="ref-exec-head" v-bind="editAttrs('profile')">
       <div><h1>{{ profile.name }}</h1><h2>{{ profile.role }}</h2></div>
       <div class="ref-exec-motto">PEOPLE<br>STRATEGY<br>GROWTH<br>LASTING IMPACT</div>
