@@ -1,5 +1,5 @@
 <template>
-  <article class="cv-sheet ref-cv ref-soft-portfolio" :style="{ '--cv-accent': accent }" @click="handleEditRequest" @keydown="handleKeydown" @dragstart="handleDragStart" @dragover="handleDragOver" @drop="handleDrop" @dragend="handleDragEnd">
+  <article class="cv-sheet ref-cv ref-soft-portfolio" :class="referenceAppearanceClasses" :style="{ '--cv-accent': accent }" @click="handleEditRequest" @keydown="handleKeydown" @dragstart="handleDragStart" @dragover="handleDragOver" @drop="handleDrop" @dragend="handleDragEnd">
     <header class="ref-soft-hero" v-bind="editAttrs('profile')">
       <div class="ref-soft-copy"><span class="ref-eyebrow">Senior UI/UX Designer</span><h1>{{ profile.name }}</h1><h2>{{ profile.role }}</h2><p>{{ profile.summary }}</p><div class="ref-contact"><span>{{ profile.email }}</span><span>{{ profile.location }}</span><span>{{ profile.website }}</span></div></div>
       <div class="ref-soft-portrait"><div class="ref-soft-avatar"><img v-if="profile.avatar" :src="profile.avatar" alt="" :style="avatarImageStyle"><span v-else>{{ initials }}</span></div><span class="ref-hand-note">Good design<br>builds better<br>tomorrows.</span></div>
