@@ -250,7 +250,7 @@
       )
       .join('')
 
-  const renderPaper = () => {
+  let renderPaper = () => {
     const paper = $('#paper')
     const template = activeTemplate()
     const layoutVariant =
