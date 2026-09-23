@@ -5,41 +5,35 @@
   const SETTINGS_KEY = 'cv-studio-static-settings-v2'
 
   const templates = [
-    { id: 'product-slate', name: 'Senior Product Designer', category: 'Product', variant: 'product', accent: '#6d5dfc' },
-    { id: 'ats-clean', name: 'ATS Clean', category: 'ATS', variant: 'ats', accent: '#0f766e' },
-    { id: 'creative-grid', name: 'Creative Portfolio', category: 'Creative', variant: 'creative', accent: '#e44d7a' },
-    { id: 'executive-ink', name: 'Executive Minimal', category: 'Leadership', variant: 'executive', accent: '#b7791f' },
-    { id: 'design-system-lead', name: 'Design System Lead', category: 'Product', variant: 'system', accent: '#2563eb' },
-    { id: 'design-engineer', name: 'Design Engineer', category: 'Tech', variant: 'tech', accent: '#111827' },
-    { id: 'product-ivory', name: 'Product Ivory', category: 'Product', variant: 'product', accent: '#315c55' },
-    { id: 'product-midnight', name: 'Product Midnight', category: 'Product', variant: 'product', accent: '#7c6dff' },
-    { id: 'ats-compact', name: 'ATS Compact', category: 'ATS', variant: 'ats', accent: '#334155' },
-    { id: 'ats-serif', name: 'ATS Serif', category: 'ATS', variant: 'ats', accent: '#7c2d12' },
-    { id: 'creative-swiss', name: 'Swiss Grid', category: 'Creative', variant: 'creative', accent: '#e10600' },
-    { id: 'executive-navy', name: 'Executive Navy', category: 'Leadership', variant: 'executive', accent: '#244a73' },
-    { id: 'modern-split', name: 'Modern Split', category: 'Modern', variant: 'product', accent: '#2563eb' },
-    { id: 'modern-clarity', name: 'Clarity Pro', category: 'Modern', variant: 'ats', accent: '#0891b2' },
-    { id: 'modern-bento', name: 'Bento Resume', category: 'Modern', variant: 'creative', accent: '#7c3aed' },
-    { id: 'modern-gradient', name: 'Gradient Editorial', category: 'Modern', variant: 'creative', accent: '#8b5cf6' },
-    { id: 'modern-timeline', name: 'Timeline Pro', category: 'Modern', variant: 'executive', accent: '#0f766e' },
-    { id: 'modern-mono', name: 'Mono Grid', category: 'Modern', variant: 'ats', accent: '#111827' },
-    { id: 'young-neo-pop', name: 'Neo Pop', category: 'Young', variant: 'creative', accent: '#ff4d8d' },
-    { id: 'young-soft-portfolio', name: 'Soft Portfolio', category: 'Young', variant: 'product', accent: '#7c6dff' },
-    { id: 'young-creator-cards', name: 'Creator Cards', category: 'Young', variant: 'creative', accent: '#0ea5a4' },
+    { id: 'executive-edge', name: 'Executive Edge', category: 'Executive', role: 'Leadership & Senior Management', variant: 'executive', accent: '#b58a3a' },
+    { id: 'soft-portfolio-pro', name: 'Soft Portfolio', category: 'Designer', role: 'UI/UX & Product Design', variant: 'product', accent: '#8b5cf6' },
+    { id: 'product-operator', name: 'Product Operator', category: 'Product', role: 'Product Management & Product Ops', variant: 'product', accent: '#0e9eac' },
+    { id: 'code-aware', name: 'Code Aware', category: 'Engineering', role: 'Design Engineer & Frontend', variant: 'ats', accent: '#2563eb' },
+    { id: 'ats-precision', name: 'ATS Precision', category: 'ATS', role: 'Software & Technical Roles', variant: 'ats', accent: '#15803d' },
+    { id: 'insight-grid', name: 'Insight Grid', category: 'Data', role: 'Data Analyst & Business Intelligence', variant: 'product', accent: '#2563eb' },
+    { id: 'brand-motion', name: 'Brand Motion', category: 'Marketing', role: 'Marketing & Communications', variant: 'creative', accent: '#f25f5c' },
+    { id: 'revenue-driver', name: 'Revenue Driver', category: 'Sales', role: 'Sales & Business Development', variant: 'executive', accent: '#0f8a4b' },
+    { id: 'people-first', name: 'People First', category: 'People', role: 'HR, Talent & People Operations', variant: 'creative', accent: '#506b5d' },
+    { id: 'next-start', name: 'Next Start', category: 'Graduate', role: 'Fresh Graduate & Entry Level', variant: 'creative', accent: '#3b82f6' },
+    { id: 'modern-bento', name: 'Bento Resume', category: 'Designer', role: 'Design & Creative', variant: 'creative', accent: '#7c3aed' },
+    { id: 'executive-navy', name: 'Executive Navy', category: 'Executive', role: 'Leadership & Corporate', variant: 'executive', accent: '#244a73' },
+    { id: 'ats-clean', name: 'ATS Clean', category: 'ATS', role: 'All-purpose ATS', variant: 'ats', accent: '#0f766e' },
+    { id: 'modern-mono', name: 'Mono Grid', category: 'Engineering', role: 'Technical & Systems', variant: 'ats', accent: '#111827' },
+    { id: 'young-creator-cards', name: 'Creator Cards', category: 'Creative', role: 'Creative & Portfolio', variant: 'creative', accent: '#0ea5a4' },
   ]
 
   const rolePresets = {
     recruiter: {
-      templateId: 'modern-clarity',
-      accent: '#0891b2',
+      templateId: 'ats-precision',
+      accent: '#15803d',
       font: 'sans',
       density: 'compact',
       radius: 'sharp',
       projectLayout: 'list',
     },
     uiux: {
-      templateId: 'young-soft-portfolio',
-      accent: '#7c6dff',
+      templateId: 'soft-portfolio-pro',
+      accent: '#8b5cf6',
       font: 'sans',
       density: 'balanced',
       radius: 'soft',
@@ -47,16 +41,16 @@
       avatarSize: 'large',
     },
     engineer: {
-      templateId: 'modern-mono',
-      accent: '#111827',
+      templateId: 'code-aware',
+      accent: '#2563eb',
       font: 'mono',
       density: 'compact',
       radius: 'sharp',
       projectLayout: 'list',
     },
     lead: {
-      templateId: 'modern-timeline',
-      accent: '#0f766e',
+      templateId: 'executive-edge',
+      accent: '#b58a3a',
       font: 'serif',
       density: 'spacious',
       radius: 'soft',
@@ -134,8 +128,8 @@
   }
 
   const defaultSettings = {
-    templateId: 'product-slate',
-    accent: '#6d5dfc',
+    templateId: 'soft-portfolio-pro',
+    accent: '#8b5cf6',
     zoom: 0.85,
     font: 'sans',
     density: 'balanced',
@@ -300,7 +294,7 @@
       button.setAttribute('aria-pressed', template.id === settings.templateId ? 'true' : 'false')
       button.innerHTML = `
         <span class="template-thumb thumb-${template.id}" style="--thumb-accent:${template.accent}"><i></i><i></i><i></i></span>
-        <span><strong>${escapeHtml(template.name)}</strong><small>${escapeHtml(template.category)}</small></span>
+        <span><strong>${escapeHtml(template.name)}</strong><small>${escapeHtml(template.role || template.category)}</small></span>
       `
       button.addEventListener('click', () => {
         settings.templateId = template.id
