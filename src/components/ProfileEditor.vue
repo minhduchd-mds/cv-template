@@ -260,6 +260,7 @@ export default {
       default: () => ({ font: 'sans', density: 'balanced', radius: 'soft' }),
     },
     accent: { type: String, default: '#6d5dfc' },
+    requestedTab: { type: String, default: 'profile' },
   },
   emits: ['close', 'update-field', 'update-item', 'update-array', 'add-item', 'remove-item', 'move-item', 'update-appearance', 'update-accent', 'reset'],
   data() {
@@ -284,7 +285,18 @@ export default {
       return String(this.profile.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
     },
   },
+  watch: {
+    requestedTab(value) {
+      this.syncRequestedTab(value)
+    },
+    open(value) {
+      if (value) this.syncRequestedTab(this.requestedTab)
+    },
+  },
   methods: {
+    syncRequestedTab(value) {
+      if (this.tabs.some((tab) => tab.id === value)) this.activeTab = value
+    },
     update(key, value) { this.$emit('update-field', { key, value }) },
     updateItem(section, index, key, value) { this.$emit('update-item', { section, index, key, value }) },
     updateArray(key, value) { this.$emit('update-array', { key, value }) },
