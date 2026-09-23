@@ -30,6 +30,9 @@
       density: 'compact',
       radius: 'sharp',
       projectLayout: 'list',
+      textScale: 0.95,
+      headingScale: 0.95,
+      sectionSpacing: 'compact',
     },
     uiux: {
       templateId: 'soft-portfolio-pro',
@@ -38,6 +41,9 @@
       density: 'balanced',
       radius: 'soft',
       projectLayout: 'cards',
+      textScale: 1,
+      headingScale: 1.05,
+      sectionSpacing: 'balanced',
       avatarSize: 'large',
     },
     engineer: {
@@ -47,6 +53,9 @@
       density: 'compact',
       radius: 'sharp',
       projectLayout: 'list',
+      textScale: 0.95,
+      headingScale: 1,
+      sectionSpacing: 'compact',
     },
     lead: {
       templateId: 'executive-edge',
@@ -55,14 +64,37 @@
       density: 'spacious',
       radius: 'soft',
       projectLayout: 'list',
+      textScale: 1,
+      headingScale: 1.05,
+      sectionSpacing: 'airy',
     },
   }
 
   const appearancePresets = {
-    recruiter: { font: 'sans', density: 'compact', radius: 'sharp' },
-    product: { font: 'sans', density: 'balanced', radius: 'soft' },
-    editorial: { font: 'serif', density: 'spacious', radius: 'soft' },
-    technical: { font: 'mono', density: 'compact', radius: 'sharp' },
+    classic: { font: 'serif', density: 'balanced', radius: 'soft', sectionSpacing: 'balanced', textScale: 1, headingScale: 1.05, projectLayout: 'list' },
+    modern: { font: 'sans', density: 'balanced', radius: 'soft', sectionSpacing: 'balanced', textScale: 1, headingScale: 1, projectLayout: 'cards' },
+    editorial: { font: 'serif', density: 'spacious', radius: 'soft', sectionSpacing: 'airy', textScale: 1.05, headingScale: 1.1, projectLayout: 'cards' },
+    technical: { font: 'mono', density: 'compact', radius: 'sharp', sectionSpacing: 'compact', textScale: 0.95, headingScale: 1, projectLayout: 'list' },
+    portfolio: { font: 'sans', density: 'spacious', radius: 'round', sectionSpacing: 'airy', textScale: 1.05, headingScale: 1.1, projectLayout: 'cards' },
+    compact: { font: 'sans', density: 'compact', radius: 'sharp', sectionSpacing: 'compact', textScale: 0.9, headingScale: 0.95, projectLayout: 'list' },
+  }
+
+  const templateDesignMeta = {
+    'executive-edge': { label: 'Executive', structure: 'Header → Summary → Leadership impact → Experience → Achievements → Education', projects: true },
+    'soft-portfolio-pro': { label: 'Designer portfolio', structure: 'Hero → Metrics → Case studies → Skills & tools → Experience highlights', projects: true },
+    'product-operator': { label: 'Product leadership', structure: 'Profile rail → Impact metrics → Experience → Product highlights → Roadmap', projects: true },
+    'code-aware': { label: 'Design engineer', structure: 'Code hero → About → Experience → Skills → Selected work', projects: true },
+    'ats-precision': { label: 'ATS / recruiter', structure: 'Profile → Experience & education → Skills → Selected projects → Certifications', projects: true },
+    'insight-grid': { label: 'Data / BI', structure: 'Header → Data summary → Skills → Achievements → Tools → Experience', projects: true },
+    'brand-motion': { label: 'Marketing', structure: 'Visual rail → Brand hero → Metrics → Experience → Campaigns', projects: true },
+    'revenue-driver': { label: 'Sales', structure: 'Sales hero → Summary → KPI highlights → Experience → Skills & clients', projects: false },
+    'people-first': { label: 'People / HR', structure: 'People hero → Competencies → Experience → Education → Additional info', projects: false },
+    'next-start': { label: 'Fresh graduate', structure: 'Graduate hero → Skills rail → Education → Projects → Internships → Activities', projects: true },
+    'modern-bento': { label: 'Designer', structure: 'Profile → Summary → Experience → Projects → Skills & languages', projects: true },
+    'executive-navy': { label: 'Executive', structure: 'Executive profile → Summary → Experience → Projects → Skills', projects: true },
+    'ats-clean': { label: 'ATS', structure: 'Recruiter-first profile → Experience → Projects → Skills & languages', projects: true },
+    'modern-mono': { label: 'Engineering', structure: 'Technical profile → Experience → Projects → Skills & languages', projects: true },
+    'young-creator-cards': { label: 'Creative', structure: 'Creative profile → Experience → Portfolio projects → Skills', projects: true },
   }
 
   const demoProfile = {
@@ -135,6 +167,9 @@
     density: 'balanced',
     radius: 'soft',
     projectLayout: 'cards',
+    textScale: 1,
+    headingScale: 1,
+    sectionSpacing: 'balanced',
     avatarShape: 'circle',
     avatarSize: 'medium',
     avatarX: 50,
@@ -661,9 +696,14 @@
     const avatarY = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
     const avatarZoom = Number.isFinite(Number(settings.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(settings.avatarZoom))) : 1
     const avatarRotate = Number.isFinite(Number(settings.avatarRotate)) ? Math.min(180, Math.max(-180, Number(settings.avatarRotate))) : 0
-    paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'} avatar-${avatarShape} avatar-size-${avatarSize}`
+    const textScale = Number.isFinite(Number(settings.textScale)) ? Math.min(1.15, Math.max(.9, Number(settings.textScale))) : 1
+    const headingScale = Number.isFinite(Number(settings.headingScale)) ? Math.min(1.2, Math.max(.9, Number(settings.headingScale))) : 1
+    const sectionSpacing = ['compact', 'balanced', 'airy'].includes(settings.sectionSpacing) ? settings.sectionSpacing : 'balanced'
+    paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'} spacing-${sectionSpacing} avatar-${avatarShape} avatar-size-${avatarSize}`
     paper.style.setProperty('--accent', settings.accent)
     paper.style.setProperty('--zoom', String(settings.zoom))
+    paper.style.setProperty('--text-scale', String(textScale))
+    paper.style.setProperty('--heading-scale', String(headingScale))
 
     const dedicatedRenderer = referenceRenderers[template.id]
     if (dedicatedRenderer) {
@@ -827,8 +867,25 @@
     $('#font').value = settings.font
     $('#density').value = settings.density
     $('#radius').value = settings.radius
+    $('#sectionSpacing').value = ['compact', 'balanced', 'airy'].includes(settings.sectionSpacing) ? settings.sectionSpacing : 'balanced'
+    const textScale = Number.isFinite(Number(settings.textScale)) ? Math.min(1.15, Math.max(.9, Number(settings.textScale))) : 1
+    const headingScale = Number.isFinite(Number(settings.headingScale)) ? Math.min(1.2, Math.max(.9, Number(settings.headingScale))) : 1
+    $('#textScale').value = String(Math.round(textScale * 100))
+    $('#headingScale').value = String(Math.round(headingScale * 100))
+    $('#textScaleValue').textContent = Math.round(textScale * 100) + '%'
+    $('#headingScaleValue').textContent = Math.round(headingScale * 100) + '%'
     $('#zoom').value = String(settings.zoom)
     $('#accent').value = settings.accent
+
+    const template = activeTemplate()
+    const designMeta = templateDesignMeta[template.id] || { label: template.category || 'Template', structure: 'Structure adapts to the selected CV.', projects: true }
+    $('#designTemplateCategory').textContent = designMeta.label
+    $('#designTemplateName').textContent = template.name
+    $('#designTemplateStructure').textContent = designMeta.structure
+    $('#projectDisplayHint').textContent = designMeta.projects ? 'Switch project sections between visual cards and a compact list.' : 'This template does not use a project section in its primary composition.'
+    $('#projectCards').disabled = !designMeta.projects
+    $('#projectList').disabled = !designMeta.projects
+    $('.design-project-layout').classList.toggle('is-disabled', !designMeta.projects)
 
     $('#showSummary').checked = settings.showSummary
     $('#showSkills').checked = settings.showSkills
@@ -1120,6 +1177,23 @@
 
   $('#radius').addEventListener('change', (event) => {
     settings.radius = event.currentTarget.value
+    renderAll()
+  })
+
+  $('#sectionSpacing').addEventListener('change', (event) => {
+    settings.sectionSpacing = event.currentTarget.value
+    renderAll()
+  })
+
+  $('#textScale').addEventListener('input', (event) => {
+    settings.textScale = Number(event.currentTarget.value) / 100
+    $('#textScaleValue').textContent = event.currentTarget.value + '%'
+    renderAll()
+  })
+
+  $('#headingScale').addEventListener('input', (event) => {
+    settings.headingScale = Number(event.currentTarget.value) / 100
+    $('#headingScaleValue').textContent = event.currentTarget.value + '%'
     renderAll()
   })
 
