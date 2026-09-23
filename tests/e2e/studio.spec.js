@@ -153,3 +153,30 @@ test('concept routes remain reachable and keyboard navigation has no dead end', 
   await expectNoHorizontalOverflow(page)
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('static fallback builder keeps core editing and template controls functional', async ({ page }) => {
+  const runtimeErrors = watchRuntimeErrors(page)
+  await page.goto('/studio/')
+
+  await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
+  await expect(page.locator('.template-card')).toHaveCount(12)
+
+  await page.getByRole('button', { name: 'Edit CV' }).click()
+  await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
+
+  await page.locator('[data-target-preset="engineer"]').click()
+  await expect(page.locator('#activeTemplateLabel')).toContainText('Design Engineer')
+  await expect(page.locator('#paper')).toHaveClass(/font-mono/)
+  await expect(page.locator('#paper')).toHaveClass(/density-compact/)
+
+  await page.locator('#paper [data-edit-focus="#experienceEditor"]').click()
+  await expect(page.locator('[data-pane="content"]')).toHaveClass(/active/)
+
+  await page.locator('#name').fill('Alex Chen Static QA')
+  await expect(page.locator('#paper')).toContainText('Alex Chen Static QA')
+
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-static-v2') || '{}').name)).toBe('Alex Chen Static QA')
+  await expectNoHorizontalOverflow(page)
+  expect(runtimeErrors).toEqual([])
+})
