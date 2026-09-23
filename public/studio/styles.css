@@ -225,3 +225,70 @@ button{cursor:pointer}
   opacity:.38;
   cursor:not-allowed
 }
+
+
+/* Static fallback direct section reordering */
+.cv-main{
+  display:flex;
+  flex-direction:column
+}
+.cv-side{
+  display:flex;
+  flex-direction:column
+}
+.draggable-section{
+  position:relative;
+  cursor:grab;
+  outline:1px solid transparent;
+  outline-offset:3px
+}
+.draggable-section:before{
+  content:"⋮⋮";
+  position:absolute;
+  left:2px;
+  top:2px;
+  z-index:4;
+  min-width:18px;
+  height:18px;
+  display:grid;
+  place-items:center;
+  border:1px solid #d8dde5;
+  border-radius:6px;
+  background:rgba(255,255,255,.94);
+  color:#667085;
+  font-size:7px;
+  font-weight:800;
+  opacity:0;
+  pointer-events:none
+}
+.draggable-section:hover:before,
+.draggable-section:focus-visible:before{
+  opacity:1
+}
+.draggable-section.section-dragging{
+  opacity:.48;
+  cursor:grabbing;
+  outline:1px dashed var(--accent)
+}
+.draggable-section.section-drop-target{
+  outline:2px solid var(--accent);
+  outline-offset:4px;
+  background:color-mix(in srgb,var(--accent) 6%,transparent)
+}
+.draggable-section.section-drop-target:before{
+  content:"Drop";
+  min-width:28px;
+  opacity:1;
+  color:var(--accent)
+}
+.template-ats .cv-side,
+.template-tech .cv-side{
+  display:grid
+}
+@media(max-width:760px){
+  .draggable-section:before{display:none}
+}
+@media print{
+  .draggable-section{cursor:default!important;outline:0!important}
+  .draggable-section:before{display:none!important}
+}
