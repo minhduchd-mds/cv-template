@@ -52,6 +52,13 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(page.locator('.role-preset-avatar img')).toHaveCount(4)
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}').avatar || '')).toMatch(/^data:image\/webp;base64,/)
 
+  await page.locator('.quick-avatar-framing').getByRole('button', { name: 'Rounded' }).click()
+  await page.locator('.quick-avatar-framing input[type="range"]').nth(0).evaluate((input) => { input.value = '30'; input.dispatchEvent(new Event('input', { bubbles: true })) })
+  await page.locator('.quick-avatar-framing input[type="range"]').nth(1).evaluate((input) => { input.value = '72'; input.dispatchEvent(new Event('input', { bubbles: true })) })
+  await expect(page.locator('.role-avatar-preview')).toHaveClass(/avatar-shape-rounded/)
+  await expect(page.locator('.role-avatar-preview img')).toHaveCSS('object-position', '30% 72%')
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-settings-v1') || '{}').appearance?.avatarShape)).toBe('rounded')
+
   await page.getByRole('button', { name: /Design.*Type, density & shape/i }).click()
   await page.locator('.editor-field').filter({ hasText: 'Typography' }).locator('select').selectOption('serif')
   await page.locator('.editor-field').filter({ hasText: 'Content density' }).locator('select').selectOption('compact')
@@ -178,6 +185,12 @@ test('static fallback builder keeps core editing and template controls functiona
   await page.locator('#staticAvatarInput').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: avatarPng })
   await expect(page.locator('[data-preset-avatar] img')).toHaveCount(4)
   await expect(page.locator('#paper .paper-avatar img')).toHaveCount(1)
+
+  await page.locator('[data-avatar-shape="square"]').click()
+  await page.locator('#avatarX').evaluate((input) => { input.value = '20'; input.dispatchEvent(new Event('input', { bubbles: true })) })
+  await page.locator('#avatarY').evaluate((input) => { input.value = '80'; input.dispatchEvent(new Event('input', { bubbles: true })) })
+  await expect(page.locator('#paper')).toHaveClass(/avatar-square/)
+  await expect(page.locator('#paper .paper-avatar img')).toHaveCSS('object-position', '20% 80%')
 
   await page.getByRole('button', { name: 'Edit CV' }).click()
   await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
