@@ -431,3 +431,24 @@ test('all 15 curated templates stay inside A4 and remain editable', async ({ pag
     expect(metrics.offsetHeight, `${name} exceeds A4 height`).toBeLessThanOrEqual(metrics.expectedPaperHeight + 24)
   }
 })
+
+
+test('preview toolbar stays sticky while scrolling the CV canvas', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 })
+  await page.goto('/studio/')
+  const toolbar = page.locator('.preview-toolbar')
+  await expect(toolbar).toBeVisible()
+
+  await page.evaluate(() => window.scrollTo(0, 620))
+  await page.waitForTimeout(80)
+
+  const position = await toolbar.evaluate((node) => {
+    const rect = node.getBoundingClientRect()
+    return { top: rect.top, bottom: rect.bottom, width: rect.width }
+  })
+
+  expect(position.top).toBeGreaterThanOrEqual(68)
+  expect(position.top).toBeLessThanOrEqual(92)
+  expect(position.bottom).toBeLessThan(180)
+  expect(position.width).toBeGreaterThan(320)
+})
