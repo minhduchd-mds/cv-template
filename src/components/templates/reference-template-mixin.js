@@ -32,14 +32,26 @@ export const referenceTemplateMixin = {
       return String(this.profile.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
     },
     referenceAppearanceClasses() {
+      const font = ['sans', 'serif', 'mono'].includes(this.appearance?.font) ? this.appearance.font : 'sans'
+      const density = ['compact', 'balanced', 'spacious'].includes(this.appearance?.density) ? this.appearance.density : 'balanced'
+      const radius = ['sharp', 'soft', 'round'].includes(this.appearance?.radius) ? this.appearance.radius : 'soft'
+      const projectLayout = ['cards', 'list'].includes(this.appearance?.projectLayout) ? this.appearance.projectLayout : 'cards'
+      const spacing = ['compact', 'balanced', 'airy'].includes(this.appearance?.sectionSpacing) ? this.appearance.sectionSpacing : 'balanced'
+      const textScale = Number.isFinite(Number(this.appearance?.textScale)) ? Math.round(Math.min(1.15, Math.max(.9, Number(this.appearance.textScale))) * 100) : 100
+      const headingScale = Number.isFinite(Number(this.appearance?.headingScale)) ? Math.round(Math.min(1.2, Math.max(.9, Number(this.appearance.headingScale))) * 100) : 100
       const size = ['small', 'medium', 'large'].includes(this.appearance?.avatarSize) ? this.appearance.avatarSize : 'medium'
       const shape = ['circle', 'rounded', 'square'].includes(this.appearance?.avatarShape) ? this.appearance.avatarShape : 'circle'
-      return [`cv-avatar-size-${size}`, `cv-avatar-${shape}`]
-    },
-    referenceAppearanceClasses() {
-      const size = ['small', 'medium', 'large'].includes(this.appearance?.avatarSize) ? this.appearance.avatarSize : 'medium'
-      const shape = ['circle', 'rounded', 'square'].includes(this.appearance?.avatarShape) ? this.appearance.avatarShape : 'circle'
-      return [`cv-avatar-size-${size}`, `cv-avatar-${shape}`]
+      return [
+        `cv-font-${font}`,
+        `cv-density-${density}`,
+        `cv-radius-${radius}`,
+        `cv-projects-${projectLayout}`,
+        `cv-spacing-${spacing}`,
+        `cv-text-${textScale}`,
+        `cv-heading-${headingScale}`,
+        `cv-avatar-size-${size}`,
+        `cv-avatar-${shape}`,
+      ]
     },
   },
   methods: {
