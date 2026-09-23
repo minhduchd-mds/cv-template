@@ -2239,3 +2239,141 @@ button{cursor:pointer}
     break-inside: avoid;
   }
 }
+
+
+/* UI containment + 1366px workspace fix */
+.workspace{
+  min-width:0;
+}
+.preview{
+  min-width:0;
+  overflow:hidden;
+}
+.paper-stage{
+  min-width:0;
+  max-width:100%;
+  overscroll-behavior:contain;
+}
+.paper{
+  box-sizing:border-box;
+  max-width:none;
+}
+.templates{
+  top:68px;
+  height:calc(100vh - 68px);
+  max-height:calc(100vh - 68px);
+}
+.editor{
+  box-sizing:border-box;
+}
+
+/* 1366/1440: keep A4 preview readable and float editor instead of crushing it */
+@media(max-width:1480px){
+  .workspace{
+    grid-template-columns:210px minmax(0,1fr);
+  }
+  .editor{
+    position:fixed;
+    right:0;
+    top:68px;
+    z-index:40;
+    width:min(380px,92vw);
+    max-height:calc(100vh - 68px);
+    overflow:auto;
+    box-shadow:-20px 0 50px rgba(15,23,42,.16);
+  }
+  .workspace:has(.editor.collapsed){
+    grid-template-columns:210px minmax(0,1fr);
+  }
+}
+
+@media(max-width:900px){
+  .templates{
+    position:relative;
+    top:auto;
+    height:auto;
+    max-height:none;
+  }
+}
+
+/* Dedicated reference layouts must never push outside the A4 canvas */
+.ref-cv,
+.ref-cv *{
+  max-width:100%;
+}
+.ref-cv :where(header,main,aside,section,article,div){
+  min-width:0;
+}
+.ref-cv :where(h1,h2,h3,p,li,strong,span,small,time,blockquote){
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.ref-contact{
+  min-width:0;
+}
+.ref-contact span{
+  min-width:0;
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.ref-job-head>div{
+  min-width:0;
+}
+.ref-job-head time{
+  flex:0 0 auto;
+  max-width:38%;
+  white-space:normal;
+  text-align:right;
+}
+.ref-projects article,
+.ref-soft-projects article,
+.ref-brand-projects article{
+  min-width:0;
+  overflow:hidden;
+}
+.ref-soft-copy,
+.ref-product-main,
+.ref-brand-main,
+.ref-sales-body main,
+.ref-sales-body aside,
+.ref-people-body main,
+.ref-people-body aside,
+.ref-next-body main,
+.ref-next-body aside,
+.ref-insight-grid-body>section,
+.ref-insight-bottom>*,
+.ref-ats-body>*{
+  min-width:0;
+}
+
+/* Avoid clipping content that grows after editing */
+.ref-cv{
+  overflow-x:hidden;
+  overflow-y:visible;
+}
+.paper{
+  overflow:visible;
+}
+
+/* Keep direct-edit targets clickable above decorative pseudo-elements */
+.paper [data-edit-pane]{
+  isolation:isolate;
+}
+.paper [data-edit-pane]::after{
+  z-index:20;
+}
+.ref-soft-portrait,
+.ref-people-portrait,
+.ref-next-wave,
+.ref-code-poster{
+  pointer-events:none;
+}
+.ref-soft-avatar,
+.ref-product-avatar,
+.ref-brand-avatar,
+.ref-sales-avatar,
+.ref-people-avatar,
+.ref-next-avatar{
+  pointer-events:auto;
+}
