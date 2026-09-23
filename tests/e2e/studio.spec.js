@@ -396,10 +396,13 @@ test('all 15 curated templates stay inside A4 and remain editable', async ({ pag
       bodyScrollWidth: document.documentElement.scrollWidth,
       bodyClientWidth: document.documentElement.clientWidth,
       editZones: node.querySelectorAll('[data-edit-pane]').length,
+      offsetHeight: node.offsetHeight,
+      expectedPaperHeight: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--paper-h')) || 1123,
     }))
 
     expect(metrics.scrollWidth, `${name} horizontal paper overflow`).toBeLessThanOrEqual(metrics.clientWidth + 2)
     expect(metrics.bodyScrollWidth, `${name} horizontal page overflow`).toBeLessThanOrEqual(metrics.bodyClientWidth + 2)
     expect(metrics.editZones, `${name} missing edit zones`).toBeGreaterThan(0)
+    expect(metrics.offsetHeight, `${name} exceeds A4 height`).toBeLessThanOrEqual(metrics.expectedPaperHeight + 24)
   }
 })
