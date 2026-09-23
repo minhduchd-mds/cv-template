@@ -316,3 +316,36 @@ test('static fallback builder keeps core editing and template controls functiona
   await expectNoHorizontalOverflow(page)
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('static fallback keeps 1366 workspace aligned with editor open', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 })
+  await page.goto('/studio/')
+  await page.getByRole('button', { name: 'Edit CV' }).click()
+  await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
+
+  const layout = await page.evaluate(() => {
+    const body = document.documentElement
+    const paper = document.querySelector('#paper')
+    const preview = document.querySelector('.preview')
+    const editor = document.querySelector('#editor')
+    const templates = document.querySelector('.templates')
+    const rect = (node) => {
+      const box = node.getBoundingClientRect()
+      return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width }
+    }
+    return {
+      body: { clientWidth: body.clientWidth, scrollWidth: body.scrollWidth },
+      paper: rect(paper),
+      preview: rect(preview),
+      editor: rect(editor),
+      templates: rect(templates),
+    }
+  })
+
+  expect(layout.body.scrollWidth).toBeLessThanOrEqual(layout.body.clientWidth + 2)
+  expect(layout.paper.left).toBeGreaterThanOrEqual(layout.preview.left - 1)
+  expect(layout.paper.right).toBeLessThanOrEqual(layout.editor.left + 1)
+  expect(layout.templates.top).toBeGreaterThanOrEqual(67)
+  expect(layout.templates.bottom).toBeLessThanOrEqual(769)
+})
