@@ -11,7 +11,7 @@
         <button class="completion-button" type="button" :aria-label="`Complete missing CV fields · ${completionPercent}% complete`" @click="runAutoComplete">
           <span>Complete gaps</span><strong>{{ completionPercent }}%</strong>
         </button>
-        <button class="editor-trigger primary-button" type="button" @click="editorOpen = true">Edit CV</button>
+        <button class="editor-trigger primary-button" type="button" @click="openEditor('profile')">Edit CV</button>
         <button class="ghost-button export-button" type="button" @click="printCv"><span>Export PDF</span><span aria-hidden="true">↗</span></button>
       </div>
     </header>
@@ -42,6 +42,12 @@
       <section id="templates" class="workspace studio-only">
         <aside class="template-panel">
           <div class="section-heading"><div><span class="section-index">01</span><h2>Choose a direction</h2></div><p>Each template uses the same structured profile data, so content stays consistent.</p></div>
+          <div class="role-presets" aria-label="Role presets">
+            <button v-for="preset in rolePresets" :key="preset.id" type="button" @click="applyRolePreset(preset)">
+              <strong>{{ preset.label }}</strong>
+              <span>{{ preset.note }}</span>
+            </button>
+          </div>
           <div class="category-tabs" role="tablist" aria-label="CV template categories">
             <button v-for="item in categories" :key="item" type="button" :class="['category-tab', { active: category === item }]" @click="category = item">{{ item }}</button>
           </div>
@@ -64,7 +70,15 @@
               <label class="color-control"><span>Accent</span><input v-model="accent" type="color" aria-label="Change CV accent color" /></label>
             </div>
           </div>
-          <div class="preview-stage"><div class="preview-zoom" :style="{ '--preview-zoom': zoom }"><CvDocument :key="selectedTemplate.id" :profile="candidate" :template="selectedTemplate" :accent="accent" :appearance="appearance" /></div></div>
+          <div class="preview-stage"><div class="preview-zoom" :style="{ '--preview-zoom': zoom }"><CvDocument
+                :key="selectedTemplate.id"
+                :profile="candidate"
+                :template="selectedTemplate"
+                :accent="accent"
+                :appearance="appearance"
+                :interactive="true"
+                @edit-section="openEditor"
+              /></div></div>
         </div>
       </section>
 
@@ -82,6 +96,7 @@
       :profile="candidate"
       :completion="completionPercent"
       :appearance="appearance"
+      :requested-tab="editorTab"
       :accent="accent"
       @close="editorOpen = false"
       @update-field="updateProfileField"
@@ -150,6 +165,13 @@ export default {
       zoom: 0.85,
       appearance: { font: 'sans', density: 'balanced', radius: 'soft' },
       editorOpen: false,
+      editorTab: 'profile',
+      rolePresets: [
+        { id: 'recruiter', label: 'Recruiter', note: 'ATS first', templateId: 'ats-clean', accent: '#0f766e', appearance: { font: 'sans', density: 'compact', radius: 'sharp' } },
+        { id: 'uiux', label: 'Senior UI/UX', note: 'Portfolio led', templateId: 'product-slate', accent: '#6d5dfc', appearance: { font: 'sans', density: 'balanced', radius: 'soft' } },
+        { id: 'engineer', label: 'Design Engineer', note: 'Code aware', templateId: 'design-engineer', accent: '#111827', appearance: { font: 'mono', density: 'compact', radius: 'sharp' } },
+        { id: 'lead', label: 'Leadership', note: 'Outcome led', templateId: 'executive-navy', accent: '#244A73', appearance: { font: 'serif', density: 'spacious', radius: 'soft' } },
+      ],
       focusMode: false,
       autoCompleteResult: null,
     }
@@ -205,20 +227,32 @@ export default {
   },
   beforeUnmount() { window.removeEventListener('keydown', this.handleShortcut) },
   methods: {
+    openEditor(tab = 'profile') {
+      const allowed = ['profile', 'impact', 'experience', 'projects', 'education', 'skills', 'design', 'layout']
+      this.editorTab = allowed.includes(tab) ? tab : 'profile'
+      this.editorOpen = true
+    },
+    applyRolePreset(preset) {
+      const template = this.templates.find((item) => item.id === preset.templateId)
+      if (template) this.selectedId = template.id
+      if (typeof preset.accent === 'string') this.accent = preset.accent
+      if (preset.appearance) this.appearance = { ...this.appearance, ...preset.appearance }
+      this.category = 'All'
+    },
     chooseTemplate(template) { this.selectedId = template.id; this.accent = template.accent },
     cycleTemplate() { const currentIndex = this.templates.findIndex((item) => item.id === this.selectedId); const nextTemplate = this.templates[(currentIndex + 1) % this.templates.length]; this.category = 'All'; this.chooseTemplate(nextTemplate) },
     runAutoComplete() {
       const result = autoCompleteCv(this.candidate, cloneCandidate())
       this.candidate = sanitizeProfileMedia(result.profile)
       this.autoCompleteResult = result.summary
-      if (result.summary.changedFields) this.editorOpen = true
+      if (result.summary.changedFields) this.openEditor('profile')
     },
     handleShortcut(event) {
       const target = event.target
       const isTyping = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
       if (isTyping || event.metaKey || event.ctrlKey || event.altKey) return
       const key = event.key.toLowerCase()
-      if (key === 'e') this.editorOpen = true
+      if (key === 'e') this.openEditor('profile')
       else if (key === 'f') this.focusMode = !this.focusMode
       else if (key === 'n') this.cycleTemplate()
       else if (key === 'p') { event.preventDefault(); this.printCv() }
