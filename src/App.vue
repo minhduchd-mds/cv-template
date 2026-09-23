@@ -7,6 +7,10 @@
       </a>
       <div class="topbar-actions">
         <span class="shortcut-hint" aria-label="Keyboard shortcuts"><kbd>E</kbd> Edit <kbd>F</kbd> Focus <kbd>N</kbd> Next</span>
+        <div class="history-controls" role="group" aria-label="Edit history">
+          <button type="button" :disabled="!canUndo" :title="undoTitle" aria-label="Undo last change" @click="undo">↶</button>
+          <button type="button" :disabled="!canRedo" :title="redoTitle" aria-label="Redo last change" @click="redo">↷</button>
+        </div>
         <a class="ghost-button" href="#templates">Templates</a>
         <button class="completion-button" type="button" :aria-label="`Complete missing CV fields · ${completionPercent}% complete`" @click="runAutoComplete">
           <span>Complete gaps</span><strong>{{ completionPercent }}%</strong>
@@ -107,8 +111,8 @@
               <div class="quality-score" :style="{ '--score-angle': `${cvScore * 3.6}deg` }" :title="`CV quality score: ${cvScore}/100 · ${scoreLabel}`" aria-live="polite"><span class="score-ring"><span>{{ cvScore }}</span></span><span><strong>CV score</strong><small>{{ scoreLabel }}</small></span></div>
               <button class="cycle-control" type="button" title="Next template (N)" @click="cycleTemplate">Next style ↻</button>
               <button class="focus-control" :class="{ active: focusMode }" type="button" :aria-pressed="focusMode" title="Toggle focus preview (F)" @click="focusMode = !focusMode">{{ focusMode ? 'Exit focus' : 'Focus' }}</button>
-              <label class="zoom-control"><span>Zoom</span><select v-model.number="zoom" aria-label="CV preview zoom"><option :value="0.75">75%</option><option :value="0.85">85%</option><option :value="1">100%</option></select></label>
-              <label class="color-control"><span>Accent</span><input v-model="accent" type="color" aria-label="Change CV accent color" /></label>
+              <label class="zoom-control"><span>Zoom</span><select :value="zoom" aria-label="CV preview zoom" @change="setZoom(Number($event.target.value))"><option :value="0.75">75%</option><option :value="0.85">85%</option><option :value="1">100%</option></select></label>
+              <label class="color-control"><span>Accent</span><input :value="accent" type="color" aria-label="Change CV accent color" @input="updateAccent($event.target.value)" /></label>
             </div>
           </div>
           <div class="preview-stage"><div class="preview-zoom" :style="{ '--preview-zoom': zoom }"><CvDocument
@@ -119,6 +123,7 @@
                 :appearance="appearance"
                 :interactive="true"
                 @edit-section="openEditor"
+                @reorder-section="reorderSection"
               /></div></div>
         </div>
       </section>
@@ -147,7 +152,7 @@
       @remove-item="removeProfileItem"
       @move-item="moveProfileItem"
       @update-appearance="updateAppearance"
-      @update-accent="accent = $event"
+      @update-accent="updateAccent"
       @reset="resetCandidate"
     />
   </div>
@@ -223,6 +228,11 @@ export default {
       ],
       avatarDragging: false,
       avatarDragStart: null,
+      undoStack: [],
+      redoStack: [],
+      historyCoalesceActive: false,
+      historyCoalesceTimer: null,
+      historyRestoring: false,
     }
   },
   computed: {
@@ -256,6 +266,10 @@ export default {
         transform: `scale(${this.avatarZoom}) rotate(${this.avatarRotate}deg)`,
       }
     },
+    canUndo() { return this.undoStack.length > 0 },
+    canRedo() { return this.redoStack.length > 0 },
+    undoTitle() { return this.canUndo ? `Undo · ${this.undoStack[this.undoStack.length - 1].label}` : 'Nothing to undo' },
+    redoTitle() { return this.canRedo ? `Redo · ${this.redoStack[this.redoStack.length - 1].label}` : 'Nothing to redo' },
     completionPercent() { return candidateCompletionReport(this.candidate).percent },
     cvScore() {
       const profile = this.candidate
@@ -301,7 +315,10 @@ export default {
     } catch (error) { console.warn('Unable to restore saved CV Studio state.', error); this.candidate = sanitizeProfileMedia(cloneCandidate()) }
     window.addEventListener('keydown', this.handleShortcut)
   },
-  beforeUnmount() { window.removeEventListener('keydown', this.handleShortcut) },
+  beforeUnmount() {
+    window.removeEventListener('keydown', this.handleShortcut)
+    window.clearTimeout(this.historyCoalesceTimer)
+  },
   methods: {
     openEditor(tab = 'profile') {
       const allowed = ['profile', 'impact', 'experience', 'projects', 'education', 'skills', 'design', 'layout']
@@ -313,6 +330,7 @@ export default {
       if (!file) return
       try {
         const image = await this.compressAvatar(file)
+        this.checkpointHistory('Upload profile photo')
         this.candidate.avatar = safeImageSource(image)
         this.avatarError = ''
       } catch (error) {
@@ -322,19 +340,23 @@ export default {
       }
     },
     removeQuickAvatar() {
+      this.checkpointHistory('Remove profile photo')
       this.candidate.avatar = ''
       this.avatarError = ''
     },
     updateAvatarAppearance(key, value) {
       if (!['avatarShape', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
+      this.checkpointHistory('Adjust profile photo', { coalesce: true })
       this.appearance = { ...this.appearance, [key]: value }
     },
     resetAvatarFraming() {
+      this.checkpointHistory('Reset profile photo framing')
       this.appearance = { ...this.appearance, avatarShape: 'circle', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }
     },
     startAvatarDrag(event) {
       if (!this.candidate.avatar || event.button !== 0) return
       const target = event.currentTarget
+      this.checkpointHistory('Move profile photo')
       const rect = target.getBoundingClientRect()
       this.avatarDragging = true
       this.avatarDragStart = {
@@ -394,15 +416,26 @@ export default {
       })
     },
     applyRolePreset(preset) {
+      this.checkpointHistory(`Apply ${preset.label} preset`)
       const template = this.templates.find((item) => item.id === preset.templateId)
       if (template) this.selectedId = template.id
       if (typeof preset.accent === 'string') this.accent = preset.accent
       if (preset.appearance) this.appearance = { ...this.appearance, ...preset.appearance }
       this.category = 'All'
     },
-    chooseTemplate(template) { this.selectedId = template.id; this.accent = template.accent },
-    cycleTemplate() { const currentIndex = this.templates.findIndex((item) => item.id === this.selectedId); const nextTemplate = this.templates[(currentIndex + 1) % this.templates.length]; this.category = 'All'; this.chooseTemplate(nextTemplate) },
+    chooseTemplate(template, recordHistory = true) {
+      if (recordHistory) this.checkpointHistory(`Choose ${template.name}`)
+      this.selectedId = template.id
+      this.accent = template.accent
+    },
+    cycleTemplate() {
+      const currentIndex = this.templates.findIndex((item) => item.id === this.selectedId)
+      const nextTemplate = this.templates[(currentIndex + 1) % this.templates.length]
+      this.category = 'All'
+      this.chooseTemplate(nextTemplate)
+    },
     runAutoComplete() {
+      this.checkpointHistory('Auto-complete CV')
       const result = autoCompleteCv(this.candidate, cloneCandidate())
       this.candidate = sanitizeProfileMedia(result.profile)
       this.autoCompleteResult = result.summary
@@ -411,13 +444,89 @@ export default {
     handleShortcut(event) {
       const target = event.target
       const isTyping = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)
-      if (isTyping || event.metaKey || event.ctrlKey || event.altKey) return
       const key = event.key.toLowerCase()
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && key === 'z' && !isTyping) {
+        event.preventDefault()
+        if (event.shiftKey) this.redo()
+        else this.undo()
+        return
+      }
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && key === 'y' && !isTyping) {
+        event.preventDefault()
+        this.redo()
+        return
+      }
+      if (isTyping || event.metaKey || event.ctrlKey || event.altKey) return
       if (key === 'e') this.openEditor('profile')
       else if (key === 'f') this.focusMode = !this.focusMode
       else if (key === 'n') this.cycleTemplate()
       else if (key === 'p') { event.preventDefault(); this.printCv() }
       else if (key === 'escape') { this.editorOpen = false; this.focusMode = false }
+    },
+    captureStudioState() {
+      return {
+        candidate: JSON.parse(JSON.stringify(this.candidate)),
+        selectedId: this.selectedId,
+        accent: this.accent,
+        zoom: this.zoom,
+        appearance: JSON.parse(JSON.stringify(this.appearance)),
+      }
+    },
+    restoreStudioState(state) {
+      if (!state) return
+      this.historyRestoring = true
+      this.candidate = sanitizeProfileMedia(JSON.parse(JSON.stringify(state.candidate)))
+      if (this.templates.some((item) => item.id === state.selectedId)) this.selectedId = state.selectedId
+      if (typeof state.accent === 'string') this.accent = state.accent
+      if ([0.75, 0.85, 1].includes(state.zoom)) this.zoom = state.zoom
+      if (state.appearance && typeof state.appearance === 'object') this.appearance = { ...this.appearance, ...JSON.parse(JSON.stringify(state.appearance)) }
+      this.$nextTick(() => { this.historyRestoring = false })
+    },
+    checkpointHistory(label, { coalesce = false } = {}) {
+      if (this.historyRestoring) return
+      if (!coalesce || !this.historyCoalesceActive) {
+        this.undoStack.push({ label, state: this.captureStudioState() })
+        if (this.undoStack.length > 30) this.undoStack.shift()
+        this.redoStack = []
+      }
+      window.clearTimeout(this.historyCoalesceTimer)
+      if (coalesce) {
+        this.historyCoalesceActive = true
+        this.historyCoalesceTimer = window.setTimeout(() => { this.historyCoalesceActive = false }, 500)
+      } else {
+        this.historyCoalesceActive = false
+      }
+    },
+    flushHistoryCoalesce() {
+      window.clearTimeout(this.historyCoalesceTimer)
+      this.historyCoalesceTimer = null
+      this.historyCoalesceActive = false
+    },
+    undo() {
+      if (!this.undoStack.length) return
+      this.flushHistoryCoalesce()
+      const entry = this.undoStack.pop()
+      this.redoStack.push({ label: entry.label, state: this.captureStudioState() })
+      if (this.redoStack.length > 30) this.redoStack.shift()
+      this.restoreStudioState(entry.state)
+    },
+    redo() {
+      if (!this.redoStack.length) return
+      this.flushHistoryCoalesce()
+      const entry = this.redoStack.pop()
+      this.undoStack.push({ label: entry.label, state: this.captureStudioState() })
+      if (this.undoStack.length > 30) this.undoStack.shift()
+      this.restoreStudioState(entry.state)
+    },
+    setZoom(value) {
+      if (![0.75, 0.85, 1].includes(value) || value === this.zoom) return
+      this.checkpointHistory('Change preview zoom')
+      this.zoom = value
+    },
+    updateAccent(value) {
+      if (typeof value !== 'string' || value === this.accent) return
+      this.checkpointHistory('Change accent color', { coalesce: true })
+      this.accent = value
     },
     persistStudioSettings() {
       try {
@@ -433,29 +542,58 @@ export default {
     },
     updateAppearance({ key, value }) {
       if (!['font', 'density', 'radius', 'projectLayout', 'avatarShape', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
+      this.checkpointHistory('Change CV appearance', { coalesce: ['avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key) })
       this.appearance = { ...this.appearance, [key]: value }
     },
     updateProfileField({ key, value }) {
       if (!Object.prototype.hasOwnProperty.call(this.candidate, key)) return
+      this.checkpointHistory(`Edit ${key}`, { coalesce: key !== 'avatar' })
       this.candidate[key] = key === 'avatar' ? safeImageSource(value) : value
     },
     updateProfileItem({ section, index, key, value }) {
       const collection = this.candidate[section]
       if (!Array.isArray(collection) || !collection[index] || typeof collection[index] !== 'object') return
+      this.checkpointHistory(`Edit ${section}`, { coalesce: key !== 'image' })
       collection[index][key] = section === 'projects' && key === 'image' ? safeImageSource(value) : value
     },
-    updateProfileArray({ key, value }) { if (Array.isArray(this.candidate[key]) && Array.isArray(value)) this.candidate[key] = value },
-    addProfileItem({ section }) { const factory = ITEM_FACTORIES[section]; if (factory && Array.isArray(this.candidate[section])) this.candidate[section].push(factory()) },
-    removeProfileItem({ section, index }) { if (Array.isArray(this.candidate[section])) this.candidate[section].splice(index, 1) },
+    updateProfileArray({ key, value }) {
+      if (!Array.isArray(this.candidate[key]) || !Array.isArray(value)) return
+      this.checkpointHistory(`Edit ${key}`, { coalesce: true })
+      this.candidate[key] = value
+    },
+    addProfileItem({ section }) {
+      const factory = ITEM_FACTORIES[section]
+      if (!factory || !Array.isArray(this.candidate[section])) return
+      this.checkpointHistory(`Add ${section} item`)
+      this.candidate[section].push(factory())
+    },
+    removeProfileItem({ section, index }) {
+      if (!Array.isArray(this.candidate[section])) return
+      this.checkpointHistory(`Remove ${section} item`)
+      this.candidate[section].splice(index, 1)
+    },
     moveProfileItem({ section, index, direction }) {
       const collection = this.candidate[section]
       if (!Array.isArray(collection)) return
       const nextIndex = index + direction
       if (nextIndex < 0 || nextIndex >= collection.length) return
+      this.checkpointHistory(`Reorder ${section}`)
       const [item] = collection.splice(index, 1)
       collection.splice(nextIndex, 0, item)
     },
+    reorderSection({ source, target }) {
+      if (!source || !target || source === target || !Array.isArray(this.candidate.sections)) return
+      const sourceIndex = this.candidate.sections.findIndex((section) => section.id === source)
+      const targetIndex = this.candidate.sections.findIndex((section) => section.id === target)
+      if (sourceIndex < 0 || targetIndex < 0) return
+      this.checkpointHistory('Reorder CV sections')
+      const sections = [...this.candidate.sections]
+      const [moved] = sections.splice(sourceIndex, 1)
+      sections.splice(targetIndex, 0, moved)
+      this.candidate.sections = sections
+    },
     resetCandidate() {
+      this.checkpointHistory('Reset CV')
       this.candidate = sanitizeProfileMedia(cloneCandidate())
       this.autoCompleteResult = null
       try {
