@@ -43,8 +43,8 @@
         <aside class="template-panel">
           <div class="section-heading"><div><span class="section-index">01</span><h2>Choose a direction</h2></div><p>Each template uses the same structured profile data, so content stays consistent.</p></div>
           <div class="role-avatar-panel">
-            <div class="role-avatar-preview" :class="{ empty: !candidate.avatar }">
-              <img v-if="candidate.avatar" :src="candidate.avatar" alt="" />
+            <div class="role-avatar-preview" :class="[{ empty: !candidate.avatar }, avatarShapeClass]">
+              <img v-if="candidate.avatar" :src="candidate.avatar" alt="" :style="avatarImageStyle" />
               <span v-else>{{ candidateInitials }}</span>
             </div>
             <div class="role-avatar-copy">
@@ -57,13 +57,21 @@
                 </label>
                 <button v-if="candidate.avatar" type="button" class="role-avatar-remove" @click="removeQuickAvatar">Remove</button>
               </div>
+              <div v-if="candidate.avatar" class="quick-avatar-framing">
+                <div class="avatar-shape-segmented" role="group" aria-label="Avatar shape">
+                  <button v-for="shape in avatarShapes" :key="shape.id" type="button" :class="{ active: avatarShape === shape.id }" :aria-pressed="avatarShape === shape.id" @click="updateAvatarAppearance('avatarShape', shape.id)">{{ shape.label }}</button>
+                </div>
+                <label><span>X</span><input type="range" min="0" max="100" :value="avatarX" @input="updateAvatarAppearance('avatarX', Number($event.target.value))" /></label>
+                <label><span>Y</span><input type="range" min="0" max="100" :value="avatarY" @input="updateAvatarAppearance('avatarY', Number($event.target.value))" /></label>
+                <button type="button" class="avatar-reset-frame" @click="resetAvatarFraming">Reset</button>
+              </div>
               <small v-if="avatarError" class="role-avatar-error" role="alert">{{ avatarError }}</small>
             </div>
           </div>
           <div class="role-presets" aria-label="Role presets">
             <button v-for="preset in rolePresets" :key="preset.id" type="button" @click="applyRolePreset(preset)">
-              <span class="role-preset-avatar" :class="{ empty: !candidate.avatar }">
-                <img v-if="candidate.avatar" :src="candidate.avatar" alt="" />
+              <span class="role-preset-avatar" :class="[{ empty: !candidate.avatar }, avatarShapeClass]">
+                <img v-if="candidate.avatar" :src="candidate.avatar" alt="" :style="avatarImageStyle" />
                 <span v-else>{{ candidateInitials }}</span>
               </span>
               <span class="role-preset-copy">
@@ -187,7 +195,7 @@ export default {
       category: 'All',
       accent: templates[0].accent,
       zoom: 0.85,
-      appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards' },
+      appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarX: 50, avatarY: 50 },
       editorOpen: false,
       editorTab: 'profile',
       rolePresets: [
@@ -199,6 +207,11 @@ export default {
       focusMode: false,
       autoCompleteResult: null,
       avatarError: '',
+      avatarShapes: [
+        { id: 'circle', label: 'Circle' },
+        { id: 'rounded', label: 'Rounded' },
+        { id: 'square', label: 'Square' },
+      ],
     }
   },
   computed: {
@@ -277,6 +290,13 @@ export default {
       this.candidate.avatar = ''
       this.avatarError = ''
     },
+    updateAvatarAppearance(key, value) {
+      if (!['avatarShape', 'avatarX', 'avatarY'].includes(key)) return
+      this.appearance = { ...this.appearance, [key]: value }
+    },
+    resetAvatarFraming() {
+      this.appearance = { ...this.appearance, avatarShape: 'circle', avatarX: 50, avatarY: 50 }
+    },
     compressAvatar(file) {
       if (!file.type.startsWith('image/')) return Promise.reject(new Error('Please choose an image file.'))
       if (file.size > 10 * 1024 * 1024) return Promise.reject(new Error('Image is too large. Please choose a file under 10 MB.'))
@@ -346,7 +366,7 @@ export default {
       }
     },
     updateAppearance({ key, value }) {
-      if (!['font', 'density', 'radius', 'projectLayout'].includes(key)) return
+      if (!['font', 'density', 'radius', 'projectLayout', 'avatarShape', 'avatarX', 'avatarY'].includes(key)) return
       this.appearance = { ...this.appearance, [key]: value }
     },
     updateProfileField({ key, value }) {
