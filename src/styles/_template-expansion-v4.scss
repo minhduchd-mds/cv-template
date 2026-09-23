@@ -199,3 +199,19 @@
 .thumb-theme-research-scholar {
   background: linear-gradient(180deg,#7c2d12 0 4px,#fffdf9 4px);
 }
+
+
+/* Finance Ledger composition refinement: left rail + main ledger */
+.theme-finance-ledger .executive-layout{
+  grid-template-columns:210px minmax(0,1fr);
+}
+.theme-finance-ledger .executive-layout main{
+  order:2;
+}
+.theme-finance-ledger .executive-layout aside{
+  order:1;
+  border-left:0;
+  border-right:1px solid #d8cfb8;
+  padding:18px 18px 18px 0;
+  background:transparent;
+}
