@@ -163,14 +163,14 @@ export default {
       category: 'All',
       accent: templates[0].accent,
       zoom: 0.85,
-      appearance: { font: 'sans', density: 'balanced', radius: 'soft' },
+      appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards' },
       editorOpen: false,
       editorTab: 'profile',
       rolePresets: [
-        { id: 'recruiter', label: 'Recruiter', note: 'ATS first', templateId: 'ats-clean', accent: '#0f766e', appearance: { font: 'sans', density: 'compact', radius: 'sharp' } },
-        { id: 'uiux', label: 'Senior UI/UX', note: 'Portfolio led', templateId: 'product-slate', accent: '#6d5dfc', appearance: { font: 'sans', density: 'balanced', radius: 'soft' } },
-        { id: 'engineer', label: 'Design Engineer', note: 'Code aware', templateId: 'design-engineer', accent: '#111827', appearance: { font: 'mono', density: 'compact', radius: 'sharp' } },
-        { id: 'lead', label: 'Leadership', note: 'Outcome led', templateId: 'executive-navy', accent: '#244A73', appearance: { font: 'serif', density: 'spacious', radius: 'soft' } },
+        { id: 'recruiter', label: 'Recruiter', note: 'ATS first', templateId: 'ats-clean', accent: '#0f766e', appearance: { font: 'sans', density: 'compact', radius: 'sharp', projectLayout: 'list' } },
+        { id: 'uiux', label: 'Senior UI/UX', note: 'Portfolio led', templateId: 'modern-bento', accent: '#7C3AED', appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards' } },
+        { id: 'engineer', label: 'Design Engineer', note: 'Code aware', templateId: 'modern-mono', accent: '#111827', appearance: { font: 'mono', density: 'compact', radius: 'sharp', projectLayout: 'list' } },
+        { id: 'lead', label: 'Leadership', note: 'Outcome led', templateId: 'modern-timeline', accent: '#0F766E', appearance: { font: 'serif', density: 'spacious', radius: 'soft', projectLayout: 'list' } },
       ],
       focusMode: false,
       autoCompleteResult: null,
@@ -271,7 +271,7 @@ export default {
       }
     },
     updateAppearance({ key, value }) {
-      if (!['font', 'density', 'radius'].includes(key)) return
+      if (!['font', 'density', 'radius', 'projectLayout'].includes(key)) return
       this.appearance = { ...this.appearance, [key]: value }
     },
     updateProfileField({ key, value }) {
