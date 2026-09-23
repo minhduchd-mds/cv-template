@@ -8,9 +8,12 @@
   >
     <template v-if="template.variant === 'ats'">
       <header class="cv-header ats-header" v-bind="editAttrs('profile')">
-        <div>
-          <p class="cv-kicker">{{ profile.role }}</p>
-          <h1>{{ profile.name }}</h1>
+        <div class="ats-header-main">
+          <div>
+            <p class="cv-kicker">{{ profile.role }}</p>
+            <h1>{{ profile.name }}</h1>
+          </div>
+          <div v-if="profile.avatar" class="cv-avatar ats-avatar" :style="imageStyle(profile.avatar)"></div>
         </div>
         <div class="contact-row">
           <span>{{ profile.location }}</span><span>{{ profile.email }}</span><span>{{ profile.phone }}</span><span>{{ profile.website }}</span>
