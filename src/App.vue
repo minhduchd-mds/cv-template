@@ -40,7 +40,7 @@
           <p>A modern, code-aware resume studio built for Senior UI/UX, Product Design and technology roles. Pick a template, edit your profile, tune the accent and export an A4-ready CV.</p>
           <div class="hero-meta"><div><strong>{{ templates.length }}</strong><span>starter templates</span></div><div><strong>A4</strong><span>print-ready layout</span></div><div><strong>360°</strong><span>sample profile data</span></div></div>
         </div>
-        <div class="hero-orbit" aria-hidden="true"><div class="orbit-card orbit-card-a"><span>01</span><b>ATS Clean</b></div><div class="orbit-card orbit-card-b"><span>02</span><b>Product</b></div><div class="orbit-card orbit-card-c"><span>03</span><b>Design Engineer</b></div><div class="hero-badge">A4<br /><small>PDF</small></div></div>
+        <div class="hero-orbit" aria-hidden="true"><div class="orbit-card orbit-card-a"><span>01</span><b>ATS Precision</b></div><div class="orbit-card orbit-card-b"><span>02</span><b>Soft Portfolio</b></div><div class="orbit-card orbit-card-c"><span>03</span><b>Executive Edge</b></div><div class="hero-badge">A4<br /><small>PDF</small></div></div>
       </section>
 
       <section id="templates" class="workspace studio-only">
@@ -217,10 +217,10 @@ export default {
       editorOpen: false,
       editorTab: 'profile',
       rolePresets: [
-        { id: 'recruiter', label: 'Recruiter', note: 'ATS first', templateId: 'ats-clean', accent: '#0f766e', appearance: { font: 'sans', density: 'compact', radius: 'sharp', projectLayout: 'list' } },
-        { id: 'uiux', label: 'Senior UI/UX', note: 'Portfolio led', templateId: 'young-soft-portfolio', accent: '#7C6DFF', appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarSize: 'large' } },
-        { id: 'engineer', label: 'Design Engineer', note: 'Code aware', templateId: 'modern-mono', accent: '#111827', appearance: { font: 'mono', density: 'compact', radius: 'sharp', projectLayout: 'list' } },
-        { id: 'lead', label: 'Leadership', note: 'Outcome led', templateId: 'modern-timeline', accent: '#0F766E', appearance: { font: 'serif', density: 'spacious', radius: 'soft', projectLayout: 'list' } },
+        { id: 'recruiter', label: 'Recruiter', note: 'ATS first', templateId: 'ats-precision', accent: '#15803D', appearance: { font: 'sans', density: 'compact', radius: 'sharp', projectLayout: 'list' } },
+        { id: 'uiux', label: 'Senior UI/UX', note: 'Portfolio led', templateId: 'soft-portfolio-pro', accent: '#8B5CF6', appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarSize: 'large' } },
+        { id: 'engineer', label: 'Design Engineer', note: 'Code aware', templateId: 'code-aware', accent: '#2563EB', appearance: { font: 'mono', density: 'compact', radius: 'sharp', projectLayout: 'list' } },
+        { id: 'lead', label: 'Leadership', note: 'Outcome led', templateId: 'executive-edge', accent: '#B58A3A', appearance: { font: 'serif', density: 'spacious', radius: 'soft', projectLayout: 'list' } },
       ],
       focusMode: false,
       autoCompleteResult: null,
