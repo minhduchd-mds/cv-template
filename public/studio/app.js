@@ -260,7 +260,7 @@
           ? 'ats'
           : template.variant
 
-    paper.className = `paper template-${layoutVariant} template-theme-${template.variant} font-${settings.font} density-${settings.density} radius-${settings.radius}`
+    paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius}`
     paper.style.setProperty('--accent', settings.accent)
     paper.style.setProperty('--zoom', String(settings.zoom))
 
