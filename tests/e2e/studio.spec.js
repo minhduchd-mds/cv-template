@@ -45,7 +45,7 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(page.getByRole('progressbar', { name: 'CV completeness' })).toBeVisible()
   await expect(page.getByRole('button', { name: /Profile.*Identity & contact/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Experience.*Roles & achievements/i })).toBeVisible()
-  await expect(page.locator('.template-card')).toHaveCount(18)
+  await expect(page.locator('.template-card')).toHaveCount(21)
 
   const avatarPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
   await page.locator('.role-avatar-upload input').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: avatarPng })
@@ -53,6 +53,8 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}').avatar || '')).toMatch(/^data:image\/webp;base64,/)
 
   await page.locator('.quick-avatar-framing').getByRole('button', { name: 'Rounded' }).click()
+  await page.locator('.quick-avatar-framing').getByRole('button', { name: 'L', exact: true }).click()
+  await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-avatar-size-large/)
   await page.locator('.quick-avatar-framing input[type="range"]').nth(0).evaluate((input) => { input.value = '30'; input.dispatchEvent(new Event('input', { bubbles: true })) })
   await page.locator('.quick-avatar-framing input[type="range"]').nth(1).evaluate((input) => { input.value = '72'; input.dispatchEvent(new Event('input', { bubbles: true })) })
   await page.locator('.quick-avatar-framing input[type="range"]').nth(2).evaluate((input) => { input.value = '160'; input.dispatchEvent(new Event('input', { bubbles: true })) })
@@ -85,8 +87,12 @@ test('builder opens from its route, edits shared data and persists locally', asy
 
   await page.getByRole('button', { name: /Profile.*Identity & contact/i }).click()
 
+  await page.getByRole('button', { name: /Senior UI\/UX.*Portfolio led/i }).click()
+  await expect(page.locator('.preview-toolbar')).toContainText('Soft Portfolio')
+  await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-avatar-size-large/)
+
   await page.getByRole('button', { name: /Design Engineer.*Code aware/i }).click()
-  await expect(page.locator('.preview-toolbar')).toContainText('Design Engineer')
+  await expect(page.locator('.preview-toolbar')).toContainText('Mono Grid')
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-font-mono/)
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-density-compact/)
 
@@ -206,7 +212,7 @@ test('static fallback builder keeps core editing and template controls functiona
   await page.goto('/studio/')
 
   await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
-  await expect(page.locator('.template-card')).toHaveCount(18)
+  await expect(page.locator('.template-card')).toHaveCount(21)
 
   const avatarPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
   await page.locator('#staticAvatarInput').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: avatarPng })
@@ -214,6 +220,8 @@ test('static fallback builder keeps core editing and template controls functiona
   await expect(page.locator('#paper .paper-avatar img')).toHaveCount(1)
 
   await page.locator('[data-avatar-shape="square"]').click()
+  await page.locator('[data-avatar-size="small"]').click()
+  await expect(page.locator('#paper')).toHaveClass(/avatar-size-small/)
   await page.locator('#avatarX').evaluate((input) => { input.value = '20'; input.dispatchEvent(new Event('input', { bubbles: true })) })
   await page.locator('#avatarY').evaluate((input) => { input.value = '80'; input.dispatchEvent(new Event('input', { bubbles: true })) })
   await page.locator('#avatarZoom').evaluate((input) => { input.value = '175'; input.dispatchEvent(new Event('input', { bubbles: true })) })
@@ -237,8 +245,12 @@ test('static fallback builder keeps core editing and template controls functiona
   await page.locator('#projectCards').click()
   await expect(page.locator('#paper')).toHaveClass(/projects-cards/)
 
+  await page.locator('[data-target-preset="uiux"]').click()
+  await expect(page.locator('#activeTemplateLabel')).toContainText('Soft Portfolio')
+  await expect(page.locator('#paper')).toHaveClass(/avatar-size-large/)
+
   await page.locator('[data-target-preset="engineer"]').click()
-  await expect(page.locator('#activeTemplateLabel')).toContainText('Design Engineer')
+  await expect(page.locator('#activeTemplateLabel')).toContainText('Mono Grid')
   await expect(page.locator('#paper')).toHaveClass(/font-mono/)
   await expect(page.locator('#paper')).toHaveClass(/density-compact/)
 
