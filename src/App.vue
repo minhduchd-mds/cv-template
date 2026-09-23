@@ -118,14 +118,15 @@
         </aside>
 
         <div class="preview-panel">
-          <div class="preview-toolbar">
-            <div><span class="section-index">02</span><div><strong>Live preview</strong><small>{{ selectedTemplate.name }} · A4</small></div></div>
+          <div class="preview-toolbar preview-toolbar-v3">
+            <div class="preview-title"><span class="section-index">02</span><div><strong>Live preview</strong><small>{{ selectedTemplate.name }} · A4</small></div></div>
+            <div class="preview-status"><span>A4</span><span>Auto-saved</span></div>
             <div class="preview-actions">
               <div class="quality-score" :style="{ '--score-angle': `${cvScore * 3.6}deg` }" :title="`CV quality score: ${cvScore}/100 · ${scoreLabel}`" aria-live="polite"><span class="score-ring"><span>{{ cvScore }}</span></span><span><strong>CV score</strong><small>{{ scoreLabel }}</small></span></div>
               <button class="cycle-control" type="button" title="Next template (N)" @click="cycleTemplate">Next style ↻</button>
               <button class="focus-control" :class="{ active: focusMode }" type="button" :aria-pressed="focusMode" title="Toggle focus preview (F)" @click="focusMode = !focusMode">{{ focusMode ? 'Exit focus' : 'Focus' }}</button>
-              <label class="zoom-control"><span>Zoom</span><select :value="zoom" aria-label="CV preview zoom" @change="setZoom(Number($event.target.value))"><option :value="0.75">75%</option><option :value="0.85">85%</option><option :value="1">100%</option></select></label>
-              <label class="color-control"><span>Accent</span><input :value="accent" type="color" aria-label="Change CV accent color" @input="updateAccent($event.target.value)" /></label>
+              <label class="zoom-control toolbar-control"><span>Zoom</span><select :value="zoom" aria-label="CV preview zoom" @change="setZoom(Number($event.target.value))"><option :value="0.75">75%</option><option :value="0.85">85%</option><option :value="1">100%</option></select></label>
+              <label class="color-control toolbar-control accent-toolbar"><span>Accent</span><input :value="accent" type="color" aria-label="Change CV accent color" @input="updateAccent($event.target.value)" /></label>
             </div>
           </div>
           <div class="preview-stage"><div class="preview-zoom" :style="{ '--preview-zoom': zoom }"><CvDocument
