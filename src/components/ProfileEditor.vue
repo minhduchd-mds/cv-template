@@ -168,33 +168,6 @@
             <p>Upload project covers directly. They flow into Case Study, Bento and visual CV concepts automatically.</p>
           </div>
 
-          <div class="project-layout-control" aria-label="Project display">
-            <div>
-              <strong>Project display</strong>
-              <span>Choose how projects appear in the CV and exported PDF.</span>
-            </div>
-            <div class="project-layout-segmented" role="group" aria-label="Project layout">
-              <button
-                type="button"
-                :class="{ active: (appearance.projectLayout || 'cards') === 'cards' }"
-                :aria-pressed="(appearance.projectLayout || 'cards') === 'cards'"
-                @click="$emit('update-appearance', { key: 'projectLayout', value: 'cards' })"
-              >
-                <span class="layout-preview-icon cards-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-                Card
-              </button>
-              <button
-                type="button"
-                :class="{ active: appearance.projectLayout === 'list' }"
-                :aria-pressed="appearance.projectLayout === 'list'"
-                @click="$emit('update-appearance', { key: 'projectLayout', value: 'list' })"
-              >
-                <span class="layout-preview-icon list-icon" aria-hidden="true"><i></i><i></i><i></i></span>
-                List
-              </button>
-            </div>
-          </div>
-
           <div class="builder-list">
             <article v-for="(project, index) in profile.projects" :key="`project-${index}`" class="builder-card">
               <div class="builder-card-top"><strong>{{ project.name || `Project ${index + 1}` }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('projects', index, -1)">↑</button><button type="button" :disabled="index === profile.projects.length - 1" @click="move('projects', index, 1)">↓</button><button type="button" class="danger" @click="remove('projects', index)">×</button></div></div>
@@ -251,22 +224,44 @@
         <section v-else-if="activeTab === 'design'" class="editor-section">
           <div class="editor-section-heading">
             <div><span>07</span><h3>Visual design</h3></div>
-            <p>Fine-tune the selected template without changing your CV content.</p>
+            <p>Template-aware controls: typography, scale, spacing and project presentation.</p>
           </div>
 
+          <div class="design-context-card">
+            <span>{{ templateMeta.label }}</span>
+            <strong>{{ template?.name || 'Selected template' }}</strong>
+            <p>{{ templateMeta.structure }}</p>
+          </div>
+
+          <div class="design-section-label"><span>Typography</span><small>Global type controls</small></div>
           <div class="editor-grid">
             <label class="editor-field">
               <span>Accent color</span>
               <input :value="accent" type="color" aria-label="CV accent color" @input="$emit('update-accent', $event.target.value)" />
             </label>
             <label class="editor-field">
-              <span>Typography</span>
+              <span>Font family</span>
               <select :value="appearance.font" @change="$emit('update-appearance', { key: 'font', value: $event.target.value })">
                 <option value="sans">Sans · Modern</option>
-                <option value="serif">Serif · Editorial</option>
+                <option value="serif">Serif · Classic</option>
                 <option value="mono">Mono · Technical</option>
               </select>
             </label>
+          </div>
+
+          <div class="design-range-grid">
+            <label class="editor-field">
+              <span class="range-head"><span>Text size</span><output>{{ textScalePercent }}%</output></span>
+              <input type="range" min="90" max="115" step="5" :value="textScalePercent" @input="$emit('update-appearance', { key: 'textScale', value: Number($event.target.value) / 100 })" />
+            </label>
+            <label class="editor-field">
+              <span class="range-head"><span>Heading size</span><output>{{ headingScalePercent }}%</output></span>
+              <input type="range" min="90" max="120" step="5" :value="headingScalePercent" @input="$emit('update-appearance', { key: 'headingScale', value: Number($event.target.value) / 100 })" />
+            </label>
+          </div>
+
+          <div class="design-section-label"><span>Spacing & shape</span><small>Keep A4 readable</small></div>
+          <div class="editor-grid">
             <label class="editor-field">
               <span>Content density</span>
               <select :value="appearance.density" @change="$emit('update-appearance', { key: 'density', value: $event.target.value })">
@@ -276,6 +271,14 @@
               </select>
             </label>
             <label class="editor-field">
+              <span>Section spacing</span>
+              <select :value="appearance.sectionSpacing || 'balanced'" @change="$emit('update-appearance', { key: 'sectionSpacing', value: $event.target.value })">
+                <option value="compact">Tight</option>
+                <option value="balanced">Balanced</option>
+                <option value="airy">Airy</option>
+              </select>
+            </label>
+            <label class="editor-field editor-field-wide">
               <span>Corner style</span>
               <select :value="appearance.radius" @change="$emit('update-appearance', { key: 'radius', value: $event.target.value })">
                 <option value="sharp">Sharp</option>
@@ -285,14 +288,32 @@
             </label>
           </div>
 
-          <div class="design-presets">
-            <button type="button" @click="applyDesignPreset('recruiter')"><strong>Recruiter</strong><span>Sans · compact · sharp</span></button>
-            <button type="button" @click="applyDesignPreset('product')"><strong>Product</strong><span>Sans · balanced · soft</span></button>
-            <button type="button" @click="applyDesignPreset('editorial')"><strong>Editorial</strong><span>Serif · spacious · soft</span></button>
-            <button type="button" @click="applyDesignPreset('technical')"><strong>Technical</strong><span>Mono · compact · sharp</span></button>
+          <div class="project-layout-control" :class="{ disabled: !templateMeta.projects }" aria-label="Project display">
+            <div>
+              <strong>Project display</strong>
+              <span>{{ templateMeta.projects ? 'Switch project sections between visual cards and a compact list.' : 'This template does not use a project section in its primary composition.' }}</span>
+            </div>
+            <div class="project-layout-segmented" role="group" aria-label="Project layout">
+              <button type="button" :disabled="!templateMeta.projects" :class="{ active: (appearance.projectLayout || 'cards') === 'cards' }" :aria-pressed="(appearance.projectLayout || 'cards') === 'cards'" @click="$emit('update-appearance', { key: 'projectLayout', value: 'cards' })">
+                <span class="layout-preview-icon cards-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Card
+              </button>
+              <button type="button" :disabled="!templateMeta.projects" :class="{ active: appearance.projectLayout === 'list' }" :aria-pressed="appearance.projectLayout === 'list'" @click="$emit('update-appearance', { key: 'projectLayout', value: 'list' })">
+                <span class="layout-preview-icon list-icon" aria-hidden="true"><i></i><i></i><i></i></span>List
+              </button>
+            </div>
           </div>
 
-          <div class="editor-note"><strong>Template + appearance</strong><p>Template controls the composition. These controls change typography, density and shape language on top of that template, so one direction can produce several usable variants.</p></div>
+          <div class="design-section-label"><span>Style presets</span><small>Visual direction, not job role</small></div>
+          <div class="design-presets design-style-grid">
+            <button type="button" @click="applyDesignPreset('classic')"><i class="preset-swatch classic"></i><strong>Classic</strong><span>Serif · balanced</span></button>
+            <button type="button" @click="applyDesignPreset('modern')"><i class="preset-swatch modern"></i><strong>Modern</strong><span>Sans · balanced</span></button>
+            <button type="button" @click="applyDesignPreset('editorial')"><i class="preset-swatch editorial"></i><strong>Editorial</strong><span>Serif · airy</span></button>
+            <button type="button" @click="applyDesignPreset('technical')"><i class="preset-swatch technical"></i><strong>Technical</strong><span>Mono · compact</span></button>
+            <button type="button" @click="applyDesignPreset('portfolio')"><i class="preset-swatch portfolio"></i><strong>Portfolio</strong><span>Larger · visual</span></button>
+            <button type="button" @click="applyDesignPreset('compact')"><i class="preset-swatch compact"></i><strong>Compact</strong><span>Small · ATS-safe</span></button>
+          </div>
+
+          <div class="editor-note"><strong>Structure stays template-specific</strong><p>Each CV owns its composition. Global controls only tune typography and rhythm; project controls appear only where that template actually renders projects.</p></div>
         </section>
 
         <section v-else class="editor-section">
@@ -345,9 +366,10 @@ export default {
     completion: { type: Number, default: 0 },
     appearance: {
       type: Object,
-      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }),
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', textScale: 1, headingScale: 1, sectionSpacing: 'balanced', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 }),
     },
     accent: { type: String, default: '#6d5dfc' },
+    template: { type: Object, default: null },
     requestedTab: { type: String, default: 'profile' },
   },
   emits: ['close', 'update-field', 'update-item', 'update-array', 'add-item', 'remove-item', 'move-item', 'update-appearance', 'update-accent', 'reset'],
@@ -411,6 +433,29 @@ export default {
         transform: `scale(${this.avatarZoom}) rotate(${this.avatarRotate}deg)`,
       }
     },
+    textScalePercent() {
+      const value = Number.isFinite(Number(this.appearance?.textScale)) ? Math.min(1.15, Math.max(.9, Number(this.appearance.textScale))) : 1
+      return Math.round(value * 100)
+    },
+    headingScalePercent() {
+      const value = Number.isFinite(Number(this.appearance?.headingScale)) ? Math.min(1.2, Math.max(.9, Number(this.appearance.headingScale))) : 1
+      return Math.round(value * 100)
+    },
+    templateMeta() {
+      const map = {
+        'executive-edge': { label: 'Executive', structure: 'Header → Summary → Leadership impact → Experience → Achievements → Education', projects: true },
+        'soft-portfolio-pro': { label: 'Designer portfolio', structure: 'Hero → Metrics → Case studies → Skills & tools → Experience highlights', projects: true },
+        'product-operator': { label: 'Product leadership', structure: 'Profile rail → Impact metrics → Experience → Product highlights → Roadmap', projects: true },
+        'code-aware': { label: 'Design engineer', structure: 'Code hero → About → Experience → Skills → Selected work', projects: true },
+        'ats-precision': { label: 'ATS / recruiter', structure: 'Profile → Experience & education → Skills → Selected projects → Certifications', projects: true },
+        'insight-grid': { label: 'Data / BI', structure: 'Header → Data summary → Skills → Achievements → Tools → Experience', projects: true },
+        'brand-motion': { label: 'Marketing', structure: 'Visual rail → Brand hero → Metrics → Experience → Campaigns', projects: true },
+        'revenue-driver': { label: 'Sales', structure: 'Sales hero → Summary → KPI highlights → Experience → Skills & clients', projects: false },
+        'people-first': { label: 'People / HR', structure: 'People hero → Competencies → Experience → Education → Additional info', projects: false },
+        'next-start': { label: 'Fresh graduate', structure: 'Graduate hero → Skills rail → Education → Projects → Internships → Activities', projects: true },
+      }
+      return map[this.template?.id] || { label: this.template?.category || 'Template', structure: 'Profile → Experience → Projects → Skills', projects: true }
+    },
   },
   watch: {
     requestedTab(value) {
@@ -431,10 +476,12 @@ export default {
     move(section, index, direction) { this.$emit('move-item', { section, index, direction }) },
     applyDesignPreset(preset) {
       const presets = {
-        recruiter: { font: 'sans', density: 'compact', radius: 'sharp', projectLayout: 'list' },
-        product: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards' },
-        editorial: { font: 'serif', density: 'spacious', radius: 'soft', projectLayout: 'cards' },
-        technical: { font: 'mono', density: 'compact', radius: 'sharp', projectLayout: 'list' },
+        classic: { font: 'serif', density: 'balanced', radius: 'soft', sectionSpacing: 'balanced', textScale: 1, headingScale: 1.05, projectLayout: 'list' },
+        modern: { font: 'sans', density: 'balanced', radius: 'soft', sectionSpacing: 'balanced', textScale: 1, headingScale: 1, projectLayout: 'cards' },
+        editorial: { font: 'serif', density: 'spacious', radius: 'soft', sectionSpacing: 'airy', textScale: 1.05, headingScale: 1.1, projectLayout: 'cards' },
+        technical: { font: 'mono', density: 'compact', radius: 'sharp', sectionSpacing: 'compact', textScale: .95, headingScale: 1, projectLayout: 'list' },
+        portfolio: { font: 'sans', density: 'spacious', radius: 'round', sectionSpacing: 'airy', textScale: 1.05, headingScale: 1.1, projectLayout: 'cards' },
+        compact: { font: 'sans', density: 'compact', radius: 'sharp', sectionSpacing: 'compact', textScale: .9, headingScale: .95, projectLayout: 'list' },
       }
       const config = presets[preset]
       if (!config) return
