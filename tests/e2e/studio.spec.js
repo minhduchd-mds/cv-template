@@ -385,7 +385,7 @@ test('static fallback keeps 1366 workspace aligned with editor open', async ({ p
 })
 
 
-test('all 15 curated templates stay inside A4 and remain editable', async ({ page }) => {
+test('all 20 curated templates stay inside A4 and remain editable', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 })
   await page.goto('/studio/')
 
@@ -405,6 +405,11 @@ test('all 15 curated templates stay inside A4 and remain editable', async ({ pag
     'ATS Clean',
     'Mono Grid',
     'Creator Cards',
+    'Strategy Brief',
+    'Clinical Clean',
+    'Finance Ledger',
+    'Studio Director',
+    'Research Scholar',
   ]
 
   for (const name of names) {
@@ -451,4 +456,23 @@ test('preview toolbar stays sticky while scrolling the CV canvas', async ({ page
   expect(position.top).toBeLessThanOrEqual(92)
   expect(position.bottom).toBeLessThan(180)
   expect(position.width).toBeGreaterThan(320)
+})
+
+
+test('five expansion templates expose distinct theme classes', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 })
+  await page.goto('/studio/')
+
+  const checks = [
+    ['Strategy Brief', 'theme-strategy-brief'],
+    ['Clinical Clean', 'theme-clinical-clean'],
+    ['Finance Ledger', 'theme-finance-ledger'],
+    ['Studio Director', 'theme-studio-director'],
+    ['Research Scholar', 'theme-research-scholar'],
+  ]
+
+  for (const [name, themeClass] of checks) {
+    await page.locator('.template-card').filter({ hasText: name }).click()
+    await expect(page.locator('#paper')).toHaveClass(new RegExp(themeClass))
+  }
 })
