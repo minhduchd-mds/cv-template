@@ -1,5 +1,15 @@
 <template>
-  <article
+  <component
+    :is="referenceComponent"
+    v-if="referenceComponent"
+    :profile="profile"
+    :accent="accent"
+    :appearance="appearance"
+    :interactive="interactive"
+    @edit-section="$emit('edit-section', $event)"
+    @reorder-section="$emit('reorder-section', $event)"
+  />
+  <article v-else
     class="cv-sheet"
     :class="[`cv-${template.variant}`, template.theme ? `theme-${template.theme}` : '', ...appearanceClasses, { 'is-editable': interactive }]"
     :style="{ '--cv-accent': accent }"
@@ -132,6 +142,30 @@
 </template>
 
 <script>
+import ExecutiveEdgeTemplate from './templates/ExecutiveEdgeTemplate.vue'
+import SoftPortfolioTemplate from './templates/SoftPortfolioTemplate.vue'
+import ProductOperatorTemplate from './templates/ProductOperatorTemplate.vue'
+import CodeAwareTemplate from './templates/CodeAwareTemplate.vue'
+import AtsPrecisionTemplate from './templates/AtsPrecisionTemplate.vue'
+import InsightGridTemplate from './templates/InsightGridTemplate.vue'
+import BrandMotionTemplate from './templates/BrandMotionTemplate.vue'
+import RevenueDriverTemplate from './templates/RevenueDriverTemplate.vue'
+import PeopleFirstTemplate from './templates/PeopleFirstTemplate.vue'
+import NextStartTemplate from './templates/NextStartTemplate.vue'
+
+const referenceTemplateMap = {
+  'executive-edge': ExecutiveEdgeTemplate,
+  'soft-portfolio-pro': SoftPortfolioTemplate,
+  'product-operator': ProductOperatorTemplate,
+  'code-aware': CodeAwareTemplate,
+  'ats-precision': AtsPrecisionTemplate,
+  'insight-grid': InsightGridTemplate,
+  'brand-motion': BrandMotionTemplate,
+  'revenue-driver': RevenueDriverTemplate,
+  'people-first': PeopleFirstTemplate,
+  'next-start': NextStartTemplate,
+}
+
 export default {
   name: 'CvDocument',
   props: {
@@ -152,6 +186,9 @@ export default {
     }
   },
   computed: {
+    referenceComponent() {
+      return referenceTemplateMap[this.template?.id] || null
+    },
     avatarImageStyle() {
       const x = Number.isFinite(Number(this.appearance?.avatarX)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarX))) : 50
       const y = Number.isFinite(Number(this.appearance?.avatarY)) ? Math.min(100, Math.max(0, Number(this.appearance.avatarY))) : 50
