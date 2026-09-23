@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import { test, expect } from '@playwright/test'
 
 const expectNoHorizontalOverflow = async (page) => {
@@ -45,6 +46,11 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(page.getByRole('button', { name: /Profile.*Identity & contact/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Experience.*Roles & achievements/i })).toBeVisible()
   await expect(page.locator('.template-card')).toHaveCount(18)
+
+  const avatarPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
+  await page.locator('.role-avatar-upload input').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: avatarPng })
+  await expect(page.locator('.role-preset-avatar img')).toHaveCount(4)
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}').avatar || '')).toMatch(/^data:image\/webp;base64,/)
 
   await page.getByRole('button', { name: /Design.*Type, density & shape/i }).click()
   await page.locator('.editor-field').filter({ hasText: 'Typography' }).locator('select').selectOption('serif')
@@ -167,6 +173,11 @@ test('static fallback builder keeps core editing and template controls functiona
 
   await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
   await expect(page.locator('.template-card')).toHaveCount(18)
+
+  const avatarPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
+  await page.locator('#staticAvatarInput').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: avatarPng })
+  await expect(page.locator('[data-preset-avatar] img')).toHaveCount(4)
+  await expect(page.locator('#paper .paper-avatar img')).toHaveCount(1)
 
   await page.getByRole('button', { name: 'Edit CV' }).click()
   await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
