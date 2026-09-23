@@ -419,26 +419,26 @@
     </div>
   `
 
-  const refHighlights = (className = 'ref-metrics') => {
+  const refHighlights = (className = '') => {
     const items = [
       { value: (profile.experience || []).length + '+', label: 'Roles' },
       { value: (profile.projects || []).length + '+', label: 'Projects' },
       { value: (profile.skills || []).length + '+', label: 'Skills' },
       { value: (profile.languages || []).length + '+', label: 'Languages' },
     ]
-    return '<div class="' + className + '">' + items.map((item) => '<div><strong>' + escapeHtml(item.value) + '</strong><span>' + escapeHtml(item.label) + '</span></div>').join('') + '</div>'
+    return '<div class="' + ['ref-metrics', className].filter(Boolean).join(' ') + '">' + items.map((item) => '<div><strong>' + escapeHtml(item.value) + '</strong><span>' + escapeHtml(item.label) + '</span></div>').join('') + '</div>'
   }
 
-  const refExperience = (className = 'ref-experience') =>
-    '<div class="' + className + '">' + (profile.experience || []).map((job) => `
+  const refExperience = (className = '') =>
+    '<div class="' + ['ref-experience', className].filter(Boolean).join(' ') + '">' + (profile.experience || []).map((job) => `
       <article>
         <div class="ref-job-head"><div><strong>${escapeHtml(job.role)}</strong><span>${escapeHtml(job.company)}${job.location ? ' · ' + escapeHtml(job.location) : ''}</span></div><time>${escapeHtml(job.period)}</time></div>
         <ul>${(job.bullets || []).map((bullet) => '<li>' + escapeHtml(bullet) + '</li>').join('')}</ul>
       </article>
     `).join('') + '</div>'
 
-  const refProjects = (className = 'ref-projects') =>
-    '<div class="' + className + '">' + (profile.projects || []).map((project, index) => `
+  const refProjects = (className = '') =>
+    '<div class="' + ['ref-projects', className].filter(Boolean).join(' ') + '">' + (profile.projects || []).map((project, index) => `
       <article>
         <div class="ref-project-index">0${index + 1}</div>
         <div><span>${escapeHtml(project.type || 'Project')}</span><strong>${escapeHtml(project.name)}</strong></div>
@@ -447,8 +447,8 @@
       </article>
     `).join('') + '</div>'
 
-  const refSkills = (className = 'ref-skills') =>
-    '<div class="' + className + '">' + (profile.skills || []).map((skill) => '<span>' + escapeHtml(skill) + '</span>').join('') + '</div>'
+  const refSkills = (className = '') =>
+    '<div class="' + ['ref-skills', className].filter(Boolean).join(' ') + '">' + (profile.skills || []).map((skill) => '<span>' + escapeHtml(skill) + '</span>').join('') + '</div>'
 
   const refEducation = () => {
     const education = Array.isArray(profile.education) ? profile.education : []
