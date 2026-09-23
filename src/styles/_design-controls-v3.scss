@@ -279,3 +279,117 @@
 @media (max-width: 1100px) {
   .preview-toolbar-v3 .preview-status { display: none; }
 }
+
+
+/* Exact legacy renderer text scaling. */
+.cv-sheet.cv-product .product-sidebar h1{font-size:calc(29px * var(--heading-scale))}
+.cv-sheet.cv-product .product-sidebar h3{font-size:calc(12px * var(--heading-scale))}
+.cv-sheet.cv-product .product-summary{font-size:calc(11px * var(--text-scale))}
+.cv-sheet.cv-product .product-contact{font-size:calc(9.5px * var(--text-scale))}
+.cv-sheet.cv-product .product-skills li{font-size:calc(9px * var(--text-scale))}
+.cv-sheet.cv-product .product-sidebar article span,
+.cv-sheet.cv-product .product-sidebar article small{font-size:calc(9px * var(--text-scale))}
+.cv-sheet.cv-product .product-section-head h2{font-size:calc(17px * var(--heading-scale))}
+.cv-sheet.cv-product .product-job .experience-head div span{font-size:calc(10px * var(--text-scale))}
+.cv-sheet.cv-product .product-projects article>div span{font-size:calc(8px * var(--text-scale))}
+.cv-sheet.cv-product .product-projects p{font-size:calc(9.5px * var(--text-scale))}
+.cv-sheet.cv-product .product-projects small{font-size:calc(8.5px * var(--text-scale))}
+
+.cv-sheet.cv-ats .ats-header h1{font-size:calc(31px * var(--heading-scale))}
+.cv-sheet.cv-ats section h2{font-size:calc(14px * var(--heading-scale))}
+.cv-sheet.cv-ats .contact-row{font-size:calc(9.5px * var(--text-scale))}
+.cv-sheet.cv-ats .ats-experience .experience-head strong{font-size:calc(11.5px * var(--text-scale))}
+.cv-sheet.cv-ats .ats-project-grid span{font-size:calc(8.5px * var(--text-scale))}
+.cv-sheet.cv-ats .ats-project-grid p{font-size:calc(9px * var(--text-scale))}
+.cv-sheet.cv-ats .ats-summary p,
+.cv-sheet.cv-ats .inline-list{font-size:calc(10px * var(--text-scale))}
+
+.cv-sheet.cv-creative .creative-header h1{font-size:calc(38px * var(--heading-scale))}
+.cv-sheet.cv-creative .creative-header h3{font-size:calc(14px * var(--heading-scale))}
+.cv-sheet.cv-creative .creative-contact{font-size:calc(9px * var(--text-scale))}
+.cv-sheet.cv-creative .creative-intro>p{font-size:calc(11px * var(--text-scale))}
+.cv-sheet.cv-creative .label-row h2{font-size:calc(17px * var(--heading-scale))}
+.cv-sheet.cv-creative .creative-projects h3{font-size:calc(12px * var(--heading-scale))}
+.cv-sheet.cv-creative .creative-projects>article>span{font-size:calc(8px * var(--text-scale))}
+.cv-sheet.cv-creative .creative-projects strong{font-size:calc(8.5px * var(--text-scale))}
+.cv-sheet.cv-creative .creative-projects p{font-size:calc(9px * var(--text-scale))}
+.cv-sheet.cv-creative .skill-list li{font-size:calc(9.5px * var(--text-scale))}
+
+.cv-sheet.cv-executive .executive-header h1{font-size:calc(36px * var(--heading-scale))}
+.cv-sheet.cv-executive .executive-header h3{font-size:calc(13px * var(--heading-scale))}
+.cv-sheet.cv-executive .executive-contact{font-size:calc(8.5px * var(--text-scale))}
+.cv-sheet.cv-executive .executive-summary p{font-size:calc(10px * var(--text-scale))}
+.cv-sheet.cv-executive .executive-layout h2{font-size:calc(14px * var(--heading-scale))}
+.cv-sheet.cv-executive .executive-job .experience-head strong{font-size:calc(12px * var(--text-scale))}
+.cv-sheet.cv-executive .executive-job .experience-head div span{font-size:calc(9.5px * var(--text-scale))}
+.cv-sheet.cv-executive .executive-project>div span{font-size:calc(8px * var(--text-scale))}
+.cv-sheet.cv-executive .executive-project p{font-size:calc(9.5px * var(--text-scale))}
+.cv-sheet.cv-executive .executive-layout aside span,
+.cv-sheet.cv-executive .executive-layout aside small,
+.cv-sheet.cv-executive .executive-layout aside p{font-size:calc(9px * var(--text-scale))}
+
+/* Legacy section spacing. */
+.cv-spacing-compact.cv-product .product-main section{margin-top:22px}
+.cv-spacing-balanced.cv-product .product-main section{margin-top:31px}
+.cv-spacing-airy.cv-product .product-main section{margin-top:38px}
+.cv-spacing-compact.cv-ats section{margin-top:17px}
+.cv-spacing-balanced.cv-ats section{margin-top:24px}
+.cv-spacing-airy.cv-ats section{margin-top:31px}
+.cv-spacing-compact.cv-creative .creative-layout main section+section{margin-top:21px}
+.cv-spacing-balanced.cv-creative .creative-layout main section+section{margin-top:30px}
+.cv-spacing-airy.cv-creative .creative-layout main section+section{margin-top:38px}
+.cv-spacing-compact.cv-executive .executive-layout section+section{margin-top:20px}
+.cv-spacing-balanced.cv-executive .executive-layout section+section{margin-top:28px}
+.cv-spacing-airy.cv-executive .executive-layout section+section{margin-top:36px}
+
+/* Legacy project Card/List modes. */
+.cv-projects-list.cv-ats .ats-project-grid,
+.cv-projects-list.cv-creative .creative-projects,
+.cv-projects-list.cv-product .product-projects{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0;
+}
+.cv-projects-list.cv-ats .ats-project-grid article,
+.cv-projects-list.cv-creative .creative-projects article,
+.cv-projects-list.cv-product .product-projects article{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:3px 14px;
+  margin:0;
+  padding:10px 0;
+  border:0;
+  border-bottom:1px solid #e7eaf0;
+  border-radius:0;
+  background:transparent;
+}
+.cv-projects-list.cv-ats .ats-project-grid article:last-child,
+.cv-projects-list.cv-creative .creative-projects article:last-child,
+.cv-projects-list.cv-product .product-projects article:last-child{
+  border-bottom:0;
+}
+.cv-projects-list.cv-ats .ats-project-grid article p,
+.cv-projects-list.cv-creative .creative-projects article p,
+.cv-projects-list.cv-product .product-projects article p{
+  grid-column:1/-1;
+  margin-top:3px;
+}
+.cv-projects-list.cv-creative .creative-projects article .cv-project-cover,
+.cv-projects-list.cv-product .product-projects article .cv-project-cover,
+.cv-projects-list.cv-ats .ats-project-grid article .cv-project-cover{
+  display:none;
+}
+.cv-projects-list.cv-executive .executive-project{
+  grid-template-columns:minmax(0,1fr) auto;
+}
+.cv-projects-list.cv-executive .executive-project .cv-project-cover{
+  display:none;
+}
+.cv-projects-list.cv-executive .executive-project p{
+  grid-column:1/-1;
+}
+
+/* Card mode makes executive projects more visual without changing content. */
+.cv-projects-cards.cv-executive .executive-project{
+  grid-template-columns:160px 1fr;
+}
