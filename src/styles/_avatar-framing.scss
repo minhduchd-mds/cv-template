@@ -1,0 +1,164 @@
+.avatar-framing-control {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid var(--apple-separator);
+  border-radius: 14px;
+  background: var(--apple-fill);
+}
+
+.avatar-framing-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.avatar-framing-head > div {
+  display: grid;
+  gap: 3px;
+}
+
+.avatar-framing-head strong {
+  color: var(--apple-label);
+  font-size: 11px;
+}
+
+.avatar-framing-head span {
+  color: var(--apple-secondary);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.avatar-framing-head > button,
+.avatar-reset-frame {
+  border: 0;
+  color: var(--apple-blue);
+  background: transparent;
+  font-size: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.avatar-shape-segmented {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--apple-fill-strong);
+}
+
+.avatar-shape-segmented button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--apple-secondary);
+  background: transparent;
+  font-size: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.avatar-shape-segmented button.active {
+  color: var(--apple-label);
+  background: #fff;
+  box-shadow: 0 1px 5px rgba(15,23,42,.1);
+}
+
+.avatar-position-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.avatar-position-grid .editor-field {
+  padding: 10px;
+  background: rgba(255,255,255,.7);
+}
+
+.avatar-position-grid input[type='range'],
+.quick-avatar-framing input[type='range'] {
+  width: 100%;
+  accent-color: var(--apple-blue);
+}
+
+.quick-avatar-framing {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 52px;
+  gap: 7px 10px;
+  margin-top: 7px;
+}
+
+.quick-avatar-framing .avatar-shape-segmented {
+  grid-column: 1 / -1;
+}
+
+.quick-avatar-framing label {
+  display: grid;
+  grid-template-columns: 10px minmax(0,1fr);
+  gap: 5px;
+  align-items: center;
+  color: var(--apple-secondary);
+  font-size: 8px;
+}
+
+.quick-avatar-framing .avatar-reset-frame {
+  align-self: center;
+  justify-self: end;
+}
+
+.avatar-shape-circle {
+  border-radius: 50% !important;
+}
+
+.avatar-shape-rounded {
+  border-radius: 20% !important;
+}
+
+.avatar-shape-square {
+  border-radius: 4px !important;
+}
+
+.cv-avatar-circle .cv-avatar,
+.cv-avatar-circle .profile-monogram {
+  border-radius: 50% !important;
+}
+
+.cv-avatar-rounded .cv-avatar,
+.cv-avatar-rounded .profile-monogram {
+  border-radius: 20% !important;
+}
+
+.cv-avatar-square .cv-avatar,
+.cv-avatar-square .profile-monogram {
+  border-radius: 4px !important;
+}
+
+.cv-avatar,
+.profile-monogram {
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+@media (max-width: 760px) {
+  .avatar-position-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-avatar-framing {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-avatar-framing .avatar-reset-frame {
+    justify-self: start;
+  }
+}
+
+@media print {
+  .avatar-framing-control,
+  .quick-avatar-framing {
+    display: none !important;
+  }
+}
