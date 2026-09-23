@@ -107,6 +107,34 @@
             <div><span>04</span><h3>Selected projects</h3></div>
             <p>Upload project covers directly. They flow into Case Study, Bento and visual CV concepts automatically.</p>
           </div>
+
+          <div class="project-layout-control" aria-label="Project display">
+            <div>
+              <strong>Project display</strong>
+              <span>Choose how projects appear in the CV and exported PDF.</span>
+            </div>
+            <div class="project-layout-segmented" role="group" aria-label="Project layout">
+              <button
+                type="button"
+                :class="{ active: (appearance.projectLayout || 'cards') === 'cards' }"
+                :aria-pressed="(appearance.projectLayout || 'cards') === 'cards'"
+                @click="$emit('update-appearance', { key: 'projectLayout', value: 'cards' })"
+              >
+                <span class="layout-preview-icon cards-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                Card
+              </button>
+              <button
+                type="button"
+                :class="{ active: appearance.projectLayout === 'list' }"
+                :aria-pressed="appearance.projectLayout === 'list'"
+                @click="$emit('update-appearance', { key: 'projectLayout', value: 'list' })"
+              >
+                <span class="layout-preview-icon list-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+                List
+              </button>
+            </div>
+          </div>
+
           <div class="builder-list">
             <article v-for="(project, index) in profile.projects" :key="`project-${index}`" class="builder-card">
               <div class="builder-card-top"><strong>{{ project.name || `Project ${index + 1}` }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('projects', index, -1)">↑</button><button type="button" :disabled="index === profile.projects.length - 1" @click="move('projects', index, 1)">↓</button><button type="button" class="danger" @click="remove('projects', index)">×</button></div></div>
@@ -257,7 +285,7 @@ export default {
     completion: { type: Number, default: 0 },
     appearance: {
       type: Object,
-      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft' }),
+      default: () => ({ font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards' }),
     },
     accent: { type: String, default: '#6d5dfc' },
     requestedTab: { type: String, default: 'profile' },
@@ -304,10 +332,10 @@ export default {
     move(section, index, direction) { this.$emit('move-item', { section, index, direction }) },
     applyDesignPreset(preset) {
       const presets = {
-        recruiter: { font: 'sans', density: 'compact', radius: 'sharp' },
-        product: { font: 'sans', density: 'balanced', radius: 'soft' },
-        editorial: { font: 'serif', density: 'spacious', radius: 'soft' },
-        technical: { font: 'mono', density: 'compact', radius: 'sharp' },
+        recruiter: { font: 'sans', density: 'compact', radius: 'sharp', projectLayout: 'list' },
+        product: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards' },
+        editorial: { font: 'serif', density: 'spacious', radius: 'soft', projectLayout: 'cards' },
+        technical: { font: 'mono', density: 'compact', radius: 'sharp', projectLayout: 'list' },
       }
       const config = presets[preset]
       if (!config) return
