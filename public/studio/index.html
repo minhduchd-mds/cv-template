@@ -70,16 +70,23 @@
 
       <section class="preview">
         <div class="preview-toolbar no-print">
-          <div><span>02</span><div><strong>Live preview</strong><small id="activeTemplateLabel"></small></div></div>
+          <div class="preview-title">
+            <span class="preview-step">02</span>
+            <div><strong>Live preview</strong><small id="activeTemplateLabel"></small></div>
+          </div>
+          <div class="preview-status">
+            <span>A4</span>
+            <span>Auto-saved</span>
+          </div>
           <div class="preview-actions">
-            <label>Zoom
+            <label class="toolbar-control"><span>Zoom</span>
               <select id="zoom">
                 <option value="0.75">75%</option>
                 <option value="0.85" selected>85%</option>
                 <option value="1">100%</option>
               </select>
             </label>
-            <label>Accent <input id="accent" type="color" value="#6d5dfc" /></label>
+            <label class="toolbar-control accent-toolbar"><span>Accent</span><input id="accent" type="color" value="#6d5dfc" /></label>
           </div>
         </div>
         <div class="paper-stage">
@@ -121,32 +128,54 @@
 
           <div class="section-editor">
             <div class="section-editor-head"><strong>Projects</strong><button id="addProject" type="button">+ Add</button></div>
-            <div class="static-project-layout">
-              <span>Display</span>
-              <div role="group" aria-label="Project display">
-                <button id="projectCards" type="button" aria-pressed="true">▦ Card</button>
-                <button id="projectList" type="button" aria-pressed="false">☷ List</button>
-              </div>
-            </div>
             <div id="projectEditor"></div>
           </div>
         </section>
 
         <section class="editor-pane" data-pane="design">
-          <label>Typography
+          <div class="design-context-card">
+            <span id="designTemplateCategory">Template</span>
+            <strong id="designTemplateName">Selected template</strong>
+            <p id="designTemplateStructure">Structure adapts to the selected CV.</p>
+          </div>
+
+          <div class="design-section-label"><span>Typography</span><small>Global type controls</small></div>
+          <label>Font family
             <select id="font">
               <option value="sans">Sans · Modern</option>
-              <option value="serif">Serif · Editorial</option>
+              <option value="serif">Serif · Classic</option>
               <option value="mono">Mono · Technical</option>
             </select>
           </label>
-          <label>Density
-            <select id="density">
-              <option value="compact">Compact</option>
-              <option value="balanced">Balanced</option>
-              <option value="spacious">Spacious</option>
-            </select>
-          </label>
+
+          <div class="design-range-grid">
+            <label>
+              <span class="range-head"><span>Text size</span><output id="textScaleValue">100%</output></span>
+              <input id="textScale" type="range" min="90" max="115" step="5" value="100" />
+            </label>
+            <label>
+              <span class="range-head"><span>Heading size</span><output id="headingScaleValue">100%</output></span>
+              <input id="headingScale" type="range" min="90" max="120" step="5" value="100" />
+            </label>
+          </div>
+
+          <div class="design-section-label"><span>Spacing & shape</span><small>Keep A4 readable</small></div>
+          <div class="field-grid">
+            <label>Content density
+              <select id="density">
+                <option value="compact">Compact</option>
+                <option value="balanced">Balanced</option>
+                <option value="spacious">Spacious</option>
+              </select>
+            </label>
+            <label>Section spacing
+              <select id="sectionSpacing">
+                <option value="compact">Tight</option>
+                <option value="balanced">Balanced</option>
+                <option value="airy">Airy</option>
+              </select>
+            </label>
+          </div>
           <label>Corner style
             <select id="radius">
               <option value="sharp">Sharp</option>
@@ -154,11 +183,23 @@
               <option value="round">Rounded</option>
             </select>
           </label>
-          <div class="preset-grid">
-            <button type="button" data-preset="recruiter"><strong>Recruiter</strong><span>compact / clean</span></button>
-            <button type="button" data-preset="product"><strong>Product</strong><span>balanced / modern</span></button>
-            <button type="button" data-preset="editorial"><strong>Editorial</strong><span>serif / spacious</span></button>
-            <button type="button" data-preset="technical"><strong>Technical</strong><span>mono / compact</span></button>
+
+          <div class="static-project-layout design-project-layout">
+            <span><strong>Project display</strong><small id="projectDisplayHint">Card or list view for project-based templates.</small></span>
+            <div role="group" aria-label="Project display">
+              <button id="projectCards" type="button" aria-pressed="true">▦ Card</button>
+              <button id="projectList" type="button" aria-pressed="false">☷ List</button>
+            </div>
+          </div>
+
+          <div class="design-section-label"><span>Style presets</span><small>Visual direction, not job role</small></div>
+          <div class="preset-grid design-style-grid">
+            <button type="button" data-preset="classic"><i class="preset-swatch classic"></i><strong>Classic</strong><span>serif · balanced</span></button>
+            <button type="button" data-preset="modern"><i class="preset-swatch modern"></i><strong>Modern</strong><span>sans · balanced</span></button>
+            <button type="button" data-preset="editorial"><i class="preset-swatch editorial"></i><strong>Editorial</strong><span>serif · airy</span></button>
+            <button type="button" data-preset="technical"><i class="preset-swatch technical"></i><strong>Technical</strong><span>mono · compact</span></button>
+            <button type="button" data-preset="portfolio"><i class="preset-swatch portfolio"></i><strong>Portfolio</strong><span>larger · visual</span></button>
+            <button type="button" data-preset="compact"><i class="preset-swatch compact"></i><strong>Compact</strong><span>small · ATS-safe</span></button>
           </div>
         </section>
 
