@@ -2451,3 +2451,129 @@ button{cursor:pointer}
     padding:12px;
   }
 }
+
+
+/* Brand Motion refinement after shared helper repair */
+.ref-brand-motion{
+  grid-template-columns:198px minmax(0,1fr);
+}
+.ref-brand-rail{
+  padding:0 18px 24px;
+}
+.ref-brand-avatar{
+  width:198px;
+  height:216px;
+  margin-left:-18px;
+}
+.ref-brand-skills{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+}
+.ref-brand-skills span{
+  max-width:100%;
+  padding:5px 7px;
+  border-radius:999px;
+  background:#eef1f5;
+  color:#465166;
+  font-size:7.5px;
+  line-height:1.2;
+}
+.ref-brand-main{
+  padding:24px 24px 26px;
+}
+.ref-brand-main section + section{
+  margin-top:16px;
+}
+.ref-brand-projects{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+}
+.ref-brand-projects article{
+  min-width:0;
+  min-height:128px;
+  padding:58px 10px 10px;
+  overflow:hidden;
+  position:relative;
+  border:1px solid #e6e9ef;
+  border-radius:12px;
+  background:#fff;
+}
+.ref-brand-projects article::before{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:46px;
+  background:
+    radial-gradient(circle at 22% 40%,rgba(255,255,255,.72),transparent 18%),
+    linear-gradient(135deg,#f6c8a7,#f8eadc);
+}
+.ref-brand-projects article:nth-child(2)::before{
+  background:
+    radial-gradient(circle at 68% 35%,rgba(255,255,255,.7),transparent 18%),
+    linear-gradient(135deg,#b8e2f2,#d9f2e8);
+}
+.ref-brand-projects article:nth-child(3)::before{
+  background:
+    radial-gradient(circle at 28% 35%,rgba(255,255,255,.75),transparent 16%),
+    linear-gradient(135deg,#d7f0c7,#f0f6d8);
+}
+.ref-brand-projects article:nth-child(4)::before{
+  background:
+    linear-gradient(135deg,#ded8ff,#f5eaff);
+}
+.ref-brand-projects .ref-project-index{
+  top:6px;
+  right:7px;
+  z-index:2;
+  color:#3d4354;
+  background:rgba(255,255,255,.76);
+  padding:2px 4px;
+  border-radius:999px;
+}
+.ref-brand-projects article>div:nth-child(2){
+  padding-right:0;
+}
+.ref-brand-projects article strong{
+  display:block;
+  font-size:9px;
+  line-height:1.25;
+}
+.ref-brand-projects article span{
+  display:block;
+  margin-bottom:2px;
+  font-size:6px;
+}
+.ref-brand-projects article small{
+  margin-top:5px;
+  color:#089a80;
+  font-size:8px;
+}
+.ref-brand-projects article p{
+  display:none;
+}
+.ref-brand-experience article + article{
+  margin-top:12px;
+}
+.ref-brand-experience ul{
+  margin-top:4px;
+}
+.ref-brand-languages span{
+  line-height:1.35;
+}
+
+@media(max-width:760px){
+  .ref-brand-motion{
+    grid-template-columns:160px minmax(0,1fr);
+  }
+  .ref-brand-avatar{
+    width:160px;
+    height:186px;
+  }
+  .ref-brand-projects{
+    grid-template-columns:1fr;
+  }
+}
