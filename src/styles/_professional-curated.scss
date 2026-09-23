@@ -1,0 +1,571 @@
+/* Curated 15-template professional library.
+   Ten reference-led directions + five retained core directions. */
+
+.workspace {
+  align-items: start;
+}
+
+.template-panel {
+  position: sticky;
+  top: 84px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 10px 24px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #c9d0da transparent;
+}
+
+.template-panel::-webkit-scrollbar {
+  width: 7px;
+}
+
+.template-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.template-panel::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #c9d0da;
+}
+
+.template-panel::-webkit-scrollbar-thumb:hover {
+  background: #aeb7c5;
+}
+
+.template-card {
+  grid-template-columns: 82px minmax(0, 1fr) auto;
+}
+
+.template-info {
+  gap: 3px;
+}
+
+.template-role {
+  overflow: hidden;
+  color: #667085;
+  font-size: 9px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.template-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 1px;
+}
+
+.template-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: #344054;
+  background: #eef1f5;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+/* 01 — Executive Edge */
+.theme-executive-edge.cv-executive {
+  color: #17191f;
+  background: #fbfaf7;
+}
+
+.theme-executive-edge .executive-header {
+  padding-bottom: 24px;
+  border-bottom: 0;
+}
+
+.theme-executive-edge .executive-header h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 36px;
+  font-weight: 500;
+  letter-spacing: -.035em;
+}
+
+.theme-executive-edge .executive-header h3 {
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.theme-executive-edge .executive-rule {
+  height: 1px;
+  background: linear-gradient(90deg,#b58a3a 0 38%,#ded6c6 38%);
+}
+
+.theme-executive-edge .executive-summary,
+.theme-executive-edge .executive-impact-grid {
+  border: 1px solid #e8e1d4;
+  background: linear-gradient(180deg,#faf7ef,#fff);
+}
+
+.theme-executive-edge .executive-impact-grid > div {
+  border-right-color: #e2dacd;
+}
+
+.theme-executive-edge .executive-layout h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: .08em;
+}
+
+/* 02 — Soft Portfolio */
+.theme-soft-portfolio-pro.cv-product {
+  color: #25243c;
+  background:
+    radial-gradient(circle at 82% 8%,rgba(139,92,246,.13),transparent 26%),
+    #f8f7ff;
+}
+
+.theme-soft-portfolio-pro .product-sidebar {
+  border-right: 0;
+  background:
+    radial-gradient(circle at 22% 8%,rgba(139,92,246,.18),transparent 30%),
+    linear-gradient(180deg,#eeebff,#f8f7ff 72%);
+}
+
+.theme-soft-portfolio-pro .profile-monogram {
+  box-shadow: 0 12px 32px rgba(109,91,210,.18);
+}
+
+.theme-soft-portfolio-pro .product-main {
+  margin: 14px;
+  padding: 25px;
+  border: 1px solid #e5e0ff;
+  border-radius: 24px;
+  background: rgba(255,255,255,.94);
+}
+
+.theme-soft-portfolio-pro .product-topline {
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(90deg,#efedff,#fbfaff);
+}
+
+.theme-soft-portfolio-pro .product-projects article {
+  border: 1px solid #e5e0ff;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(83,67,164,.08);
+}
+
+/* 03 — Product Operator */
+.theme-product-operator.cv-product {
+  color: #11243b;
+  background: #f4f9fc;
+}
+
+.theme-product-operator .product-sidebar {
+  color: #fff;
+  border-right: 0;
+  background: linear-gradient(180deg,#112e4a,#08233c);
+}
+
+.theme-product-operator .product-sidebar .cv-kicker,
+.theme-product-operator .product-sidebar span,
+.theme-product-operator .product-sidebar p,
+.theme-product-operator .product-sidebar li,
+.theme-product-operator .product-sidebar small {
+  color: rgba(255,255,255,.78);
+}
+
+.theme-product-operator .product-sidebar h1,
+.theme-product-operator .product-sidebar h3,
+.theme-product-operator .product-sidebar strong {
+  color: #fff;
+}
+
+.theme-product-operator .product-main {
+  background: #fff;
+}
+
+.theme-product-operator .product-topline {
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(90deg,#e7f7f8,#f7fbfc);
+}
+
+.theme-product-operator .product-highlights strong,
+.theme-product-operator .product-section-head span {
+  color: #0e9eac;
+}
+
+.theme-product-operator .product-projects article {
+  border-color: #d8ebee;
+  background: linear-gradient(180deg,#fff,#f6fbfc);
+}
+
+/* 04 — Code Aware */
+.theme-code-aware.cv-ats {
+  font-family: "SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  color: #111827;
+  background:
+    linear-gradient(rgba(37,99,235,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(37,99,235,.025) 1px,transparent 1px),
+    #fff;
+  background-size: 20px 20px;
+}
+
+.theme-code-aware .ats-header {
+  position: relative;
+  padding: 24px 22px;
+  border-bottom: 1px solid #111827;
+}
+
+.theme-code-aware .ats-header::before {
+  content: '< CV />';
+  display: block;
+  margin-bottom: 10px;
+  color: #667085;
+  font-size: 9px;
+  letter-spacing: .08em;
+}
+
+.theme-code-aware .ats-header h1 {
+  max-width: 68%;
+  font-size: 38px;
+  line-height: .9;
+  letter-spacing: -.055em;
+}
+
+.theme-code-aware .ats-highlight-section,
+.theme-code-aware .ats-project-grid article {
+  border: 1px solid #dfe5ef;
+  background: #fafcff;
+}
+
+.theme-code-aware.cv-ats section h2 {
+  border-bottom: 1px solid #111827;
+  letter-spacing: .04em;
+}
+
+/* 05 — ATS Precision */
+.theme-ats-precision.cv-ats {
+  color: #152238;
+  background: #fff;
+}
+
+.theme-ats-precision .ats-header {
+  padding: 22px 24px;
+  border-bottom: 2px solid #16805b;
+}
+
+.theme-ats-precision .ats-header h1 {
+  font-size: 32px;
+  letter-spacing: -.035em;
+}
+
+.theme-ats-precision .cv-kicker {
+  color: #15803d;
+}
+
+.theme-ats-precision .cv-section-stack {
+  grid-template-columns: minmax(0,1.55fr) minmax(220px,.72fr);
+  gap: 20px 26px;
+}
+
+.theme-ats-precision .ats-summary,
+.theme-ats-precision .ats-highlight-section {
+  grid-column: 1 / -1;
+}
+
+.theme-ats-precision .ats-project-grid {
+  grid-template-columns: 1fr;
+}
+
+.theme-ats-precision.cv-ats section h2 {
+  color: #152238;
+  border-bottom-color: #cbded3;
+}
+
+/* 06 — Insight Grid */
+.theme-insight-grid.cv-product {
+  color: #173158;
+  background: #f7fbff;
+}
+
+.theme-insight-grid .product-sidebar {
+  border-right: 1px solid #dce8f7;
+  background: linear-gradient(180deg,#eef6ff,#f9fcff);
+}
+
+.theme-insight-grid .product-main {
+  background:
+    linear-gradient(rgba(37,99,235,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(37,99,235,.025) 1px,transparent 1px),
+    #fff;
+  background-size: 24px 24px;
+}
+
+.theme-insight-grid .product-topline {
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(90deg,#edf5ff,#f8fbff);
+}
+
+.theme-insight-grid .product-highlights strong,
+.theme-insight-grid .product-section-head span {
+  color: #2563eb;
+}
+
+.theme-insight-grid .product-skills li {
+  position: relative;
+  padding-right: 26px;
+}
+
+.theme-insight-grid .product-skills li::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 22px;
+  height: 3px;
+  border-radius: 999px;
+  background: #6ea2f3;
+}
+
+/* 07 — Brand Motion */
+.theme-brand-motion.cv-creative {
+  color: #1f2937;
+  background: #fff;
+}
+
+.theme-brand-motion .creative-header {
+  min-height: 228px;
+  padding: 30px 34px 30px 230px;
+  overflow: hidden;
+  border-bottom: 0;
+  background:
+    radial-gradient(circle at 12% 28%,#ffb4a9 0 62px,transparent 63px),
+    radial-gradient(circle at 21% 76%,#b7ead7 0 78px,transparent 79px),
+    linear-gradient(135deg,#fff4f0,#fff 52%);
+}
+
+.theme-brand-motion .creative-header .creative-avatar {
+  position: absolute;
+  left: 34px;
+  top: 30px;
+  width: 164px !important;
+  height: 164px !important;
+  border-radius: 22px !important;
+}
+
+.theme-brand-motion .creative-header h1 {
+  font-size: 38px;
+  line-height: .96;
+  letter-spacing: -.045em;
+}
+
+.theme-brand-motion .highlight-strip {
+  grid-template-columns: repeat(4,1fr);
+}
+
+.theme-brand-motion .highlight-strip > div:nth-child(1) { background: #ebfbf5; }
+.theme-brand-motion .highlight-strip > div:nth-child(2) { background: #fff0f4; }
+.theme-brand-motion .highlight-strip > div:nth-child(3) { background: #f4efff; }
+.theme-brand-motion .highlight-strip > div:nth-child(4) { background: #edf8ff; }
+
+.theme-brand-motion .creative-projects article {
+  border: 1px solid #e6e9ef;
+  border-radius: 14px;
+  background: #fff;
+}
+
+/* 08 — Revenue Driver */
+.theme-revenue-driver.cv-executive {
+  color: #12345a;
+  background: #fff;
+}
+
+.theme-revenue-driver .executive-header {
+  padding: 24px;
+  border-radius: 0 0 18px 18px;
+  background: linear-gradient(110deg,#edf6ff,#fff 56%);
+}
+
+.theme-revenue-driver .executive-header h1 {
+  color: #144a83;
+  font-size: 34px;
+  letter-spacing: -.04em;
+}
+
+.theme-revenue-driver .executive-rule {
+  height: 3px;
+  background: linear-gradient(90deg,#0f8a4b 0 28%,#1a5f9f 28% 58%,transparent 58%);
+}
+
+.theme-revenue-driver .executive-impact-grid > div {
+  border: 1px solid #d9e7ee;
+  border-radius: 12px;
+  background: linear-gradient(180deg,#f7fbff,#fff);
+}
+
+.theme-revenue-driver .executive-impact-grid strong {
+  color: #0f8a4b;
+}
+
+/* 09 — People First */
+.theme-people-first.cv-creative {
+  color: #25352f;
+  background: #fbfaf6;
+}
+
+.theme-people-first .creative-header {
+  min-height: 206px;
+  padding: 34px;
+  border: 0;
+  background:
+    radial-gradient(circle at 84% 30%,rgba(113,138,114,.17),transparent 18%),
+    linear-gradient(135deg,#fbfaf6,#f4f3eb);
+}
+
+.theme-people-first .creative-header h1 {
+  font-family: Georgia,"Times New Roman",serif;
+  font-size: 42px;
+  font-weight: 500;
+  letter-spacing: -.04em;
+}
+
+.theme-people-first .creative-avatar {
+  border-radius: 50% 50% 44% 56% !important;
+}
+
+.theme-people-first .creative-layout {
+  grid-template-columns: .78fr 1.5fr;
+}
+
+.theme-people-first .creative-aside {
+  padding: 18px;
+  border: 0;
+  border-radius: 18px;
+  background: #e7eadf;
+}
+
+.theme-people-first .skill-list li {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+}
+
+/* 10 — Next Start */
+.theme-next-start.cv-creative {
+  color: #193766;
+  background:
+    radial-gradient(circle at 100% 80%,rgba(59,130,246,.08),transparent 30%),
+    #fff;
+}
+
+.theme-next-start .creative-header {
+  min-height: 188px;
+  padding: 30px 34px;
+  border: 0;
+  background: linear-gradient(135deg,#f8fbff,#fff 60%);
+}
+
+.theme-next-start .creative-header h1 {
+  font-size: 36px;
+}
+
+.theme-next-start .creative-number {
+  color: #fff;
+  background: #3b82f6;
+}
+
+.theme-next-start .creative-intro {
+  border: 0;
+  border-radius: 14px;
+  background: #f4f8ff;
+}
+
+.theme-next-start .creative-projects article,
+.theme-next-start .creative-aside {
+  border-color: #dbe8fb;
+  background: #f8fbff;
+}
+
+.theme-next-start .skill-list li {
+  display: inline-flex;
+  margin: 2px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eaf2ff;
+}
+
+/* Distinct thumbnails for the ten reference-led directions */
+.thumb-theme-executive-edge {
+  background: linear-gradient(90deg,#b58a3a 0 4px,#fbfaf7 4px);
+}
+
+.thumb-theme-soft-portfolio-pro {
+  background:
+    radial-gradient(circle at 76% 18%,rgba(139,92,246,.24),transparent 24%),
+    linear-gradient(90deg,#ece8ff 0 34%,#fff 34%);
+}
+
+.thumb-theme-product-operator {
+  background: linear-gradient(90deg,#12304d 0 36%,#fff 36%);
+}
+
+.thumb-theme-code-aware {
+  background-image:
+    linear-gradient(#edf1f7 1px,transparent 1px),
+    linear-gradient(90deg,#edf1f7 1px,transparent 1px);
+  background-size: 8px 8px;
+}
+
+.thumb-theme-ats-precision {
+  background: linear-gradient(180deg,#e9f6ef 0 7px,#fff 7px);
+}
+
+.thumb-theme-insight-grid {
+  background:
+    linear-gradient(#eef4fc 1px,transparent 1px),
+    linear-gradient(90deg,#eef4fc 1px,transparent 1px),
+    linear-gradient(90deg,#edf5ff 0 34%,#fff 34%);
+  background-size: 10px 10px,10px 10px,100% 100%;
+}
+
+.thumb-theme-brand-motion {
+  background:
+    radial-gradient(circle at 18% 20%,#ffb4a9 0 12px,transparent 13px),
+    radial-gradient(circle at 22% 72%,#b7ead7 0 14px,transparent 15px),
+    linear-gradient(135deg,#fff3f0,#fff);
+}
+
+.thumb-theme-revenue-driver {
+  background:
+    linear-gradient(90deg,#0f8a4b 0 5px,transparent 5px),
+    linear-gradient(135deg,#edf6ff,#fff 68%);
+}
+
+.thumb-theme-people-first {
+  background:
+    radial-gradient(circle at 80% 20%,#dfe4d6 0 13px,transparent 14px),
+    linear-gradient(135deg,#f3f0e7,#fff);
+}
+
+.thumb-theme-next-start {
+  background:
+    radial-gradient(circle at 82% 82%,rgba(59,130,246,.22),transparent 28%),
+    linear-gradient(135deg,#f1f7ff,#fff);
+}
+
+@media (max-width: 1100px) {
+  .template-panel {
+    position: relative;
+    top: auto;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+}
+
+@media print {
+  .template-panel {
+    display: none !important;
+  }
+}
