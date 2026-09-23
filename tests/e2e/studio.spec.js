@@ -45,7 +45,8 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(page.getByRole('progressbar', { name: 'CV completeness' })).toBeVisible()
   await expect(page.getByRole('button', { name: /Profile.*Identity & contact/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Experience.*Roles & achievements/i })).toBeVisible()
-  await expect(page.locator('.template-card')).toHaveCount(21)
+  await expect(page.locator('.template-card')).toHaveCount(15)
+  await expect(page.locator('.template-panel')).toHaveCSS('overflow-y', 'auto')
 
   const avatarPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
   await page.locator('.role-avatar-upload input').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: avatarPng })
@@ -92,7 +93,7 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-avatar-size-large/)
 
   await page.getByRole('button', { name: /Design Engineer.*Code aware/i }).click()
-  await expect(page.locator('.preview-toolbar')).toContainText('Mono Grid')
+  await expect(page.locator('.preview-toolbar')).toContainText('Code Aware')
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-font-mono/)
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-density-compact/)
 
@@ -212,7 +213,7 @@ test('static fallback builder keeps core editing and template controls functiona
   await page.goto('/studio/')
 
   await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
-  await expect(page.locator('.template-card')).toHaveCount(21)
+  await expect(page.locator('.template-card')).toHaveCount(15)
 
   const avatarPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
   await page.locator('#staticAvatarInput').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: avatarPng })
@@ -250,7 +251,7 @@ test('static fallback builder keeps core editing and template controls functiona
   await expect(page.locator('#paper')).toHaveClass(/avatar-size-large/)
 
   await page.locator('[data-target-preset="engineer"]').click()
-  await expect(page.locator('#activeTemplateLabel')).toContainText('Mono Grid')
+  await expect(page.locator('#activeTemplateLabel')).toContainText('Code Aware')
   await expect(page.locator('#paper')).toHaveClass(/font-mono/)
   await expect(page.locator('#paper')).toHaveClass(/density-compact/)
 
