@@ -23,6 +23,9 @@
     { id: 'modern-gradient', name: 'Gradient Editorial', category: 'Modern', variant: 'creative', accent: '#8b5cf6' },
     { id: 'modern-timeline', name: 'Timeline Pro', category: 'Modern', variant: 'executive', accent: '#0f766e' },
     { id: 'modern-mono', name: 'Mono Grid', category: 'Modern', variant: 'ats', accent: '#111827' },
+    { id: 'young-neo-pop', name: 'Neo Pop', category: 'Young', variant: 'creative', accent: '#ff4d8d' },
+    { id: 'young-soft-portfolio', name: 'Soft Portfolio', category: 'Young', variant: 'product', accent: '#7c6dff' },
+    { id: 'young-creator-cards', name: 'Creator Cards', category: 'Young', variant: 'creative', accent: '#0ea5a4' },
   ]
 
   const rolePresets = {
@@ -35,12 +38,13 @@
       projectLayout: 'list',
     },
     uiux: {
-      templateId: 'modern-bento',
-      accent: '#7c3aed',
+      templateId: 'young-soft-portfolio',
+      accent: '#7c6dff',
       font: 'sans',
       density: 'balanced',
       radius: 'soft',
       projectLayout: 'cards',
+      avatarSize: 'large',
     },
     engineer: {
       templateId: 'modern-mono',
@@ -138,6 +142,7 @@
     radius: 'soft',
     projectLayout: 'cards',
     avatarShape: 'circle',
+    avatarSize: 'medium',
     avatarX: 50,
     avatarY: 50,
     avatarZoom: 1,
@@ -351,11 +356,12 @@
           : template.variant
 
     const avatarShape = ['circle', 'rounded', 'square'].includes(settings.avatarShape) ? settings.avatarShape : 'circle'
+    const avatarSize = ['small', 'medium', 'large'].includes(settings.avatarSize) ? settings.avatarSize : 'medium'
     const avatarX = Number.isFinite(Number(settings.avatarX)) ? Math.min(100, Math.max(0, Number(settings.avatarX))) : 50
     const avatarY = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
     const avatarZoom = Number.isFinite(Number(settings.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(settings.avatarZoom))) : 1
     const avatarRotate = Number.isFinite(Number(settings.avatarRotate)) ? Math.min(180, Math.max(-180, Number(settings.avatarRotate))) : 0
-    paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'} avatar-${avatarShape}`
+    paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'} avatar-${avatarShape} avatar-size-${avatarSize}`
     paper.style.setProperty('--accent', settings.accent)
     paper.style.setProperty('--zoom', String(settings.zoom))
 
@@ -524,6 +530,7 @@
     $('#projectList').classList.toggle('active', settings.projectLayout === 'list')
 
     const avatarShape = ['circle', 'rounded', 'square'].includes(settings.avatarShape) ? settings.avatarShape : 'circle'
+    const avatarSize = ['small', 'medium', 'large'].includes(settings.avatarSize) ? settings.avatarSize : 'medium'
     const avatarX = Number.isFinite(Number(settings.avatarX)) ? Math.min(100, Math.max(0, Number(settings.avatarX))) : 50
     const avatarY = Number.isFinite(Number(settings.avatarY)) ? Math.min(100, Math.max(0, Number(settings.avatarY))) : 50
     const avatarZoom = Number.isFinite(Number(settings.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(settings.avatarZoom))) : 1
@@ -532,8 +539,13 @@
     $('#avatarY').value = String(avatarY)
     $('#avatarZoom').value = String(Math.round(avatarZoom * 100))
     $('#avatarRotate').value = String(avatarRotate)
-    $$('[data-avatar-shape]').forEach((button) => {
+    $('[data-avatar-shape]').forEach((button) => {
       const active = button.dataset.avatarShape === avatarShape
+      button.classList.toggle('active', active)
+      button.setAttribute('aria-pressed', active ? 'true' : 'false')
+    })
+    $('[data-avatar-size]').forEach((button) => {
+      const active = button.dataset.avatarSize === avatarSize
       button.classList.toggle('active', active)
       button.setAttribute('aria-pressed', active ? 'true' : 'false')
     })
@@ -656,9 +668,16 @@
     renderAll()
   })
 
-  $$('[data-avatar-shape]').forEach((button) => {
+  $('[data-avatar-shape]').forEach((button) => {
     button.addEventListener('click', () => {
       settings.avatarShape = button.dataset.avatarShape
+      renderAll()
+    })
+  })
+
+  $('[data-avatar-size]').forEach((button) => {
+    button.addEventListener('click', () => {
+      settings.avatarSize = button.dataset.avatarSize
       renderAll()
     })
   })
@@ -685,6 +704,7 @@
 
   $('#avatarResetFrame').addEventListener('click', () => {
     settings.avatarShape = 'circle'
+    settings.avatarSize = 'medium'
     settings.avatarX = 50
     settings.avatarY = 50
     settings.avatarZoom = 1
