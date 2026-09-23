@@ -23,13 +23,24 @@
       <aside class="templates no-print">
         <div class="panel-heading">
           <span>01</span>
-          <div><strong>Templates</strong><small>12 directions · 4 role presets</small></div>
+          <div><strong>Templates</strong><small>18 directions · 4 role presets</small></div>
+        </div>
+        <div class="static-avatar-panel">
+          <div id="staticAvatarPreview" class="static-avatar-preview">AC</div>
+          <div>
+            <strong>Profile photo</strong>
+            <span>One upload, shared across all role presets.</span>
+            <div class="static-avatar-actions">
+              <label><input id="staticAvatarInput" type="file" accept="image/jpeg,image/png,image/webp" />Upload / Replace</label>
+              <button id="staticAvatarRemove" type="button">Remove</button>
+            </div>
+          </div>
         </div>
         <div class="target-preset-grid" aria-label="Role presets">
-          <button type="button" data-target-preset="recruiter"><strong>Recruiter</strong><span>ATS first</span></button>
-          <button type="button" data-target-preset="uiux"><strong>Senior UI/UX</strong><span>Portfolio led</span></button>
-          <button type="button" data-target-preset="engineer"><strong>Design Engineer</strong><span>Code aware</span></button>
-          <button type="button" data-target-preset="lead"><strong>Leadership</strong><span>Outcome led</span></button>
+          <button type="button" data-target-preset="recruiter"><span class="preset-avatar" data-preset-avatar>AC</span><span><strong>Recruiter</strong><small>ATS first</small></span></button>
+          <button type="button" data-target-preset="uiux"><span class="preset-avatar" data-preset-avatar>AC</span><span><strong>Senior UI/UX</strong><small>Portfolio led</small></span></button>
+          <button type="button" data-target-preset="engineer"><span class="preset-avatar" data-preset-avatar>AC</span><span><strong>Design Engineer</strong><small>Code aware</small></span></button>
+          <button type="button" data-target-preset="lead"><span class="preset-avatar" data-preset-avatar>AC</span><span><strong>Leadership</strong><small>Outcome led</small></span></button>
         </div>
         <p class="preview-edit-hint">Tip: click a block in the CV preview to jump into editing.</p>
         <div id="templateList" class="template-list"></div>
