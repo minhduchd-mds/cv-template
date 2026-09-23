@@ -75,3 +75,6 @@
 
 // Overflow guards for the five retained legacy templates.
 @use 'retained-template-fixes';
+
+// Template-aware design controls and preview toolbar.
+@use 'design-controls-v3';
