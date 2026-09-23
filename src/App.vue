@@ -103,7 +103,16 @@
           <div class="template-grid">
             <button v-for="template in filteredTemplates" :key="template.id" type="button" :class="['template-card', { active: selectedId === template.id }]" @click="chooseTemplate(template)">
               <div class="template-thumb" :class="[`thumb-${template.variant}`, template.theme ? `thumb-theme-${template.theme}` : '']" :style="{ '--thumb-accent': template.accent }"><span class="thumb-sidebar"></span><span class="thumb-head"></span><span class="thumb-line line-a"></span><span class="thumb-line line-b"></span><span class="thumb-line line-c"></span></div>
-              <span class="template-info"><span class="template-kicker">{{ template.category }}</span><strong>{{ template.name }}</strong><span>{{ template.description }}</span></span><span class="template-check" aria-hidden="true">✓</span>
+              <span class="template-info">
+                <span class="template-meta-row">
+                  <span class="template-kicker">{{ template.category }}</span>
+                  <span v-if="template.badge" class="template-badge">{{ template.badge }}</span>
+                </span>
+                <strong>{{ template.name }}</strong>
+                <span v-if="template.role" class="template-role">{{ template.role }}</span>
+                <span>{{ template.description }}</span>
+              </span>
+              <span class="template-check" aria-hidden="true">✓</span>
             </button>
           </div>
         </aside>
