@@ -72,3 +72,6 @@
 
 // Dedicated layouts for the 10 reference-led CV templates.
 @use 'reference-layouts';
+
+// Overflow guards for the five retained legacy templates.
+@use 'retained-template-fixes';
