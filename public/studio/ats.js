@@ -2104,3 +2104,421 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
   else inject()
 })()
+
+
+/* ATS_APPLICATION_WORKSPACE_V1 */
+(() => {
+  'use strict'
+
+  const PROFILE_KEY='cv-studio-static-v2'
+  const SETTINGS_KEY='cv-studio-static-settings-v2'
+  const TARGET_KEY='cv-studio-ats-target-v2'
+  const VERSIONS_KEY='cv-studio-ats-versions-v1'
+  const APPLICATIONS_KEY='cv-studio-ats-applications-v1'
+  const DB_NAME='cv-studio-ats-workspace'
+  const DB_VERSION=1
+  const PDF_STORE='pdfs'
+
+  const $=(selector,root=document)=>root.querySelector(selector)
+  const $$=(selector,root=document)=>[...root.querySelectorAll(selector)]
+  const esc=(value)=>String(value==null?'':value).replace(/[&<>"']/g,(char)=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[char]))
+  const readJson=(key,fallback)=>{
+    try{return JSON.parse(localStorage.getItem(key)||'')||fallback}catch{return fallback}
+  }
+  const writeJson=(key,value)=>localStorage.setItem(key,JSON.stringify(value))
+  const clone=(value)=>JSON.parse(JSON.stringify(value))
+  const clean=(value)=>String(value==null?'':value).trim().replace(/\s+/g,' ')
+  const clampScore=(selector)=>{
+    const raw=String($(selector)?.textContent||'').trim()
+    const match=raw.match(/-?\d+(?:\.\d+)?/)
+    return match?Math.max(0,Math.min(100,Number(match[0]))):null
+  }
+  const currentScores=()=>({
+    readiness:clampScore('#atsProReadiness') ?? clampScore('#atsScore'),
+    targetFit:clampScore('#atsProFit'),
+    pdfFidelity:clampScore('#atsPdfScore'),
+    jdMatch:clampScore('#atsJobMatchLarge')
+  })
+  const currentProfile=()=>{
+    const profile=clone(readJson(PROFILE_KEY,{}))
+    if(profile&&typeof profile==='object')profile.avatar=''
+    return profile
+  }
+  const applications=()=>readJson(APPLICATIONS_KEY,[]).filter((item)=>item&&item.id)
+  const saveApplications=(items)=>writeJson(APPLICATIONS_KEY,items)
+  const versions=()=>readJson(VERSIONS_KEY,[]).filter((item)=>item&&item.id)
+  const now=()=>new Date().toISOString()
+  const statusOrder=['Draft','Ready','Applied','Interview','Offer','Closed']
+  const statusClass=(status)=>String(status||'Draft').toLowerCase().replace(/\s+/g,'-')
+  const formatDate=(iso)=>{
+    try{return new Intl.DateTimeFormat(undefined,{month:'short',day:'2-digit',year:'numeric'}).format(new Date(iso))}
+    catch{return iso||''}
+  }
+  const formatBytes=(bytes)=>{
+    const value=Number(bytes||0)
+    if(value<1024)return value+' B'
+    if(value<1024*1024)return Math.round(value/1024)+' KB'
+    return (value/(1024*1024)).toFixed(1)+' MB'
+  }
+  const selectedVersion=()=>{
+    const id=$('#atsAppVersion')?.value
+    if(!id)return null
+    return versions().find((item)=>item.id===id)||null
+  }
+
+  let dbPromise=null
+  const openDb=()=>{
+    if(dbPromise)return dbPromise
+    dbPromise=new Promise((resolve,reject)=>{
+      const request=indexedDB.open(DB_NAME,DB_VERSION)
+      request.onupgradeneeded=()=>{
+        const db=request.result
+        if(!db.objectStoreNames.contains(PDF_STORE))db.createObjectStore(PDF_STORE,{keyPath:'applicationId'})
+      }
+      request.onsuccess=()=>resolve(request.result)
+      request.onerror=()=>reject(request.error)
+    })
+    return dbPromise
+  }
+
+  const putPdf=async(applicationId,file)=>{
+    const db=await openDb()
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(PDF_STORE,'readwrite')
+      tx.objectStore(PDF_STORE).put({
+        applicationId,
+        file,
+        name:file.name,
+        type:file.type||'application/pdf',
+        size:file.size,
+        savedAt:now()
+      })
+      tx.oncomplete=()=>resolve()
+      tx.onerror=()=>reject(tx.error)
+    })
+  }
+
+  const getPdf=async(applicationId)=>{
+    const db=await openDb()
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(PDF_STORE,'readonly')
+      const req=tx.objectStore(PDF_STORE).get(applicationId)
+      req.onsuccess=()=>resolve(req.result||null)
+      req.onerror=()=>reject(req.error)
+    })
+  }
+
+  const removePdf=async(applicationId)=>{
+    const db=await openDb()
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(PDF_STORE,'readwrite')
+      tx.objectStore(PDF_STORE).delete(applicationId)
+      tx.oncomplete=()=>resolve()
+      tx.onerror=()=>reject(tx.error)
+    })
+  }
+
+  const sourceSnapshot=()=>{
+    const version=selectedVersion()
+    if(version){
+      return {
+        versionId:version.id,
+        versionName:version.name,
+        profile:clone(version.profile||{}),
+        settings:clone(version.settings||{}),
+        target:clone(version.target||{}),
+        scores:clone(version.scores||{})
+      }
+    }
+    return {
+      versionId:'',
+      versionName:'Current CV',
+      profile:currentProfile(),
+      settings:clone(readJson(SETTINGS_KEY,{})),
+      target:clone(readJson(TARGET_KEY,{role:'auto',industry:'general',seniority:'senior',jd:''})),
+      scores:currentScores()
+    }
+  }
+
+  const createApplication=()=>{
+    const company=clean($('#atsAppCompany')?.value)
+    const role=clean($('#atsAppRole')?.value)
+    if(!company||!role){
+      $('#atsAppStatusText').textContent='Company and role are required.'
+      return
+    }
+    const source=sourceSnapshot()
+    const jd=String($('#atsAppJd')?.value||source.target?.jd||'').trim()
+    source.target.jd=jd
+    const item={
+      id:'app-'+Date.now(),
+      company,
+      role,
+      status:$('#atsAppStatus')?.value||'Draft',
+      createdAt:now(),
+      updatedAt:now(),
+      source:{
+        versionId:source.versionId,
+        versionName:source.versionName
+      },
+      profile:source.profile,
+      settings:source.settings,
+      target:source.target,
+      scores:source.scores,
+      jd,
+      notes:String($('#atsAppNotes')?.value||'').trim(),
+      pdf:null
+    }
+    const items=applications()
+    items.push(item)
+    saveApplications(items)
+    resetForm()
+    renderWorkspace()
+    $('#atsAppStatusText').textContent='Application workspace created.'
+  }
+
+  const resetForm=()=>{
+    $('#atsAppCompany').value=''
+    $('#atsAppRole').value=readJson(PROFILE_KEY,{}).role||''
+    $('#atsAppStatus').value='Draft'
+    $('#atsAppJd').value=String($('#atsJobDescription')?.value||readJson(TARGET_KEY,{}).jd||'')
+    $('#atsAppNotes').value=''
+    $('#atsAppVersion').value=''
+  }
+
+  const updateApplication=(id,patch)=>{
+    const items=applications()
+    const index=items.findIndex((item)=>item.id===id)
+    if(index<0)return
+    items[index]=Object.assign({},items[index],patch,{updatedAt:now()})
+    saveApplications(items)
+    renderWorkspace()
+  }
+
+  const deleteApplication=async(id)=>{
+    saveApplications(applications().filter((item)=>item.id!==id))
+    try{await removePdf(id)}catch{}
+    renderWorkspace()
+    $('#atsAppStatusText').textContent='Application removed.'
+  }
+
+  const restoreApplication=(id)=>{
+    const item=applications().find((entry)=>entry.id===id)
+    if(!item)return
+    const current=readJson(PROFILE_KEY,{})
+    const profile=clone(item.profile||{})
+    if(current.avatar)profile.avatar=current.avatar
+    writeJson(PROFILE_KEY,profile)
+    writeJson(SETTINGS_KEY,item.settings||{})
+    writeJson(TARGET_KEY,item.target||{})
+    sessionStorage.setItem('ats-application-restored',item.company+' · '+item.role)
+    location.reload()
+  }
+
+  const syncScores=(id)=>{
+    const scores=currentScores()
+    updateApplication(id,{scores})
+    $('#atsAppStatusText').textContent='Scores synced from the current ATS scan.'
+  }
+
+  const attachPdf=async(id,file)=>{
+    if(!file||(!/pdf/i.test(file.type||'')&&!/\.pdf$/i.test(file.name||''))){
+      $('#atsAppStatusText').textContent='Choose a PDF file.'
+      return
+    }
+    await putPdf(id,file)
+    updateApplication(id,{pdf:{name:file.name,size:file.size,attachedAt:now()}})
+    $('#atsAppStatusText').textContent='Final PDF attached locally.'
+  }
+
+  const downloadPdf=async(id)=>{
+    const record=await getPdf(id)
+    if(!record?.file){
+      $('#atsAppStatusText').textContent='No PDF attached to this workspace.'
+      return
+    }
+    const url=URL.createObjectURL(record.file)
+    const anchor=document.createElement('a')
+    anchor.href=url
+    anchor.download=record.name||'cv.pdf'
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    setTimeout(()=>URL.revokeObjectURL(url),1000)
+  }
+
+  const verifyPdf=async(id)=>{
+    const record=await getPdf(id)
+    if(!record?.file){
+      $('#atsAppStatusText').textContent='Attach a PDF first.'
+      return
+    }
+    const tab=$('#atsPdfVerifyTab')
+    const input=$('#atsPdfInput')
+    if(!tab||!input){
+      $('#atsAppStatusText').textContent='PDF verifier is unavailable.'
+      return
+    }
+    tab.click()
+    try{
+      const transfer=new DataTransfer()
+      transfer.items.add(record.file)
+      input.files=transfer.files
+      input.dispatchEvent(new Event('change',{bubbles:true}))
+    }catch{
+      $('#atsAppStatusText').textContent='Open PDF Verify and choose the attached file again.'
+    }
+  }
+
+  const scorePill=(label,value)=>{
+    return '<span><small>'+esc(label)+'</small><strong>'+(value==null?'—':Math.round(value))+'</strong></span>'
+  }
+
+  const renderVersionOptions=()=>{
+    const select=$('#atsAppVersion')
+    if(!select)return
+    const items=versions().slice().sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))
+    select.innerHTML='<option value="">Current CV</option>'+items.map((item)=>(
+      '<option value="'+esc(item.id)+'">'+esc(item.name)+' · '+esc(formatDate(item.createdAt))+'</option>'
+    )).join('')
+  }
+
+  const filteredApplications=()=>{
+    const query=clean($('#atsAppSearch')?.value).toLowerCase()
+    const status=$('#atsAppFilterStatus')?.value||'All'
+    return applications()
+      .filter((item)=>status==='All'||item.status===status)
+      .filter((item)=>!query||[item.company,item.role,item.notes,item.jd].join(' ').toLowerCase().includes(query))
+      .sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)))
+  }
+
+  const renderSummary=()=>{
+    const items=applications()
+    const counts=Object.fromEntries(statusOrder.map((status)=>[status,items.filter((item)=>item.status===status).length]))
+    $('#atsAppSummary').innerHTML=statusOrder.map((status)=>(
+      '<article><span>'+esc(status)+'</span><strong>'+counts[status]+'</strong></article>'
+    )).join('')
+    $('#atsAppCount').textContent=items.length+' application'+(items.length===1?'':'s')
+  }
+
+  const renderCards=()=>{
+    const host=$('#atsAppList')
+    if(!host)return
+    const items=filteredApplications()
+    if(!items.length){
+      host.innerHTML='<div class="ats-app-empty"><strong>No matching applications</strong><p>Create a workspace or change the filters.</p></div>'
+      return
+    }
+    host.innerHTML=items.map((item)=>(
+      '<article class="ats-app-card" data-app-id="'+esc(item.id)+'">'+
+        '<div class="ats-app-card-head">'+
+          '<div><span>'+esc(item.company)+'</span><strong>'+esc(item.role)+'</strong><small>'+esc(item.source?.versionName||'Current CV')+' · updated '+esc(formatDate(item.updatedAt))+'</small></div>'+
+          '<select data-app-status="'+esc(item.id)+'">'+statusOrder.map((status)=>'<option value="'+status+'"'+(status===item.status?' selected':'')+'>'+status+'</option>').join('')+'</select>'+
+        '</div>'+
+        '<div class="ats-app-scores">'+
+          scorePill('Readiness',item.scores?.readiness)+
+          scorePill('Target fit',item.scores?.targetFit)+
+          scorePill('PDF',item.scores?.pdfFidelity)+
+          scorePill('JD',item.scores?.jdMatch)+
+        '</div>'+
+        '<div class="ats-app-target"><span>'+esc(item.target?.role||'auto')+'</span><span>'+esc(item.target?.industry||'general')+'</span><span>'+esc(item.target?.seniority||'senior')+'</span></div>'+
+        (item.jd?'<details class="ats-app-jd"><summary>Job description</summary><p>'+esc(item.jd)+'</p></details>':'')+
+        (item.notes?'<p class="ats-app-notes">'+esc(item.notes)+'</p>':'')+
+        '<div class="ats-app-pdf '+(item.pdf?'attached':'')+'"><div><strong>'+(item.pdf?'Final PDF attached':'No final PDF')+'</strong><small>'+(item.pdf?esc(item.pdf.name)+' · '+formatBytes(item.pdf.size):'Stored locally with IndexedDB')+'</small></div><label><input type="file" accept="application/pdf,.pdf" data-app-pdf="'+esc(item.id)+'" />'+(item.pdf?'Replace PDF':'Attach PDF')+'</label></div>'+
+        '<div class="ats-app-actions">'+
+          '<button type="button" data-app-restore="'+esc(item.id)+'">Restore CV</button>'+
+          '<button type="button" data-app-sync="'+esc(item.id)+'">Sync scores</button>'+
+          (item.pdf?'<button type="button" data-app-verify="'+esc(item.id)+'">Verify PDF</button><button type="button" data-app-download="'+esc(item.id)+'">Download PDF</button>':'')+
+          '<button type="button" class="danger" data-app-delete="'+esc(item.id)+'">Delete</button>'+
+        '</div>'+
+      '</article>'
+    )).join('')
+  }
+
+  const renderWorkspace=()=>{
+    renderVersionOptions()
+    renderSummary()
+    renderCards()
+  }
+
+  const inject=()=>{
+    const tabs=$('.ats-tabs')
+    const panel=$('.ats-panel')
+    if(!tabs||!panel||$('#atsApplicationsTab'))return
+
+    const tab=document.createElement('button')
+    tab.type='button'
+    tab.id='atsApplicationsTab'
+    tab.dataset.atsTab='applications'
+    tab.textContent='Applications'
+    tabs.appendChild(tab)
+
+    const pane=document.createElement('section')
+    pane.className='ats-pane'
+    pane.dataset.atsPane='applications'
+    pane.innerHTML=
+      '<section class="ats-app-create">'+
+        '<div class="ats-section-title"><div><span>Application workspace</span><strong>Track one job from JD to final PDF</strong></div><small id="atsAppCount">0 applications</small></div>'+
+        '<div class="ats-app-form">'+
+          '<label>Company<input id="atsAppCompany" type="text" maxlength="100" placeholder="Company name" /></label>'+
+          '<label>Role<input id="atsAppRole" type="text" maxlength="120" placeholder="Target role" /></label>'+
+          '<label>Status<select id="atsAppStatus">'+statusOrder.map((status)=>'<option>'+status+'</option>').join('')+'</select></label>'+
+          '<label>CV version<select id="atsAppVersion"><option value="">Current CV</option></select></label>'+
+          '<label class="wide">Job description<textarea id="atsAppJd" rows="5" placeholder="Paste the JD for this application"></textarea></label>'+
+          '<label class="wide">Notes<textarea id="atsAppNotes" rows="2" placeholder="Recruiter, deadline, referral, interview notes…"></textarea></label>'+
+        '</div>'+
+        '<div class="ats-app-create-actions"><small id="atsAppStatusText">Workspace data stays in this browser.</small><button id="atsAppCreate" type="button">Create workspace</button></div>'+
+      '</section>'+
+      '<section class="ats-app-overview">'+
+        '<div class="ats-section-title"><div><span>Pipeline</span><strong>Application status</strong></div><small>Local overview</small></div>'+
+        '<div id="atsAppSummary" class="ats-app-summary"></div>'+
+      '</section>'+
+      '<div class="ats-app-filter"><input id="atsAppSearch" type="search" placeholder="Search company, role or notes…" /><select id="atsAppFilterStatus"><option>All</option>'+statusOrder.map((status)=>'<option>'+status+'</option>').join('')+'</select></div>'+
+      '<div id="atsAppList" class="ats-app-list"></div>'+
+      '<p class="ats-help">Each workspace keeps a CV snapshot and ATS scores from the moment it is created. Attached PDFs are saved in IndexedDB and never uploaded by this feature.</p>'
+
+    panel.insertBefore(pane,panel.querySelector('.ats-footer'))
+
+    tab.addEventListener('click',()=>{
+      $$('[data-ats-tab]').forEach((item)=>item.classList.toggle('active',item===tab))
+      $$('[data-ats-pane]').forEach((item)=>item.classList.toggle('active',item.dataset.atsPane==='applications'))
+      renderWorkspace()
+    })
+
+    $('#atsAppCreate').addEventListener('click',createApplication)
+    $('#atsAppSearch').addEventListener('input',renderCards)
+    $('#atsAppFilterStatus').addEventListener('change',renderCards)
+    $('#atsAppList').addEventListener('change',(event)=>{
+      const status=event.target.closest('[data-app-status]')
+      if(status)return updateApplication(status.dataset.appStatus,{status:status.value})
+      const pdf=event.target.closest('[data-app-pdf]')
+      if(pdf&&pdf.files?.[0])attachPdf(pdf.dataset.appPdf,pdf.files[0])
+    })
+    $('#atsAppList').addEventListener('click',(event)=>{
+      const restore=event.target.closest('[data-app-restore]')
+      if(restore)return restoreApplication(restore.dataset.appRestore)
+      const sync=event.target.closest('[data-app-sync]')
+      if(sync)return syncScores(sync.dataset.appSync)
+      const verify=event.target.closest('[data-app-verify]')
+      if(verify)return verifyPdf(verify.dataset.appVerify)
+      const download=event.target.closest('[data-app-download]')
+      if(download)return downloadPdf(download.dataset.appDownload)
+      const remove=event.target.closest('[data-app-delete]')
+      if(remove)return deleteApplication(remove.dataset.appDelete)
+    })
+
+    const restored=sessionStorage.getItem('ats-application-restored')
+    if(restored){
+      sessionStorage.removeItem('ats-application-restored')
+      $('#atsAppStatusText').textContent='Restored workspace CV: '+restored
+    }
+
+    resetForm()
+    renderWorkspace()
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
+  else inject()
+})()

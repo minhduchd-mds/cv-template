@@ -176,3 +176,33 @@ test('ATS versions save compare and restore snapshots locally', async ({ page })
   expect(saved[0].profile.avatar).toBe('')
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('ATS application workspace creates tracks and restores a job snapshot', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+
+  await page.goto('/studio/')
+  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:'Applications'}).click()
+
+  await expect(page.getByText('Track one job from JD to final PDF')).toBeVisible()
+  await page.locator('#atsAppCompany').fill('Example Corp')
+  await page.locator('#atsAppRole').fill('Senior Product Designer')
+  await page.locator('#atsAppJd').fill('Design systems, user research and stakeholder management.')
+  await page.locator('#atsAppNotes').fill('Referral from design team')
+  await page.locator('#atsAppCreate').click()
+
+  await expect(page.locator('#atsAppList .ats-app-card')).toHaveCount(1)
+  await expect(page.locator('#atsAppList')).toContainText('Example Corp')
+  await expect(page.locator('#atsAppList')).toContainText('Referral from design team')
+
+  await page.locator('[data-app-status]').selectOption('Applied')
+  const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('cv-studio-ats-applications-v1')||'[]'))
+  expect(stored).toHaveLength(1)
+  expect(stored[0].status).toBe('Applied')
+  expect(stored[0].profile.avatar).toBe('')
+  expect(stored[0].jd).toContain('Design systems')
+
+  expect(runtimeErrors).toEqual([])
+})
