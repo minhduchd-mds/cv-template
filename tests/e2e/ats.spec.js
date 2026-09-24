@@ -206,3 +206,44 @@ test('ATS application workspace creates tracks and restores a job snapshot', asy
 
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('ATS application analytics summarizes pipeline keywords and follow-ups', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+
+  await page.addInitScript(() => {
+    localStorage.setItem('cv-studio-ats-applications-v1',JSON.stringify([
+      {
+        id:'a1',company:'Alpha',role:'Senior Product Designer',status:'Interview',
+        updatedAt:'2026-09-24T08:00:00.000Z',followUpDate:'2026-09-24',
+        source:{versionName:'UIUX v1'},target:{role:'uiux',industry:'technology',seniority:'senior'},
+        scores:{readiness:88,targetFit:76,pdfFidelity:94,jdMatch:72},
+        jd:'User research accessibility stakeholder management design systems',
+        profile:{role:'Senior Product Designer',skills:['Design Systems'],summary:'Enterprise product designer',experience:[],projects:[]},
+        stageHistory:[{status:'Applied',at:'2026-09-20T08:00:00.000Z'},{status:'Interview',at:'2026-09-23T08:00:00.000Z'}]
+      },
+      {
+        id:'a2',company:'Beta',role:'Product Designer',status:'Applied',
+        updatedAt:'2026-09-24T08:00:00.000Z',followUpDate:'2026-09-30',
+        source:{versionName:'UIUX v2'},target:{role:'uiux',industry:'technology',seniority:'senior'},
+        scores:{readiness:92,targetFit:81,pdfFidelity:96,jdMatch:78},
+        jd:'Accessibility user research product strategy',
+        profile:{role:'Product Designer',skills:['Product Strategy'],summary:'Product designer',experience:[],projects:[]},
+        stageHistory:[{status:'Applied',at:'2026-09-24T08:00:00.000Z'}]
+      }
+    ]))
+  })
+
+  await page.goto('/studio/')
+  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:'Analytics'}).click()
+
+  await expect(page.getByText('Pipeline & CV evidence')).toBeVisible()
+  await expect(page.locator('#atsAnalyticsHeadline')).toContainText('2')
+  await expect(page.locator('#atsAnalyticsFunnel')).toContainText('Interview')
+  await expect(page.locator('#atsAnalyticsKeywords')).toContainText('accessibility')
+  await expect(page.locator('#atsAnalyticsRoles')).toContainText('Senior Product Designer')
+  await expect(page.locator('#atsAnalyticsVersions')).toContainText('UIUX v1')
+  expect(runtimeErrors).toEqual([])
+})

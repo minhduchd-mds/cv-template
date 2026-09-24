@@ -2269,6 +2269,8 @@
       scores:source.scores,
       jd,
       notes:String($('#atsAppNotes')?.value||'').trim(),
+      followUpDate:String($('#atsAppFollowUp')?.value||'').trim(),
+      stageHistory:[{status:$('#atsAppStatus')?.value||'Draft',at:now()}],
       pdf:null
     }
     const items=applications()
@@ -2285,6 +2287,7 @@
     $('#atsAppStatus').value='Draft'
     $('#atsAppJd').value=String($('#atsJobDescription')?.value||readJson(TARGET_KEY,{}).jd||'')
     $('#atsAppNotes').value=''
+    $('#atsAppFollowUp').value=''
     $('#atsAppVersion').value=''
   }
 
@@ -2292,9 +2295,15 @@
     const items=applications()
     const index=items.findIndex((item)=>item.id===id)
     if(index<0)return
-    items[index]=Object.assign({},items[index],patch,{updatedAt:now()})
+    const current=items[index]
+    const next=Object.assign({},current,patch,{updatedAt:now()})
+    if(patch.status&&patch.status!==current.status){
+      next.stageHistory=[...(Array.isArray(current.stageHistory)?current.stageHistory:[]),{status:patch.status,at:now()}]
+    }
+    items[index]=next
     saveApplications(items)
     renderWorkspace()
+    window.dispatchEvent(new CustomEvent('ats-applications-changed'))
   }
 
   const deleteApplication=async(id)=>{
@@ -2426,6 +2435,7 @@
         '<div class="ats-app-target"><span>'+esc(item.target?.role||'auto')+'</span><span>'+esc(item.target?.industry||'general')+'</span><span>'+esc(item.target?.seniority||'senior')+'</span></div>'+
         (item.jd?'<details class="ats-app-jd"><summary>Job description</summary><p>'+esc(item.jd)+'</p></details>':'')+
         (item.notes?'<p class="ats-app-notes">'+esc(item.notes)+'</p>':'')+
+        '<div class="ats-app-followup"><label>Next follow-up<input type="date" value="'+esc(item.followUpDate||'')+'" data-app-followup="'+esc(item.id)+'" /></label>'+(item.followUpDate?'<span>'+esc(item.followUpDate)+'</span>':'<span>Not scheduled</span>')+'</div>'+
         '<div class="ats-app-pdf '+(item.pdf?'attached':'')+'"><div><strong>'+(item.pdf?'Final PDF attached':'No final PDF')+'</strong><small>'+(item.pdf?esc(item.pdf.name)+' · '+formatBytes(item.pdf.size):'Stored locally with IndexedDB')+'</small></div><label><input type="file" accept="application/pdf,.pdf" data-app-pdf="'+esc(item.id)+'" />'+(item.pdf?'Replace PDF':'Attach PDF')+'</label></div>'+
         '<div class="ats-app-actions">'+
           '<button type="button" data-app-restore="'+esc(item.id)+'">Restore CV</button>'+
@@ -2466,6 +2476,7 @@
           '<label>Role<input id="atsAppRole" type="text" maxlength="120" placeholder="Target role" /></label>'+
           '<label>Status<select id="atsAppStatus">'+statusOrder.map((status)=>'<option>'+status+'</option>').join('')+'</select></label>'+
           '<label>CV version<select id="atsAppVersion"><option value="">Current CV</option></select></label>'+
+          '<label>Follow-up date<input id="atsAppFollowUp" type="date" /></label>'+
           '<label class="wide">Job description<textarea id="atsAppJd" rows="5" placeholder="Paste the JD for this application"></textarea></label>'+
           '<label class="wide">Notes<textarea id="atsAppNotes" rows="2" placeholder="Recruiter, deadline, referral, interview notes…"></textarea></label>'+
         '</div>'+
@@ -2493,6 +2504,8 @@
     $('#atsAppList').addEventListener('change',(event)=>{
       const status=event.target.closest('[data-app-status]')
       if(status)return updateApplication(status.dataset.appStatus,{status:status.value})
+      const followup=event.target.closest('[data-app-followup]')
+      if(followup)return updateApplication(followup.dataset.appFollowup,{followUpDate:followup.value})
       const pdf=event.target.closest('[data-app-pdf]')
       if(pdf&&pdf.files?.[0])attachPdf(pdf.dataset.appPdf,pdf.files[0])
     })
@@ -2517,6 +2530,238 @@
 
     resetForm()
     renderWorkspace()
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
+  else inject()
+})()
+
+
+/* ATS_APPLICATION_ANALYTICS_V1 */
+(() => {
+  'use strict'
+
+  const APPLICATIONS_KEY='cv-studio-ats-applications-v1'
+  const $=(selector,root=document)=>root.querySelector(selector)
+  const $$=(selector,root=document)=>[...root.querySelectorAll(selector)]
+  const esc=(value)=>String(value==null?'':value).replace(/[&<>"']/g,(char)=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[char]))
+  const readApps=()=>{
+    try{return (JSON.parse(localStorage.getItem(APPLICATIONS_KEY)||'[]')||[]).filter((item)=>item&&item.id)}
+    catch{return []}
+  }
+  const statusOrder=['Draft','Ready','Applied','Interview','Offer','Closed']
+  const stopWords=new Set([
+    'with','from','that','this','your','have','will','role','team','work','years','year','experience','skills','skill','required','preferred','responsibilities',
+    'candidate','using','about','into','and','the','for','you','are','our','job','who','what','when','where','how','ability','strong','including','plus','within'
+  ])
+  const normalize=(value)=>String(value==null?'':value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}+#./@%-]+/gu,' ')
+    .replace(/\s+/g,' ')
+    .trim()
+  const average=(values)=>{
+    const nums=values.filter((value)=>Number.isFinite(Number(value))).map(Number)
+    return nums.length?Math.round(nums.reduce((a,b)=>a+b,0)/nums.length):null
+  }
+  const pct=(num,den)=>den?Math.round(num/den*100):null
+  const displayPct=(value)=>value==null?'—':value+'%'
+  const todayLocal=()=>{
+    const d=new Date()
+    const y=d.getFullYear()
+    const m=String(d.getMonth()+1).padStart(2,'0')
+    const day=String(d.getDate()).padStart(2,'0')
+    return y+'-'+m+'-'+day
+  }
+  const addDays=(dateString,days)=>{
+    const parts=dateString.split('-').map(Number)
+    const d=new Date(parts[0],parts[1]-1,parts[2])
+    d.setDate(d.getDate()+days)
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')
+  }
+  const prettyDate=(value)=>{
+    if(!value)return ''
+    try{return new Intl.DateTimeFormat(undefined,{month:'short',day:'2-digit'}).format(new Date(value+'T12:00:00'))}
+    catch{return value}
+  }
+
+  const statusCounts=(apps)=>Object.fromEntries(statusOrder.map((status)=>[status,apps.filter((item)=>item.status===status).length]))
+
+  const recordedStage=(item,status)=>{
+    return Array.isArray(item.stageHistory)&&item.stageHistory.some((entry)=>entry?.status===status)
+  }
+
+  const funnel=(apps)=>{
+    const applied=apps.filter((item)=>recordedStage(item,'Applied')).length
+    const interview=apps.filter((item)=>recordedStage(item,'Interview')).length
+    const offer=apps.filter((item)=>recordedStage(item,'Offer')).length
+    return {
+      applied,interview,offer,
+      interviewRate:pct(interview,applied),
+      offerRate:pct(offer,interview)
+    }
+  }
+
+  const groupCounts=(apps,getter)=>{
+    const map=new Map()
+    apps.forEach((item)=>{
+      const key=String(getter(item)||'Unknown').trim()||'Unknown'
+      map.set(key,(map.get(key)||0)+1)
+    })
+    return [...map.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))
+  }
+
+  const snapshotText=(item)=>{
+    const p=item.profile||{}
+    const values=[
+      p.role,p.summary,...(p.skills||[]),
+      ...(p.experience||[]).flatMap((job)=>[job.role,job.company,...(job.bullets||[])]),
+      ...(p.projects||[]).flatMap((project)=>[project.name,project.type,project.description,project.impact])
+    ]
+    return normalize(values.filter(Boolean).join(' '))
+  }
+
+  const jdTerms=(jd)=>{
+    const words=normalize(jd).split(' ').filter((word)=>word.length>=4&&!stopWords.has(word)&&!/^\d+$/.test(word))
+    const counts=new Map()
+    words.forEach((word)=>counts.set(word,(counts.get(word)||0)+1))
+    return [...counts.entries()].sort((a,b)=>b[1]-a[1]).map(([word])=>word).slice(0,24)
+  }
+
+  const missingTerms=(apps)=>{
+    const counts=new Map()
+    apps.forEach((item)=>{
+      if(!item.jd)return
+      const source=snapshotText(item)
+      jdTerms(item.jd).forEach((term)=>{
+        if(!source.includes(term))counts.set(term,(counts.get(term)||0)+1)
+      })
+    })
+    return [...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,12)
+  }
+
+  const followUps=(apps)=>{
+    const today=todayLocal()
+    const horizon=addDays(today,7)
+    return apps
+      .filter((item)=>item.status!=='Closed'&&item.followUpDate&&item.followUpDate<=horizon)
+      .sort((a,b)=>String(a.followUpDate).localeCompare(String(b.followUpDate)))
+      .map((item)=>({
+        ...item,
+        followUpState:item.followUpDate<today?'overdue':item.followUpDate===today?'today':'upcoming'
+      }))
+  }
+
+  const metricCard=(label,value,meta)=>{
+    return '<article><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong><small>'+esc(meta||'')+'</small></article>'
+  }
+
+  const renderBarList=(host,items,total)=>{
+    host.innerHTML=items.length?items.map(([label,count])=>{
+      const width=total?Math.max(4,Math.round(count/total*100)):0
+      return '<article><div><strong>'+esc(label)+'</strong><span>'+count+'</span></div><i><b style="width:'+width+'%"></b></i></article>'
+    }).join(''):'<div class="ats-analytics-empty">No data yet.</div>'
+  }
+
+  const render=()=>{
+    if(!$('#atsAnalyticsPane'))return
+    const apps=readApps()
+    const counts=statusCounts(apps)
+    const flow=funnel(apps)
+    const active=apps.filter((item)=>item.status!=='Closed').length
+    const scoreReadiness=average(apps.map((item)=>item.scores?.readiness))
+    const scoreFit=average(apps.map((item)=>item.scores?.targetFit))
+    const scorePdf=average(apps.map((item)=>item.scores?.pdfFidelity))
+    const scoreJd=average(apps.map((item)=>item.scores?.jdMatch))
+    const due=followUps(apps)
+    const missing=missingTerms(apps)
+
+    $('#atsAnalyticsHeadline').innerHTML=[
+      metricCard('Applications',apps.length,String(active)+' active'),
+      metricCard('Recorded interviews',flow.interview,displayPct(flow.interviewRate)+' of recorded Applied'),
+      metricCard('Recorded offers',flow.offer,displayPct(flow.offerRate)+' of recorded Interview'),
+      metricCard('Follow-ups',due.length,due.filter((item)=>item.followUpState==='overdue').length+' overdue')
+    ].join('')
+
+    $('#atsAnalyticsScores').innerHTML=[
+      metricCard('Avg readiness',scoreReadiness==null?'—':scoreReadiness,'Saved snapshots'),
+      metricCard('Avg target fit',scoreFit==null?'—':scoreFit,'Saved snapshots'),
+      metricCard('Avg PDF fidelity',scorePdf==null?'—':scorePdf,'Verified snapshots'),
+      metricCard('Avg JD match',scoreJd==null?'—':scoreJd,'Saved snapshots')
+    ].join('')
+
+    renderBarList($('#atsAnalyticsStatus'),statusOrder.map((status)=>[status,counts[status]]),Math.max(1,apps.length))
+    renderBarList($('#atsAnalyticsRoles'),groupCounts(apps,(item)=>item.role).slice(0,7),Math.max(1,apps.length))
+    renderBarList($('#atsAnalyticsVersions'),groupCounts(apps,(item)=>item.source?.versionName||'Current CV').slice(0,7),Math.max(1,apps.length))
+
+    $('#atsAnalyticsKeywords').innerHTML=missing.length?missing.map(([term,count])=>(
+      '<span><strong>'+esc(term)+'</strong><small>'+count+' JD'+(count===1?'':'s')+'</small></span>'
+    )).join(''):'<div class="ats-analytics-empty">No repeated missing JD terms yet.</div>'
+
+    $('#atsAnalyticsFollowups').innerHTML=due.length?due.map((item)=>(
+      '<article class="'+item.followUpState+'">'+
+        '<div><span>'+esc(item.company)+'</span><strong>'+esc(item.role)+'</strong><small>'+esc(item.status)+'</small></div>'+
+        '<time>'+esc(prettyDate(item.followUpDate))+'</time>'+
+      '</article>'
+    )).join(''):'<div class="ats-analytics-empty">No follow-ups due in the next 7 days.</div>'
+
+    $('#atsAnalyticsFunnel').innerHTML=[
+      ['Applied',flow.applied,100],
+      ['Interview',flow.interview,flow.applied?Math.round(flow.interview/flow.applied*100):0],
+      ['Offer',flow.offer,flow.interview?Math.round(flow.offer/flow.interview*100):0]
+    ].map(([label,count,width])=>(
+      '<article><div><strong>'+label+'</strong><span>'+count+'</span></div><i><b style="width:'+Math.max(count?8:0,Math.min(100,width))+'%"></b></i></article>'
+    )).join('')
+
+    $('#atsAnalyticsCaveat').textContent=apps.some((item)=>!Array.isArray(item.stageHistory)||item.stageHistory.length<2)
+      ? 'Conversion uses recorded stage history only. Older workspaces may not contain earlier stages.'
+      : 'Conversion uses recorded stage history for these workspaces.'
+  }
+
+  const inject=()=>{
+    const tabs=$('.ats-tabs')
+    const panel=$('.ats-panel')
+    if(!tabs||!panel||$('#atsAnalyticsTab'))return
+
+    const tab=document.createElement('button')
+    tab.type='button'
+    tab.id='atsAnalyticsTab'
+    tab.dataset.atsTab='analytics'
+    tab.textContent='Analytics'
+    tabs.appendChild(tab)
+
+    const pane=document.createElement('section')
+    pane.id='atsAnalyticsPane'
+    pane.className='ats-pane'
+    pane.dataset.atsPane='analytics'
+    pane.innerHTML=
+      '<div class="ats-section-title"><div><span>Application analytics</span><strong>Pipeline & CV evidence</strong></div><small>Local-only</small></div>'+
+      '<div id="atsAnalyticsHeadline" class="ats-analytics-headline"></div>'+
+      '<section class="ats-analytics-grid">'+
+        '<article class="wide"><div class="ats-section-title"><div><span>Recorded progression</span><strong>Applied → Interview → Offer</strong></div><small id="atsAnalyticsCaveat"></small></div><div id="atsAnalyticsFunnel" class="ats-analytics-bars funnel"></div></article>'+
+        '<article><div class="ats-section-title"><div><span>Current pipeline</span><strong>Status distribution</strong></div></div><div id="atsAnalyticsStatus" class="ats-analytics-bars"></div></article>'+
+        '<article><div class="ats-section-title"><div><span>Target roles</span><strong>Where you are applying</strong></div></div><div id="atsAnalyticsRoles" class="ats-analytics-bars"></div></article>'+
+        '<article><div class="ats-section-title"><div><span>CV usage</span><strong>Versions in applications</strong></div></div><div id="atsAnalyticsVersions" class="ats-analytics-bars"></div></article>'+
+        '<article><div class="ats-section-title"><div><span>JD coverage</span><strong>Frequent terms absent from snapshot</strong></div><small>Descriptive</small></div><div id="atsAnalyticsKeywords" class="ats-analytics-keywords"></div></article>'+
+        '<article class="wide"><div class="ats-section-title"><div><span>Follow-up</span><strong>Due in the next 7 days</strong></div><small>Scheduled dates</small></div><div id="atsAnalyticsFollowups" class="ats-analytics-followups"></div></article>'+
+      '</section>'+
+      '<div class="ats-section-title"><div><span>Score snapshots</span><strong>Average saved scores</strong></div><small>Not a hiring prediction</small></div>'+
+      '<div id="atsAnalyticsScores" class="ats-analytics-scores"></div>'+
+      '<p class="ats-help">Analytics describes your saved application data. It does not predict hiring outcomes or imply that a higher ATS score guarantees an interview.</p>'
+
+    panel.insertBefore(pane,panel.querySelector('.ats-footer'))
+
+    tab.addEventListener('click',()=>{
+      $$('[data-ats-tab]').forEach((item)=>item.classList.toggle('active',item===tab))
+      $$('[data-ats-pane]').forEach((item)=>item.classList.toggle('active',item.dataset.atsPane==='analytics'))
+      render()
+    })
+    window.addEventListener('ats-applications-changed',render)
+    window.addEventListener('storage',(event)=>{if(event.key===APPLICATIONS_KEY)render()})
+    render()
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
