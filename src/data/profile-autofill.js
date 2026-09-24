@@ -196,6 +196,7 @@ const CANDIDATE_DEFAULTS = {
   website: 'alexchen.design',
   avatar: '',
   headline: 'I turn complex product workflows into clear, measurable experiences.',
+  quote: 'I turn complex challenges into clear momentum.',
   availability: 'Open to senior product design and design engineering roles',
   summary: 'Product-minded designer focused on complex B2B products, design systems and code-aware delivery.',
   sections: DEFAULT_SECTIONS,
