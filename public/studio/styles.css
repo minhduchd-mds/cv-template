@@ -2580,33 +2580,33 @@ button{cursor:pointer}
 
 
 /* Retained-template containment audit */
-.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards){
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards,.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar){
   overflow-x:hidden;
 }
-.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards)
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards,.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar)
   :where(.cv-head,.cv-body,.cv-main,.cv-side,section,article,.job,.project,.project-items,.skills,.contact){
   min-width:0;
 }
-.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards)
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards,.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar)
   :where(h1,h2,h3,p,strong,span,b,small){
   overflow-wrap:anywhere;
 }
-.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .job-head>div{
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards,.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar) .job-head>div{
   min-width:0;
 }
-.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .job-head span{
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards,.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar) .job-head span{
   max-width:42%;
   white-space:normal;
   text-align:right;
 }
-.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .contact{
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards,.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar) .contact{
   flex-wrap:wrap;
 }
-.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .contact span{
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards,.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar) .contact span{
   max-width:100%;
   overflow-wrap:anywhere;
 }
-.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards) .project{
+.paper:is(.theme-modern-bento,.theme-executive-navy,.theme-ats-clean,.theme-modern-mono,.theme-young-creator-cards,.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar) .project{
   min-width:0;
   overflow:hidden;
 }
@@ -3464,3 +3464,20 @@ button{cursor:pointer}
 /* TEMPLATE_LAYOUT_MASTER_DRAG_V1 */
 .layout-section-group{display:grid;gap:5px}.layout-section-group+.layout-section-group{margin-top:10px;padding-top:10px;border-top:1px solid #eef1f4}.layout-group-title{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 2px 2px}.layout-group-title strong{font-size:7.5px;text-transform:uppercase;letter-spacing:.07em;color:#667085}.layout-group-title small{font-size:7px;color:#98a2b3}.layout-section-row.draggable{cursor:grab}.layout-section-row.draggable:active{cursor:grabbing}.layout-section-row.draggable .layout-section-handle{cursor:grab}.layout-row-dragging{opacity:.5;transform:scale(.99)}.layout-row-drop{border-color:#98a2b3;background:#f8fafc;box-shadow:0 0 0 2px rgba(15,23,42,.04)}.layout-row-drop:before{content:"";position:absolute;left:10px;right:10px;top:-3px;height:2px;border-radius:999px;background:#111827}.layout-section-row{position:relative}
 @media(max-width:760px){.layout-group-title{align-items:flex-start;flex-direction:column}.layout-section-row.draggable{cursor:default}.layout-section-row.draggable .layout-section-handle{cursor:default}}
+
+
+/* FLEXIBLE_TEMPLATE_CONTAINMENT_V2 */
+.paper:is(.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar)
+  :where(.cv-main,.cv-side,.job-head,.job-head>div,.project-items,.project,.skills,.languages){
+  min-width:0;
+}
+.paper:is(.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar)
+  :where(h1,h2,h3,p,strong,span,b,small,a){
+  overflow-wrap:anywhere;
+}
+.paper:is(.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar) .contact{
+  flex-wrap:wrap;
+}
+.paper:is(.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar) .contact span{
+  max-width:100%;
+}
