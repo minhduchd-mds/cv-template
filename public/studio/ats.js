@@ -1814,3 +1814,293 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot)
   else boot()
 })()
+
+
+/* ATS_VERSION_COMPARE_V1 */
+(() => {
+  'use strict'
+
+  const PROFILE_KEY='cv-studio-static-v2'
+  const SETTINGS_KEY='cv-studio-static-settings-v2'
+  const TARGET_KEY='cv-studio-ats-target-v2'
+  const VERSIONS_KEY='cv-studio-ats-versions-v1'
+  const $=(selector,root=document)=>root.querySelector(selector)
+  const $$=(selector,root=document)=>[...root.querySelectorAll(selector)]
+  const esc=(value)=>String(value==null?'':value).replace(/[&<>"']/g,(char)=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[char]))
+  const readJson=(key,fallback)=>{
+    try{return JSON.parse(localStorage.getItem(key)||'')||fallback}catch{return fallback}
+  }
+  const writeJson=(key,value)=>{
+    localStorage.setItem(key,JSON.stringify(value))
+  }
+  const deepClone=(value)=>JSON.parse(JSON.stringify(value))
+  const normalize=(value)=>String(value==null?'':value).trim().replace(/\s+/g,' ')
+  const numberValue=(selector)=>{
+    const raw=String($(selector)?.textContent||'').trim()
+    if(!raw||raw==='—')return null
+    const match=raw.match(/-?\d+(?:\.\d+)?/)
+    return match?Number(match[0]):null
+  }
+  const versions=()=>readJson(VERSIONS_KEY,[]).filter((item)=>item&&item.id)
+  const saveVersions=(items)=>writeJson(VERSIONS_KEY,items)
+
+  const sanitizedProfile=()=>{
+    const profile=deepClone(readJson(PROFILE_KEY,{}))
+    if(profile&&typeof profile==='object')profile.avatar=''
+    return profile
+  }
+
+  const targetSnapshot=()=>deepClone(readJson(TARGET_KEY,{role:'auto',industry:'general',seniority:'senior',jd:''}))
+  const scoreSnapshot=()=>({
+    readiness:numberValue('#atsProReadiness') ?? numberValue('#atsScore'),
+    targetFit:numberValue('#atsProFit'),
+    pdfFidelity:numberValue('#atsPdfScore'),
+    jdMatch:numberValue('#atsJobMatchLarge')
+  })
+
+  const defaultVersionName=()=>{
+    const role=$('#atsProRole option:checked')?.textContent?.trim()
+    const industry=$('#atsProIndustry option:checked')?.textContent?.trim()
+    const fallback=readJson(PROFILE_KEY,{}).role||'CV'
+    return [role&&role!=='Auto from template'?role:fallback,industry&&industry!=='Any industry'?industry:''].filter(Boolean).join(' · ')
+  }
+
+  const createSnapshot=(name)=>{
+    const profile=sanitizedProfile()
+    const target=targetSnapshot()
+    return {
+      id:'v-'+Date.now(),
+      name:normalize(name)||defaultVersionName(),
+      createdAt:new Date().toISOString(),
+      profile,
+      settings:deepClone(readJson(SETTINGS_KEY,{})),
+      target,
+      scores:scoreSnapshot(),
+      meta:{
+        template:String($('#activeTemplateLabel')?.textContent||'').trim(),
+        skillCount:Array.isArray(profile.skills)?profile.skills.length:0,
+        experienceCount:Array.isArray(profile.experience)?profile.experience.length:0,
+        projectCount:Array.isArray(profile.projects)?profile.projects.length:0
+      }
+    }
+  }
+
+  const formatDate=(iso)=>{
+    try{
+      return new Intl.DateTimeFormat(undefined,{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(iso))
+    }catch{return iso}
+  }
+
+  const scoreBadge=(label,value)=>{
+    const shown=value==null?'—':String(Math.round(value))
+    return '<span><small>'+esc(label)+'</small><strong>'+shown+'</strong></span>'
+  }
+
+  const renderList=()=>{
+    const host=$('#atsVersionList')
+    if(!host)return
+    const items=versions().slice().sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))
+    $('#atsVersionCount').textContent=items.length+' saved'
+    if(!items.length){
+      host.innerHTML='<div class="ats-version-empty"><strong>No saved versions yet</strong><p>Save the current CV before making a role-specific or JD-specific change.</p></div>'
+      renderSelectors(items)
+      return
+    }
+
+    host.innerHTML=items.map((item)=>(
+      '<article class="ats-version-card" data-version-id="'+esc(item.id)+'">'+
+        '<div class="ats-version-card-head"><div><strong>'+esc(item.name)+'</strong><small>'+esc(formatDate(item.createdAt))+(item.meta?.template?' · '+esc(item.meta.template):'')+'</small></div><button type="button" data-version-more aria-label="Version actions">•••</button></div>'+
+        '<div class="ats-version-score-row">'+
+          scoreBadge('Readiness',item.scores?.readiness)+
+          scoreBadge('Target fit',item.scores?.targetFit)+
+          scoreBadge('PDF',item.scores?.pdfFidelity)+
+        '</div>'+
+        '<div class="ats-version-meta"><span>'+(item.meta?.skillCount||0)+' skills</span><span>'+(item.meta?.experienceCount||0)+' roles</span><span>'+(item.meta?.projectCount||0)+' projects</span></div>'+
+        '<div class="ats-version-actions"><button type="button" data-version-restore="'+esc(item.id)+'">Restore</button><button type="button" data-version-delete="'+esc(item.id)+'">Delete</button></div>'+
+      '</article>'
+    )).join('')
+    renderSelectors(items)
+  }
+
+  const renderSelectors=(items)=>{
+    const a=$('#atsCompareA'), b=$('#atsCompareB')
+    if(!a||!b)return
+    const options=items.map((item)=>'<option value="'+esc(item.id)+'">'+esc(item.name)+' · '+esc(formatDate(item.createdAt))+'</option>').join('')
+    a.innerHTML='<option value="">Version A</option>'+options
+    b.innerHTML='<option value="">Version B</option>'+options
+    if(items.length>=2){
+      a.value=items[1].id
+      b.value=items[0].id
+    }else if(items.length===1){
+      a.value=items[0].id
+    }
+    $('#atsCompareRun').disabled=items.length<2
+  }
+
+  const diffScore=(a,b,key)=>{
+    const av=a.scores?.[key], bv=b.scores?.[key]
+    if(av==null||bv==null)return {a:av,b:bv,delta:null}
+    return {a:av,b:bv,delta:Math.round((bv-av)*10)/10}
+  }
+
+  const setDiff=(aValues,bValues)=>{
+    const aSet=new Map((aValues||[]).map((value)=>[normalize(value).toLowerCase(),value]))
+    const bSet=new Map((bValues||[]).map((value)=>[normalize(value).toLowerCase(),value]))
+    const added=[...bSet.entries()].filter(([key])=>!aSet.has(key)).map(([,value])=>value)
+    const removed=[...aSet.entries()].filter(([key])=>!bSet.has(key)).map(([,value])=>value)
+    return {added,removed}
+  }
+
+  const flattenExperience=(profile)=>{
+    return (profile?.experience||[]).flatMap((job)=>[
+      job.role,job.company,job.period,...(job.bullets||[])
+    ]).filter(Boolean)
+  }
+
+  const changeRow=(label,aText,bText)=>{
+    const same=normalize(aText)===normalize(bText)
+    return '<article class="'+(same?'same':'changed')+'"><strong>'+esc(label)+'</strong><span>'+esc(same?'No change':'Changed')+'</span><div><p>'+esc(aText||'—')+'</p><i>→</i><p>'+esc(bText||'—')+'</p></div></article>'
+  }
+
+  const metricCompare=(label,diff)=>{
+    const delta=diff.delta
+    const deltaText=delta==null?'—':(delta>0?'+':'')+delta
+    const cls=delta==null?'neutral':delta>0?'up':delta<0?'down':'neutral'
+    return '<article><span>'+esc(label)+'</span><div><strong>'+(diff.a==null?'—':Math.round(diff.a))+'</strong><i>→</i><strong>'+(diff.b==null?'—':Math.round(diff.b))+'</strong></div><b class="'+cls+'">'+deltaText+'</b></article>'
+  }
+
+  const compareVersions=()=>{
+    const items=versions()
+    const a=items.find((item)=>item.id===$('#atsCompareA').value)
+    const b=items.find((item)=>item.id===$('#atsCompareB').value)
+    const host=$('#atsCompareResult')
+    if(!a||!b){
+      host.hidden=true
+      return
+    }
+    host.hidden=false
+
+    const skills=setDiff(a.profile?.skills,b.profile?.skills)
+    const expA=flattenExperience(a.profile).join(' · ')
+    const expB=flattenExperience(b.profile).join(' · ')
+    const targetA=[a.target?.role,a.target?.industry,a.target?.seniority].filter(Boolean).join(' · ')
+    const targetB=[b.target?.role,b.target?.industry,b.target?.seniority].filter(Boolean).join(' · ')
+
+    $('#atsCompareNames').innerHTML='<div><strong>'+esc(a.name)+'</strong><small>'+esc(formatDate(a.createdAt))+'</small></div><span>vs</span><div><strong>'+esc(b.name)+'</strong><small>'+esc(formatDate(b.createdAt))+'</small></div>'
+    $('#atsCompareMetrics').innerHTML=[
+      metricCompare('ATS Readiness',diffScore(a,b,'readiness')),
+      metricCompare('Target Fit',diffScore(a,b,'targetFit')),
+      metricCompare('PDF Fidelity',diffScore(a,b,'pdfFidelity')),
+      metricCompare('JD Match',diffScore(a,b,'jdMatch'))
+    ].join('')
+
+    $('#atsCompareContent').innerHTML=
+      changeRow('Target profile',targetA,targetB)+
+      changeRow('Summary',a.profile?.summary,b.profile?.summary)+
+      changeRow('Experience',expA,expB)+
+      '<article class="'+(!skills.added.length&&!skills.removed.length?'same':'changed')+'"><strong>Skills</strong><span>'+(!skills.added.length&&!skills.removed.length?'No change':'Changed')+'</span>'+
+        '<div class="ats-skill-diff"><section><small>Removed</small>'+(skills.removed.length?skills.removed.map((x)=>'<em>- '+esc(x)+'</em>').join(''):'<em>None</em>')+'</section>'+
+        '<section><small>Added</small>'+(skills.added.length?skills.added.map((x)=>'<em>+ '+esc(x)+'</em>').join(''):'<em>None</em>')+'</section></div></article>'
+  }
+
+  const saveCurrent=()=>{
+    const name=$('#atsVersionName').value
+    const items=versions()
+    items.push(createSnapshot(name))
+    saveVersions(items)
+    $('#atsVersionName').value=''
+    renderList()
+    $('#atsVersionStatus').textContent='Version saved locally.'
+  }
+
+  const restoreVersion=(id)=>{
+    const item=versions().find((entry)=>entry.id===id)
+    if(!item)return
+    const current=readJson(PROFILE_KEY,{})
+    const nextProfile=deepClone(item.profile||{})
+    if(current.avatar)nextProfile.avatar=current.avatar
+    writeJson(PROFILE_KEY,nextProfile)
+    writeJson(SETTINGS_KEY,item.settings||{})
+    writeJson(TARGET_KEY,item.target||{})
+    sessionStorage.setItem('ats-version-restored',item.name||'Saved version')
+    location.reload()
+  }
+
+  const deleteVersion=(id)=>{
+    const next=versions().filter((item)=>item.id!==id)
+    saveVersions(next)
+    renderList()
+    $('#atsCompareResult').hidden=true
+    $('#atsVersionStatus').textContent='Version deleted.'
+  }
+
+  const inject=()=>{
+    const tabs=$('.ats-tabs')
+    const panel=$('.ats-panel')
+    if(!tabs||!panel||$('#atsVersionTab'))return
+
+    const tab=document.createElement('button')
+    tab.type='button'
+    tab.id='atsVersionTab'
+    tab.dataset.atsTab='versions'
+    tab.textContent='Versions'
+    tabs.appendChild(tab)
+
+    const pane=document.createElement('section')
+    pane.className='ats-pane'
+    pane.dataset.atsPane='versions'
+    pane.innerHTML=
+      '<section class="ats-version-save">'+
+        '<div class="ats-section-title"><div><span>Snapshots</span><strong>CV Version Compare</strong></div><small id="atsVersionCount">0 saved</small></div>'+
+        '<p>Save a snapshot before tailoring this CV to another role or job description.</p>'+
+        '<div class="ats-version-save-row"><input id="atsVersionName" type="text" maxlength="80" placeholder="Version name · optional" /><button id="atsVersionSave" type="button">Save current version</button></div>'+
+        '<small id="atsVersionStatus">Stored only in this browser.</small>'+
+      '</section>'+
+      '<section class="ats-version-compare">'+
+        '<div class="ats-section-title"><div><span>Compare</span><strong>Version A vs Version B</strong></div><small>Scores + content</small></div>'+
+        '<div class="ats-compare-controls"><select id="atsCompareA"></select><span>→</span><select id="atsCompareB"></select><button id="atsCompareRun" type="button">Compare</button></div>'+
+        '<div id="atsCompareResult" hidden>'+
+          '<div id="atsCompareNames" class="ats-compare-names"></div>'+
+          '<div id="atsCompareMetrics" class="ats-compare-metrics"></div>'+
+          '<div class="ats-section-title"><div><span>Content diff</span><strong>What changed</strong></div><small>Descriptive only</small></div>'+
+          '<div id="atsCompareContent" class="ats-compare-content"></div>'+
+        '</div>'+
+      '</section>'+
+      '<div class="ats-section-title"><div><span>Saved versions</span><strong>Local history</strong></div><small>Restore or delete</small></div>'+
+      '<div id="atsVersionList" class="ats-version-list"></div>'+
+      '<p class="ats-help">Scores are snapshots from the moment each version was saved. Restoring a version keeps your current profile photo.</p>'
+
+    panel.insertBefore(pane,panel.querySelector('.ats-footer'))
+
+    tab.addEventListener('click',()=>{
+      $$('[data-ats-tab]').forEach((item)=>item.classList.toggle('active',item===tab))
+      $$('[data-ats-pane]').forEach((item)=>item.classList.toggle('active',item.dataset.atsPane==='versions'))
+      renderList()
+    })
+
+    $('#atsVersionSave').addEventListener('click',saveCurrent)
+    $('#atsVersionName').addEventListener('keydown',(event)=>{
+      if(event.key==='Enter')saveCurrent()
+    })
+    $('#atsCompareRun').addEventListener('click',compareVersions)
+    $('#atsVersionList').addEventListener('click',(event)=>{
+      const restore=event.target.closest('[data-version-restore]')
+      if(restore)return restoreVersion(restore.dataset.versionRestore)
+      const remove=event.target.closest('[data-version-delete]')
+      if(remove)return deleteVersion(remove.dataset.versionDelete)
+    })
+
+    const restored=sessionStorage.getItem('ats-version-restored')
+    if(restored){
+      sessionStorage.removeItem('ats-version-restored')
+      $('#atsVersionStatus').textContent='Restored: '+restored
+    }
+
+    renderList()
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
+  else inject()
+})()

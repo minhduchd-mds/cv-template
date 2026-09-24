@@ -141,3 +141,38 @@ test('ATS Auto Fix applies factual safe fixes and supports undo', async ({ page 
 
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('ATS versions save compare and restore snapshots locally', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+
+  await page.goto('/studio/')
+  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:'Versions'}).click()
+
+  await expect(page.getByText('CV Version Compare')).toBeVisible()
+  await page.locator('#atsVersionName').fill('Baseline')
+  await page.locator('#atsVersionSave').click()
+  await expect(page.locator('#atsVersionList')).toContainText('Baseline')
+
+  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  const skills=page.locator('#skills')
+  await skills.fill((await skills.inputValue())+'\\nUser Research')
+  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:'Versions'}).click()
+  await page.locator('#atsVersionName').fill('Tailored')
+  await page.locator('#atsVersionSave').click()
+
+  await expect(page.locator('#atsVersionList .ats-version-card')).toHaveCount(2)
+  await page.locator('#atsCompareA').selectOption({label:/Baseline/})
+  await page.locator('#atsCompareB').selectOption({label:/Tailored/})
+  await page.locator('#atsCompareRun').click()
+  await expect(page.locator('#atsCompareResult')).toBeVisible()
+  await expect(page.locator('#atsCompareContent')).toContainText('User Research')
+
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('cv-studio-ats-versions-v1')||'[]'))
+  expect(saved).toHaveLength(2)
+  expect(saved[0].profile.avatar).toBe('')
+  expect(runtimeErrors).toEqual([])
+})
