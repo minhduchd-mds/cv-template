@@ -617,3 +617,376 @@
   }
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot()
 })()
+
+
+/* ATS_PDF_VERIFY_V1: parse the exported PDF text layer and compare it with the live CV. */
+(() => {
+  'use strict'
+
+  const PDFJS_VERSION = '6.3.289'
+  const PDFJS_URL = \`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/\${PDFJS_VERSION}/pdf.min.mjs\`
+  const PDFJS_WORKER_URL = \`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/\${PDFJS_VERSION}/pdf.worker.min.mjs\`
+  const PROFILE_KEY = 'cv-studio-static-v2'
+  const $ = (selector, root = document) => root.querySelector(selector)
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)]
+  const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)))
+  const esc = (value) => String(value == null ? '' : value).replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  }[char]))
+  const normalize = (value) => String(value == null ? '' : value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}+#./@%-]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const readProfile = () => {
+    try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}') || {} }
+    catch { return {} }
+  }
+  const flatten = (value, depth = 0) => {
+    if (depth > 4 || value == null) return []
+    if (typeof value === 'string' || typeof value === 'number') {
+      const text = String(value).trim()
+      if (!text || text.startsWith('data:image/')) return []
+      return [text]
+    }
+    if (Array.isArray(value)) return value.flatMap((item) => flatten(item, depth + 1))
+    if (typeof value === 'object') return Object.entries(value)
+      .filter(([key]) => !/image|avatar|id|enabled/i.test(key))
+      .flatMap(([, item]) => flatten(item, depth + 1))
+    return []
+  }
+  const matchText = (haystack, value) => {
+    const needle = normalize(value)
+    if (!needle) return true
+    if (haystack.includes(needle)) return true
+    const words = needle.split(' ').filter(Boolean)
+    if (words.length >= 9) return haystack.includes(words.slice(0, 8).join(' '))
+    if (words.length >= 5) return haystack.includes(words.slice(0, 5).join(' '))
+    return false
+  }
+  const usefulParts = (value) => [...new Set(flatten(value)
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 2 && item.length <= 420))].slice(0, 90)
+  const groupCoverage = (pdfNormalized, value) => {
+    const parts = usefulParts(value)
+    if (!parts.length) return { present:false, matched:0, total:0, score:null }
+    const matched = parts.filter((part) => matchText(pdfNormalized, part)).length
+    return { present:true, matched, total:parts.length, score:matched / parts.length }
+  }
+  const sourceLines = () => {
+    const text = String($('#paper')?.innerText || $('#paper')?.textContent || '')
+      .replace(/\u00a0/g, ' ')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+    const lines = text.split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length >= 3)
+    return { text, lines:[...new Set(lines)].slice(0, 180) }
+  }
+  const orderConsistency = (lines, pdfNormalized) => {
+    const positions = []
+    lines.forEach((line) => {
+      const needle = normalize(line)
+      if (!needle) return
+      let pos = pdfNormalized.indexOf(needle)
+      if (pos < 0) {
+        const words = needle.split(' ').filter(Boolean)
+        if (words.length >= 5) pos = pdfNormalized.indexOf(words.slice(0, 5).join(' '))
+      }
+      if (pos >= 0) positions.push(pos)
+    })
+    if (positions.length < 3) return { score:60, matched:positions.length, inversions:0 }
+    let good = 0
+    let inversions = 0
+    for (let i = 1; i < positions.length; i += 1) {
+      if (positions[i] >= positions[i - 1]) good += 1
+      else inversions += 1
+    }
+    return { score:clamp(good / (positions.length - 1) * 100), matched:positions.length, inversions }
+  }
+
+  let pdfModulePromise = null
+  const loadPdfModule = async () => {
+    if (window.__atsPdfTextExtractor) return null
+    if (!pdfModulePromise) {
+      pdfModulePromise = import(PDFJS_URL).then((pdfjsLib) => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL
+        return pdfjsLib
+      })
+    }
+    return pdfModulePromise
+  }
+
+  const extractPdfText = async (file) => {
+    if (window.__atsPdfTextExtractor) return window.__atsPdfTextExtractor(file)
+    const pdfjsLib = await loadPdfModule()
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    const documentTask = pdfjsLib.getDocument({ data: bytes })
+    const pdf = await documentTask.promise
+    const pages = []
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber)
+      const content = await page.getTextContent()
+      const rows = []
+      let current = []
+      content.items.forEach((item) => {
+        const value = String(item.str || '').trim()
+        if (value) current.push(value)
+        if (item.hasEOL && current.length) {
+          rows.push(current.join(' '))
+          current = []
+        }
+      })
+      if (current.length) rows.push(current.join(' '))
+      pages.push(rows.join('\n'))
+    }
+    return { text:pages.join('\n\n'), pages:pdf.numPages }
+  }
+
+  const fieldGroups = (profile) => [
+    ['Name', profile.name, '#name'],
+    ['Role / title', profile.role, '#role'],
+    ['Headline', profile.headline, '#headline'],
+    ['Email', profile.email, '#email'],
+    ['Phone', profile.phone, '#phone'],
+    ['Location', profile.location, '#location'],
+    ['Website', profile.website, '#website'],
+    ['Summary', profile.summary, '#summary'],
+    ['Skills', profile.skills, '#skills'],
+    ['Experience', profile.experience, '#experienceEditor'],
+    ['Projects', profile.projects, '#projectEditor'],
+    ['Languages', profile.languages, '#languages'],
+  ]
+
+  const analyzePdf = (pdfText, pages) => {
+    const profile = readProfile()
+    const source = sourceLines()
+    const pdfNormalized = normalize(pdfText)
+    const groups = fieldGroups(profile).map(([label, value, selector]) => ({
+      label, selector, coverage:groupCoverage(pdfNormalized, value)
+    }))
+    const sourceMatches = source.lines.map((line) => matchText(pdfNormalized, line) ? 1 : 0)
+    const retained = sourceMatches.length
+      ? clamp(sourceMatches.reduce((sum, value) => sum + value, 0) / sourceMatches.length * 100)
+      : 0
+    const criticalLabels = new Set(['Name','Role / title','Email','Skills','Experience'])
+    const critical = groups.filter((group) => criticalLabels.has(group.label) && group.coverage.present)
+    const criticalScore = critical.length
+      ? clamp(critical.reduce((sum, group) => sum + group.coverage.score, 0) / critical.length * 100)
+      : 0
+    const order = orderConsistency(source.lines, pdfNormalized)
+    const textLayer = pdfNormalized.length >= 240 ? 100 : pdfNormalized.length >= 80 ? 60 : pdfNormalized.length ? 30 : 0
+    const score = clamp(retained * .45 + criticalScore * .30 + order.score * .15 + textLayer * .10)
+    return {
+      score, retained, criticalScore, order, textLayer, groups, pdfText, pages,
+      sourceWordCount:source.text.split(/\s+/).filter(Boolean).length,
+      pdfWordCount:String(pdfText).split(/\s+/).filter(Boolean).length,
+    }
+  }
+
+  const stateLabel = (coverage) => {
+    if (!coverage.present) return { key:'empty', label:'No source data' }
+    if (coverage.score >= .85) return { key:'retained', label:'Retained' }
+    if (coverage.score > 0) return { key:'partial', label:'Partial' }
+    return { key:'missing', label:'Missing' }
+  }
+  const verdict = (score) => score >= 90 ? 'Export preserved well' : score >= 75 ? 'Review a few differences' : score >= 55 ? 'PDF needs attention' : 'High parsing risk'
+
+  const inject = () => {
+    const panel = $('.ats-panel')
+    const tabs = $('.ats-tabs')
+    if (!panel || !tabs || $('#atsPdfVerifyTab')) return
+
+    const tab = document.createElement('button')
+    tab.type = 'button'
+    tab.id = 'atsPdfVerifyTab'
+    tab.dataset.atsTab = 'pdf'
+    tab.textContent = 'PDF verify'
+    tabs.appendChild(tab)
+
+    const pane = document.createElement('section')
+    pane.className = 'ats-pane'
+    pane.dataset.atsPane = 'pdf'
+    pane.innerHTML = [
+      '<section class="ats-pdf-intro">',
+        '<div><span>Export verification</span><strong>Check the PDF ATS will receive</strong></div>',
+        '<p>Export your CV, then drop the saved PDF here. The file stays in this browser; only its text layer is read.</p>',
+      '</section>',
+      '<label id="atsPdfDrop" class="ats-pdf-drop">',
+        '<input id="atsPdfInput" type="file" accept="application/pdf,.pdf" />',
+        '<span class="ats-pdf-icon">PDF</span>',
+        '<strong>Drop exported PDF here</strong>',
+        '<small>or click to choose the file</small>',
+      '</label>',
+      '<div id="atsPdfLoading" class="ats-pdf-loading" hidden><span></span><div><strong>Reading PDF text layer…</strong><small>Comparing it with your current CV.</small></div></div>',
+      '<div id="atsPdfError" class="ats-pdf-error" hidden></div>',
+      '<div id="atsPdfResult" hidden>',
+        '<section class="ats-pdf-score">',
+          '<div><span>PDF fidelity</span><strong id="atsPdfScore">—</strong><small id="atsPdfVerdict">Waiting for file</small></div>',
+          '<div class="ats-pdf-metrics">',
+            '<article><span>Text retained</span><strong id="atsPdfRetained">—</strong></article>',
+            '<article><span>Critical fields</span><strong id="atsPdfCritical">—</strong></article>',
+            '<article><span>Reading order</span><strong id="atsPdfOrder">—</strong></article>',
+          '</div>',
+        '</section>',
+        '<div class="ats-section-title"><div><span>Source vs PDF</span><strong>What survived export</strong></div><small id="atsPdfMeta"></small></div>',
+        '<div id="atsPdfFieldList" class="ats-pdf-field-list"></div>',
+        '<div class="ats-section-title"><div><span>Reading order</span><strong id="atsPdfOrderTitle">Sequence check</strong></div><small id="atsPdfOrderMeta"></small></div>',
+        '<div id="atsPdfOrderAdvice" class="ats-pdf-advice"></div>',
+        '<details class="ats-pdf-raw">',
+          '<summary>View extracted PDF text</summary>',
+          '<pre id="atsPdfRawText"></pre>',
+        '</details>',
+      '</div>',
+      '<div class="ats-pdf-actions">',
+        '<button type="button" id="atsPdfExportAgain" class="button ghost">Export PDF again</button>',
+        '<button type="button" id="atsPdfChooseAgain" class="button primary">Choose PDF</button>',
+      '</div>',
+      '<p class="ats-help">PDF verification checks the real selectable text layer. Scanned/image-only PDFs can score poorly even if they look visually correct.</p>',
+    ].join('')
+    panel.insertBefore(pane, panel.querySelector('.ats-footer'))
+
+    // The original ATS script bound existing tabs before this new tab existed, so bind it here.
+    tab.addEventListener('click', () => {
+      $$('[data-ats-tab]').forEach((item) => item.classList.toggle('active', item === tab))
+      $$('[data-ats-pane]').forEach((item) => item.classList.toggle('active', item.dataset.atsPane === 'pdf'))
+    })
+
+    const input = $('#atsPdfInput')
+    const drop = $('#atsPdfDrop')
+    drop.addEventListener('dragover', (event) => {
+      event.preventDefault()
+      drop.classList.add('dragging')
+    })
+    drop.addEventListener('dragleave', () => drop.classList.remove('dragging'))
+    drop.addEventListener('drop', (event) => {
+      event.preventDefault()
+      drop.classList.remove('dragging')
+      const file = event.dataTransfer?.files?.[0]
+      if (file) verify(file)
+    })
+    input.addEventListener('change', () => {
+      const file = input.files?.[0]
+      if (file) verify(file)
+    })
+    $('#atsPdfChooseAgain').addEventListener('click', () => input.click())
+    $('#atsPdfExportAgain').addEventListener('click', () => $('#print')?.click())
+
+    // After the browser print flow closes, signal the next useful action without forcing a modal.
+    window.addEventListener('afterprint', () => {
+      const button = $('#atsScanButton')
+      if (!button) return
+      button.classList.add('ats-pdf-ready')
+      button.title = 'ATS Scan · verify the PDF you just exported'
+      const badge = $('#atsScoreBadge')
+      if (badge && !badge.dataset.readiness) {
+        badge.dataset.readiness = badge.textContent || ''
+      }
+      if (badge) badge.textContent = 'PDF?'
+    })
+    $('#atsScanButton')?.addEventListener('click', () => {
+      const badge = $('#atsScoreBadge')
+      if (badge?.dataset.readiness) {
+        badge.textContent = badge.dataset.readiness
+        delete badge.dataset.readiness
+      }
+      $('#atsScanButton')?.classList.remove('ats-pdf-ready')
+    })
+  }
+
+  const openSourceField = (selector) => {
+    if (!selector) return
+    $('#atsShell').hidden = true
+    document.body.classList.remove('ats-open')
+    setTimeout(() => {
+      if ($('#editor')?.classList.contains('collapsed')) $('#toggleEditor')?.click()
+      $('.tab[data-tab="content"]')?.click()
+      const node = $(selector)
+      node?.scrollIntoView({ behavior:'smooth', block:'center' })
+      const focus = node?.matches('input,textarea,select') ? node : node?.querySelector('input,textarea,select,button')
+      focus?.focus({ preventScroll:true })
+    }, 80)
+  }
+
+  const renderResult = (report, filename) => {
+    $('#atsPdfResult').hidden = false
+    $('#atsPdfScore').textContent = report.score
+    $('#atsPdfVerdict').textContent = verdict(report.score)
+    $('#atsPdfRetained').textContent = report.retained + '%'
+    $('#atsPdfCritical').textContent = report.criticalScore + '%'
+    $('#atsPdfOrder').textContent = report.order.score + '%'
+    $('#atsPdfMeta').textContent = report.pages + ' page' + (report.pages === 1 ? '' : 's') + ' · ' + report.pdfWordCount + ' PDF words'
+    $('#atsPdfRawText').textContent = report.pdfText || 'No selectable PDF text found.'
+    $('#atsPdfOrderTitle').textContent = report.order.inversions ? 'Possible sequence changes' : 'Sequence looks consistent'
+    $('#atsPdfOrderMeta').textContent = report.order.matched + ' comparable text blocks'
+    $('#atsPdfOrderAdvice').innerHTML = report.order.inversions
+      ? '<strong>Review reading order</strong><p>' + report.order.inversions + ' sequence break(s) detected. Multi-column layouts are the first thing to review.</p><button type="button" data-pdf-use-ats>Use ATS template</button>'
+      : '<strong>Order preserved</strong><p>Matched blocks generally appear in the same sequence as the live CV.</p>'
+
+    $('#atsPdfFieldList').innerHTML = report.groups.map((group) => {
+      const state = stateLabel(group.coverage)
+      const detail = group.coverage.present
+        ? group.coverage.matched + '/' + group.coverage.total + ' source value(s) found in PDF'
+        : 'No source data to compare'
+      return '<article data-pdf-state="' + state.key + '">' +
+        '<span class="ats-pdf-state-dot"></span>' +
+        '<div><strong>' + esc(group.label) + '</strong><small>' + esc(detail) + '</small></div>' +
+        '<b>' + esc(state.label) + '</b>' +
+        (group.selector && state.key !== 'retained' && state.key !== 'empty'
+          ? '<button type="button" data-pdf-edit="' + esc(group.selector) + '">Fix source</button>'
+          : '') +
+      '</article>'
+    }).join('')
+
+    $('#atsPdfFieldList').onclick = (event) => {
+      const edit = event.target.closest('[data-pdf-edit]')
+      if (edit) openSourceField(edit.dataset.pdfEdit)
+    }
+    $('[data-pdf-use-ats]')?.addEventListener('click', () => {
+      $('#atsShell').hidden = true
+      document.body.classList.remove('ats-open')
+      setTimeout(() => {
+        const card = $$('.template-card').find((item) => /ATS Precision/i.test(item.textContent || ''))
+          || $$('.template-card').find((item) => /ATS Clean/i.test(item.textContent || ''))
+        card?.click()
+        card?.scrollIntoView({ behavior:'smooth', block:'center' })
+      }, 80)
+    })
+
+    const drop = $('#atsPdfDrop')
+    drop.querySelector('strong').textContent = filename
+    drop.querySelector('small').textContent = 'Verified · drop another PDF to compare again'
+    drop.classList.add('verified')
+  }
+
+  const verify = async (file) => {
+    const error = $('#atsPdfError')
+    const loading = $('#atsPdfLoading')
+    error.hidden = true
+    if (!file || !/pdf/i.test(file.type || '') && !/\.pdf$/i.test(file.name || '')) {
+      error.textContent = 'Please choose a PDF file.'
+      error.hidden = false
+      return
+    }
+    loading.hidden = false
+    $('#atsPdfResult').hidden = true
+    try {
+      const extracted = await extractPdfText(file)
+      const report = analyzePdf(extracted.text || '', Number(extracted.pages || 1))
+      renderResult(report, file.name || 'Exported CV.pdf')
+    } catch (cause) {
+      console.error('ATS PDF verification failed.', cause)
+      error.innerHTML = '<strong>Unable to read this PDF.</strong><span>Try the exported file again. Image-only/scanned PDFs may not contain a readable text layer.</span>'
+      error.hidden = false
+    } finally {
+      loading.hidden = true
+    }
+  }
+
+  const boot = () => inject()
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot)
+  else boot()
+})()

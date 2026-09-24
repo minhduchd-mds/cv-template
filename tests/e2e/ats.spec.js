@@ -38,3 +38,46 @@ test('static ATS scanner separates readiness from target fit and supports edits'
   expect(target.seniority).toBe('senior')
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('ATS PDF verification compares exported text with the live CV', async ({ page }) => {
+  const runtimeErrors = []
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.goto('/studio/')
+  await page.evaluate(() => {
+    window.__atsPdfTextExtractor = async () => ({
+      pages: 1,
+      text: [
+        'Alex Chen',
+        'Senior Product Designer',
+        'alex.chen@example.com',
+        'Product Platform',
+        'Senior Product Designer',
+        '2022 — Present',
+        'Design systems',
+        'Figma',
+      ].join('\\n'),
+    })
+  })
+
+  await page.getByRole('button', { name: /ATS Scan/i }).click()
+  await page.getByRole('button', { name: 'PDF verify' }).click()
+  await expect(page.getByText('Check the PDF ATS will receive')).toBeVisible()
+
+  await page.locator('#atsPdfInput').setInputFiles({
+    name: 'alex-chen-cv.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4\\n% test fixture'),
+  })
+
+  await expect(page.locator('#atsPdfResult')).toBeVisible()
+  await expect(page.locator('#atsPdfScore')).not.toHaveText('—')
+  await expect(page.locator('#atsPdfMeta')).toContainText('1 page')
+  await expect(page.locator('#atsPdfRawText')).toContainText('Alex Chen')
+
+  const projectRow = page.locator('#atsPdfFieldList article').filter({ hasText: 'Projects' })
+  await expect(projectRow).toContainText(/Missing|Partial|No source data/)
+
+  expect(runtimeErrors).toEqual([])
+})
