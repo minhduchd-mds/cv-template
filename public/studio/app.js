@@ -111,6 +111,8 @@
     avatar: '',
     name: 'Alex Chen',
     role: 'Senior Product Designer',
+    headline: 'Driving revenue. Building partnerships. Creating opportunity.',
+    quote: "I don't just meet targets. I create momentum.",
     email: 'alex.chen@example.com',
     phone: '+84 900 000 000',
     location: 'Hanoi, Vietnam',
@@ -228,6 +230,8 @@
     }[char]))
 
   let profile = restoreObject(PROFILE_KEY, demoProfile)
+  if (!String(profile.headline || '').trim()) profile.headline = demoProfile.headline
+  if (!String(profile.quote || '').trim()) profile.quote = demoProfile.quote
   let settings = restoreObject(SETTINGS_KEY, defaultSettings)
   let avatarDrag = null
   let sectionDrag = null
@@ -650,7 +654,13 @@
 
   const renderRevenueDriver = () => `
     <div class="ref-cv ref-revenue-driver">
-      <header data-edit-pane="content" data-edit-focus="#name"><div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>Driving revenue. Building partnerships. Creating opportunity.</p></div>${avatarMarkup('ref-sales-avatar')}</header>
+      <header>
+        <div>
+          <div data-edit-pane="content" data-edit-focus="#name"><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2></div>
+          <p data-edit-pane="content" data-edit-focus="#headline">${escapeHtml(profile.headline || demoProfile.headline)}</p>
+        </div>
+        <div data-edit-pane="content" data-edit-focus="#name">${avatarMarkup('ref-sales-avatar')}</div>
+      </header>
       ${refContact()}
       <div class="ref-sales-body">
         <main>
@@ -658,7 +668,7 @@
           <section data-edit-pane="content" data-edit-focus="#summary"><h3>Key Performance Highlights</h3>${refHighlights('ref-sales-metrics')}</section>
           <section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-sales-experience')}</section>
         </main>
-        <aside data-edit-pane="content" data-edit-focus="#skills"><h3>Core Skills</h3>${refSkills('ref-sales-skills')}<h3>Selected Clients</h3><div class="ref-client-grid"><span>Microsoft</span><span>Vodafone</span><span>Sage</span><span>DELL</span><span>HSBC</span><span>Atlassian</span></div><blockquote>“I don't just meet targets.<br>I create momentum.”</blockquote></aside>
+        <aside><div data-edit-pane="content" data-edit-focus="#skills"><h3>Core Skills</h3>${refSkills('ref-sales-skills')}<h3>Selected Clients</h3><div class="ref-client-grid"><span>Microsoft</span><span>Vodafone</span><span>Sage</span><span>DELL</span><span>HSBC</span><span>Atlassian</span></div></div><blockquote data-edit-pane="content" data-edit-focus="#quote">“${escapeHtml(profile.quote || demoProfile.quote)}”</blockquote></aside>
       </div>
     </div>
   `
@@ -883,7 +893,7 @@
   }
 
   const syncEditorFields = () => {
-    ;['name', 'role', 'email', 'phone', 'location', 'website', 'summary'].forEach((key) => {
+    ;['name', 'role', 'headline', 'quote', 'email', 'phone', 'location', 'website', 'summary'].forEach((key) => {
       const input = $('#' + key)
       if (input) input.value = profile[key] || ''
     })
@@ -989,7 +999,7 @@
     renderQuickAvatar()
   }
 
-  ;['name', 'role', 'email', 'phone', 'location', 'website', 'summary'].forEach((key) => {
+  ;['name', 'role', 'headline', 'quote', 'email', 'phone', 'location', 'website', 'summary'].forEach((key) => {
     $('#' + key).addEventListener('input', (event) => {
       profile[key] = event.currentTarget.value
       persist()
