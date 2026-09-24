@@ -1208,7 +1208,6 @@
   const printCv = () => {
     preparePrintFit()
     window.print()
-    window.setTimeout(resetPrintFit, 0)
   }
 
   window.addEventListener('afterprint', resetPrintFit)
