@@ -119,12 +119,14 @@
 
           <div class="editor-grid">
             <label class="editor-field editor-field-wide"><span>Full name</span><input :value="profile.name" type="text" @input="update('name', $event.target.value)" /></label>
-            <label class="editor-field editor-field-wide"><span>Role / headline</span><input :value="profile.role" type="text" @input="update('role', $event.target.value)" /></label>
+            <label class="editor-field editor-field-wide"><span>Role / title</span><input :value="profile.role" type="text" @input="update('role', $event.target.value)" /></label>
+            <label class="editor-field editor-field-wide"><span>Headline / tagline</span><input :value="profile.headline || ''" type="text" @input="update('headline', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Location</span><input :value="profile.location" type="text" @input="update('location', $event.target.value)" /></label>
             <label class="editor-field"><span>Email</span><input :value="profile.email" type="email" @input="update('email', $event.target.value)" /></label>
             <label class="editor-field"><span>Phone</span><input :value="profile.phone" type="text" @input="update('phone', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Website / portfolio</span><input :value="profile.website" type="text" @input="update('website', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Professional summary</span><textarea :value="profile.summary" rows="7" @input="update('summary', $event.target.value)"></textarea><small>{{ profile.summary.length }} characters</small></label>
+            <label class="editor-field editor-field-wide"><span>Personal quote / statement</span><textarea :value="profile.quote || ''" rows="3" @input="update('quote', $event.target.value)"></textarea><small>Optional — used by selected templates such as Revenue Driver.</small></label>
           </div>
         </section>
 
