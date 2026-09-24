@@ -1182,7 +1182,36 @@
     setEditorOpen($('#editor').classList.contains('collapsed'))
   })
 
-  $('#print').addEventListener('click', () => window.print())
+  const resetPrintFit = () => {
+    const paper = $('#paper')
+    if (!paper) return
+    paper.style.removeProperty('--print-fit')
+    paper.style.removeProperty('--print-width')
+    paper.style.removeProperty('--print-min-height')
+  }
+
+  const preparePrintFit = () => {
+    const paper = $('#paper')
+    if (!paper) return 1
+    resetPrintFit()
+    const a4HeightPx = 1123
+    const measuredHeight = Math.max(a4HeightPx, paper.scrollHeight, paper.offsetHeight)
+    const fit = Math.max(0.68, Math.min(1, a4HeightPx / measuredHeight))
+    paper.style.setProperty('--print-fit', fit.toFixed(4))
+    paper.style.setProperty('--print-width', `${(210 / fit).toFixed(2)}mm`)
+    paper.style.setProperty('--print-min-height', `${(297 / fit).toFixed(2)}mm`)
+    paper.dataset.printFit = fit.toFixed(4)
+    return fit
+  }
+
+  const printCv = () => {
+    preparePrintFit()
+    window.print()
+    window.setTimeout(resetPrintFit, 0)
+  }
+
+  window.addEventListener('afterprint', resetPrintFit)
+  $('#print').addEventListener('click', printCv)
 
   $('#reset').addEventListener('click', () => {
     profile = clone(demoProfile)
@@ -1379,7 +1408,7 @@
     if (key === 'e') setEditorOpen(true)
     if (key === 'p') {
       event.preventDefault()
-      window.print()
+      printCv()
     }
     if (event.key === 'Escape') setEditorOpen(false)
   })
