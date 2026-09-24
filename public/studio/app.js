@@ -1418,4 +1418,308 @@
   renderAll()
   lastHistoryState = captureHistoryState()
   syncHistoryControls()
+
+
+  /* WORKSPACE_BACKUP_V1 */
+  const BACKUP_FORMAT = 'cv-studio-backup'
+  const BACKUP_SCHEMA = 1
+  const BACKUP_KEYS = [
+    { key: PROFILE_KEY, type: 'object' },
+    { key: SETTINGS_KEY, type: 'object' },
+    { key: 'cv-studio-ats-target-v2', type: 'object' },
+    { key: 'cv-studio-ats-versions-v1', type: 'array' },
+    { key: 'cv-studio-ats-applications-v1', type: 'array' },
+  ]
+  const BACKUP_DB_NAME = 'cv-studio-ats-workspace'
+  const BACKUP_DB_VERSION = 1
+  const BACKUP_PDF_STORE = 'pdfs'
+  let pendingWorkspaceBackup = null
+
+  const safeJsonValue = (key, fallback) => {
+    const raw = localStorage.getItem(key)
+    if (!raw) return fallback
+    try { return JSON.parse(raw) } catch { return fallback }
+  }
+
+  const workspaceSnapshot = () => {
+    const data = {}
+    BACKUP_KEYS.forEach(({ key, type }) => {
+      data[key] = safeJsonValue(key, type === 'array' ? [] : {})
+    })
+    return data
+  }
+
+  const openBackupDb = () => new Promise((resolve, reject) => {
+    if (!window.indexedDB) return resolve(null)
+    const request = indexedDB.open(BACKUP_DB_NAME, BACKUP_DB_VERSION)
+    request.onupgradeneeded = () => {
+      const db = request.result
+      if (!db.objectStoreNames.contains(BACKUP_PDF_STORE)) db.createObjectStore(BACKUP_PDF_STORE, { keyPath: 'applicationId' })
+    }
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error)
+  })
+
+  const readPdfRecords = async () => {
+    const db = await openBackupDb()
+    if (!db || !db.objectStoreNames.contains(BACKUP_PDF_STORE)) return []
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(BACKUP_PDF_STORE, 'readonly')
+      const request = tx.objectStore(BACKUP_PDF_STORE).getAll()
+      request.onsuccess = () => resolve(request.result || [])
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  const putPdfRecord = async (record) => {
+    const db = await openBackupDb()
+    if (!db) return
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(BACKUP_PDF_STORE, 'readwrite')
+      tx.objectStore(BACKUP_PDF_STORE).put(record)
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => reject(tx.error)
+    })
+  }
+
+  const blobToDataUrl = (blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(blob)
+  })
+
+  const dataUrlToBlob = (value, fallbackType = 'application/pdf') => {
+    const parts = String(value || '').split(',', 2)
+    if (parts.length !== 2 || !/;base64/i.test(parts[0])) return null
+    const typeMatch = parts[0].match(/^data:([^;]+)/i)
+    const binary = atob(parts[1])
+    const bytes = new Uint8Array(binary.length)
+    for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index)
+    return new Blob([bytes], { type: typeMatch?.[1] || fallbackType })
+  }
+
+  const backupSummary = (data) => {
+    const profileData = data?.[PROFILE_KEY] || {}
+    const versionsData = data?.['cv-studio-ats-versions-v1'] || []
+    const appsData = data?.['cv-studio-ats-applications-v1'] || []
+    return {
+      name: String(profileData.name || '').trim() || 'Unnamed CV',
+      experience: Array.isArray(profileData.experience) ? profileData.experience.length : 0,
+      projects: Array.isArray(profileData.projects) ? profileData.projects.length : 0,
+      versions: Array.isArray(versionsData) ? versionsData.length : 0,
+      applications: Array.isArray(appsData) ? appsData.length : 0,
+    }
+  }
+
+  const createBackupPayload = async (includePdfs) => {
+    const data = workspaceSnapshot()
+    const records = includePdfs ? await readPdfRecords() : []
+    const pdfs = []
+    for (const record of records) {
+      if (!record?.applicationId || !record?.file) continue
+      pdfs.push({
+        applicationId: record.applicationId,
+        name: record.name || record.file.name || 'cv.pdf',
+        type: record.type || record.file.type || 'application/pdf',
+        size: Number(record.size || record.file.size || 0),
+        savedAt: record.savedAt || new Date().toISOString(),
+        dataUrl: await blobToDataUrl(record.file),
+      })
+    }
+    return {
+      format: BACKUP_FORMAT,
+      schemaVersion: BACKUP_SCHEMA,
+      createdAt: new Date().toISOString(),
+      includesPdfs: Boolean(includePdfs),
+      summary: backupSummary(data),
+      data,
+      pdfs,
+    }
+  }
+
+  const validateBackupPayload = (payload) => {
+    if (!payload || payload.format !== BACKUP_FORMAT) return { ok: false, message: 'This is not a CV Studio backup file.' }
+    if (Number(payload.schemaVersion) !== BACKUP_SCHEMA) return { ok: false, message: 'Unsupported backup schema version.' }
+    if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) return { ok: false, message: 'Backup data is incomplete.' }
+    for (const { key, type } of BACKUP_KEYS) {
+      const value = payload.data[key]
+      if (value == null) continue
+      if (type === 'array' && !Array.isArray(value)) return { ok: false, message: 'Backup has an invalid ' + key + ' section.' }
+      if (type === 'object' && (typeof value !== 'object' || Array.isArray(value))) return { ok: false, message: 'Backup has an invalid ' + key + ' section.' }
+    }
+    if (payload.pdfs != null && !Array.isArray(payload.pdfs)) return { ok: false, message: 'Backup PDF section is invalid.' }
+    return { ok: true, message: '' }
+  }
+
+  const downloadBackupJson = (payload) => {
+    const date = new Date().toISOString().slice(0, 10)
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'cv-studio-backup-' + date + '.cvstudio.json'
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  const renderBackupImportPreview = (payload) => {
+    const host = $('#backupImportPreview')
+    if (!host) return
+    if (!payload) {
+      host.classList.remove('error')
+      host.innerHTML = '<small>No backup selected.</small>'
+      return
+    }
+    if (payload.error) {
+      host.classList.add('error')
+      host.innerHTML = '<strong>Cannot restore</strong><small>' + escapeHtml(payload.error) + '</small>'
+      return
+    }
+    host.classList.remove('error')
+    const summary = payload.summary || backupSummary(payload.data || {})
+    host.innerHTML =
+      '<div><span>Profile</span><strong>' + escapeHtml(summary.name || 'Unnamed CV') + '</strong></div>' +
+      '<div><span>Experience</span><strong>' + Number(summary.experience || 0) + '</strong></div>' +
+      '<div><span>Versions</span><strong>' + Number(summary.versions || 0) + '</strong></div>' +
+      '<div><span>Applications</span><strong>' + Number(summary.applications || 0) + '</strong></div>' +
+      '<div><span>PDFs</span><strong>' + Number((payload.pdfs || []).length) + '</strong></div>' +
+      '<small>Created ' + escapeHtml(String(payload.createdAt || 'Unknown date')) + '</small>'
+  }
+
+  const renderBackupSummary = () => {
+    const host = $('#workspaceBackupSummary')
+    if (!host) return
+    const summary = backupSummary(workspaceSnapshot())
+    host.innerHTML =
+      '<article><span>Profile</span><strong>' + escapeHtml(summary.name) + '</strong></article>' +
+      '<article><span>Experience</span><strong>' + summary.experience + '</strong></article>' +
+      '<article><span>Projects</span><strong>' + summary.projects + '</strong></article>' +
+      '<article><span>Versions</span><strong>' + summary.versions + '</strong></article>' +
+      '<article><span>Applications</span><strong>' + summary.applications + '</strong></article>'
+  }
+
+  const ensureBackupUi = () => {
+    if ($('#workspaceBackupShell')) return
+    const shell = document.createElement('div')
+    shell.id = 'workspaceBackupShell'
+    shell.className = 'workspace-backup-shell no-print'
+    shell.hidden = true
+    shell.innerHTML =
+      '<div class="workspace-backup-backdrop" data-backup-close></div>' +
+      '<section class="workspace-backup-dialog" role="dialog" aria-modal="true" aria-labelledby="workspaceBackupTitle">' +
+        '<header><div><span>Data safety</span><h2 id="workspaceBackupTitle">Backup & Recovery</h2><p>Export the current CV Studio workspace before major edits or restore a previous backup.</p></div><button type="button" data-backup-close aria-label="Close backup dialog">×</button></header>' +
+        '<div id="workspaceBackupSummary" class="workspace-backup-summary"></div>' +
+        '<section class="workspace-backup-card"><div><span>01 · Export</span><strong>Save a local backup</strong><p>Profile, design settings, ATS target, versions and applications are always included.</p></div>' +
+          '<label class="workspace-backup-check"><input id="backupIncludePdfs" type="checkbox" /><span><strong>Include attached PDFs</strong><small>Makes the backup larger, but restores final application PDFs too.</small></span></label>' +
+          '<button id="backupExportNow" type="button" class="button primary">Download backup</button></section>' +
+        '<section class="workspace-backup-card"><div><span>02 · Restore</span><strong>Preview before replacing data</strong><p>Choosing a file never changes the current workspace until you confirm Restore.</p></div>' +
+          '<label class="workspace-backup-file"><input id="backupImportFile" type="file" accept=".json,.cvstudio,application/json" /><span>Choose backup file</span></label>' +
+          '<div id="backupImportPreview" class="workspace-backup-preview"><small>No backup selected.</small></div>' +
+          '<button id="backupRestoreNow" type="button" class="button primary" disabled>Restore selected backup</button></section>' +
+        '<footer><span id="backupWorkspaceStatus">Everything stays on this device unless you download the backup file.</span></footer>' +
+      '</section>'
+    document.body.appendChild(shell)
+
+    shell.addEventListener('click', (event) => {
+      if (event.target.closest('[data-backup-close]')) setBackupOpen(false)
+    })
+
+    $('#backupExportNow').addEventListener('click', async () => {
+      const button = $('#backupExportNow')
+      const status = $('#backupWorkspaceStatus')
+      button.disabled = true
+      status.textContent = 'Preparing backup…'
+      try {
+        const payload = await createBackupPayload($('#backupIncludePdfs').checked)
+        downloadBackupJson(payload)
+        status.textContent = 'Backup downloaded · ' + payload.summary.applications + ' applications · ' + payload.pdfs.length + ' PDFs.'
+      } catch (error) {
+        console.error(error)
+        status.textContent = 'Backup could not be created. No workspace data was changed.'
+      } finally {
+        button.disabled = false
+      }
+    })
+
+    $('#backupImportFile').addEventListener('change', async (event) => {
+      pendingWorkspaceBackup = null
+      $('#backupRestoreNow').disabled = true
+      const file = event.currentTarget.files?.[0]
+      if (!file) return renderBackupImportPreview(null)
+      try {
+        const payload = JSON.parse(await file.text())
+        const validation = validateBackupPayload(payload)
+        if (!validation.ok) return renderBackupImportPreview({ error: validation.message })
+        pendingWorkspaceBackup = payload
+        renderBackupImportPreview(payload)
+        $('#backupRestoreNow').disabled = false
+      } catch {
+        renderBackupImportPreview({ error: 'The selected file is not valid JSON.' })
+      }
+    })
+
+    $('#backupRestoreNow').addEventListener('click', async () => {
+      if (!pendingWorkspaceBackup) return
+      if (!window.confirm('Restore this CV Studio backup? Current structured workspace data will be replaced.')) return
+      const button = $('#backupRestoreNow')
+      button.disabled = true
+      $('#backupWorkspaceStatus').textContent = 'Restoring backup…'
+      try {
+        const imported = clone(pendingWorkspaceBackup.data)
+        const currentProfile = safeJsonValue(PROFILE_KEY, {})
+        if (currentProfile.avatar && imported[PROFILE_KEY] && !imported[PROFILE_KEY].avatar) imported[PROFILE_KEY].avatar = currentProfile.avatar
+        if (!pendingWorkspaceBackup.includesPdfs && Array.isArray(imported['cv-studio-ats-applications-v1'])) {
+          imported['cv-studio-ats-applications-v1'] = imported['cv-studio-ats-applications-v1'].map((item) => ({ ...item, pdf: null }))
+        }
+        BACKUP_KEYS.forEach(({ key, type }) => {
+          const value = imported[key]
+          localStorage.setItem(key, JSON.stringify(value == null ? (type === 'array' ? [] : {}) : value))
+        })
+        if (pendingWorkspaceBackup.includesPdfs) {
+          for (const pdf of pendingWorkspaceBackup.pdfs || []) {
+            const blob = dataUrlToBlob(pdf.dataUrl, pdf.type)
+            if (!blob || !pdf.applicationId) continue
+            const file = new File([blob], pdf.name || 'cv.pdf', { type: pdf.type || blob.type || 'application/pdf' })
+            await putPdfRecord({
+              applicationId: pdf.applicationId,
+              file,
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              savedAt: pdf.savedAt || new Date().toISOString(),
+            })
+          }
+        }
+        sessionStorage.setItem('cv-studio-backup-restored', pendingWorkspaceBackup.createdAt || new Date().toISOString())
+        location.reload()
+      } catch (error) {
+        console.error(error)
+        $('#backupWorkspaceStatus').textContent = 'Restore failed. The page was not reloaded; review current data before trying again.'
+        button.disabled = false
+      }
+    })
+  }
+
+  const setBackupOpen = (open) => {
+    ensureBackupUi()
+    const shell = $('#workspaceBackupShell')
+    shell.hidden = !open
+    document.body.classList.toggle('workspace-backup-open', open)
+    if (open) {
+      renderBackupSummary()
+      const restored = sessionStorage.getItem('cv-studio-backup-restored')
+      if (restored) {
+        $('#backupWorkspaceStatus').textContent = 'Backup restored successfully · source created ' + restored
+        sessionStorage.removeItem('cv-studio-backup-restored')
+      }
+      setTimeout(() => $('#workspaceBackupShell [data-backup-close]')?.focus(), 0)
+    }
+  }
+
+  ensureBackupUi()
+  $('#backupWorkspace')?.addEventListener('click', () => setBackupOpen(true))
+
 })()

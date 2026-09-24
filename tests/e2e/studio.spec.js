@@ -535,3 +535,37 @@ test('PDF export computes a one-page print fit when CV content exceeds A4', asyn
   expect(result.fit).toBeLessThan(1)
   expect(result.fit).toBeGreaterThanOrEqual(.68)
 })
+
+
+test('workspace backup previews import before restore', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+  await page.goto('/studio/')
+  await page.locator('#backupWorkspace').click()
+  await expect(page.getByRole('heading',{name:'Backup & Recovery'})).toBeVisible()
+  await expect(page.locator('#workspaceBackupSummary')).toContainText('Applications')
+
+  const backup={
+    format:'cv-studio-backup',
+    schemaVersion:1,
+    createdAt:'2026-09-24T00:00:00.000Z',
+    includesPdfs:false,
+    summary:{name:'Imported Candidate',experience:2,projects:1,versions:3,applications:4},
+    data:{
+      'cv-studio-static-v2':{name:'Imported Candidate',experience:[],projects:[],skills:[],languages:[]},
+      'cv-studio-static-settings-v2':{},
+      'cv-studio-ats-target-v2':{},
+      'cv-studio-ats-versions-v1':[],
+      'cv-studio-ats-applications-v1':[]
+    },
+    pdfs:[]
+  }
+  await page.locator('#backupImportFile').setInputFiles({
+    name:'workspace.cvstudio.json',
+    mimeType:'application/json',
+    buffer:Buffer.from(JSON.stringify(backup))
+  })
+  await expect(page.locator('#backupImportPreview')).toContainText('Imported Candidate')
+  await expect(page.locator('#backupRestoreNow')).toBeEnabled()
+  expect(runtimeErrors).toEqual([])
+})
