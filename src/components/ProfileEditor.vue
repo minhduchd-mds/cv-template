@@ -120,13 +120,13 @@
           <div class="editor-grid">
             <label class="editor-field editor-field-wide"><span>Full name</span><input :value="profile.name" type="text" @input="update('name', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Role / title</span><input :value="profile.role" type="text" @input="update('role', $event.target.value)" /></label>
-            <label class="editor-field editor-field-wide"><span>Headline / tagline</span><input :value="profile.headline || ''" type="text" @input="update('headline', $event.target.value)" /></label>
+            <label class="editor-field editor-field-wide"><span>Headline / tagline</span><input data-profile-field="headline" :value="profile.headline || ''" type="text" @input="update('headline', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Location</span><input :value="profile.location" type="text" @input="update('location', $event.target.value)" /></label>
             <label class="editor-field"><span>Email</span><input :value="profile.email" type="email" @input="update('email', $event.target.value)" /></label>
             <label class="editor-field"><span>Phone</span><input :value="profile.phone" type="text" @input="update('phone', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Website / portfolio</span><input :value="profile.website" type="text" @input="update('website', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Professional summary</span><textarea :value="profile.summary" rows="7" @input="update('summary', $event.target.value)"></textarea><small>{{ profile.summary.length }} characters</small></label>
-            <label class="editor-field editor-field-wide"><span>Personal quote / statement</span><textarea :value="profile.quote || ''" rows="3" @input="update('quote', $event.target.value)"></textarea><small>Optional — used by selected templates such as Revenue Driver.</small></label>
+            <label class="editor-field editor-field-wide"><span>Personal quote / statement</span><textarea data-profile-field="quote" :value="profile.quote || ''" rows="3" @input="update('quote', $event.target.value)"></textarea><small>Optional — used by selected templates such as Revenue Driver.</small></label>
           </div>
         </section>
 
@@ -373,6 +373,7 @@ export default {
     accent: { type: String, default: '#6d5dfc' },
     template: { type: Object, default: null },
     requestedTab: { type: String, default: 'profile' },
+    requestedField: { type: String, default: '' },
   },
   emits: ['close', 'update-field', 'update-item', 'update-array', 'add-item', 'remove-item', 'move-item', 'update-appearance', 'update-accent', 'reset'],
   data() {
@@ -467,14 +468,29 @@ export default {
   watch: {
     requestedTab(value) {
       this.syncRequestedTab(value)
+      if (this.open) this.focusRequestedField(this.requestedField)
+    },
+    requestedField(value) {
+      if (this.open) this.focusRequestedField(value)
     },
     open(value) {
-      if (value) this.syncRequestedTab(this.requestedTab)
+      if (value) {
+        this.syncRequestedTab(this.requestedTab)
+        this.focusRequestedField(this.requestedField)
+      }
     },
   },
   methods: {
     syncRequestedTab(value) {
       if (this.tabs.some((tab) => tab.id === value)) this.activeTab = value
+    },
+    focusRequestedField(value) {
+      if (!['headline', 'quote'].includes(value)) return
+      this.$nextTick(() => {
+        const target = this.$el?.querySelector?.(`[data-profile-field="${value}"]`)
+        target?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+        target?.focus?.({ preventScroll: true })
+      })
     },
     update(key, value) { this.$emit('update-field', { key, value }) },
     updateItem(section, index, key, value) { this.$emit('update-item', { section, index, key, value }) },

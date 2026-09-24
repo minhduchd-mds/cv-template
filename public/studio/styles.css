@@ -3423,7 +3423,4 @@ button{cursor:pointer}
     break-inside:avoid-page;
     page-break-inside:avoid;
   }
-  .paper .ref-sales-body blockquote{
-    white-space:normal!important;
-  }
 }

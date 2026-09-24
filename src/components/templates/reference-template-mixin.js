@@ -59,18 +59,19 @@ export const referenceTemplateMixin = {
       if (!url) return {}
       return { backgroundImage: `url("${String(url).replace(/"/g, '%22')}")` }
     },
-    editAttrs(tab, sectionId = null) {
+    editAttrs(tab, sectionId = null, field = '') {
       if (!this.interactive) return {}
       const attrs = {
         'data-edit-section': tab,
         tabindex: 0,
         role: 'button',
-        'aria-label': `Edit ${tab} section`,
+        'aria-label': field ? `Edit ${field}` : `Edit ${tab} section`,
       }
       if (sectionId) {
         attrs['data-section-id'] = sectionId
         attrs.draggable = 'true'
       }
+      if (field) attrs['data-edit-field'] = field
       return attrs
     },
     handleEditRequest(event) {
@@ -78,7 +79,8 @@ export const referenceTemplateMixin = {
       const target = event.target?.closest?.('[data-edit-section]')
       if (!target || !this.$el.contains(target)) return
       const tab = target.getAttribute('data-edit-section')
-      if (tab) this.$emit('edit-section', tab)
+      const field = target.getAttribute('data-edit-field') || ''
+      if (tab) this.$emit('edit-section', field ? { tab, field } : tab)
     },
     handleKeydown(event) {
       if (!this.interactive || !['Enter', ' '].includes(event.key)) return
@@ -86,7 +88,8 @@ export const referenceTemplateMixin = {
       if (!target) return
       event.preventDefault()
       const tab = target.getAttribute('data-edit-section')
-      if (tab) this.$emit('edit-section', tab)
+      const field = target.getAttribute('data-edit-field') || ''
+      if (tab) this.$emit('edit-section', field ? { tab, field } : tab)
     },
     clearDragClasses() {
       this.$el?.querySelectorAll?.('.is-section-dragging, .is-section-drop-target').forEach((node) => node.classList.remove('is-section-dragging', 'is-section-drop-target'))

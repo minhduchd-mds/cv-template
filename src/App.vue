@@ -158,6 +158,7 @@
       :appearance="appearance"
       :template="selectedTemplate"
       :requested-tab="editorTab"
+      :requested-field="editorField"
       :accent="accent"
       @close="editorOpen = false"
       @update-field="updateProfileField"
@@ -227,6 +228,7 @@ export default {
       appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', textScale: 1, headingScale: 1, sectionSpacing: 'balanced', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 },
       editorOpen: false,
       editorTab: 'profile',
+      editorField: '',
       rolePresets: [
         { id: 'recruiter', label: 'Recruiter', note: 'ATS first', templateId: 'ats-precision', accent: '#15803D', appearance: { font: 'sans', density: 'compact', radius: 'sharp', projectLayout: 'list', textScale: .95, headingScale: .95, sectionSpacing: 'compact' } },
         { id: 'uiux', label: 'Senior UI/UX', note: 'Portfolio led', templateId: 'soft-portfolio-pro', accent: '#8B5CF6', appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', textScale: 1, headingScale: 1.05, sectionSpacing: 'balanced', avatarSize: 'large' } },
@@ -343,9 +345,12 @@ export default {
     window.clearTimeout(this.historyCoalesceTimer)
   },
   methods: {
-    openEditor(tab = 'profile') {
+    openEditor(request = 'profile') {
       const allowed = ['profile', 'impact', 'experience', 'projects', 'education', 'skills', 'design', 'layout']
+      const tab = request && typeof request === 'object' ? request.tab : request
+      const field = request && typeof request === 'object' ? request.field : ''
       this.editorTab = allowed.includes(tab) ? tab : 'profile'
+      this.editorField = typeof field === 'string' ? field : ''
       this.editorOpen = true
     },
     async uploadQuickAvatar(event) {
