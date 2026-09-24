@@ -496,16 +496,27 @@
 })()
 
 
-/* ATS_PRO_V2: transparent readiness + role/industry target fit */
+/* ATS_PRO_V2_FIXED */
 (() => {
   'use strict'
+
   const PROFILE_KEY = 'cv-studio-static-v2'
   const TARGET_KEY = 'cv-studio-ats-target-v2'
-  const $ = (s, r = document) => r.querySelector(s)
-  const $$ = (s, r = document) => [...r.querySelectorAll(s)]
-  const clamp = (n) => Math.max(0, Math.min(100, Math.round(n)))
-  const norm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}+#./%-]+/gu, ' ').replace(/\s+/g, ' ').trim()
-  const read = (key, fallback = {}) => { try { return JSON.parse(localStorage.getItem(key) || '') || fallback } catch { return fallback } }
+  const $ = (selector, root = document) => root.querySelector(selector)
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)]
+  const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)))
+  const normalize = (value) => String(value == null ? '' : value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}+#./@%-]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  const readJson = (key, fallback) => {
+    try { return JSON.parse(localStorage.getItem(key) || '') || fallback }
+    catch { return fallback }
+  }
 
   const ROLES = {
     auto: ['Auto from template', []],
@@ -519,131 +530,373 @@
     hr: ['HR · Talent', ['recruitment','talent acquisition','employee engagement','hr operations','performance management','onboarding','learning and development']],
     finance: ['Finance · Banking', ['financial analysis','budgeting','forecasting','reporting','investment','risk','excel','financial modeling','compliance']],
     research: ['Research · Academic', ['research','publication','methodology','analysis','teaching','grant','peer review','study']],
-    general: ['General professional', ['leadership','communication','project management','stakeholder management','problem solving','collaboration','delivery']],
+    general: ['General professional', ['leadership','communication','project management','stakeholder management','problem solving','collaboration','delivery']]
   }
+
   const INDUSTRIES = {
-    general: ['Any industry', []], technology: ['Technology · SaaS', ['saas','platform','software','digital product','cloud','enterprise','b2b']], telecom: ['Telecom', ['telecom','telecommunications','network','5g','subscriber','mobile']], finance: ['Banking · Fintech', ['banking','fintech','finance','risk','compliance','payments','investment']], ecommerce: ['E-commerce', ['ecommerce','marketplace','conversion','checkout','retention','growth']], healthcare: ['Healthcare', ['healthcare','clinical','patient','medical','compliance','healthtech']], public: ['Public sector', ['public sector','government','citizen','policy','administration']], manufacturing: ['Manufacturing', ['manufacturing','supply chain','operations','quality','production']]
+    general: ['Any industry', []],
+    technology: ['Technology · SaaS', ['saas','platform','software','digital product','cloud','enterprise','b2b']],
+    telecom: ['Telecom', ['telecom','telecommunications','network','5g','subscriber','mobile']],
+    finance: ['Banking · Fintech', ['banking','fintech','finance','risk','compliance','payments','investment']],
+    ecommerce: ['E-commerce', ['ecommerce','marketplace','conversion','checkout','retention','growth']],
+    healthcare: ['Healthcare', ['healthcare','clinical','patient','medical','compliance','healthtech']],
+    public: ['Public sector', ['public sector','government','citizen','policy','administration']],
+    manufacturing: ['Manufacturing', ['manufacturing','supply chain','operations','quality','production']]
   }
+
   const SENIORITY = {
-    entry: ['Entry / Graduate', ['intern','internship','graduate','coursework','project']], mid: ['Mid-level', ['owned','delivered','shipped','collaborated','implemented','improved']], senior: ['Senior', ['led','strategy','mentored','system','stakeholder','ownership','cross functional']], lead: ['Lead / Manager', ['managed','team','roadmap','strategy','governance','scale','leadership']], executive: ['Director / Executive', ['revenue','portfolio','transformation','p&l','organization','board','strategy']]
+    entry: ['Entry / Graduate', ['intern','internship','graduate','coursework','project']],
+    mid: ['Mid-level', ['owned','delivered','shipped','collaborated','implemented','improved']],
+    senior: ['Senior', ['led','strategy','mentored','system','stakeholder','ownership','cross functional']],
+    lead: ['Lead / Manager', ['managed','team','roadmap','strategy','governance','scale','leadership']],
+    executive: ['Director / Executive', ['revenue','portfolio','transformation','p&l','organization','board','strategy']]
   }
-  const TEMPLATE_ROLE = { 'Soft Portfolio':'uiux','Bento Resume':'uiux','Creator Cards':'uiux','Code Aware':'designEngineer','Mono Grid':'engineering','ATS Precision':'engineering','Product Operator':'product','Revenue Driver':'sales','Insight Grid':'data','Brand Motion':'marketing','People First':'hr','Finance Ledger':'finance','Research Scholar':'research','Studio Director':'marketing' }
-  const FIELD_MAP = { Name:'#name','Role / title':'#role',Headline:'#headline',Email:'#email',Phone:'#phone',Location:'#location',Website:'#website',Summary:'#summary',Skills:'#skills',Experience:'#experienceEditor',Projects:'#projectEditor',Languages:'#languages' }
+
+  const TEMPLATE_ROLE = {
+    'Soft Portfolio':'uiux',
+    'Bento Resume':'uiux',
+    'Creator Cards':'uiux',
+    'Code Aware':'designEngineer',
+    'Mono Grid':'engineering',
+    'ATS Precision':'engineering',
+    'Product Operator':'product',
+    'Revenue Driver':'sales',
+    'Insight Grid':'data',
+    'Brand Motion':'marketing',
+    'People First':'hr',
+    'Finance Ledger':'finance',
+    'Research Scholar':'research',
+    'Studio Director':'marketing'
+  }
+
+  const FIELD_MAP = {
+    'Name':'#name',
+    'Role / title':'#role',
+    'Headline':'#headline',
+    'Email':'#email',
+    'Phone':'#phone',
+    'Location':'#location',
+    'Website':'#website',
+    'Summary':'#summary',
+    'Skills':'#skills',
+    'Experience':'#experienceEditor',
+    'Projects':'#projectEditor',
+    'Languages':'#languages'
+  }
+
   const ACTIONS = ['led','built','designed','delivered','launched','improved','increased','reduced','created','managed','developed','implemented','shipped','owned','drove','scaled','automated','mentored','achieved']
 
-  let target = { role:'auto', industry:'general', seniority:'senior', ...(read(TARGET_KEY, {})) }
-  const saveTarget = () => { try { localStorage.setItem(TARGET_KEY, JSON.stringify(target)) } catch {} }
-  const options = (lib, value) => Object.entries(lib).map(([k,[label]]) => \`<option value="\${k}"\${k === value ? ' selected' : ''}>\${label}</option>\`).join('')
+  let target = Object.assign({ role:'auto', industry:'general', seniority:'senior', jd:'' }, readJson(TARGET_KEY, {}))
+
+  const saveTarget = () => {
+    try { localStorage.setItem(TARGET_KEY, JSON.stringify(target)) }
+    catch {}
+  }
+
+  const optionsHtml = (library, value) => Object.entries(library).map(([key, item]) => {
+    return '<option value="' + key + '"' + (key === value ? ' selected' : '') + '>' + item[0] + '</option>'
+  }).join('')
+
   const activeTemplate = () => String($('#activeTemplateLabel')?.textContent || '').trim()
-  const roleKey = () => target.role === 'auto' ? (TEMPLATE_ROLE[activeTemplate()] || 'general') : target.role
-  const plain = () => String($('#paper')?.innerText || '').replace(/\n{3,}/g, '\n\n').trim()
-  const profile = () => read(PROFILE_KEY, {})
-  const hit = (source, term) => source.includes(norm(term))
-  const termScore = (source, terms) => !terms.length ? null : clamp(terms.filter((t) => hit(source, t)).length / terms.length * 100)
+  const resolvedRoleKey = () => target.role === 'auto' ? (TEMPLATE_ROLE[activeTemplate()] || 'general') : target.role
+  const paperText = () => String($('#paper')?.innerText || '').trim()
+  const profile = () => readJson(PROFILE_KEY, {})
+  const containsTerm = (source, term) => source.includes(normalize(term))
+
+  const termScore = (source, terms) => {
+    if (!terms.length) return null
+    return clamp(terms.filter((term) => containsTerm(source, term)).length / terms.length * 100)
+  }
+
+  const flatten = (value) => {
+    if (value == null) return []
+    if (Array.isArray(value)) return value.flatMap(flatten)
+    if (typeof value === 'object') return Object.entries(value)
+      .filter(([key]) => !/image|avatar|id|enabled/i.test(key))
+      .flatMap(([, item]) => flatten(item))
+    const text = String(value).trim()
+    return text && !text.startsWith('data:image/') ? [text] : []
+  }
 
   const readiness = () => {
-    const p = profile(), text = plain(), source = norm(text)
-    const fields = [p.name,p.role,p.headline,p.email,p.phone,p.location,p.website,p.summary,p.skills,p.experience,p.projects,p.languages].filter((v) => Array.isArray(v) ? v.length : String(v || '').trim())
-    const flatten = (v) => Array.isArray(v) ? v.flatMap(flatten) : v && typeof v === 'object' ? Object.values(v).flatMap(flatten) : String(v || '').trim() ? [String(v).trim()] : []
-    const coverage = fields.flatMap(flatten).filter((v) => v.length < 350).map((v) => hit(source, v) || hit(source, norm(v).split(' ').slice(0,5).join(' ')) ? 1 : 0)
-    const extraction = coverage.length ? clamp(coverage.reduce((a,b) => a+b, 0) / coverage.length * 100) : 0
-    const critical = [p.name,p.role,p.email,p.experience,p.skills].map((v) => flatten(v).some((x) => hit(source, x) || hit(source, norm(x).split(' ').slice(0,5).join(' '))) ? 100 : 0).reduce((a,b)=>a+b,0) / 5
-    const paper = $('#paper'), rect = paper?.getBoundingClientRect(), columns = rect ? $$('*', paper).filter((n) => { const r=n.getBoundingClientRect(), s=getComputedStyle(n); return r.width > rect.width*.62 && r.height>100 && s.display==='grid' && s.gridTemplateColumns.split(' ').filter((x)=>x&&x!=='none').length>1 }).length : 0
-    const tables = $$('table', paper).length, graphics = $$('img,svg,canvas', paper).length
-    const headingWords = ['summary','experience','skills','education','projects','certificates','languages'], headingCount = headingWords.filter((h)=>source.includes(h)).length
+    const p = profile()
+    const text = paperText()
+    const source = normalize(text)
+    const values = [p.name,p.role,p.headline,p.email,p.phone,p.location,p.website,p.summary,p.skills,p.experience,p.projects,p.languages]
+      .filter((value) => Array.isArray(value) ? value.length : String(value || '').trim())
+      .flatMap(flatten)
+      .filter((value) => value.length < 350)
+
+    const extractionHits = values.map((value) => {
+      const needle = normalize(value)
+      if (source.includes(needle)) return 1
+      const words = needle.split(' ').filter(Boolean)
+      return words.length >= 5 && source.includes(words.slice(0,5).join(' ')) ? 1 : 0
+    })
+    const extraction = extractionHits.length ? clamp(extractionHits.reduce((a,b) => a+b,0) / extractionHits.length * 100) : 0
+
+    const criticalValues = [p.name,p.role,p.email,p.experience,p.skills]
+    const criticalHits = criticalValues.map((value) => flatten(value).some((item) => {
+      const needle = normalize(item)
+      if (source.includes(needle)) return true
+      const words = needle.split(' ').filter(Boolean)
+      return words.length >= 5 && source.includes(words.slice(0,5).join(' '))
+    }) ? 100 : 0)
+    const critical = clamp(criticalHits.reduce((a,b) => a+b,0) / criticalHits.length)
+
+    const paper = $('#paper')
+    const rect = paper?.getBoundingClientRect()
+    const columns = rect ? $$('*', paper).filter((node) => {
+      const nodeRect = node.getBoundingClientRect()
+      const style = getComputedStyle(node)
+      const gridCols = style.gridTemplateColumns.split(' ').filter((item) => item && item !== 'none')
+      return nodeRect.width > rect.width * .62 && nodeRect.height > 100 && style.display === 'grid' && gridCols.length > 1
+    }).length : 0
+    const tables = $$('table', paper).length
+    const graphics = $$('img,svg,canvas', paper).length
+    const headingWords = ['summary','experience','skills','education','projects','certificates','languages']
+    const headingCount = headingWords.filter((heading) => source.includes(heading)).length
     const structure = clamp(100 - (columns ? 30 + Math.min(15,(columns-1)*5) : 0) - Math.min(30,tables*18) - (headingCount < 3 ? 20 : 0))
-    const periods = [...(p.experience||[]),...(p.education||[]),...(p.certificates||[])].map((x)=>x?.period).filter(Boolean), badDates = periods.filter((x)=>!/(19|20)\d{2}/.test(String(x))).length
+
+    const periods = [].concat(p.experience || [], p.education || [], p.certificates || []).map((item) => item?.period).filter(Boolean)
+    const badDates = periods.filter((value) => !/(19|20)\d{2}/.test(String(value))).length
     const format = clamp(100 - Math.min(18,graphics*4) - badDates*15 - (!p.email ? 8 : 0) - (!p.phone ? 5 : 0))
-    const exp = norm((p.experience||[]).flatMap(flatten).join(' ')), metrics = (exp.match(/\d+(?:[.,]\d+)?%|\d+\+|\$\s?\d+/g)||[]).length, verbs = ACTIONS.filter((v)=>exp.includes(v)).length
-    const evidence = clamp(100 - (!p.summary ? 20 : 0) - (!(p.skills||[]).length ? 20 : 0) - (!(p.experience||[]).length ? 35 : 0) - ((p.experience||[]).length && !metrics ? 15 : 0) - ((p.experience||[]).length && verbs<2 ? 10 : 0))
+
+    const expText = normalize((p.experience || []).flatMap(flatten).join(' '))
+    const metrics = (expText.match(/\d+(?:[.,]\d+)?%|\d+\+|\$\s?\d+/g) || []).length
+    const verbs = ACTIONS.filter((verb) => expText.includes(verb)).length
+    const evidence = clamp(100 - (!p.summary ? 20 : 0) - (!(p.skills || []).length ? 20 : 0) - (!(p.experience || []).length ? 35 : 0) - ((p.experience || []).length && !metrics ? 15 : 0) - ((p.experience || []).length && verbs < 2 ? 10 : 0))
+
     const score = clamp(extraction*.30 + critical*.25 + structure*.15 + format*.10 + evidence*.20)
-    return { score, metrics:[['Text extraction',extraction,30],['Critical fields',critical,25],['Structure',structure,15],['Format hygiene',format,10],['Evidence quality',evidence,20]] }
+    return {
+      score,
+      metrics:[
+        ['Text extraction', extraction, 30],
+        ['Critical fields', critical, 25],
+        ['Structure', structure, 15],
+        ['Format hygiene', format, 10],
+        ['Evidence quality', evidence, 20]
+      ]
+    }
   }
 
   const fit = () => {
-    const source = norm(plain()), rKey = roleKey(), r = termScore(source, ROLES[rKey][1]), i = termScore(source, INDUSTRIES[target.industry][1]), s = termScore(source, SENIORITY[target.seniority][1])
-    const jd = $('#atsJobDescription')?.value || target.jd || '', terms = [...new Set(norm(jd).split(' ').filter((w)=>w.length>3))].slice(0,28), j = termScore(source, terms)
-    const parts = j == null ? [[r,target.industry==='general'?70:55],[i,20],[s,target.industry==='general'?30:25]] : [[r,35],[i,15],[s,15],[j,35]]
-    const active = parts.filter(([score])=>score!=null), total = active.reduce((a,[,w])=>a+w,0) || 1, score = clamp(active.reduce((a,[v,w])=>a+v*w,0)/total)
-    return { score, role:r, industry:i, seniority:s, jd:j, terms, matched:terms.filter((t)=>hit(source,t)), missing:terms.filter((t)=>!hit(source,t)), rKey }
+    const source = normalize(paperText())
+    const roleKey = resolvedRoleKey()
+    const role = termScore(source, ROLES[roleKey][1])
+    const industry = termScore(source, INDUSTRIES[target.industry][1])
+    const seniority = termScore(source, SENIORITY[target.seniority][1])
+    const jd = String($('#atsJobDescription')?.value || target.jd || '')
+    const terms = [...new Set(normalize(jd).split(' ').filter((word) => word.length > 3))].slice(0,28)
+    const jdScore = termScore(source, terms)
+    const parts = jdScore == null
+      ? [[role, target.industry === 'general' ? 70 : 55], [industry,20], [seniority,target.industry === 'general' ? 30 : 25]]
+      : [[role,35],[industry,15],[seniority,15],[jdScore,35]]
+    const active = parts.filter(([score]) => score != null)
+    const totalWeight = active.reduce((sum, item) => sum + item[1], 0) || 1
+    const score = clamp(active.reduce((sum, item) => sum + item[0] * item[1], 0) / totalWeight)
+    return { score, role, industry, seniority, jd:jdScore, roleKey }
   }
 
-  const scoreLabel = (n) => n>=85?'Strong':n>=70?'Good':n>=55?'Needs review':'High risk'
-  const inject = () => {
-    const panel = $('.ats-panel'); if (!panel || $('#atsProTarget')) return
-    $('.ats-score-hero')?.classList.add('ats-pro-legacy-score')
-    $('.ats-tabs [data-ats-tab="scan"]') && ($('.ats-tabs [data-ats-tab="scan"]').textContent = 'Overview')
-    $('.ats-tabs [data-ats-tab="job"]') && ($('.ats-tabs [data-ats-tab="job"]').textContent = 'Target fit')
-    panel.querySelector('.ats-head').insertAdjacentHTML('afterend', \`<section class="ats-pro-scoreboard"><article><span>ATS Readiness</span><strong id="atsProReadiness">—</strong><b id="atsProReadinessLabel">Scan ready</b><small>Machine readability · fixed criteria</small></article><article><span>Target Fit</span><strong id="atsProFit">—</strong><b id="atsProFitLabel">Target profile</b><small>Role + industry + seniority + JD</small></article></section>\`)
-    panel.querySelector('.ats-tabs').insertAdjacentHTML('beforebegin', \`<section id="atsProTarget" class="ats-pro-target"><div><span>Target profile</span><strong>What are you applying for?</strong></div><div class="ats-pro-target-grid"><label>Role<select id="atsProRole">\${options(ROLES,target.role)}</select></label><label>Industry<select id="atsProIndustry">\${options(INDUSTRIES,target.industry)}</select></label><label>Seniority<select id="atsProSeniority">\${options(SENIORITY,target.seniority)}</select></label></div><p id="atsProTargetHint"></p></section>\`)
-    const scanPane = $('[data-ats-pane="scan"]'); scanPane?.insertAdjacentHTML('afterbegin', \`<section class="ats-pro-method"><div class="ats-section-title"><div><span>Scoring model</span><strong>Transparent ATS Readiness</strong></div><small>100 points</small></div><div id="atsProMetrics"></div><details><summary>How the score is calculated</summary><p>Text extraction 30% · Critical fields 25% · Structure 15% · Format hygiene 10% · Evidence quality 20%. Role and industry never change ATS Readiness.</p></details></section>\`)
-    const jobPane = $('[data-ats-pane="job"]'); jobPane?.insertAdjacentHTML('afterbegin', \`<section class="ats-pro-fit-section"><div class="ats-section-title"><div><span>Profile fit</span><strong>Role, industry & seniority</strong></div><small>Editable target</small></div><div id="atsProFitBreakdown"></div></section>\`)
+  const labelScore = (score) => score >= 85 ? 'Strong' : score >= 70 ? 'Good' : score >= 55 ? 'Needs review' : 'High risk'
 
-    $('#atsProRole').addEventListener('change', syncTarget); $('#atsProIndustry').addEventListener('change', syncTarget); $('#atsProSeniority').addEventListener('change', syncTarget)
-    $('#atsJobDescription')?.addEventListener('input', () => { target.jd = $('#atsJobDescription').value; saveTarget(); render() })
-    panel.addEventListener('click', (e) => {
-      const edit = e.target.closest('[data-ats-pro-edit]'); if (edit) return openEditor(edit.dataset.atsProEdit)
-      if (e.target.closest('[data-ats-pro-template]')) return useAtsTemplate()
+  const openEditor = (selector) => {
+    $('#atsShell').hidden = true
+    document.body.classList.remove('ats-open')
+    setTimeout(() => {
+      if ($('#editor')?.classList.contains('collapsed')) $('#toggleEditor')?.click()
+      $('.tab[data-tab="content"]')?.click()
+      const node = $(selector)
+      node?.scrollIntoView({ behavior:'smooth', block:'center' })
+      const focus = node?.matches('input,textarea,select') ? node : node?.querySelector('input,textarea,select,button')
+      focus?.focus({ preventScroll:true })
+    }, 80)
+  }
+
+  const chooseAtsTemplate = () => {
+    $('#atsShell').hidden = true
+    document.body.classList.remove('ats-open')
+    setTimeout(() => {
+      const card = $$('.template-card').find((item) => /ATS Precision/i.test(item.textContent || ''))
+        || $$('.template-card').find((item) => /ATS Clean/i.test(item.textContent || ''))
+      card?.click()
+      card?.scrollIntoView({ behavior:'smooth', block:'center' })
+    }, 80)
+  }
+
+  const decorateActions = () => {
+    $$('#atsFieldList .ats-field-row').forEach((row) => {
+      if (row.querySelector('.ats-pro-action')) return
+      const label = row.querySelector('strong')?.textContent?.trim()
+      const selector = FIELD_MAP[label]
+      if (selector) row.insertAdjacentHTML('beforeend','<button class="ats-pro-action" type="button" data-ats-pro-edit="' + selector + '">Edit</button>')
     })
-    const lists = ['#atsFieldList','#atsCheckList','#atsContentNotes'].map($).filter(Boolean)
-    lists.forEach((node)=>new MutationObserver(decorateActions).observe(node,{childList:true,subtree:true}))
+    $$('#atsCheckList .ats-check').forEach((row) => {
+      if (row.querySelector('.ats-pro-action')) return
+      const label = row.querySelector('strong')?.textContent || ''
+      if (/Reading order|Tables/.test(label)) row.insertAdjacentHTML('beforeend','<button class="ats-pro-action" type="button" data-ats-pro-template>Use ATS template</button>')
+      else if (/Dates/.test(label)) row.insertAdjacentHTML('beforeend','<button class="ats-pro-action" type="button" data-ats-pro-edit="#experienceEditor">Edit</button>')
+    })
+    $$('#atsContentNotes article').forEach((row) => {
+      if (row.querySelector('.ats-pro-action')) return
+      const text = row.textContent.toLowerCase()
+      const selector = text.includes('skill') ? '#skills'
+        : text.includes('experience') || text.includes('action') || text.includes('measurable') ? '#experienceEditor'
+        : text.includes('summary') ? '#summary' : ''
+      if (selector) row.insertAdjacentHTML('beforeend','<button class="ats-pro-action" type="button" data-ats-pro-edit="' + selector + '">Fix</button>')
+    })
+  }
+
+  const inject = () => {
+    const panel = $('.ats-panel')
+    if (!panel || $('#atsProTarget')) return
+
+    $('.ats-score-hero')?.classList.add('ats-pro-legacy-score')
+    const scanTab = $('.ats-tabs [data-ats-tab="scan"]')
+    const jobTab = $('.ats-tabs [data-ats-tab="job"]')
+    if (scanTab) scanTab.textContent = 'Overview'
+    if (jobTab) jobTab.textContent = 'Target fit'
+
+    panel.querySelector('.ats-head').insertAdjacentHTML('afterend',
+      '<section class="ats-pro-scoreboard">' +
+        '<article><span>ATS Readiness</span><strong id="atsProReadiness">—</strong><b id="atsProReadinessLabel">Scan ready</b><small>Machine readability · fixed criteria</small></article>' +
+        '<article><span>Target Fit</span><strong id="atsProFit">—</strong><b id="atsProFitLabel">Target profile</b><small>Role + industry + seniority + JD</small></article>' +
+      '</section>'
+    )
+
+    panel.querySelector('.ats-tabs').insertAdjacentHTML('beforebegin',
+      '<section id="atsProTarget" class="ats-pro-target">' +
+        '<div><span>Target profile</span><strong>What are you applying for?</strong></div>' +
+        '<div class="ats-pro-target-grid">' +
+          '<label>Role<select id="atsProRole">' + optionsHtml(ROLES,target.role) + '</select></label>' +
+          '<label>Industry<select id="atsProIndustry">' + optionsHtml(INDUSTRIES,target.industry) + '</select></label>' +
+          '<label>Seniority<select id="atsProSeniority">' + optionsHtml(SENIORITY,target.seniority) + '</select></label>' +
+        '</div>' +
+        '<p id="atsProTargetHint"></p>' +
+      '</section>'
+    )
+
+    $('[data-ats-pane="scan"]')?.insertAdjacentHTML('afterbegin',
+      '<section class="ats-pro-method">' +
+        '<div class="ats-section-title"><div><span>Scoring model</span><strong>Transparent ATS Readiness</strong></div><small>100 points</small></div>' +
+        '<div id="atsProMetrics"></div>' +
+        '<details><summary>How the score is calculated</summary><p>Text extraction 30% · Critical fields 25% · Structure 15% · Format hygiene 10% · Evidence quality 20%. Role and industry never change ATS Readiness.</p></details>' +
+      '</section>'
+    )
+
+    $('[data-ats-pane="job"]')?.insertAdjacentHTML('afterbegin',
+      '<section class="ats-pro-fit-section">' +
+        '<div class="ats-section-title"><div><span>Profile fit</span><strong>Role, industry & seniority</strong></div><small>Editable target</small></div>' +
+        '<div id="atsProFitBreakdown"></div>' +
+      '</section>'
+    )
+
+    $('#atsProRole').addEventListener('change', syncTarget)
+    $('#atsProIndustry').addEventListener('change', syncTarget)
+    $('#atsProSeniority').addEventListener('change', syncTarget)
+    $('#atsJobDescription')?.addEventListener('input', () => {
+      target.jd = $('#atsJobDescription').value
+      saveTarget()
+      render()
+    })
+
+    panel.addEventListener('click', (event) => {
+      const edit = event.target.closest('[data-ats-pro-edit]')
+      if (edit) {
+        openEditor(edit.dataset.atsProEdit)
+        return
+      }
+      if (event.target.closest('[data-ats-pro-template]')) chooseAtsTemplate()
+    })
+
+    ;['#atsFieldList','#atsCheckList','#atsContentNotes'].map($).filter(Boolean).forEach((node) => {
+      new MutationObserver(decorateActions).observe(node,{ childList:true, subtree:true })
+    })
     decorateActions()
   }
 
-  const syncTarget = () => { target.role=$('#atsProRole').value; target.industry=$('#atsProIndustry').value; target.seniority=$('#atsProSeniority').value; saveTarget(); render() }
-  const openEditor = (selector) => { $('#atsShell').hidden=true; document.body.classList.remove('ats-open'); setTimeout(()=>{ if ($('#editor')?.classList.contains('collapsed')) $('#toggleEditor')?.click(); $('.tab[data-tab="content"]')?.click(); const n=$(selector); n?.scrollIntoView({behavior:'smooth',block:'center'}); (n?.matches('input,textarea,select')?n:n?.querySelector('input,textarea,select,button'))?.focus({preventScroll:true}) },80) }
-  const useAtsTemplate = () => { $('#atsShell').hidden=true; document.body.classList.remove('ats-open'); setTimeout(()=>{ const n=$$('.template-card').find((x)=>/ATS Precision/i.test(x.textContent||'')) || $$('.template-card').find((x)=>/ATS Clean/i.test(x.textContent||'')); n?.click(); n?.scrollIntoView({behavior:'smooth',block:'center'}) },80) }
-  const decorateActions = () => {
-    $$('#atsFieldList .ats-field-row').forEach((row)=>{ if (row.querySelector('.ats-pro-action')) return; const label=row.querySelector('strong')?.textContent?.trim(), selector=FIELD_MAP[label]; if (selector) row.insertAdjacentHTML('beforeend', \`<button class="ats-pro-action" type="button" data-ats-pro-edit="\${selector}">Edit</button>\`) })
-    $$('#atsCheckList .ats-check').forEach((row)=>{ if (row.querySelector('.ats-pro-action')) return; const label=row.querySelector('strong')?.textContent||''; if (/Reading order|Tables/.test(label)) row.insertAdjacentHTML('beforeend','<button class="ats-pro-action" type="button" data-ats-pro-template>Use ATS template</button>'); else if (/Dates/.test(label)) row.insertAdjacentHTML('beforeend','<button class="ats-pro-action" type="button" data-ats-pro-edit="#experienceEditor">Edit</button>') })
-    $$('#atsContentNotes article').forEach((row)=>{ if (row.querySelector('.ats-pro-action')) return; const t=row.textContent.toLowerCase(), selector=t.includes('skill')?'#skills':t.includes('experience')||t.includes('action')||t.includes('measurable')?'#experienceEditor':t.includes('summary')?'#summary':''; if (selector) row.insertAdjacentHTML('beforeend',\`<button class="ats-pro-action" type="button" data-ats-pro-edit="\${selector}">Fix</button>\`) })
+  function syncTarget() {
+    target.role = $('#atsProRole').value
+    target.industry = $('#atsProIndustry').value
+    target.seniority = $('#atsProSeniority').value
+    saveTarget()
+    render()
   }
 
-  const render = () => {
+  function render() {
     if (!$('#atsProTarget')) return
-    const r=readiness(), f=fit(); $('#atsProReadiness').textContent=r.score; $('#atsProReadinessLabel').textContent=scoreLabel(r.score); $('#atsProFit').textContent=f.score; $('#atsProFitLabel').textContent=scoreLabel(f.score); if ($('#atsScoreBadge')) $('#atsScoreBadge').textContent=r.score
-    $('#atsProTargetHint').textContent = \`\${ROLES[f.rKey][0]} · \${INDUSTRIES[target.industry][0]} · \${SENIORITY[target.seniority][0]}\`
-    $('#atsProMetrics').innerHTML = r.metrics.map(([label,score,weight])=>\`<article><div><strong>\${label}</strong><span>\${weight}%</span></div><div class="ats-pro-meter"><i style="width:\${score}%"></i></div><b>\${clamp(score)}</b></article>\`).join('')
-    const rows=[['Role match',f.role,ROLES[f.rKey][0]],['Industry signals',f.industry,INDUSTRIES[target.industry][0]],['Seniority signals',f.seniority,SENIORITY[target.seniority][0]]]
-    $('#atsProFitBreakdown').innerHTML=rows.map(([label,score,detail])=>\`<article><div><strong>\${label}</strong><small>\${detail}</small></div><div class="ats-pro-meter"><i style="width:\${score==null?0:score}%"></i></div><b>\${score==null?'—':score}</b></article>\`).join('')
+    const r = readiness()
+    const f = fit()
+    $('#atsProReadiness').textContent = r.score
+    $('#atsProReadinessLabel').textContent = labelScore(r.score)
+    $('#atsProFit').textContent = f.score
+    $('#atsProFitLabel').textContent = labelScore(f.score)
+    if ($('#atsScoreBadge')) $('#atsScoreBadge').textContent = r.score
+    $('#atsProTargetHint').textContent = ROLES[f.roleKey][0] + ' · ' + INDUSTRIES[target.industry][0] + ' · ' + SENIORITY[target.seniority][0]
+
+    $('#atsProMetrics').innerHTML = r.metrics.map((item) => {
+      return '<article>' +
+        '<div><strong>' + item[0] + '</strong><span>' + item[2] + '%</span></div>' +
+        '<div class="ats-pro-meter"><i style="width:' + item[1] + '%"></i></div>' +
+        '<b>' + clamp(item[1]) + '</b>' +
+      '</article>'
+    }).join('')
+
+    const rows = [
+      ['Role match',f.role,ROLES[f.roleKey][0]],
+      ['Industry signals',f.industry,INDUSTRIES[target.industry][0]],
+      ['Seniority signals',f.seniority,SENIORITY[target.seniority][0]]
+    ]
+    $('#atsProFitBreakdown').innerHTML = rows.map((item) => {
+      const score = item[1]
+      return '<article>' +
+        '<div><strong>' + item[0] + '</strong><small>' + item[2] + '</small></div>' +
+        '<div class="ats-pro-meter"><i style="width:' + (score == null ? 0 : score) + '%"></i></div>' +
+        '<b>' + (score == null ? '—' : score) + '</b>' +
+      '</article>'
+    }).join('')
     decorateActions()
   }
 
   const boot = () => {
-    inject(); render()
-    $('#atsScanButton')?.addEventListener('click',()=>setTimeout(()=>{ inject(); render() },0))
-    $('#atsRescan')?.addEventListener('click',()=>setTimeout(render,0))
-    const paper=$('#paper'); if (paper) new MutationObserver(()=>setTimeout(render,0)).observe(paper,{childList:true,subtree:true,characterData:true,attributes:true})
+    inject()
+    render()
+    $('#atsScanButton')?.addEventListener('click', () => setTimeout(() => { inject(); render() }, 0))
+    $('#atsRescan')?.addEventListener('click', () => setTimeout(render, 0))
+    const paper = $('#paper')
+    if (paper) new MutationObserver(() => setTimeout(render,0)).observe(paper,{ childList:true, subtree:true, characterData:true, attributes:true })
   }
-  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot()
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot)
+  else boot()
 })()
 
-
-/* ATS_PDF_VERIFY_V1: parse the exported PDF text layer and compare it with the live CV. */
+/* ATS_PDF_VERIFY_V1_FIXED */
 (() => {
   'use strict'
 
-  const PDFJS_VERSION = '6.3.289'
-  const PDFJS_URL = \`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/\${PDFJS_VERSION}/pdf.min.mjs\`
-  const PDFJS_WORKER_URL = \`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/\${PDFJS_VERSION}/pdf.worker.min.mjs\`
+  const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.3.289/pdf.min.mjs'
+  const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.3.289/pdf.worker.min.mjs'
   const PROFILE_KEY = 'cv-studio-static-v2'
   const $ = (selector, root = document) => root.querySelector(selector)
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)]
   const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)))
   const esc = (value) => String(value == null ? '' : value).replace(/[&<>"']/g, (char) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
   }[char]))
   const normalize = (value) => String(value == null ? '' : value)
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u0300-\u036f]/g,'')
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}+#./@%-]+/gu, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/[^\p{L}\p{N}+#./@%-]+/gu,' ')
+    .replace(/\s+/g,' ')
     .trim()
+
   const readProfile = () => {
     try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}') || {} }
     catch { return {} }
   }
+
   const flatten = (value, depth = 0) => {
     if (depth > 4 || value == null) return []
     if (typeof value === 'string' || typeof value === 'number') {
@@ -651,42 +904,43 @@
       if (!text || text.startsWith('data:image/')) return []
       return [text]
     }
-    if (Array.isArray(value)) return value.flatMap((item) => flatten(item, depth + 1))
+    if (Array.isArray(value)) return value.flatMap((item) => flatten(item,depth+1))
     if (typeof value === 'object') return Object.entries(value)
       .filter(([key]) => !/image|avatar|id|enabled/i.test(key))
-      .flatMap(([, item]) => flatten(item, depth + 1))
+      .flatMap(([,item]) => flatten(item,depth+1))
     return []
   }
+
   const matchText = (haystack, value) => {
     const needle = normalize(value)
     if (!needle) return true
     if (haystack.includes(needle)) return true
     const words = needle.split(' ').filter(Boolean)
-    if (words.length >= 9) return haystack.includes(words.slice(0, 8).join(' '))
-    if (words.length >= 5) return haystack.includes(words.slice(0, 5).join(' '))
+    if (words.length >= 9) return haystack.includes(words.slice(0,8).join(' '))
+    if (words.length >= 5) return haystack.includes(words.slice(0,5).join(' '))
     return false
   }
-  const usefulParts = (value) => [...new Set(flatten(value)
-    .map((item) => item.trim())
-    .filter((item) => item.length >= 2 && item.length <= 420))].slice(0, 90)
-  const groupCoverage = (pdfNormalized, value) => {
+
+  const usefulParts = (value) => [...new Set(flatten(value).map((item) => item.trim()).filter((item) => item.length >= 2 && item.length <= 420))].slice(0,90)
+
+  const groupCoverage = (pdfNormalized,value) => {
     const parts = usefulParts(value)
     if (!parts.length) return { present:false, matched:0, total:0, score:null }
-    const matched = parts.filter((part) => matchText(pdfNormalized, part)).length
-    return { present:true, matched, total:parts.length, score:matched / parts.length }
+    const matched = parts.filter((part) => matchText(pdfNormalized,part)).length
+    return { present:true, matched, total:parts.length, score:matched/parts.length }
   }
+
   const sourceLines = () => {
     const text = String($('#paper')?.innerText || $('#paper')?.textContent || '')
-      .replace(/\u00a0/g, ' ')
-      .replace(/[ \t]+\n/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\u00a0/g,' ')
+      .replace(/[ \t]+\n/g,'\n')
+      .replace(/\n{3,}/g,'\n\n')
       .trim()
-    const lines = text.split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length >= 3)
-    return { text, lines:[...new Set(lines)].slice(0, 180) }
+    const lines = text.split('\n').map((line) => line.trim()).filter((line) => line.length >= 3)
+    return { text, lines:[...new Set(lines)].slice(0,180) }
   }
-  const orderConsistency = (lines, pdfNormalized) => {
+
+  const orderConsistency = (lines,pdfNormalized) => {
     const positions = []
     lines.forEach((line) => {
       const needle = normalize(line)
@@ -694,123 +948,218 @@
       let pos = pdfNormalized.indexOf(needle)
       if (pos < 0) {
         const words = needle.split(' ').filter(Boolean)
-        if (words.length >= 5) pos = pdfNormalized.indexOf(words.slice(0, 5).join(' '))
+        if (words.length >= 5) pos = pdfNormalized.indexOf(words.slice(0,5).join(' '))
       }
       if (pos >= 0) positions.push(pos)
     })
     if (positions.length < 3) return { score:60, matched:positions.length, inversions:0 }
-    let good = 0
-    let inversions = 0
-    for (let i = 1; i < positions.length; i += 1) {
-      if (positions[i] >= positions[i - 1]) good += 1
-      else inversions += 1
+    let good=0
+    let inversions=0
+    for(let i=1;i<positions.length;i+=1){
+      if(positions[i]>=positions[i-1]) good+=1
+      else inversions+=1
     }
-    return { score:clamp(good / (positions.length - 1) * 100), matched:positions.length, inversions }
+    return { score:clamp(good/(positions.length-1)*100), matched:positions.length, inversions }
   }
 
-  let pdfModulePromise = null
+  let modulePromise = null
   const loadPdfModule = async () => {
     if (window.__atsPdfTextExtractor) return null
-    if (!pdfModulePromise) {
-      pdfModulePromise = import(PDFJS_URL).then((pdfjsLib) => {
+    if (!modulePromise) {
+      modulePromise = import(PDFJS_URL).then((pdfjsLib) => {
         pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL
         return pdfjsLib
       })
     }
-    return pdfModulePromise
+    return modulePromise
   }
 
   const extractPdfText = async (file) => {
     if (window.__atsPdfTextExtractor) return window.__atsPdfTextExtractor(file)
     const pdfjsLib = await loadPdfModule()
     const bytes = new Uint8Array(await file.arrayBuffer())
-    const documentTask = pdfjsLib.getDocument({ data: bytes })
-    const pdf = await documentTask.promise
+    const task = pdfjsLib.getDocument({ data:bytes })
+    const documentPdf = await task.promise
     const pages = []
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-      const page = await pdf.getPage(pageNumber)
+    for(let pageNumber=1;pageNumber<=documentPdf.numPages;pageNumber+=1){
+      const page = await documentPdf.getPage(pageNumber)
       const content = await page.getTextContent()
-      const rows = []
-      let current = []
+      const rows=[]
+      let current=[]
       content.items.forEach((item) => {
-        const value = String(item.str || '').trim()
-        if (value) current.push(value)
-        if (item.hasEOL && current.length) {
+        const value=String(item.str || '').trim()
+        if(value) current.push(value)
+        if(item.hasEOL && current.length){
           rows.push(current.join(' '))
-          current = []
+          current=[]
         }
       })
-      if (current.length) rows.push(current.join(' '))
+      if(current.length) rows.push(current.join(' '))
       pages.push(rows.join('\n'))
     }
-    return { text:pages.join('\n\n'), pages:pdf.numPages }
+    return { text:pages.join('\n\n'), pages:documentPdf.numPages }
   }
 
-  const fieldGroups = (profile) => [
-    ['Name', profile.name, '#name'],
-    ['Role / title', profile.role, '#role'],
-    ['Headline', profile.headline, '#headline'],
-    ['Email', profile.email, '#email'],
-    ['Phone', profile.phone, '#phone'],
-    ['Location', profile.location, '#location'],
-    ['Website', profile.website, '#website'],
-    ['Summary', profile.summary, '#summary'],
-    ['Skills', profile.skills, '#skills'],
-    ['Experience', profile.experience, '#experienceEditor'],
-    ['Projects', profile.projects, '#projectEditor'],
-    ['Languages', profile.languages, '#languages'],
+  const fieldGroups = (p) => [
+    ['Name',p.name,'#name'],
+    ['Role / title',p.role,'#role'],
+    ['Headline',p.headline,'#headline'],
+    ['Email',p.email,'#email'],
+    ['Phone',p.phone,'#phone'],
+    ['Location',p.location,'#location'],
+    ['Website',p.website,'#website'],
+    ['Summary',p.summary,'#summary'],
+    ['Skills',p.skills,'#skills'],
+    ['Experience',p.experience,'#experienceEditor'],
+    ['Projects',p.projects,'#projectEditor'],
+    ['Languages',p.languages,'#languages']
   ]
 
-  const analyzePdf = (pdfText, pages) => {
-    const profile = readProfile()
-    const source = sourceLines()
-    const pdfNormalized = normalize(pdfText)
-    const groups = fieldGroups(profile).map(([label, value, selector]) => ({
-      label, selector, coverage:groupCoverage(pdfNormalized, value)
-    }))
-    const sourceMatches = source.lines.map((line) => matchText(pdfNormalized, line) ? 1 : 0)
-    const retained = sourceMatches.length
-      ? clamp(sourceMatches.reduce((sum, value) => sum + value, 0) / sourceMatches.length * 100)
-      : 0
-    const criticalLabels = new Set(['Name','Role / title','Email','Skills','Experience'])
-    const critical = groups.filter((group) => criticalLabels.has(group.label) && group.coverage.present)
-    const criticalScore = critical.length
-      ? clamp(critical.reduce((sum, group) => sum + group.coverage.score, 0) / critical.length * 100)
-      : 0
-    const order = orderConsistency(source.lines, pdfNormalized)
-    const textLayer = pdfNormalized.length >= 240 ? 100 : pdfNormalized.length >= 80 ? 60 : pdfNormalized.length ? 30 : 0
-    const score = clamp(retained * .45 + criticalScore * .30 + order.score * .15 + textLayer * .10)
+  const analyzePdf = (pdfText,pages) => {
+    const p=readProfile()
+    const source=sourceLines()
+    const pdfNormalized=normalize(pdfText)
+    const groups=fieldGroups(p).map((item) => ({ label:item[0], selector:item[2], coverage:groupCoverage(pdfNormalized,item[1]) }))
+    const matches=source.lines.map((line) => matchText(pdfNormalized,line) ? 1 : 0)
+    const retained=matches.length ? clamp(matches.reduce((a,b)=>a+b,0)/matches.length*100) : 0
+    const criticalNames=new Set(['Name','Role / title','Email','Skills','Experience'])
+    const critical=groups.filter((group)=>criticalNames.has(group.label) && group.coverage.present)
+    const criticalScore=critical.length ? clamp(critical.reduce((sum,group)=>sum+group.coverage.score,0)/critical.length*100) : 0
+    const order=orderConsistency(source.lines,pdfNormalized)
+    const textLayer=pdfNormalized.length>=240 ? 100 : pdfNormalized.length>=80 ? 60 : pdfNormalized.length ? 30 : 0
+    const score=clamp(retained*.45 + criticalScore*.30 + order.score*.15 + textLayer*.10)
     return {
-      score, retained, criticalScore, order, textLayer, groups, pdfText, pages,
-      sourceWordCount:source.text.split(/\s+/).filter(Boolean).length,
-      pdfWordCount:String(pdfText).split(/\s+/).filter(Boolean).length,
+      score,
+      retained,
+      criticalScore,
+      order,
+      textLayer,
+      groups,
+      pdfText,
+      pages,
+      pdfWordCount:String(pdfText).split(/\s+/).filter(Boolean).length
     }
   }
 
   const stateLabel = (coverage) => {
-    if (!coverage.present) return { key:'empty', label:'No source data' }
-    if (coverage.score >= .85) return { key:'retained', label:'Retained' }
-    if (coverage.score > 0) return { key:'partial', label:'Partial' }
+    if(!coverage.present) return { key:'empty', label:'No source data' }
+    if(coverage.score>=.85) return { key:'retained', label:'Retained' }
+    if(coverage.score>0) return { key:'partial', label:'Partial' }
     return { key:'missing', label:'Missing' }
   }
-  const verdict = (score) => score >= 90 ? 'Export preserved well' : score >= 75 ? 'Review a few differences' : score >= 55 ? 'PDF needs attention' : 'High parsing risk'
+
+  const verdict = (score) => score>=90 ? 'Export preserved well'
+    : score>=75 ? 'Review a few differences'
+    : score>=55 ? 'PDF needs attention'
+    : 'High parsing risk'
+
+  const openSourceField = (selector) => {
+    if(!selector) return
+    $('#atsShell').hidden=true
+    document.body.classList.remove('ats-open')
+    setTimeout(() => {
+      if($('#editor')?.classList.contains('collapsed')) $('#toggleEditor')?.click()
+      $('.tab[data-tab="content"]')?.click()
+      const node=$(selector)
+      node?.scrollIntoView({ behavior:'smooth', block:'center' })
+      const focus=node?.matches('input,textarea,select') ? node : node?.querySelector('input,textarea,select,button')
+      focus?.focus({ preventScroll:true })
+    },80)
+  }
+
+  const chooseAtsTemplate = () => {
+    $('#atsShell').hidden=true
+    document.body.classList.remove('ats-open')
+    setTimeout(() => {
+      const card=$$('.template-card').find((item)=>/ATS Precision/i.test(item.textContent||''))
+        || $$('.template-card').find((item)=>/ATS Clean/i.test(item.textContent||''))
+      card?.click()
+      card?.scrollIntoView({ behavior:'smooth', block:'center' })
+    },80)
+  }
+
+  const renderResult = (report,filename) => {
+    $('#atsPdfResult').hidden=false
+    $('#atsPdfScore').textContent=report.score
+    $('#atsPdfVerdict').textContent=verdict(report.score)
+    $('#atsPdfRetained').textContent=report.retained+'%'
+    $('#atsPdfCritical').textContent=report.criticalScore+'%'
+    $('#atsPdfOrder').textContent=report.order.score+'%'
+    $('#atsPdfMeta').textContent=report.pages+' page'+(report.pages===1?'':'s')+' · '+report.pdfWordCount+' PDF words'
+    $('#atsPdfRawText').textContent=report.pdfText || 'No selectable PDF text found.'
+    $('#atsPdfOrderTitle').textContent=report.order.inversions ? 'Possible sequence changes' : 'Sequence looks consistent'
+    $('#atsPdfOrderMeta').textContent=report.order.matched+' comparable text blocks'
+    $('#atsPdfOrderAdvice').innerHTML=report.order.inversions
+      ? '<strong>Review reading order</strong><p>'+report.order.inversions+' sequence break(s) detected. Multi-column layouts are the first thing to review.</p><button type="button" data-pdf-use-ats>Use ATS template</button>'
+      : '<strong>Order preserved</strong><p>Matched blocks generally appear in the same sequence as the live CV.</p>'
+
+    $('#atsPdfFieldList').innerHTML=report.groups.map((group) => {
+      const state=stateLabel(group.coverage)
+      const detail=group.coverage.present
+        ? group.coverage.matched+'/'+group.coverage.total+' source value(s) found in PDF'
+        : 'No source data to compare'
+      const action=group.selector && state.key!=='retained' && state.key!=='empty'
+        ? '<button type="button" data-pdf-edit="'+esc(group.selector)+'">Fix source</button>'
+        : ''
+      return '<article data-pdf-state="'+state.key+'">' +
+        '<span class="ats-pdf-state-dot"></span>' +
+        '<div><strong>'+esc(group.label)+'</strong><small>'+esc(detail)+'</small></div>' +
+        '<b>'+esc(state.label)+'</b>' +
+        action +
+      '</article>'
+    }).join('')
+
+    $('#atsPdfFieldList').onclick=(event) => {
+      const edit=event.target.closest('[data-pdf-edit]')
+      if(edit) openSourceField(edit.dataset.pdfEdit)
+    }
+    $('[data-pdf-use-ats]')?.addEventListener('click',chooseAtsTemplate)
+
+    const drop=$('#atsPdfDrop')
+    drop.querySelector('strong').textContent=filename
+    drop.querySelector('small').textContent='Verified · drop another PDF to compare again'
+    drop.classList.add('verified')
+  }
+
+  const verify = async (file) => {
+    const error=$('#atsPdfError')
+    const loading=$('#atsPdfLoading')
+    error.hidden=true
+    if(!file || (!/pdf/i.test(file.type||'') && !/\.pdf$/i.test(file.name||''))){
+      error.textContent='Please choose a PDF file.'
+      error.hidden=false
+      return
+    }
+    loading.hidden=false
+    $('#atsPdfResult').hidden=true
+    try{
+      const extracted=await extractPdfText(file)
+      renderResult(analyzePdf(extracted.text||'',Number(extracted.pages||1)),file.name||'Exported CV.pdf')
+    }catch(cause){
+      console.error('ATS PDF verification failed.',cause)
+      error.innerHTML='<strong>Unable to read this PDF.</strong><span>Try the exported file again. Image-only/scanned PDFs may not contain a readable text layer.</span>'
+      error.hidden=false
+    }finally{
+      loading.hidden=true
+    }
+  }
 
   const inject = () => {
-    const panel = $('.ats-panel')
-    const tabs = $('.ats-tabs')
-    if (!panel || !tabs || $('#atsPdfVerifyTab')) return
+    const panel=$('.ats-panel')
+    const tabs=$('.ats-tabs')
+    if(!panel || !tabs || $('#atsPdfVerifyTab')) return
 
-    const tab = document.createElement('button')
-    tab.type = 'button'
-    tab.id = 'atsPdfVerifyTab'
-    tab.dataset.atsTab = 'pdf'
-    tab.textContent = 'PDF verify'
+    const tab=document.createElement('button')
+    tab.type='button'
+    tab.id='atsPdfVerifyTab'
+    tab.dataset.atsTab='pdf'
+    tab.textContent='PDF verify'
     tabs.appendChild(tab)
 
-    const pane = document.createElement('section')
-    pane.className = 'ats-pane'
-    pane.dataset.atsPane = 'pdf'
-    pane.innerHTML = [
+    const pane=document.createElement('section')
+    pane.className='ats-pane'
+    pane.dataset.atsPane='pdf'
+    pane.innerHTML=[
       '<section class="ats-pdf-intro">',
         '<div><span>Export verification</span><strong>Check the PDF ATS will receive</strong></div>',
         '<p>Export your CV, then drop the saved PDF here. The file stays in this browser; only its text layer is read.</p>',
@@ -836,10 +1185,7 @@
         '<div id="atsPdfFieldList" class="ats-pdf-field-list"></div>',
         '<div class="ats-section-title"><div><span>Reading order</span><strong id="atsPdfOrderTitle">Sequence check</strong></div><small id="atsPdfOrderMeta"></small></div>',
         '<div id="atsPdfOrderAdvice" class="ats-pdf-advice"></div>',
-        '<details class="ats-pdf-raw">',
-          '<summary>View extracted PDF text</summary>',
-          '<pre id="atsPdfRawText"></pre>',
-        '</details>',
+        '<details class="ats-pdf-raw"><summary>View extracted PDF text</summary><pre id="atsPdfRawText"></pre></details>',
       '</div>',
       '<div class="ats-pdf-actions">',
         '<button type="button" id="atsPdfExportAgain" class="button ghost">Export PDF again</button>',
@@ -847,146 +1193,49 @@
       '</div>',
       '<p class="ats-help">PDF verification checks the real selectable text layer. Scanned/image-only PDFs can score poorly even if they look visually correct.</p>',
     ].join('')
-    panel.insertBefore(pane, panel.querySelector('.ats-footer'))
+    panel.insertBefore(pane,panel.querySelector('.ats-footer'))
 
-    // The original ATS script bound existing tabs before this new tab existed, so bind it here.
-    tab.addEventListener('click', () => {
-      $$('[data-ats-tab]').forEach((item) => item.classList.toggle('active', item === tab))
-      $$('[data-ats-pane]').forEach((item) => item.classList.toggle('active', item.dataset.atsPane === 'pdf'))
+    tab.addEventListener('click',() => {
+      $$('[data-ats-tab]').forEach((item)=>item.classList.toggle('active',item===tab))
+      $$('[data-ats-pane]').forEach((item)=>item.classList.toggle('active',item.dataset.atsPane==='pdf'))
     })
 
-    const input = $('#atsPdfInput')
-    const drop = $('#atsPdfDrop')
-    drop.addEventListener('dragover', (event) => {
-      event.preventDefault()
-      drop.classList.add('dragging')
-    })
-    drop.addEventListener('dragleave', () => drop.classList.remove('dragging'))
-    drop.addEventListener('drop', (event) => {
+    const input=$('#atsPdfInput')
+    const drop=$('#atsPdfDrop')
+    drop.addEventListener('dragover',(event)=>{event.preventDefault();drop.classList.add('dragging')})
+    drop.addEventListener('dragleave',()=>drop.classList.remove('dragging'))
+    drop.addEventListener('drop',(event)=>{
       event.preventDefault()
       drop.classList.remove('dragging')
-      const file = event.dataTransfer?.files?.[0]
-      if (file) verify(file)
+      const file=event.dataTransfer?.files?.[0]
+      if(file) verify(file)
     })
-    input.addEventListener('change', () => {
-      const file = input.files?.[0]
-      if (file) verify(file)
+    input.addEventListener('change',()=>{
+      const file=input.files?.[0]
+      if(file) verify(file)
     })
-    $('#atsPdfChooseAgain').addEventListener('click', () => input.click())
-    $('#atsPdfExportAgain').addEventListener('click', () => $('#print')?.click())
+    $('#atsPdfChooseAgain').addEventListener('click',()=>input.click())
+    $('#atsPdfExportAgain').addEventListener('click',()=>$('#print')?.click())
 
-    // After the browser print flow closes, signal the next useful action without forcing a modal.
-    window.addEventListener('afterprint', () => {
-      const button = $('#atsScanButton')
-      if (!button) return
+    window.addEventListener('afterprint',()=>{
+      const button=$('#atsScanButton')
+      if(!button) return
+      button.dataset.pdfReady='true'
       button.classList.add('ats-pdf-ready')
-      button.title = 'ATS Scan · verify the PDF you just exported'
-      const badge = $('#atsScoreBadge')
-      if (badge && !badge.dataset.readiness) {
-        badge.dataset.readiness = badge.textContent || ''
+      button.title='ATS Scan · verify the PDF you just exported'
+    })
+
+    $('#atsScanButton')?.addEventListener('click',()=>{
+      const button=$('#atsScanButton')
+      if(button?.dataset.pdfReady==='true'){
+        delete button.dataset.pdfReady
+        button.classList.remove('ats-pdf-ready')
+        setTimeout(()=>$('#atsPdfVerifyTab')?.click(),0)
       }
-      if (badge) badge.textContent = 'PDF?'
-    })
-    $('#atsScanButton')?.addEventListener('click', () => {
-      const badge = $('#atsScoreBadge')
-      if (badge?.dataset.readiness) {
-        badge.textContent = badge.dataset.readiness
-        delete badge.dataset.readiness
-      }
-      $('#atsScanButton')?.classList.remove('ats-pdf-ready')
     })
   }
 
-  const openSourceField = (selector) => {
-    if (!selector) return
-    $('#atsShell').hidden = true
-    document.body.classList.remove('ats-open')
-    setTimeout(() => {
-      if ($('#editor')?.classList.contains('collapsed')) $('#toggleEditor')?.click()
-      $('.tab[data-tab="content"]')?.click()
-      const node = $(selector)
-      node?.scrollIntoView({ behavior:'smooth', block:'center' })
-      const focus = node?.matches('input,textarea,select') ? node : node?.querySelector('input,textarea,select,button')
-      focus?.focus({ preventScroll:true })
-    }, 80)
-  }
-
-  const renderResult = (report, filename) => {
-    $('#atsPdfResult').hidden = false
-    $('#atsPdfScore').textContent = report.score
-    $('#atsPdfVerdict').textContent = verdict(report.score)
-    $('#atsPdfRetained').textContent = report.retained + '%'
-    $('#atsPdfCritical').textContent = report.criticalScore + '%'
-    $('#atsPdfOrder').textContent = report.order.score + '%'
-    $('#atsPdfMeta').textContent = report.pages + ' page' + (report.pages === 1 ? '' : 's') + ' · ' + report.pdfWordCount + ' PDF words'
-    $('#atsPdfRawText').textContent = report.pdfText || 'No selectable PDF text found.'
-    $('#atsPdfOrderTitle').textContent = report.order.inversions ? 'Possible sequence changes' : 'Sequence looks consistent'
-    $('#atsPdfOrderMeta').textContent = report.order.matched + ' comparable text blocks'
-    $('#atsPdfOrderAdvice').innerHTML = report.order.inversions
-      ? '<strong>Review reading order</strong><p>' + report.order.inversions + ' sequence break(s) detected. Multi-column layouts are the first thing to review.</p><button type="button" data-pdf-use-ats>Use ATS template</button>'
-      : '<strong>Order preserved</strong><p>Matched blocks generally appear in the same sequence as the live CV.</p>'
-
-    $('#atsPdfFieldList').innerHTML = report.groups.map((group) => {
-      const state = stateLabel(group.coverage)
-      const detail = group.coverage.present
-        ? group.coverage.matched + '/' + group.coverage.total + ' source value(s) found in PDF'
-        : 'No source data to compare'
-      return '<article data-pdf-state="' + state.key + '">' +
-        '<span class="ats-pdf-state-dot"></span>' +
-        '<div><strong>' + esc(group.label) + '</strong><small>' + esc(detail) + '</small></div>' +
-        '<b>' + esc(state.label) + '</b>' +
-        (group.selector && state.key !== 'retained' && state.key !== 'empty'
-          ? '<button type="button" data-pdf-edit="' + esc(group.selector) + '">Fix source</button>'
-          : '') +
-      '</article>'
-    }).join('')
-
-    $('#atsPdfFieldList').onclick = (event) => {
-      const edit = event.target.closest('[data-pdf-edit]')
-      if (edit) openSourceField(edit.dataset.pdfEdit)
-    }
-    $('[data-pdf-use-ats]')?.addEventListener('click', () => {
-      $('#atsShell').hidden = true
-      document.body.classList.remove('ats-open')
-      setTimeout(() => {
-        const card = $$('.template-card').find((item) => /ATS Precision/i.test(item.textContent || ''))
-          || $$('.template-card').find((item) => /ATS Clean/i.test(item.textContent || ''))
-        card?.click()
-        card?.scrollIntoView({ behavior:'smooth', block:'center' })
-      }, 80)
-    })
-
-    const drop = $('#atsPdfDrop')
-    drop.querySelector('strong').textContent = filename
-    drop.querySelector('small').textContent = 'Verified · drop another PDF to compare again'
-    drop.classList.add('verified')
-  }
-
-  const verify = async (file) => {
-    const error = $('#atsPdfError')
-    const loading = $('#atsPdfLoading')
-    error.hidden = true
-    if (!file || !/pdf/i.test(file.type || '') && !/\.pdf$/i.test(file.name || '')) {
-      error.textContent = 'Please choose a PDF file.'
-      error.hidden = false
-      return
-    }
-    loading.hidden = false
-    $('#atsPdfResult').hidden = true
-    try {
-      const extracted = await extractPdfText(file)
-      const report = analyzePdf(extracted.text || '', Number(extracted.pages || 1))
-      renderResult(report, file.name || 'Exported CV.pdf')
-    } catch (cause) {
-      console.error('ATS PDF verification failed.', cause)
-      error.innerHTML = '<strong>Unable to read this PDF.</strong><span>Try the exported file again. Image-only/scanned PDFs may not contain a readable text layer.</span>'
-      error.hidden = false
-    } finally {
-      loading.hidden = true
-    }
-  }
-
-  const boot = () => inject()
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot)
+  const boot=()=>inject()
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot)
   else boot()
 })()
