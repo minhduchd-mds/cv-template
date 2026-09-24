@@ -104,3 +104,40 @@ test('ATS visual heatmap highlights readable and risky CV regions', async ({ pag
 
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('ATS Auto Fix applies factual safe fixes and supports undo', async ({ page }) => {
+  const runtimeErrors = []
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.addInitScript(() => {
+    const key='cv-studio-static-v2'
+    const saved=JSON.parse(localStorage.getItem(key)||'{}')
+    saved.summary=''
+    saved.skills=['Product Design','Figma']
+    saved.experience=[{
+      role:'Product Designer',
+      company:'Example Co',
+      period:'2022 — Present',
+      location:'Hanoi',
+      bullets:['Responsible for design systems across product teams.']
+    }]
+    localStorage.setItem(key,JSON.stringify(saved))
+  })
+
+  await page.goto('/studio/')
+  await page.getByRole('button', { name: /ATS Scan/i }).click()
+
+  await expect(page.getByText('ATS Auto Fix')).toBeVisible()
+  await expect(page.locator('#atsAutoFixList .ats-auto-card.safe').first()).toBeVisible()
+
+  const before=await page.locator('#summary').inputValue()
+  await page.locator('#atsAutoFixList [data-auto-apply="summary"]').click()
+  await expect(page.locator('#summary')).not.toHaveValue(before)
+  await expect(page.locator('#paper')).toContainText('Product Designer')
+
+  await page.locator('#atsAutoUndo').click()
+  await expect(page.locator('#summary')).toHaveValue(before)
+
+  expect(runtimeErrors).toEqual([])
+})

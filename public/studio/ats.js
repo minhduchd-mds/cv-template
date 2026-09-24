@@ -1460,3 +1460,344 @@
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot)
   else boot()
 })()
+
+
+/* ATS_AUTO_FIX_V1 */
+(() => {
+  'use strict'
+
+  const PROFILE_KEY='cv-studio-static-v2'
+  const TARGET_KEY='cv-studio-ats-target-v2'
+  const $=(selector,root=document)=>root.querySelector(selector)
+  const $$=(selector,root=document)=>[...root.querySelectorAll(selector)]
+  const esc=(value)=>String(value==null?'':value).replace(/[&<>"']/g,(char)=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[char]))
+  const normalize=(value)=>String(value==null?'':value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}+#./@%-]+/gu,' ')
+    .replace(/\s+/g,' ')
+    .trim()
+
+  const ROLE_TERMS={
+    uiux:['Product Design','User Research','Prototyping','Design Systems','Interaction Design','Usability Testing','Figma','Accessibility','Information Architecture','User Flows'],
+    designEngineer:['Frontend','TypeScript','JavaScript','React','Vue','Design Systems','Component Library','Accessibility','CSS','HTML','Performance'],
+    product:['Product Strategy','Roadmap','Prioritization','Product Discovery','Metrics','Experimentation','Stakeholder Management','Requirements','User Research'],
+    sales:['Business Development','Revenue','Pipeline','Sales','Account Management','Negotiation','Partnership','Go-to-Market','CRM','Quota'],
+    engineering:['JavaScript','TypeScript','React','Node','API','Testing','Git','CI/CD','Architecture','Performance','Cloud'],
+    data:['SQL','Dashboard','Analytics','Business Intelligence','Python','Data Visualization','Metrics','Reporting'],
+    marketing:['Campaign','Brand','SEO','Content','Acquisition','Conversion','Analytics','CRM','Growth'],
+    hr:['Recruitment','Talent Acquisition','Employee Engagement','HR Operations','Performance Management','Onboarding','Learning and Development'],
+    finance:['Financial Analysis','Budgeting','Forecasting','Reporting','Investment','Risk','Excel','Financial Modeling','Compliance'],
+    research:['Research','Publication','Methodology','Analysis','Teaching','Grant','Peer Review','Study'],
+    general:['Leadership','Communication','Project Management','Stakeholder Management','Problem Solving','Collaboration','Delivery']
+  }
+
+  const TEMPLATE_ROLE={
+    'Soft Portfolio':'uiux','Bento Resume':'uiux','Creator Cards':'uiux','Code Aware':'designEngineer',
+    'Mono Grid':'engineering','ATS Precision':'engineering','Product Operator':'product','Revenue Driver':'sales',
+    'Insight Grid':'data','Brand Motion':'marketing','People First':'hr','Finance Ledger':'finance',
+    'Research Scholar':'research','Studio Director':'marketing'
+  }
+
+  const WEAK_STARTS=[
+    [/^responsible for\s+/i,'Supported '],
+    [/^worked on\s+/i,'Contributed to '],
+    [/^helped (?:to )?/i,'Supported '],
+    [/^assisted (?:with|in)\s+/i,'Supported '],
+    [/^involved in\s+/i,'Contributed to ']
+  ]
+
+  let undoStack=[]
+  let suggestions=[]
+
+  const readJson=(key,fallback)=>{
+    try{return JSON.parse(localStorage.getItem(key)||'')||fallback}catch{return fallback}
+  }
+  const profile=()=>readJson(PROFILE_KEY,{})
+  const target=()=>Object.assign({role:'auto',industry:'general',seniority:'senior',jd:''},readJson(TARGET_KEY,{}))
+  const activeTemplate=()=>String($('#activeTemplateLabel')?.textContent||'').replace(/\s*·\s*A4.*$/,'').trim()
+  const roleKey=()=>{
+    const t=target()
+    return t.role==='auto'?(TEMPLATE_ROLE[activeTemplate()]||'general'):t.role
+  }
+  const paperText=()=>String($('#paper')?.innerText||'').trim()
+  const unique=(values)=>[...new Set(values.filter(Boolean))]
+  const sentence=(value)=>{
+    const text=String(value||'').trim().replace(/\s+/g,' ')
+    if(!text)return ''
+    return text.charAt(0).toUpperCase()+text.slice(1).replace(/[.;,\s]+$/,'')+'.'
+  }
+
+  const buildSummaryFix=(p)=>{
+    const current=String(p.summary||'').trim()
+    const role=String(p.role||'').trim()
+    const skills=(p.skills||[]).filter(Boolean).slice(0,4)
+    if(!role && !skills.length)return null
+
+    let proposed=current
+    if(!current){
+      const skillText=skills.length?' with experience across '+skills.join(', '):''
+      proposed=sentence((role||'Professional')+skillText)
+    }else{
+      const currentNorm=normalize(current)
+      const missingSkills=skills.filter((skill)=>!currentNorm.includes(normalize(skill))).slice(0,2)
+      if(missingSkills.length){
+        proposed=sentence(current)+' '+sentence('Core strengths include '+missingSkills.join(' and '))
+      }
+    }
+    if(!proposed||normalize(proposed)===normalize(current))return null
+    return {
+      id:'summary',
+      type:'safe',
+      title:'Strengthen professional summary',
+      reason:current?'Reuse skills already present in this CV.':'Build a factual summary from the current role and entered skills.',
+      current:current||'No summary',
+      proposed,
+      apply:()=>applyInput('#summary',proposed)
+    }
+  }
+
+  const buildSkillsFix=(p)=>{
+    const current=(p.skills||[]).filter(Boolean)
+    const currentNorm=current.map(normalize)
+    const text=normalize(paperText())
+    const candidates=ROLE_TERMS[roleKey()]||ROLE_TERMS.general
+    const proven=candidates.filter((term)=>{
+      const key=normalize(term)
+      return !currentNorm.includes(key) && text.includes(key)
+    }).slice(0,5)
+    if(!proven.length)return null
+    const proposed=unique(current.concat(proven))
+    return {
+      id:'skills',
+      type:'safe',
+      title:'Sync proven keywords into Skills',
+      reason:'These terms already appear elsewhere in the CV, so this does not add a new claim.',
+      current:current.join(' · ')||'No skills',
+      proposed:proposed.join(' · '),
+      apply:()=>applyInput('#skills',proposed.join('\n'))
+    }
+  }
+
+  const buildExperienceFixes=(p)=>{
+    const fixes=[]
+    ;(p.experience||[]).forEach((job,jobIndex)=>{
+      ;(job.bullets||[]).forEach((bullet,bulletIndex)=>{
+        const original=String(bullet||'').trim()
+        if(!original)return
+        const match=WEAK_STARTS.find(([pattern])=>pattern.test(original))
+        if(!match)return
+        const proposed=sentence(original.replace(match[0],match[1]))
+        if(normalize(proposed)===normalize(original))return
+        fixes.push({
+          id:'experience-'+jobIndex+'-'+bulletIndex,
+          type:'safe',
+          title:'Use a clearer action-led bullet',
+          reason:'Rephrases a weak opening while keeping the existing fact and scope.',
+          context:(job.role||'Experience')+(job.company?' · '+job.company:''),
+          current:original,
+          proposed,
+          apply:()=>applyExperienceBullet(jobIndex,bulletIndex,proposed)
+        })
+      })
+    })
+    return fixes.slice(0,3)
+  }
+
+  const extractJdTerms=()=>{
+    const jd=String($('#atsJobDescription')?.value||target().jd||'')
+    if(!jd.trim())return []
+    const stop=new Set(['with','from','that','this','your','have','will','role','team','work','years','experience','skills','required','preferred','responsibilities','candidate','using','about','into','and','the','for','you','are','our','job'])
+    const words=normalize(jd).split(' ').filter((word)=>word.length>=4&&!stop.has(word)&&!/^\d+$/.test(word))
+    const counts=new Map()
+    words.forEach((word)=>counts.set(word,(counts.get(word)||0)+1))
+    return [...counts.entries()].sort((a,b)=>b[1]-a[1]).map((item)=>item[0]).slice(0,18)
+  }
+
+  const buildReviewKeywords=(p)=>{
+    const text=normalize(paperText())
+    const roleTerms=(ROLE_TERMS[roleKey()]||ROLE_TERMS.general).map((term)=>normalize(term))
+    const jdTerms=extractJdTerms()
+    const missing=unique(roleTerms.concat(jdTerms)).filter((term)=>!text.includes(term)).slice(0,10)
+    if(!missing.length)return null
+    return {
+      id:'review-keywords',
+      type:'review',
+      title:'Missing target keywords',
+      reason:'Only add these when they accurately describe your real experience or skills.',
+      current:'Not found in current CV',
+      proposed:missing.join(' · '),
+      keywords:missing
+    }
+  }
+
+  const buildSuggestions=()=>{
+    const p=profile()
+    const next=[]
+    const summary=buildSummaryFix(p)
+    const skills=buildSkillsFix(p)
+    if(summary)next.push(summary)
+    if(skills)next.push(skills)
+    next.push(...buildExperienceFixes(p))
+    const review=buildReviewKeywords(p)
+    if(review)next.push(review)
+    suggestions=next
+    renderSuggestions()
+  }
+
+  const snapshotForSelector=(selector)=>{
+    const node=$(selector)
+    if(!node)return null
+    return {kind:'input',selector,value:node.value}
+  }
+
+  const applyInput=(selector,value)=>{
+    const node=$(selector)
+    if(!node)return false
+    const before=snapshotForSelector(selector)
+    if(before)undoStack.push(before)
+    node.value=value
+    node.dispatchEvent(new Event('input',{bubbles:true}))
+    return true
+  }
+
+  const applyExperienceBullet=(jobIndex,bulletIndex,value)=>{
+    const textarea=$$('#experienceEditor .editor-card textarea[data-key="bullets"]')[jobIndex]
+    if(!textarea)return false
+    const lines=textarea.value.split(/\n+/).map((item)=>item.trim()).filter(Boolean)
+    const before={kind:'input',selector:'#experienceEditor .editor-card:nth-of-type('+(jobIndex+1)+') textarea[data-key="bullets"]',value:textarea.value}
+    undoStack.push(before)
+    lines[bulletIndex]=value
+    textarea.value=lines.join('\n')
+    textarea.dispatchEvent(new Event('input',{bubbles:true}))
+    return true
+  }
+
+  const undoLast=()=>{
+    const item=undoStack.pop()
+    if(!item)return
+    const node=$(item.selector)
+    if(!node)return
+    node.value=item.value
+    node.dispatchEvent(new Event('input',{bubbles:true}))
+    buildSuggestions()
+    renderUndo()
+  }
+
+  const renderUndo=()=>{
+    const button=$('#atsAutoUndo')
+    if(button)button.disabled=!undoStack.length
+  }
+
+  const renderSuggestions=()=>{
+    const host=$('#atsAutoFixList')
+    if(!host)return
+    const safe=suggestions.filter((item)=>item.type==='safe')
+    const review=suggestions.filter((item)=>item.type==='review')
+    $('#atsAutoFixCount').textContent=safe.length+' safe fix'+(safe.length===1?'':'es')
+    $('#atsAutoApplyAll').disabled=!safe.length
+
+    if(!suggestions.length){
+      host.innerHTML='<div class="ats-auto-empty"><strong>No automatic fixes needed</strong><p>The current CV has no safe deterministic rewrite to apply. You can still review Target Fit and PDF verification.</p></div>'
+      renderUndo()
+      return
+    }
+
+    host.innerHTML=suggestions.map((item)=>{
+      const reviewOnly=item.type==='review'
+      return '<article class="ats-auto-card '+(reviewOnly?'review':'safe')+'" data-auto-id="'+esc(item.id)+'">' +
+        '<div class="ats-auto-card-head"><div><span>'+(reviewOnly?'Review':'Safe fix')+'</span><strong>'+esc(item.title)+'</strong>'+(item.context?'<small>'+esc(item.context)+'</small>':'')+'</div>' +
+        (reviewOnly?'<b>Verify first</b>':'<b>Low risk</b>')+'</div>' +
+        '<p class="ats-auto-reason">'+esc(item.reason)+'</p>' +
+        '<div class="ats-auto-diff"><div><span>Current</span><p>'+esc(item.current)+'</p></div><i>→</i><div><span>'+(reviewOnly?'Consider':'Proposed')+'</span><p>'+esc(item.proposed)+'</p></div></div>' +
+        '<div class="ats-auto-actions">' +
+          (reviewOnly
+            ? '<button type="button" data-auto-copy="'+esc(item.id)+'">Copy keywords</button><button type="button" data-auto-edit-skills>Review Skills</button>'
+            : '<button type="button" class="primary" data-auto-apply="'+esc(item.id)+'">Apply</button>') +
+        '</div>' +
+      '</article>'
+    }).join('')
+    renderUndo()
+  }
+
+  const applySuggestion=(id)=>{
+    const item=suggestions.find((entry)=>entry.id===id)
+    if(!item||item.type!=='safe'||typeof item.apply!=='function')return
+    if(item.apply()){
+      buildSuggestions()
+      renderUndo()
+      $('#atsAutoStatus').textContent='Applied · CV preview and ATS scan updated'
+      setTimeout(()=>{if($('#atsAutoStatus'))$('#atsAutoStatus').textContent='Changes stay local until you export.'},1800)
+    }
+  }
+
+  const applyAll=()=>{
+    const safe=[...suggestions].filter((item)=>item.type==='safe')
+    safe.forEach((item)=>item.apply?.())
+    buildSuggestions()
+    renderUndo()
+    $('#atsAutoStatus').textContent=safe.length?'Applied '+safe.length+' safe fixes · review the CV before export.':'No safe fixes to apply.'
+  }
+
+  const copyKeywords=async(id)=>{
+    const item=suggestions.find((entry)=>entry.id===id)
+    if(!item?.keywords?.length)return
+    try{
+      await navigator.clipboard.writeText(item.keywords.join(', '))
+      $('#atsAutoStatus').textContent='Keywords copied · add only the ones that are true.'
+    }catch{
+      $('#atsAutoStatus').textContent='Copy unavailable · review the keywords manually.'
+    }
+  }
+
+  const openSkills=()=>{
+    $('#atsShell').hidden=true
+    document.body.classList.remove('ats-open')
+    setTimeout(()=>{
+      if($('#editor')?.classList.contains('collapsed'))$('#toggleEditor')?.click()
+      $('.tab[data-tab="content"]')?.click()
+      $('#skills')?.scrollIntoView({behavior:'smooth',block:'center'})
+      $('#skills')?.focus({preventScroll:true})
+    },80)
+  }
+
+  const inject=()=>{
+    const scanPane=$('[data-ats-pane="scan"]')
+    if(!scanPane||$('#atsAutoFix'))return
+    const section=document.createElement('section')
+    section.id='atsAutoFix'
+    section.className='ats-auto-fix'
+    section.innerHTML=
+      '<div class="ats-section-title ats-auto-title"><div><span>Optimization</span><strong>ATS Auto Fix</strong></div><small id="atsAutoFixCount">0 safe fixes</small></div>' +
+      '<div class="ats-auto-toolbar"><div><strong>Evidence-first fixes</strong><span id="atsAutoStatus">Changes stay local until you export.</span></div><div><button id="atsAutoUndo" type="button" disabled>Undo</button><button id="atsAutoApplyAll" type="button" class="primary">Apply safe fixes</button></div></div>' +
+      '<div id="atsAutoFixList" class="ats-auto-list"></div>'
+    scanPane.insertBefore(section,scanPane.querySelector('.ats-section-title')||scanPane.firstChild)
+
+    section.addEventListener('click',(event)=>{
+      const apply=event.target.closest('[data-auto-apply]')
+      if(apply)return applySuggestion(apply.dataset.autoApply)
+      const copy=event.target.closest('[data-auto-copy]')
+      if(copy)return copyKeywords(copy.dataset.autoCopy)
+      if(event.target.closest('[data-auto-edit-skills]'))return openSkills()
+    })
+    $('#atsAutoApplyAll').addEventListener('click',applyAll)
+    $('#atsAutoUndo').addEventListener('click',undoLast)
+
+    $('#atsScanButton')?.addEventListener('click',()=>setTimeout(buildSuggestions,0))
+    $('#atsRescan')?.addEventListener('click',()=>setTimeout(buildSuggestions,0))
+    $('#atsJobDescription')?.addEventListener('input',()=>setTimeout(buildSuggestions,80))
+    $('#atsProRole')?.addEventListener('change',()=>setTimeout(buildSuggestions,0))
+    $('#atsProIndustry')?.addEventListener('change',()=>setTimeout(buildSuggestions,0))
+    $('#atsProSeniority')?.addEventListener('change',()=>setTimeout(buildSuggestions,0))
+    const paper=$('#paper')
+    if(paper)new MutationObserver(()=>setTimeout(buildSuggestions,100)).observe(paper,{childList:true,subtree:true,characterData:true})
+    buildSuggestions()
+  }
+
+  const boot=()=>inject()
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot)
+  else boot()
+})()
