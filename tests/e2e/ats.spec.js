@@ -81,3 +81,26 @@ test('ATS PDF verification compares exported text with the live CV', async ({ pa
 
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('ATS visual heatmap highlights readable and risky CV regions', async ({ page }) => {
+  const runtimeErrors = []
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.goto('/studio/')
+  await page.getByRole('button', { name: /ATS Scan/i }).click()
+  await expect(page.getByText('ATS Heatmap')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Show heatmap' }).click()
+  await expect(page.locator('#paper')).toHaveClass(/ats-heatmap-active/)
+  await expect(page.locator('#atsHeatmapLegend')).toBeVisible()
+  await expect(page.locator('#paper .ats-heat').first()).toBeVisible()
+
+  const summary = page.locator('#paper [data-edit-focus="#summary"]').first()
+  await expect(summary).toHaveClass(/ats-heat-/)
+
+  await page.getByRole('button', { name: 'Hide ATS heatmap' }).click()
+  await expect(page.locator('#paper')).not.toHaveClass(/ats-heatmap-active/)
+
+  expect(runtimeErrors).toEqual([])
+})

@@ -1239,3 +1239,224 @@
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot)
   else boot()
 })()
+
+
+/* ATS_VISUAL_HEATMAP_V1 */
+(() => {
+  'use strict'
+
+  const PROFILE_KEY = 'cv-studio-static-v2'
+  const $ = (selector, root = document) => root.querySelector(selector)
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)]
+  const normalize = (value) => String(value == null ? '' : value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/\s+/g,' ')
+    .trim()
+
+  let enabled = false
+  let mode = 'web'
+
+  const readProfile = () => {
+    try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}') || {} }
+    catch { return {} }
+  }
+
+  const clearHeatmap = () => {
+    $$('#paper .ats-heat').forEach((node) => {
+      node.classList.remove('ats-heat','ats-heat-good','ats-heat-partial','ats-heat-bad')
+      node.removeAttribute('data-ats-heat-label')
+      node.removeAttribute('data-ats-heat-field')
+    })
+    $('#paper')?.classList.remove('ats-heatmap-active')
+  }
+
+  const statusMapFromWeb = () => {
+    const map = new Map()
+    $$('#atsFieldList .ats-field-row').forEach((row) => {
+      const label = row.querySelector('strong')?.textContent?.trim()
+      const state = row.dataset.atsStatus || 'empty'
+      if (label) map.set(label, state === 'readable' ? 'good' : state === 'partial' ? 'partial' : state === 'missing' ? 'bad' : 'empty')
+    })
+    return map
+  }
+
+  const statusMapFromPdf = () => {
+    const map = new Map()
+    $$('#atsPdfFieldList article').forEach((row) => {
+      const label = row.querySelector('strong')?.textContent?.trim()
+      const state = row.dataset.pdfState || 'empty'
+      if (label) map.set(label, state === 'retained' ? 'good' : state === 'partial' ? 'partial' : state === 'missing' ? 'bad' : 'empty')
+    })
+    return map
+  }
+
+  const editableTargets = () => ({
+    'Summary': $$('[data-edit-focus="#summary"]','#paper' in window ? document : document),
+    'Skills': $$('[data-edit-focus="#skills"]', $('#paper') || document),
+    'Experience': $$('[data-edit-focus="#experienceEditor"]', $('#paper') || document),
+    'Projects': $$('[data-edit-focus="#projectEditor"]', $('#paper') || document),
+    'Languages': $$('[data-edit-focus="#languages"]', $('#paper') || document)
+  })
+
+  const findTextNode = (value) => {
+    const paper = $('#paper')
+    const needle = normalize(value)
+    if (!paper || !needle) return null
+    const candidates = $$('h1,h2,h3,p,span,strong,a,time,div',paper)
+      .filter((node) => normalize(node.textContent).includes(needle))
+      .filter((node) => node.children.length <= 6)
+      .sort((a,b) => {
+        const aLen = normalize(a.textContent).length
+        const bLen = normalize(b.textContent).length
+        return aLen - bLen
+      })
+    return candidates[0] || null
+  }
+
+  const addNode = (node, field, state) => {
+    if (!node || state === 'empty') return
+    const target = node.closest('[data-edit-pane]') || node
+    target.classList.add('ats-heat','ats-heat-' + state)
+    target.dataset.atsHeatField = field
+    target.dataset.atsHeatLabel = field + ' · ' + (state === 'good' ? (mode === 'pdf' ? 'Retained' : 'Readable') : state === 'partial' ? 'Partial' : 'Missing')
+  }
+
+  const applyHeatmap = () => {
+    clearHeatmap()
+    if (!enabled) return
+    const paper = $('#paper')
+    if (!paper) return
+    paper.classList.add('ats-heatmap-active')
+    const statuses = mode === 'pdf' ? statusMapFromPdf() : statusMapFromWeb()
+    const profile = readProfile()
+
+    const selectorMap = {
+      'Summary':'#summary',
+      'Skills':'#skills',
+      'Experience':'#experienceEditor',
+      'Projects':'#projectEditor',
+      'Languages':'#languages'
+    }
+
+    Object.entries(selectorMap).forEach(([field,selector]) => {
+      const state = statuses.get(field)
+      if (!state || state === 'empty') return
+      const nodes = $$('[data-edit-focus="' + selector + '"]',paper)
+      nodes.forEach((node) => addNode(node,field,state))
+    })
+
+    const directFields = [
+      ['Name',profile.name],
+      ['Role / title',profile.role],
+      ['Headline',profile.headline],
+      ['Email',profile.email],
+      ['Phone',profile.phone],
+      ['Location',profile.location],
+      ['Website',profile.website]
+    ]
+    directFields.forEach(([field,value]) => {
+      const state=statuses.get(field)
+      if(!state || state==='empty' || !String(value||'').trim()) return
+      addNode(findTextNode(value),field,state)
+    })
+
+    const legend=$('#atsHeatmapLegend')
+    if(legend){
+      legend.hidden=false
+      legend.dataset.mode=mode
+      $('#atsHeatModeLabel').textContent=mode==='pdf'?'PDF verification':'Web scan'
+    }
+  }
+
+  const setEnabled = (next) => {
+    enabled=next
+    const button=$('#atsHeatmapToggle')
+    if(button){
+      button.setAttribute('aria-pressed',String(enabled))
+      button.classList.toggle('active',enabled)
+      button.textContent=enabled?'Hide heatmap':'Show heatmap'
+    }
+    if(!enabled) $('#atsHeatmapLegend').hidden=true
+    applyHeatmap()
+  }
+
+  const setMode = (next) => {
+    if(next==='pdf' && !$('#atsPdfResult')?.hidden===false){
+      // no-op; handled below with explicit availability check
+    }
+    mode=next
+    $$('#atsHeatmapLegend [data-heat-mode]').forEach((button)=>button.classList.toggle('active',button.dataset.heatMode===mode))
+    applyHeatmap()
+  }
+
+  const inject = () => {
+    const panel=$('.ats-panel')
+    const paperStage=$('.paper-stage')
+    if(!panel || !paperStage || $('#atsHeatmapToggle')) return
+
+    const scoreboards=$('.ats-pro-scoreboard') || $('.ats-score-hero')
+    scoreboards?.insertAdjacentHTML('afterend',
+      '<section class="ats-heat-control">' +
+        '<div><span>Visual audit</span><strong>ATS Heatmap</strong><small>Highlight what the parser can and cannot read.</small></div>' +
+        '<button type="button" id="atsHeatmapToggle" aria-pressed="false">Show heatmap</button>' +
+      '</section>'
+    )
+
+    const legend=document.createElement('div')
+    legend.id='atsHeatmapLegend'
+    legend.className='ats-heat-legend'
+    legend.hidden=true
+    legend.innerHTML=
+      '<div class="ats-heat-legend-head"><div><span>ATS Heatmap</span><strong id="atsHeatModeLabel">Web scan</strong></div><button id="atsHeatmapClose" type="button" aria-label="Hide ATS heatmap">×</button></div>' +
+      '<div class="ats-heat-mode-switch"><button type="button" class="active" data-heat-mode="web">Web</button><button type="button" data-heat-mode="pdf">PDF</button></div>' +
+      '<div class="ats-heat-key"><span><i class="good"></i>Readable</span><span><i class="partial"></i>Partial</span><span><i class="bad"></i>Missing</span></div>'
+    paperStage.insertBefore(legend,paperStage.firstChild)
+
+    $('#atsHeatmapToggle').addEventListener('click',()=>setEnabled(!enabled))
+    $('#atsHeatmapClose').addEventListener('click',()=>setEnabled(false))
+    $$('#atsHeatmapLegend [data-heat-mode]').forEach((button)=>button.addEventListener('click',()=>{
+      if(button.dataset.heatMode==='pdf' && $('#atsPdfResult')?.hidden!==false){
+        $('#atsHeatmapLegend').classList.add('needs-pdf')
+        setTimeout(()=>$('#atsHeatmapLegend')?.classList.remove('needs-pdf'),900)
+        return
+      }
+      setMode(button.dataset.heatMode)
+    }))
+
+    const webList=$('#atsFieldList')
+    const pdfList=$('#atsPdfFieldList')
+    if(webList) new MutationObserver(()=>{ if(enabled && mode==='web') setTimeout(applyHeatmap,0) }).observe(webList,{childList:true,subtree:true,attributes:true})
+    if(pdfList) new MutationObserver(()=>{ if(enabled && mode==='pdf') setTimeout(applyHeatmap,0) }).observe(pdfList,{childList:true,subtree:true,attributes:true})
+
+    const paper=$('#paper')
+    if(paper) new MutationObserver(()=>{ if(enabled) setTimeout(applyHeatmap,40) }).observe(paper,{childList:true,subtree:true,characterData:true})
+
+    $('#atsPdfVerifyTab')?.addEventListener('click',()=>{ if(enabled && $('#atsPdfResult')?.hidden===false) setMode('pdf') })
+    $('.ats-tabs [data-ats-tab="scan"]')?.addEventListener('click',()=>{ if(enabled) setMode('web') })
+
+    paperStage.addEventListener('click',(event)=>{
+      if(!enabled) return
+      const heat=event.target.closest('.ats-heat')
+      if(!heat) return
+      const focus=heat.getAttribute('data-edit-focus')
+      if(focus){
+        $('#atsShell').hidden=true
+        document.body.classList.remove('ats-open')
+        setTimeout(()=>{
+          if($('#editor')?.classList.contains('collapsed')) $('#toggleEditor')?.click()
+          $('.tab[data-tab="content"]')?.click()
+          const node=$(focus)
+          node?.scrollIntoView({behavior:'smooth',block:'center'})
+          const target=node?.matches('input,textarea,select')?node:node?.querySelector('input,textarea,select,button')
+          target?.focus({preventScroll:true})
+        },80)
+      }
+    })
+  }
+
+  const boot=()=>inject()
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot)
+  else boot()
+})()
