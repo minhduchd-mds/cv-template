@@ -1610,11 +1610,20 @@
   const extractJdTerms=()=>{
     const jd=String($('#atsJobDescription')?.value||target().jd||'')
     if(!jd.trim())return []
+    const normalizedJd=normalize(jd)
     const stop=new Set(['with','from','that','this','your','have','will','role','team','work','years','experience','skills','required','preferred','responsibilities','candidate','using','about','into','and','the','for','you','are','our','job'])
-    const words=normalize(jd).split(' ').filter((word)=>word.length>=4&&!stop.has(word)&&!/^\d+$/.test(word))
+    const knownPhrases=unique(
+      Object.values(ROLE_TERMS)
+        .flat()
+        .map((term)=>normalize(term))
+        .filter((term)=>term.includes(' ')&&normalizedJd.includes(term))
+    )
+    const phraseWords=new Set(knownPhrases.flatMap((phrase)=>phrase.split(' ')))
+    const words=normalizedJd.split(' ').filter((word)=>word.length>=4&&!stop.has(word)&&!/^\d+$/.test(word)&&!phraseWords.has(word))
     const counts=new Map()
     words.forEach((word)=>counts.set(word,(counts.get(word)||0)+1))
-    return [...counts.entries()].sort((a,b)=>b[1]-a[1]).map((item)=>item[0]).slice(0,18)
+    const singles=[...counts.entries()].sort((a,b)=>b[1]-a[1]).map((item)=>item[0])
+    return unique(knownPhrases.concat(singles)).slice(0,18)
   }
 
   const buildReviewKeywords=(p)=>{
