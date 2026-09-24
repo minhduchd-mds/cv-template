@@ -25,9 +25,11 @@ test('static ATS scanner separates readiness from target fit and supports edits'
   await expect(page.locator('#name')).toBeFocused()
 
   await page.getByRole('button', { name: /ATS Scan/i }).click()
+  await page.getByRole('button', { name: /Verify/ }).click()
   await page.getByRole('button', { name: 'ATS sees this' }).click()
   await expect(page.locator('#atsPlainText')).toContainText('Alex Chen')
 
+  await page.getByRole('button', { name: /Optimize/ }).click()
   await page.getByRole('button', { name: 'Target fit' }).click()
   await page.locator('#atsJobDescription').fill('Senior Product Designer design systems design systems Figma Figma usability testing usability testing stakeholder management stakeholder management')
   await expect(page.locator('#atsJobMatchLarge')).not.toHaveText('—')
@@ -62,6 +64,7 @@ test('ATS PDF verification compares exported text with the live CV', async ({ pa
   })
 
   await page.getByRole('button', { name: /ATS Scan/i }).click()
+  await page.getByRole('button', { name: /Verify/ }).click()
   await page.getByRole('button', { name: 'PDF verify' }).click()
   await expect(page.getByText('Check the PDF ATS will receive')).toBeVisible()
 
@@ -91,6 +94,7 @@ test('ATS visual heatmap highlights readable and risky CV regions', async ({ pag
   await page.getByRole('button', { name: /ATS Scan/i }).click()
   await expect(page.getByText('ATS Heatmap')).toBeVisible()
 
+  await page.getByRole('button',{name:/Optimize/}).click()
   await page.getByRole('button', { name: 'Show heatmap' }).click()
   await expect(page.locator('#paper')).toHaveClass(/ats-heatmap-active/)
   await expect(page.locator('#atsHeatmapLegend')).toBeVisible()
@@ -128,6 +132,7 @@ test('ATS Auto Fix applies factual safe fixes and supports undo', async ({ page 
   await page.goto('/studio/')
   await page.getByRole('button', { name: /ATS Scan/i }).click()
 
+  await page.getByRole('button',{name:/Optimize/}).click()
   await expect(page.getByText('ATS Auto Fix')).toBeVisible()
   await expect(page.locator('#atsAutoFixList .ats-auto-card.safe').first()).toBeVisible()
 
@@ -149,6 +154,7 @@ test('ATS versions save compare and restore snapshots locally', async ({ page })
 
   await page.goto('/studio/')
   await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/Applications/}).click()
   await page.getByRole('button',{name:'Versions'}).click()
 
   await expect(page.getByText('CV Version Compare')).toBeVisible()
@@ -237,6 +243,7 @@ test('ATS application analytics summarizes pipeline keywords and follow-ups', as
 
   await page.goto('/studio/')
   await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/Applications/}).click()
   await page.getByRole('button',{name:'Analytics'}).click()
 
   await expect(page.getByText('Pipeline & CV evidence')).toBeVisible()
@@ -245,5 +252,33 @@ test('ATS application analytics summarizes pipeline keywords and follow-ups', as
   await expect(page.locator('#atsAnalyticsKeywords')).toContainText('accessibility')
   await expect(page.locator('#atsAnalyticsRoles')).toContainText('Senior Product Designer')
   await expect(page.locator('#atsAnalyticsVersions')).toContainText('UIUX v1')
+  expect(runtimeErrors).toEqual([])
+})
+
+
+test('ATS UX V3 consolidates scanner navigation and next action', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+
+  await page.goto('/studio/')
+  await page.getByRole('button',{name:/ATS Scan/i}).click()
+
+  await expect(page.locator('#atsV3Nav [data-v3-group]')).toHaveCount(4)
+  await expect(page.locator('.ats-v3-legacy-tabs')).toBeHidden()
+  await expect(page.locator('#atsV3Next')).toBeVisible()
+
+  await page.getByRole('button',{name:/Optimize/}).click()
+  await expect(page.locator('#atsProTarget')).toBeVisible()
+  await expect(page.locator('#atsAutoFix')).toBeAttached()
+
+  await page.getByRole('button',{name:/Verify/}).click()
+  await page.getByRole('button',{name:'PDF verify'}).click()
+  await expect(page.locator('[data-ats-pane="pdf"]')).toHaveClass(/active/)
+
+  await page.getByRole('button',{name:/Applications/}).click()
+  await expect(page.locator('.ats-panel')).toHaveClass(/ats-v3-wide/)
+  await page.getByRole('button',{name:'Analytics'}).click()
+  await expect(page.locator('[data-ats-pane="analytics"]')).toHaveClass(/active/)
+
   expect(runtimeErrors).toEqual([])
 })

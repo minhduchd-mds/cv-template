@@ -2767,3 +2767,294 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
   else inject()
 })()
+
+
+/* ATS_UX_V3 */
+(() => {
+  'use strict'
+
+  const $=(selector,root=document)=>root.querySelector(selector)
+  const $$=(selector,root=document)=>[...root.querySelectorAll(selector)]
+  const GROUPS={
+    overview:{label:'Overview',hint:'Readiness',defaultPane:'scan'},
+    optimize:{label:'Optimize',hint:'Target + fixes',defaultPane:'job'},
+    verify:{label:'Verify',hint:'Parser + PDF',defaultPane:'parser'},
+    applications:{label:'Applications',hint:'Pipeline + history',defaultPane:'applications'}
+  }
+  const PANE_GROUP={
+    scan:'overview',
+    job:'optimize',
+    parser:'verify',
+    pdf:'verify',
+    applications:'applications',
+    versions:'applications',
+    analytics:'applications'
+  }
+  let activeGroup='overview'
+  let syncing=false
+
+  const legacyTab=(pane)=>$('.ats-tabs [data-ats-tab="'+pane+'"]')
+  const paneNode=(pane)=>$('[data-ats-pane="'+pane+'"]')
+
+  const routeTo=(group,pane,target)=>{
+    activeGroup=group
+    const panel=$('.ats-panel')
+    panel?.classList.toggle('ats-v3-wide',group==='applications')
+    panel?.setAttribute('data-ats-v3-group',group)
+    $$('#atsV3Nav [data-v3-group]').forEach((button)=>{
+      button.classList.toggle('active',button.dataset.v3Group===group)
+      button.setAttribute('aria-selected',String(button.dataset.v3Group===group))
+    })
+    renderSubnav(group,pane)
+    if(pane){
+      const tab=legacyTab(pane)
+      if(tab&&!tab.classList.contains('active')){
+        syncing=true
+        tab.click()
+        syncing=false
+      }
+    }
+    const routeTarget=target?$(target):null
+    if(routeTarget)setTimeout(()=>routeTarget.scrollIntoView({behavior:'smooth',block:'start'}),40)
+    updateNextAction()
+  }
+
+  const subnavItems=(group)=>({
+    overview:[],
+    optimize:[
+      {pane:'job',label:'Target fit',target:'#atsJobDescription'},
+      {pane:'job',label:'Auto Fix',target:'#atsAutoFix'},
+      {pane:'job',label:'Heatmap',target:'.ats-heat-control'}
+    ],
+    verify:[
+      {pane:'parser',label:'ATS sees this'},
+      {pane:'pdf',label:'PDF verify'}
+    ],
+    applications:[
+      {pane:'applications',label:'Pipeline'},
+      {pane:'versions',label:'Versions'},
+      {pane:'analytics',label:'Analytics'}
+    ]
+  }[group]||[])
+
+  const renderSubnav=(group,currentPane)=>{
+    const host=$('#atsV3Subnav')
+    if(!host)return
+    const items=subnavItems(group)
+    host.hidden=!items.length
+    if(!items.length){host.innerHTML='';return}
+    host.innerHTML=items.map((item,index)=>{
+      const active=item.pane===(currentPane||GROUPS[group].defaultPane) && (!item.target || index===0)
+      return '<button type="button" class="'+(active?'active':'')+'" data-v3-sub-pane="'+item.pane+'"'+(item.target?' data-v3-sub-target="'+item.target.replace(/"/g,'&quot;')+'"':'')+'>'+item.label+'</button>'
+    }).join('')
+  }
+
+  const currentMissingField=()=>$('#atsFieldList .ats-field-row[data-ats-status="missing"]')
+  const safeFixCount=()=>$$('#atsAutoFixList .ats-auto-card.safe').length
+  const hasPdfReport=()=>$('#atsPdfResult')?.hidden===false
+  const applications=()=>{
+    try{return JSON.parse(localStorage.getItem('cv-studio-ats-applications-v1')||'[]')||[]}
+    catch{return []}
+  }
+  const versions=()=>{
+    try{return JSON.parse(localStorage.getItem('cv-studio-ats-versions-v1')||'[]')||[]}
+    catch{return []}
+  }
+  const dueFollowups=()=>{
+    const today=new Date()
+    const local=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0')
+    return applications().filter((item)=>item&&item.status!=='Closed'&&item.followUpDate&&item.followUpDate<=local).length
+  }
+
+  const nextAction=()=>{
+    const missing=currentMissingField()
+    if(missing){
+      return {
+        eyebrow:'Readiness',
+        title:'Fix missing ATS fields',
+        detail:'At least one source field is not readable in the current CV output.',
+        action:'Review fields',
+        group:'overview',
+        pane:'scan',
+        target:'#atsFieldList'
+      }
+    }
+    const fixes=safeFixCount()
+    if(fixes){
+      return {
+        eyebrow:'Optimize',
+        title:'Review '+fixes+' safe fix'+(fixes===1?'':'es'),
+        detail:'Evidence-first improvements are ready. Apply only after reviewing the proposed copy.',
+        action:'Open Auto Fix',
+        group:'optimize',
+        pane:'job',
+        target:'#atsAutoFix'
+      }
+    }
+    if(!String($('#atsJobDescription')?.value||'').trim()){
+      return {
+        eyebrow:'Target fit',
+        title:'Add the target job description',
+        detail:'Role and industry are set, but JD coverage cannot be evaluated until a job description is added.',
+        action:'Add JD',
+        group:'optimize',
+        pane:'job',
+        target:'#atsJobDescription'
+      }
+    }
+    if(!hasPdfReport()){
+      return {
+        eyebrow:'Export quality',
+        title:'Verify the exported PDF',
+        detail:'The web CV has been scanned. Check the actual PDF text layer before sending it.',
+        action:'Verify PDF',
+        group:'verify',
+        pane:'pdf',
+        target:'#atsPdfDrop'
+      }
+    }
+    const due=dueFollowups()
+    if(due){
+      return {
+        eyebrow:'Applications',
+        title:due+' follow-up'+(due===1?' is':'s are')+' due',
+        detail:'Open the application workspace and review scheduled follow-ups.',
+        action:'Review follow-ups',
+        group:'applications',
+        pane:'analytics',
+        target:'#atsAnalyticsFollowups'
+      }
+    }
+    if(!versions().length){
+      return {
+        eyebrow:'Version history',
+        title:'Save a baseline before tailoring',
+        detail:'Create a snapshot now so later role- or JD-specific edits remain comparable.',
+        action:'Save version',
+        group:'applications',
+        pane:'versions',
+        target:'#atsVersionName'
+      }
+    }
+    return {
+      eyebrow:'Review',
+      title:'Core checks are covered',
+      detail:'No immediate scanner action is required. Review the CV visually before using it for an application.',
+      action:'Open applications',
+      group:'applications',
+      pane:'applications',
+      target:'#atsAppCompany'
+    }
+  }
+
+  const updateNextAction=()=>{
+    const card=$('#atsV3Next')
+    if(!card)return
+    const item=nextAction()
+    const signature=[item.eyebrow,item.title,item.detail,item.action,item.group,item.pane,item.target].join('|')
+    if(card.dataset.signature===signature)return
+    card.dataset.signature=signature
+    card.innerHTML=
+      '<div><span>'+item.eyebrow+'</span><strong>'+item.title+'</strong><p>'+item.detail+'</p></div>'+
+      '<button type="button" data-next-group="'+item.group+'" data-next-pane="'+item.pane+'" data-next-target="'+item.target+'">'+item.action+' →</button>'
+  }
+
+  const relocateTools=()=>{
+    const job=paneNode('job')
+    if(!job)return
+    const autoFix=$('#atsAutoFix')
+    const heat=$('.ats-heat-control')
+    if(autoFix&&!autoFix.closest('[data-ats-pane="job"]'))job.insertBefore(autoFix,job.firstChild)
+    if(heat&&!heat.closest('[data-ats-pane="job"]'))job.insertBefore(heat,job.firstChild)
+  }
+
+  const syncFromLegacy=(pane)=>{
+    if(syncing)return
+    const group=PANE_GROUP[pane]
+    if(!group)return
+    activeGroup=group
+    const panel=$('.ats-panel')
+    panel?.classList.toggle('ats-v3-wide',group==='applications')
+    panel?.setAttribute('data-ats-v3-group',group)
+    $$('#atsV3Nav [data-v3-group]').forEach((button)=>{
+      button.classList.toggle('active',button.dataset.v3Group===group)
+      button.setAttribute('aria-selected',String(button.dataset.v3Group===group))
+    })
+    renderSubnav(group,pane)
+    updateNextAction()
+  }
+
+  const inject=()=>{
+    const panel=$('.ats-panel')
+    const legacy=$('.ats-tabs')
+    if(!panel||!legacy||$('#atsV3Nav'))return
+
+    panel.classList.add('ats-v3-ready')
+    legacy.classList.add('ats-v3-legacy-tabs')
+
+    const nav=document.createElement('nav')
+    nav.id='atsV3Nav'
+    nav.className='ats-v3-nav'
+    nav.setAttribute('aria-label','ATS workspace')
+    nav.innerHTML=Object.entries(GROUPS).map(([key,item])=>(
+      '<button type="button" data-v3-group="'+key+'" aria-selected="'+(key==='overview'?'true':'false')+'" class="'+(key==='overview'?'active':'')+'"><span>'+item.label+'</span><small>'+item.hint+'</small></button>'
+    )).join('')
+
+    const subnav=document.createElement('nav')
+    subnav.id='atsV3Subnav'
+    subnav.className='ats-v3-subnav'
+    subnav.hidden=true
+    subnav.setAttribute('aria-label','ATS section detail')
+
+    legacy.parentNode.insertBefore(nav,legacy)
+    legacy.parentNode.insertBefore(subnav,legacy)
+
+    const scan=paneNode('scan')
+    if(scan&&!$('#atsV3Next')){
+      const next=document.createElement('section')
+      next.id='atsV3Next'
+      next.className='ats-v3-next'
+      scan.insertBefore(next,scan.firstChild)
+    }
+
+    relocateTools()
+
+    nav.addEventListener('click',(event)=>{
+      const button=event.target.closest('[data-v3-group]')
+      if(!button)return
+      const group=button.dataset.v3Group
+      routeTo(group,GROUPS[group].defaultPane)
+    })
+    subnav.addEventListener('click',(event)=>{
+      const button=event.target.closest('[data-v3-sub-pane]')
+      if(!button)return
+      routeTo(activeGroup,button.dataset.v3SubPane,button.dataset.v3SubTarget||'')
+      $$('#atsV3Subnav button').forEach((item)=>item.classList.toggle('active',item===button))
+    })
+    $('#atsV3Next')?.addEventListener('click',(event)=>{
+      const button=event.target.closest('[data-next-group]')
+      if(!button)return
+      routeTo(button.dataset.nextGroup,button.dataset.nextPane,button.dataset.nextTarget)
+    })
+
+    $$('[data-ats-tab]',legacy).forEach((tab)=>{
+      tab.addEventListener('click',()=>setTimeout(()=>syncFromLegacy(tab.dataset.atsTab),0))
+    })
+
+    ;['#atsFieldList','#atsAutoFixList','#atsPdfResult'].forEach((selector)=>{
+      const node=$(selector)
+      if(node)new MutationObserver(()=>setTimeout(updateNextAction,20)).observe(node,{subtree:true,childList:true,attributes:true,characterData:true})
+    })
+    $('#atsJobDescription')?.addEventListener('input',()=>setTimeout(updateNextAction,20))
+    window.addEventListener('ats-applications-changed',()=>setTimeout(updateNextAction,20))
+    window.addEventListener('storage',(event)=>{
+      if(['cv-studio-ats-applications-v1','cv-studio-ats-versions-v1'].includes(event.key))updateNextAction()
+    })
+
+    routeTo('overview','scan')
+    updateNextAction()
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
+  else inject()
+})()
