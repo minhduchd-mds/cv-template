@@ -30,6 +30,15 @@ const selectTemplate = async (page, template) => {
 
 test.describe('20-template visual layout audit', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      const projects=Array.from({length:6},(_,index)=>({
+        name:'QA Project '+(index+1),
+        type:'Product',
+        impact:'Impact '+(index+1),
+        description:'Short project evidence '+(index+1)
+      }))
+      localStorage.setItem('cv-studio-static-v2',JSON.stringify({projects}))
+    })
     await page.goto('/studio/')
   })
 

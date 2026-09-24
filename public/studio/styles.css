@@ -3494,6 +3494,13 @@ button{cursor:pointer}
     margin-bottom:-515px;
   }
 }
+@media(max-width:470px){
+  .paper{
+    transform:scale(.49);
+    transform-origin:top left;
+    margin-bottom:-573px;
+  }
+}
 @media(max-width:420px){
   .paper{
     transform:scale(.44);
