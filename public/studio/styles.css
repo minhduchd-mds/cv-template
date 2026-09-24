@@ -3405,3 +3405,25 @@ button{cursor:pointer}
   line-height:1.45;
   text-align:center;
 }
+
+
+/* Print fit v1 — preserve the web composition while fitting edited content to A4 */
+@media print{
+  .paper{
+    width:var(--print-width,210mm)!important;
+    min-height:var(--print-min-height,297mm)!important;
+    zoom:var(--print-fit,1);
+    margin:0 auto!important;
+    transform:none!important;
+    page-break-after:avoid;
+    break-after:avoid-page;
+  }
+  .paper .ref-revenue-driver{
+    min-height:0!important;
+    break-inside:avoid-page;
+    page-break-inside:avoid;
+  }
+  .paper .ref-sales-body blockquote{
+    white-space:normal!important;
+  }
+}
