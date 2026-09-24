@@ -646,8 +646,8 @@ export default {
     },
     printCv() {
       this.preparePrintFit()
+      window.addEventListener('afterprint', () => this.resetPrintFit(), { once: true })
       window.print()
-      window.setTimeout(() => this.resetPrintFit(), 0)
     },
   },
 }
