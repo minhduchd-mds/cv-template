@@ -1839,6 +1839,36 @@
   })
 
 
+  let layoutMasterDrag = null
+  const layoutSectionGroup = (section) => ['skills','languages'].includes(section) ? 'side' : 'main'
+
+  const orderedLayoutSections = (sections) => {
+    const order=Array.isArray(settings.sectionOrder)?settings.sectionOrder:[]
+    return [...sections].sort((a,b)=>{
+      const ai=order.indexOf(a)
+      const bi=order.indexOf(b)
+      return (ai<0?99:ai)-(bi<0?99:bi)
+    })
+  }
+
+  const renderLayoutSectionRow = (section,contract) => {
+    const cfg=contract.sections[section]||{supported:true,limit:null,placement:''}
+    const count=sectionSourceCount(section)
+    const setting=sectionSettingKey[section]
+    const isVisible=sectionVisible(section)
+    const supportedNow=cfg.supported!==false
+    const draggable=contract.mode==='flexible'&&supportedNow
+    const group=layoutSectionGroup(section)
+    let meta=supportedNow?(cfg.placement||'Template section'):'Not used by this template'
+    if(supportedNow&&cfg.limit&&count>cfg.limit)meta+=' · '+cfg.limit+' of '+count+' shown'
+    else if(supportedNow&&count)meta+=' · '+count+' item'+(count===1?'':'s')
+    return '<article class="layout-section-row '+(!supportedNow?'unsupported ':'')+(!isVisible?'hidden-section ':'')+(draggable?'draggable':'')+'" data-layout-section="'+section+'" data-layout-group="'+group+'"'+(draggable?' draggable="true"':'')+'>'+
+      '<div class="layout-section-handle" aria-hidden="true">'+(draggable?'⋮⋮':'•')+'</div>'+
+      '<div class="layout-section-copy"><strong>'+escapeHtml(sectionLabels[section])+'</strong><small>'+escapeHtml(meta)+'</small></div>'+
+      (supportedNow&&setting?'<button type="button" class="layout-switch '+(isVisible?'on':'')+'" role="switch" aria-checked="'+(isVisible?'true':'false')+'" data-layout-toggle="'+setting+'"><i></i><span>'+(isVisible?'Visible':'Hidden')+'</span></button>':'<span class="layout-section-lock">'+(supportedNow?'Fixed':'Unavailable')+'</span>')+
+    '</article>'
+  }
+
   const renderLayoutMaster = () => {
     const host=$('#layoutMaster')
     if(!host)return
@@ -1848,10 +1878,17 @@
     const supported=sections.filter((section)=>contract.sections[section]?.supported!==false)
     const visible=supported.filter((section)=>sectionVisible(section))
     const modeNote=contract.mode==='flexible'
-      ? 'Main and side groups can be reordered from the CV preview.'
+      ? 'Drag sections within Main or Side. Cross-column moves stay locked to protect the template grid.'
       : contract.mode==='guided'
         ? 'Hierarchy is recruiter-first; visibility is editable but structure stays guided.'
         : 'Hierarchy is intentionally fixed to protect the template composition.'
+
+    const main=orderedLayoutSections(sections.filter((section)=>layoutSectionGroup(section)==='main'))
+    const side=orderedLayoutSections(sections.filter((section)=>layoutSectionGroup(section)==='side'))
+    const sectionBody=contract.mode==='flexible'
+      ? '<div class="layout-section-group"><div class="layout-group-title"><strong>Main content</strong><small>Summary · Experience · Projects</small></div>'+main.map((section)=>renderLayoutSectionRow(section,contract)).join('')+'</div>'+
+        '<div class="layout-section-group"><div class="layout-group-title"><strong>Side content</strong><small>Skills · Languages</small></div>'+side.map((section)=>renderLayoutSectionRow(section,contract)).join('')+'</div>'
+      : sections.map((section)=>renderLayoutSectionRow(section,contract)).join('')
 
     host.innerHTML=
       '<section class="layout-master-context">'+
@@ -1860,23 +1897,23 @@
       '</section>'+
       '<section class="layout-master-sections">'+
         '<div class="layout-master-title"><div><span>Section manager</span><strong>Structure & visibility</strong></div><small>'+escapeHtml(modeNote)+'</small></div>'+
-        '<div id="layoutSectionList">'+sections.map((section)=>{
-          const cfg=contract.sections[section]||{supported:true,limit:null,placement:''}
-          const count=sectionSourceCount(section)
-          const setting=sectionSettingKey[section]
-          const isVisible=sectionVisible(section)
-          const supportedNow=cfg.supported!==false
-          let meta=supportedNow?(cfg.placement||'Template section'):'Not used by this template'
-          if(supportedNow&&cfg.limit&&count>cfg.limit)meta+=' · '+cfg.limit+' of '+count+' shown'
-          else if(supportedNow&&count)meta+=' · '+count+' item'+(count===1?'':'s')
-          return '<article class="layout-section-row '+(!supportedNow?'unsupported ':'')+(!isVisible?'hidden-section':'')+'" data-layout-section="'+section+'">'+
-            '<div class="layout-section-handle" aria-hidden="true">'+(contract.mode==='flexible'&&supportedNow?'⋮⋮':'•')+'</div>'+
-            '<div class="layout-section-copy"><strong>'+escapeHtml(sectionLabels[section])+'</strong><small>'+escapeHtml(meta)+'</small></div>'+
-            (supportedNow&&setting?'<button type="button" class="layout-switch '+(isVisible?'on':'')+'" role="switch" aria-checked="'+(isVisible?'true':'false')+'" data-layout-toggle="'+setting+'"><i></i><span>'+(isVisible?'Visible':'Hidden')+'</span></button>':'<span class="layout-section-lock">'+(supportedNow?'Fixed':'Unavailable')+'</span>')+
-          '</article>'
-        }).join('')+'</div>'+
+        '<div id="layoutSectionList">'+sectionBody+'</div>'+
       '</section>'+
       '<section class="layout-master-note"><strong>'+escapeHtml(contract.label)+'</strong><p>'+escapeHtml(modeNote)+'</p></section>'
+  }
+
+  const reorderLayoutSection = (from,to) => {
+    if(!from||!to||from===to)return false
+    if(layoutSectionGroup(from)!==layoutSectionGroup(to))return false
+    const order=[...(settings.sectionOrder||[])]
+    const fromIndex=order.indexOf(from)
+    const toIndex=order.indexOf(to)
+    if(fromIndex<0||toIndex<0)return false
+    const moved=order.splice(fromIndex,1)[0]
+    order.splice(toIndex,0,moved)
+    settings.sectionOrder=order
+    renderAll()
+    return true
   }
 
   $('#layoutMaster')?.addEventListener('click',(event)=>{
@@ -1888,11 +1925,45 @@
       return
     }
     const row=event.target.closest('[data-layout-section]')
-    if(row){
+    if(row&&!row.classList.contains('unsupported')){
       const focusMap={summary:'#summary',experience:'#experienceEditor',projects:'#projectEditor',skills:'#skills',languages:'#languages'}
       const target=focusMap[row.dataset.layoutSection]
       if(target)activatePane('content',target)
     }
+  })
+
+  $('#layoutMaster')?.addEventListener('dragstart',(event)=>{
+    const row=event.target.closest('[data-layout-section].draggable')
+    if(!row)return
+    layoutMasterDrag={section:row.dataset.layoutSection,group:row.dataset.layoutGroup}
+    row.classList.add('layout-row-dragging')
+    if(event.dataTransfer){
+      event.dataTransfer.effectAllowed='move'
+      event.dataTransfer.setData('text/plain',layoutMasterDrag.section)
+    }
+  })
+
+  $('#layoutMaster')?.addEventListener('dragover',(event)=>{
+    if(!layoutMasterDrag)return
+    const row=event.target.closest('[data-layout-section].draggable')
+    if(!row||row.dataset.layoutGroup!==layoutMasterDrag.group||row.dataset.layoutSection===layoutMasterDrag.section)return
+    event.preventDefault()
+    $('.layout-row-drop',$('#layoutMaster')).forEach((node)=>node.classList.remove('layout-row-drop'))
+    row.classList.add('layout-row-drop')
+    if(event.dataTransfer)event.dataTransfer.dropEffect='move'
+  })
+
+  $('#layoutMaster')?.addEventListener('drop',(event)=>{
+    if(!layoutMasterDrag)return
+    const row=event.target.closest('[data-layout-section].draggable')
+    if(!row||row.dataset.layoutGroup!==layoutMasterDrag.group||row.dataset.layoutSection===layoutMasterDrag.section)return
+    event.preventDefault()
+    reorderLayoutSection(layoutMasterDrag.section,row.dataset.layoutSection)
+  })
+
+  $('#layoutMaster')?.addEventListener('dragend',()=>{
+    $('.layout-row-dragging,.layout-row-drop',$('#layoutMaster')).forEach((node)=>node.classList.remove('layout-row-dragging','layout-row-drop'))
+    layoutMasterDrag=null
   })
 
 
