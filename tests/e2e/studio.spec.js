@@ -620,3 +620,31 @@ test('Content Health finds editorial and template coverage issues', async ({ pag
   expect(skills.split('\n').filter((x)=>x.toLowerCase()==='figma')).toHaveLength(1)
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('Layout Master respects per-template section contracts', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+  await page.goto('/studio/')
+  await page.locator('#toggleEditor').click()
+  await page.getByRole('button',{name:'Layout'}).click()
+
+  await expect(page.locator('#layoutMaster')).toContainText('Soft Portfolio')
+  await expect(page.locator('[data-layout-section="projects"]')).toContainText('3 of')
+  await page.locator('[data-layout-section="projects"] [data-layout-toggle]').click()
+  await expect(page.locator('#paper .ref-soft-projects')).toHaveCount(0)
+
+  await page.locator('.template-card').filter({hasText:'Revenue Driver'}).click()
+  await page.getByRole('button',{name:'Layout'}).click()
+  await expect(page.locator('[data-layout-section="projects"]')).toContainText('Not used by this template')
+  await expect(page.locator('[data-layout-section="projects"] [data-layout-toggle]')).toHaveCount(0)
+
+  await page.locator('[data-layout-section="experience"] [data-layout-toggle]').click()
+  await expect(page.locator('#paper .ref-sales-experience')).toHaveCount(0)
+
+  await page.locator('.template-card').filter({hasText:'Bento Resume'}).click()
+  await page.getByRole('button',{name:'Layout'}).click()
+  await expect(page.locator('#layoutMaster')).toContainText('Flexible hierarchy')
+  await expect(page.locator('[data-layout-section="languages"] [data-layout-toggle]')).toHaveCount(1)
+  expect(runtimeErrors).toEqual([])
+})

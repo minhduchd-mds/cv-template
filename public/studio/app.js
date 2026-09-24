@@ -107,6 +107,171 @@
     'research-scholar': { label: 'Academic', structure: 'Research profile → Experience → Selected work → Skills → Education & credentials', projects: true },
   }
 
+
+
+  /* TEMPLATE_LAYOUT_CONTRACTS_V1 */
+  const templateLayoutContracts = {
+    'executive-edge': {
+      mode:'fixed', label:'Executive hierarchy', page:'1–2 pages',
+      sections:{
+        summary:{supported:true,limit:null,placement:'Executive summary'},
+        experience:{supported:true,limit:null,placement:'Primary content'},
+        projects:{supported:true,limit:4,placement:'Selected achievements'},
+        skills:{supported:false},
+        languages:{supported:false},
+      }
+    },
+    'soft-portfolio-pro': {
+      mode:'fixed', label:'Portfolio hierarchy', page:'1–2 pages',
+      sections:{
+        summary:{supported:true,limit:null,placement:'Hero'},
+        experience:{supported:true,limit:null,placement:'Experience highlights'},
+        projects:{supported:true,limit:3,placement:'Selected case studies'},
+        skills:{supported:true,limit:null,placement:'Skills + tools rail'},
+        languages:{supported:false},
+      }
+    },
+    'product-operator': {
+      mode:'fixed', label:'Product leadership hierarchy', page:'1–2 pages',
+      sections:{
+        summary:{supported:true,limit:null,placement:'Profile rail'},
+        experience:{supported:true,limit:null,placement:'Primary content'},
+        projects:{supported:true,limit:null,placement:'Product highlights'},
+        skills:{supported:true,limit:null,placement:'Profile rail'},
+        languages:{supported:false},
+      }
+    },
+    'code-aware': {
+      mode:'fixed', label:'Technical hierarchy', page:'1–2 pages',
+      sections:{
+        summary:{supported:true,limit:null,placement:'About'},
+        experience:{supported:true,limit:null,placement:'Experience'},
+        projects:{supported:true,limit:null,placement:'Selected work'},
+        skills:{supported:true,limit:null,placement:'Skills'},
+        languages:{supported:false},
+      }
+    },
+    'ats-precision': {
+      mode:'guided', label:'Recruiter-first hierarchy', page:'1–2 pages',
+      sections:{
+        summary:{supported:true,limit:null,placement:'Header'},
+        experience:{supported:true,limit:null,placement:'Main column'},
+        projects:{supported:true,limit:2,placement:'Side column'},
+        skills:{supported:true,limit:null,placement:'Side column'},
+        languages:{supported:false},
+      }
+    },
+    'insight-grid': {
+      mode:'fixed', label:'Analytics hierarchy', page:'1–2 pages',
+      sections:{
+        summary:{supported:true,limit:null,placement:'Data summary'},
+        experience:{supported:true,limit:null,placement:'Bottom primary'},
+        projects:{supported:true,limit:null,placement:'Key achievements'},
+        skills:{supported:true,limit:null,placement:'Skills + tools'},
+        languages:{supported:false},
+      }
+    },
+    'brand-motion': {
+      mode:'fixed', label:'Campaign hierarchy', page:'1–2 pages',
+      sections:{
+        summary:{supported:true,limit:null,placement:'Brand hero'},
+        experience:{supported:true,limit:null,placement:'Work experience'},
+        projects:{supported:true,limit:3,placement:'Selected campaigns'},
+        skills:{supported:true,limit:null,placement:'Visual rail'},
+        languages:{supported:true,limit:null,placement:'Visual rail'},
+      }
+    },
+    'revenue-driver': {
+      mode:'fixed', label:'Sales hierarchy', page:'1–2 pages',
+      sections:{
+        summary:{supported:true,limit:null,placement:'Primary column'},
+        experience:{supported:true,limit:null,placement:'Primary column'},
+        projects:{supported:false},
+        skills:{supported:true,limit:null,placement:'Side column'},
+        languages:{supported:false},
+      }
+    },
+    'people-first': {
+      mode:'fixed', label:'People hierarchy', page:'1–2 pages',
+      sections:{
+        summary:{supported:true,limit:null,placement:'Hero'},
+        experience:{supported:true,limit:null,placement:'Primary content'},
+        projects:{supported:false},
+        skills:{supported:true,limit:null,placement:'Competencies rail'},
+        languages:{supported:true,limit:null,placement:'Additional information'},
+      }
+    },
+    'next-start': {
+      mode:'fixed', label:'Early-career hierarchy', page:'1 page preferred',
+      sections:{
+        summary:{supported:false},
+        experience:{supported:true,limit:null,placement:'Internships'},
+        projects:{supported:true,limit:2,placement:'Projects'},
+        skills:{supported:true,limit:null,placement:'Skills rail'},
+        languages:{supported:false},
+      }
+    },
+    'modern-bento': {mode:'flexible',label:'Two-column flexible',page:'1–2 pages'},
+    'executive-navy': {mode:'flexible',label:'Executive flexible',page:'1–2 pages'},
+    'ats-clean': {mode:'flexible',label:'ATS flexible',page:'1–2 pages'},
+    'modern-mono': {mode:'flexible',label:'Technical flexible',page:'1–2 pages'},
+    'young-creator-cards': {mode:'flexible',label:'Creative flexible',page:'1–2 pages'},
+    'strategy-brief': {mode:'flexible',label:'Consulting flexible',page:'1–2 pages'},
+    'clinical-clean': {mode:'flexible',label:'Clinical flexible',page:'1–2 pages'},
+    'finance-ledger': {mode:'flexible',label:'Finance flexible',page:'1–2 pages'},
+    'studio-director': {mode:'flexible',label:'Editorial flexible',page:'1–2 pages'},
+    'research-scholar': {mode:'flexible',label:'Academic flexible',page:'1–2 pages'},
+  }
+
+  const sectionSettingKey = {
+    summary:'showSummary',
+    skills:'showSkills',
+    experience:'showExperience',
+    projects:'showProjects',
+    languages:'showLanguages',
+  }
+
+  const sectionLabels = {
+    summary:'Summary',
+    experience:'Experience',
+    projects:'Projects',
+    skills:'Skills',
+    languages:'Languages',
+  }
+
+  const genericLayoutSections = {
+    summary:{supported:true,limit:null,placement:'Main column'},
+    experience:{supported:true,limit:null,placement:'Main column'},
+    projects:{supported:true,limit:null,placement:'Main column'},
+    skills:{supported:true,limit:null,placement:'Side column'},
+    languages:{supported:true,limit:null,placement:'Side column'},
+  }
+
+  const activeLayoutContract = () => {
+    const template=activeTemplate()
+    const contract=templateLayoutContracts[template.id] || {mode:'flexible',label:'Flexible layout',page:'1–2 pages'}
+    return {
+      ...contract,
+      sections:{...genericLayoutSections,...(contract.sections||{})}
+    }
+  }
+
+  const sectionVisible = (section) => {
+    const key=sectionSettingKey[section]
+    return key ? settings[key] !== false : true
+  }
+
+  const sectionSourceCount = (section) => {
+    if(section==='summary') return String(profile.summary||'').trim()?1:0
+    if(section==='experience') return Array.isArray(profile.experience)?profile.experience.length:0
+    if(section==='projects') return Array.isArray(profile.projects)?profile.projects.length:0
+    if(section==='skills') return Array.isArray(profile.skills)?profile.skills.length:0
+    if(section==='languages') return Array.isArray(profile.languages)?profile.languages.length:0
+    return 0
+  }
+
+  const layoutModeLabel = (mode) => mode==='fixed'?'Fixed hierarchy':mode==='guided'?'Guided hierarchy':'Flexible hierarchy'
+
   const demoProfile = {
     avatar: '',
     name: 'Alex Chen',
@@ -193,6 +358,7 @@
     showSkills: true,
     showExperience: true,
     showProjects: true,
+    showLanguages: true,
   }
 
   const clone = (value) => JSON.parse(JSON.stringify(value))
@@ -538,10 +704,10 @@
         <div class="ref-exec-motto">PEOPLE<br>STRATEGY<br>GROWTH<br>LASTING IMPACT</div>
       </header>
       ${refContact()}
-      <section class="ref-section ref-summary" data-edit-pane="content" data-edit-focus="#summary"><h3>Executive Summary</h3><p>${escapeHtml(profile.summary)}</p></section>
+      ${sectionVisible('summary') ? '<section class="ref-section ref-summary" data-edit-pane="content" data-edit-focus="#summary"><h3>Executive Summary</h3><p>' + escapeHtml(profile.summary) + '</p></section>' : ''}
       <section class="ref-section" data-edit-pane="content"><h3>Leadership Impact</h3>${refHighlights('ref-exec-impact')}</section>
-      <section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-exec-experience')}</section>
-      <section class="ref-section" data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Selected Achievements</h3>${refProjects('ref-achievement-row', 4)}</section>
+      ${sectionVisible('experience') ? '<section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>' + refExperience('ref-exec-experience') + '</section>' : ''}
+      ${sectionVisible('projects') ? '<section class="ref-section" data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Selected Achievements</h3>' + refProjects('ref-achievement-row', 4) + '</section>' : ''}
       ${refEducation() ? '<section class="ref-section"><h3>Education & Professional Development</h3>' + refEducation() + '</section>' : ''}
     </div>
   `
@@ -553,17 +719,17 @@
           <span class="ref-eyebrow">Senior UI/UX Designer</span>
           <h1>${escapeHtml(profile.name)}</h1>
           <h2>${escapeHtml(profile.role)}</h2>
-          <p>${escapeHtml(profile.summary)}</p>
+          ${sectionVisible('summary') ? '<p>' + escapeHtml(profile.summary) + '</p>' : ''}
           ${refContact()}
         </div>
         <div class="ref-soft-portrait">${avatarMarkup('ref-soft-avatar')}<span class="ref-hand-note">Good design<br>builds better<br>tomorrows.</span></div>
       </header>
       ${refHighlights('ref-soft-metrics')}
       <div class="ref-soft-body">
-        <main data-edit-pane="content" data-edit-focus="#projectEditor"><div class="ref-section-title">Selected Case Studies</div>${refProjects('ref-soft-projects', 3)}</main>
-        <aside data-edit-pane="content" data-edit-focus="#skills"><div class="ref-section-title">Core Skills</div>${refSkills('ref-soft-skills')}<div class="ref-section-title">Tools</div>${refSkills('ref-tool-grid')}</aside>
+        ${sectionVisible('projects') ? '<main data-edit-pane="content" data-edit-focus="#projectEditor"><div class="ref-section-title">Selected Case Studies</div>' + refProjects('ref-soft-projects', 3) + '</main>' : '<main></main>'}
+        ${sectionVisible('skills') ? '<aside data-edit-pane="content" data-edit-focus="#skills"><div class="ref-section-title">Core Skills</div>' + refSkills('ref-soft-skills') + '<div class="ref-section-title">Tools</div>' + refSkills('ref-tool-grid') + '</aside>' : '<aside></aside>'}
       </div>
-      <section class="ref-soft-highlights" data-edit-pane="content" data-edit-focus="#experienceEditor"><div class="ref-section-title">Experience Highlights</div>${refExperience('ref-soft-experience')}</section>
+      ${sectionVisible('experience') ? '<section class="ref-soft-highlights" data-edit-pane="content" data-edit-focus="#experienceEditor"><div class="ref-section-title">Experience Highlights</div>' + refExperience('ref-soft-experience') + '</section>' : ''}
     </div>
   `
 
@@ -573,17 +739,16 @@
         ${avatarMarkup('ref-product-avatar')}
         <h1>${escapeHtml(profile.name)}</h1>
         <h2>${escapeHtml(profile.role)}</h2>
-        <p>${escapeHtml(profile.summary)}</p>
+        ${sectionVisible('summary') ? '<p>' + escapeHtml(profile.summary) + '</p>' : ''}
         ${refContact()}
-        <div data-edit-pane="content" data-edit-focus="#skills"><div class="ref-rail-label">Core Skills</div>
-        ${refSkills('ref-rail-skills')}</div>
+        ${sectionVisible('skills') ? '<div data-edit-pane="content" data-edit-focus="#skills"><div class="ref-rail-label">Core Skills</div>' + refSkills('ref-rail-skills') + '</div>' : ''}
       </aside>
       <main class="ref-product-main">
         <header><h1>From Insight to Impact</h1><span>PEOPLE · PRODUCTS · PROGRESS</span></header>
         ${refHighlights('ref-product-metrics')}
-        <section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Experience</h3>${refExperience('ref-product-experience')}</section>
+        ${sectionVisible('experience') ? '<section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Experience</h3>' + refExperience('ref-product-experience') + '</section>' : ''}
         <div class="ref-product-lower">
-          <section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Product Highlights</h3>${refProjects('ref-product-highlights')}</section>
+          ${sectionVisible('projects') ? '<section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Product Highlights</h3>' + refProjects('ref-product-highlights') + '</section>' : '<section></section>'}
           <section><h3>Roadmap Mindset</h3><div class="ref-roadmap"><div><b>Discover</b><span>Understand</span></div><div><b>Define</b><span>Set strategy</span></div><div><b>Deliver</b><span>Build & test</span></div><div><b>Scale</b><span>Measure impact</span></div></div></section>
         </div>
       </main>
@@ -597,24 +762,24 @@
         <div><span>// Build interfaces</span><span>// for a more human web.</span>${refContact()}</div>
       </header>
       <div class="ref-code-grid">
-        <section class="ref-code-about" data-edit-pane="content" data-edit-focus="#summary"><h3>01 / ABOUT</h3><p>${escapeHtml(profile.summary)}</p></section>
+        ${sectionVisible('summary') ? '<section class="ref-code-about" data-edit-pane="content" data-edit-focus="#summary"><h3>01 / ABOUT</h3><p>' + escapeHtml(profile.summary) + '</p></section>' : '<section class="ref-code-about"></section>'}
         <div class="ref-code-poster">DESIGN<br>×<br>CODE<br>×<br>PEOPLE<br>=<br><b>BETTER PRODUCTS</b></div>
       </div>
-      <section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>02 / EXPERIENCE</h3>${refExperience('ref-code-experience')}</section>
-      <section class="ref-section" data-edit-pane="content" data-edit-focus="#skills"><h3>03 / SKILLS</h3><div class="ref-code-skills">${(profile.skills || []).map((skill, index) => '<div><span>' + escapeHtml(skill) + '</span><i style="--level:' + Math.max(3, 7 - (index % 5)) + '"></i></div>').join('')}</div></section>
-      <section class="ref-section" data-edit-pane="content" data-edit-focus="#projectEditor"><h3>04 / SELECTED WORK</h3>${refProjects('ref-code-work')}</section>
+      ${sectionVisible('experience') ? '<section class="ref-section" data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>02 / EXPERIENCE</h3>' + refExperience('ref-code-experience') + '</section>' : ''}
+      ${sectionVisible('skills') ? '<section class="ref-section" data-edit-pane="content" data-edit-focus="#skills"><h3>03 / SKILLS</h3><div class="ref-code-skills">' + (profile.skills || []).map((skill, index) => '<div><span>' + escapeHtml(skill) + '</span><i style="--level:' + Math.max(3, 7 - (index % 5)) + '"></i></div>').join('') + '</div></section>' : ''}
+      ${sectionVisible('projects') ? '<section class="ref-section" data-edit-pane="content" data-edit-focus="#projectEditor"><h3>04 / SELECTED WORK</h3>' + refProjects('ref-code-work') + '</section>' : ''}
     </div>
   `
 
   const renderAtsPrecision = () => `
     <div class="ref-cv ref-ats-precision">
       <header class="ref-ats-head" data-edit-pane="content" data-edit-focus="#name">
-        <div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>${escapeHtml(profile.summary)}</p></div>
+        <div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2>${sectionVisible('summary') ? '<p>' + escapeHtml(profile.summary) + '</p>' : ''}</div>
         ${refContact()}
       </header>
       <div class="ref-ats-body">
-        <main><section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Experience</h3>${refExperience('ref-ats-experience')}</section>${refEducation() ? '<section><h3>Education</h3>' + refEducation() + '</section>' : ''}</main>
-        <aside><section data-edit-pane="content" data-edit-focus="#skills"><h3>Skills</h3>${refSkills('ref-ats-skills')}</section><section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Selected Projects</h3>${refProjects('ref-ats-projects', 2)}</section>${refCertificates() ? '<section><h3>Certifications</h3>' + refCertificates() + '</section>' : ''}</aside>
+        <main>${sectionVisible('experience') ? '<section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Experience</h3>' + refExperience('ref-ats-experience') + '</section>' : ''}${refEducation() ? '<section><h3>Education</h3>' + refEducation() + '</section>' : ''}</main>
+        <aside>${sectionVisible('skills') ? '<section data-edit-pane="content" data-edit-focus="#skills"><h3>Skills</h3>' + refSkills('ref-ats-skills') + '</section>' : ''}${sectionVisible('projects') ? '<section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Selected Projects</h3>' + refProjects('ref-ats-projects', 2) + '</section>' : ''}${refCertificates() ? '<section><h3>Certifications</h3>' + refCertificates() + '</section>' : ''}</aside>
       </div>
     </div>
   `
@@ -625,13 +790,13 @@
         <div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2>${refContact()}</div>
         <div class="ref-chart-bars"><i></i><i></i><i></i><i></i><i></i><strong>Turning Data<br>Into Decisions</strong></div>
       </header>
-      <section class="ref-insight-summary" data-edit-pane="content" data-edit-focus="#summary"><div><h3>Professional Summary</h3><p>${escapeHtml(profile.summary)}</p></div>${refHighlights('ref-insight-metrics')}</section>
+      ${sectionVisible('summary') ? '<section class="ref-insight-summary" data-edit-pane="content" data-edit-focus="#summary"><div><h3>Professional Summary</h3><p>' + escapeHtml(profile.summary) + '</p></div>' + refHighlights('ref-insight-metrics') + '</section>' : '<section class="ref-insight-summary">' + refHighlights('ref-insight-metrics') + '</section>'}
       <div class="ref-insight-grid-body">
-        <section data-edit-pane="content" data-edit-focus="#skills"><h3>Core Skills</h3><div class="ref-skill-bars">${(profile.skills || []).map((skill, index) => '<div><span>' + escapeHtml(skill) + '</span><i><b style="width:' + Math.max(62, 92 - index * 4) + '%"></b></i></div>').join('')}</div></section>
-        <section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Key Achievements</h3>${refProjects('ref-insight-achievements')}</section>
-        <section><h3>Tools & Technologies</h3>${refSkills('ref-insight-tools')}</section>
+        ${sectionVisible('skills') ? '<section data-edit-pane="content" data-edit-focus="#skills"><h3>Core Skills</h3><div class="ref-skill-bars">' + (profile.skills || []).map((skill, index) => '<div><span>' + escapeHtml(skill) + '</span><i><b style="width:' + Math.max(62, 92 - index * 4) + '%"></b></i></div>').join('') + '</div></section>' : '<section></section>'}
+        ${sectionVisible('projects') ? '<section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Key Achievements</h3>' + refProjects('ref-insight-achievements') + '</section>' : '<section></section>'}
+        ${sectionVisible('skills') ? '<section><h3>Tools & Technologies</h3>' + refSkills('ref-insight-tools') + '</section>' : '<section></section>'}
       </div>
-      <div class="ref-insight-bottom"><section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-insight-experience')}</section><aside>${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}${refCertificates() ? '<h3>Certifications</h3>' + refCertificates() : ''}</aside></div>
+      <div class="ref-insight-bottom">${sectionVisible('experience') ? '<section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>' + refExperience('ref-insight-experience') + '</section>' : '<section></section>'}<aside>${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}${refCertificates() ? '<h3>Certifications</h3>' + refCertificates() : ''}</aside></div>
     </div>
   `
 
@@ -641,14 +806,14 @@
         ${avatarMarkup('ref-brand-avatar')}
         ${refContact()}
         <blockquote>Brands grow when<br>people feel something.</blockquote>
-        <div data-edit-pane="content" data-edit-focus="#skills"><h3>Skills</h3>${refSkills('ref-brand-skills')}</div>
-        <div data-edit-pane="content" data-edit-focus="#languages"><h3>Languages</h3><div class="ref-brand-languages">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div></div>
+        ${sectionVisible('skills') ? '<div data-edit-pane="content" data-edit-focus="#skills"><h3>Skills</h3>' + refSkills('ref-brand-skills') + '</div>' : ''}
+        ${sectionVisible('languages') ? '<div data-edit-pane="content" data-edit-focus="#languages"><h3>Languages</h3><div class="ref-brand-languages">' + (profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('') + '</div></div>' : ''}
       </aside>
       <main class="ref-brand-main">
-        <header data-edit-pane="content" data-edit-focus="#name"><span>Ideas · People · Impact</span><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>${escapeHtml(profile.summary)}</p><em>BRANDS<br>PEOPLE<br>STORIES<br>GROWTH</em></header>
+        <header data-edit-pane="content" data-edit-focus="#name"><span>Ideas · People · Impact</span><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2>${sectionVisible('summary') ? '<p>' + escapeHtml(profile.summary) + '</p>' : ''}<em>BRANDS<br>PEOPLE<br>STORIES<br>GROWTH</em></header>
         ${refHighlights('ref-brand-metrics')}
-        <section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Work Experience</h3>${refExperience('ref-brand-experience')}</section>
-        <section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Selected Campaigns</h3>${refProjects('ref-brand-projects', 3)}</section>
+        ${sectionVisible('experience') ? '<section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Work Experience</h3>' + refExperience('ref-brand-experience') + '</section>' : ''}
+        ${sectionVisible('projects') ? '<section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Selected Campaigns</h3>' + refProjects('ref-brand-projects', 3) + '</section>' : ''}
       </main>
     </div>
   `
@@ -665,11 +830,11 @@
       ${refContact()}
       <div class="ref-sales-body">
         <main>
-          <section data-edit-pane="content" data-edit-focus="#summary"><h3>Professional Summary</h3><p>${escapeHtml(profile.summary)}</p></section>
+          ${sectionVisible('summary') ? '<section data-edit-pane="content" data-edit-focus="#summary"><h3>Professional Summary</h3><p>' + escapeHtml(profile.summary) + '</p></section>' : ''}
           <section data-edit-pane="content" data-edit-focus="#summary"><h3>Key Performance Highlights</h3>${refHighlights('ref-sales-metrics')}</section>
-          <section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-sales-experience')}</section>
+          ${sectionVisible('experience') ? '<section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>' + refExperience('ref-sales-experience') + '</section>' : ''}
         </main>
-        <aside><div data-edit-pane="content" data-edit-focus="#skills"><h3>Core Skills</h3>${refSkills('ref-sales-skills')}<h3>Selected Clients</h3><div class="ref-client-grid"><span>Microsoft</span><span>Vodafone</span><span>Sage</span><span>DELL</span><span>HSBC</span><span>Atlassian</span></div></div><blockquote data-edit-pane="content" data-edit-focus="#quote">“${escapeHtml(profile.quote || demoProfile.quote)}”</blockquote></aside>
+        <aside>${sectionVisible('skills') ? '<div data-edit-pane="content" data-edit-focus="#skills"><h3>Core Skills</h3>' + refSkills('ref-sales-skills') + '<h3>Selected Clients</h3><div class="ref-client-grid"><span>Microsoft</span><span>Vodafone</span><span>Sage</span><span>DELL</span><span>HSBC</span><span>Atlassian</span></div></div>' : ''}<blockquote data-edit-pane="content" data-edit-focus="#quote">“${escapeHtml(profile.quote || demoProfile.quote)}”</blockquote></aside>
       </div>
     </div>
   `
@@ -677,13 +842,13 @@
   const renderPeopleFirst = () => `
     <div class="ref-cv ref-people-first">
       <header data-edit-pane="content" data-edit-focus="#name">
-        <div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>${escapeHtml(profile.summary)}</p></div>
+        <div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2>${sectionVisible('summary') ? '<p>' + escapeHtml(profile.summary) + '</p>' : ''}</div>
         <div class="ref-people-portrait">${avatarMarkup('ref-people-avatar')}<span>People<br>Build<br>Brighter<br>Workplaces ♡</span></div>
       </header>
       ${refContact()}
       <div class="ref-people-body">
-        <aside data-edit-pane="content" data-edit-focus="#skills"><h3>Key Competencies</h3>${refSkills('ref-people-skills')}${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}</aside>
-        <main><div data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>${refExperience('ref-people-experience')}</div><div data-edit-pane="content" data-edit-focus="#languages"><h3>Additional Information</h3><div class="ref-people-extra">${(profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('')}</div></div></main>
+        <aside>${sectionVisible('skills') ? '<div data-edit-pane="content" data-edit-focus="#skills"><h3>Key Competencies</h3>' + refSkills('ref-people-skills') + '</div>' : ''}${refEducation() ? '<h3>Education</h3>' + refEducation() : ''}</aside>
+        <main>${sectionVisible('experience') ? '<div data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Professional Experience</h3>' + refExperience('ref-people-experience') + '</div>' : ''}${sectionVisible('languages') ? '<div data-edit-pane="content" data-edit-focus="#languages"><h3>Additional Information</h3><div class="ref-people-extra">' + (profile.languages || []).map((language) => '<span>' + escapeHtml(language) + '</span>').join('') + '</div></div>' : ''}</main>
       </div>
     </div>
   `
@@ -692,11 +857,11 @@
     <div class="ref-cv ref-next-start">
       <header data-edit-pane="content" data-edit-focus="#name"><div><h1>${escapeHtml(profile.name)}</h1><h2>${escapeHtml(profile.role)}</h2><p>Curious learner · Problem solver · Ready to make an impact</p></div><span class="ref-next-note">A Brighter<br>You Ahead</span></header>
       <div class="ref-next-body">
-        <aside><div data-edit-pane="content" data-edit-focus="#name">${avatarMarkup('ref-next-avatar')}<blockquote>Eager to learn,<br>excited to build,<br>ready for what's next.</blockquote>${refContact()}</div><div data-edit-pane="content" data-edit-focus="#skills"><h3>Skills</h3>${refSkills('ref-next-skills')}</div></aside>
+        <aside><div data-edit-pane="content" data-edit-focus="#name">${avatarMarkup('ref-next-avatar')}<blockquote>Eager to learn,<br>excited to build,<br>ready for what's next.</blockquote>${refContact()}</div>${sectionVisible('skills') ? '<div data-edit-pane="content" data-edit-focus="#skills"><h3>Skills</h3>' + refSkills('ref-next-skills') + '</div>' : ''}</aside>
         <main>
           ${refEducation() ? '<section><h3>Education</h3>' + refEducation() + '</section>' : ''}
-          <section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Projects</h3>${refProjects('ref-next-projects', 2)}</section>
-          <section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Internships</h3>${refExperience('ref-next-experience')}</section>
+          ${sectionVisible('projects') ? '<section data-edit-pane="content" data-edit-focus="#projectEditor"><h3>Projects</h3>' + refProjects('ref-next-projects', 2) + '</section>' : ''}
+          ${sectionVisible('experience') ? '<section data-edit-pane="content" data-edit-focus="#experienceEditor"><h3>Internships</h3>' + refExperience('ref-next-experience') + '</section>' : ''}
           <section><h3>Activities</h3><div class="ref-next-activities"><span>Community involvement</span><span>Team projects</span><span>Continuous learning</span></div></section>
         </main>
       </div>
@@ -771,12 +936,12 @@
       ? '<div class="paper-avatar avatar-shape-' + avatarShape + '"><img src="' + escapeHtml(safeAvatar(profile.avatar)) + '" alt="" style="object-position:' + avatarX + '% ' + avatarY + '%;transform:scale(' + avatarZoom + ') rotate(' + avatarRotate + 'deg)" /></div>'
       : ''
 
-    const languages = `
+    const languages = sectionVisible('languages') ? `
       <section class="draggable-section" draggable="true" data-section-key="languages" data-section-group="side" style="order:${sectionOrderIndex('languages')}" data-edit-pane="content" data-edit-focus="#languages">
         <h3 class="section-title">Languages</h3>
         <div class="languages">${profile.languages.map((language) => `<span>${escapeHtml(language)}</span>`).join('')}</div>
       </section>
-    `
+    ` : ''
 
     paper.innerHTML = `
       <header class="cv-head" data-edit-pane="content" data-edit-focus="#name">
@@ -924,10 +1089,7 @@
     $('#projectList').disabled = !designMeta.projects
     $('.design-project-layout').classList.toggle('is-disabled', !designMeta.projects)
 
-    $('#showSummary').checked = settings.showSummary
-    $('#showSkills').checked = settings.showSkills
-    $('#showExperience').checked = settings.showExperience
-    $('#showProjects').checked = settings.showProjects
+    renderLayoutMaster()
     $('#projectCards').setAttribute('aria-pressed', settings.projectLayout !== 'list' ? 'true' : 'false')
     $('#projectList').setAttribute('aria-pressed', settings.projectLayout === 'list' ? 'true' : 'false')
     $('#projectCards').classList.toggle('active', settings.projectLayout !== 'list')
@@ -1676,17 +1838,63 @@
     renderAll()
   })
 
-  ;[
-    ['showSummary', 'showSummary'],
-    ['showSkills', 'showSkills'],
-    ['showExperience', 'showExperience'],
-    ['showProjects', 'showProjects'],
-  ].forEach(([id, key]) => {
-    $('#' + id).addEventListener('change', (event) => {
-      settings[key] = event.currentTarget.checked
+
+  const renderLayoutMaster = () => {
+    const host=$('#layoutMaster')
+    if(!host)return
+    const template=activeTemplate()
+    const contract=activeLayoutContract()
+    const sections=['summary','experience','projects','skills','languages']
+    const supported=sections.filter((section)=>contract.sections[section]?.supported!==false)
+    const visible=supported.filter((section)=>sectionVisible(section))
+    const modeNote=contract.mode==='flexible'
+      ? 'Main and side groups can be reordered from the CV preview.'
+      : contract.mode==='guided'
+        ? 'Hierarchy is recruiter-first; visibility is editable but structure stays guided.'
+        : 'Hierarchy is intentionally fixed to protect the template composition.'
+
+    host.innerHTML=
+      '<section class="layout-master-context">'+
+        '<div><span>'+escapeHtml(layoutModeLabel(contract.mode))+'</span><strong>'+escapeHtml(template.name)+'</strong><p>'+escapeHtml(templateDesignMeta[template.id]?.structure||contract.label)+'</p></div>'+
+        '<div class="layout-master-stats"><span><small>Visible</small><strong>'+visible.length+'/'+supported.length+'</strong></span><span><small>Page intent</small><strong>'+escapeHtml(contract.page||'Auto')+'</strong></span></div>'+
+      '</section>'+
+      '<section class="layout-master-sections">'+
+        '<div class="layout-master-title"><div><span>Section manager</span><strong>Structure & visibility</strong></div><small>'+escapeHtml(modeNote)+'</small></div>'+
+        '<div id="layoutSectionList">'+sections.map((section)=>{
+          const cfg=contract.sections[section]||{supported:true,limit:null,placement:''}
+          const count=sectionSourceCount(section)
+          const setting=sectionSettingKey[section]
+          const isVisible=sectionVisible(section)
+          const supportedNow=cfg.supported!==false
+          let meta=supportedNow?(cfg.placement||'Template section'):'Not used by this template'
+          if(supportedNow&&cfg.limit&&count>cfg.limit)meta+=' · '+cfg.limit+' of '+count+' shown'
+          else if(supportedNow&&count)meta+=' · '+count+' item'+(count===1?'':'s')
+          return '<article class="layout-section-row '+(!supportedNow?'unsupported ':'')+(!isVisible?'hidden-section':'')+'" data-layout-section="'+section+'">'+
+            '<div class="layout-section-handle" aria-hidden="true">'+(contract.mode==='flexible'&&supportedNow?'⋮⋮':'•')+'</div>'+
+            '<div class="layout-section-copy"><strong>'+escapeHtml(sectionLabels[section])+'</strong><small>'+escapeHtml(meta)+'</small></div>'+
+            (supportedNow&&setting?'<button type="button" class="layout-switch '+(isVisible?'on':'')+'" role="switch" aria-checked="'+(isVisible?'true':'false')+'" data-layout-toggle="'+setting+'"><i></i><span>'+(isVisible?'Visible':'Hidden')+'</span></button>':'<span class="layout-section-lock">'+(supportedNow?'Fixed':'Unavailable')+'</span>')+
+          '</article>'
+        }).join('')+'</div>'+
+      '</section>'+
+      '<section class="layout-master-note"><strong>'+escapeHtml(contract.label)+'</strong><p>'+escapeHtml(modeNote)+'</p></section>'
+  }
+
+  $('#layoutMaster')?.addEventListener('click',(event)=>{
+    const toggle=event.target.closest('[data-layout-toggle]')
+    if(toggle){
+      const key=toggle.dataset.layoutToggle
+      settings[key]=settings[key]===false
       renderAll()
-    })
+      return
+    }
+    const row=event.target.closest('[data-layout-section]')
+    if(row){
+      const focusMap={summary:'#summary',experience:'#experienceEditor',projects:'#projectEditor',skills:'#skills',languages:'#languages'}
+      const target=focusMap[row.dataset.layoutSection]
+      if(target)activatePane('content',target)
+    }
   })
+
 
   $$('.tab').forEach((button) => {
     button.addEventListener('click', () => activatePane(button.dataset.tab))

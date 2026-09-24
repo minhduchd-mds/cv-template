@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,follow" />
   <meta name="description" content="Static fallback CV Studio builder for GitHub Pages." />
   <title>CV Studio · Builder</title>
-  <link rel="stylesheet" href="./styles.css?v=20260924-content-health-v1" />
+  <link rel="stylesheet" href="./styles.css?v=20260924-layout-master-v1" />
   <link rel="stylesheet" href="./ats.css?v=20260924-ats-ux-v3-stable" />
 </head>
 <body>
@@ -212,17 +212,13 @@
         </section>
 
         <section class="editor-pane" data-pane="layout">
-          <label class="toggle"><input id="showSummary" type="checkbox" checked /><span>Show summary</span></label>
-          <label class="toggle"><input id="showSkills" type="checkbox" checked /><span>Show skills</span></label>
-          <label class="toggle"><input id="showExperience" type="checkbox" checked /><span>Show experience</span></label>
-          <label class="toggle"><input id="showProjects" type="checkbox" checked /><span>Show projects</span></label>
-          <p class="note">The full Vue Studio adds section ordering, images, certificates, education and deeper controls. This fallback keeps the Builder usable while hosted Actions runners are unavailable.</p>
+          <div id="layoutMaster" class="layout-master"></div>
         </section>
       </aside>
     </main>
   </div>
 
-  <script src="./app.js?v=20260924-content-health-v1"></script>
+  <script src="./app.js?v=20260924-layout-master-v1"></script>
   <script src="./ats.js?v=20260924-ats-ux-v3-stable"></script>
 </body>
 </html>
