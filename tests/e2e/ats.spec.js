@@ -282,3 +282,27 @@ test('ATS UX V3 consolidates scanner navigation and next action', async ({ page 
 
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('ATS V3 layout remains bounded across viewport sizes', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+  for (const viewport of [{width:1440,height:900},{width:768,height:1024},{width:390,height:844}]) {
+    await page.setViewportSize(viewport)
+    await page.goto('/studio/')
+    await page.getByRole('button',{name:/ATS Scan/i}).click()
+    await page.getByRole('button',{name:/Applications/}).click()
+    const bounds=await page.locator('.ats-panel').evaluate((panel)=>({
+      left:panel.getBoundingClientRect().left,
+      right:panel.getBoundingClientRect().right,
+      width:panel.getBoundingClientRect().width,
+      viewport:window.innerWidth,
+      scrollWidth:panel.scrollWidth,
+      clientWidth:panel.clientWidth
+    }))
+    expect(bounds.left).toBeGreaterThanOrEqual(-1)
+    expect(bounds.right).toBeLessThanOrEqual(bounds.viewport+1)
+    expect(bounds.scrollWidth).toBeLessThanOrEqual(bounds.clientWidth+1)
+  }
+  expect(runtimeErrors).toEqual([])
+})

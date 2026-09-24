@@ -2805,7 +2805,7 @@
       button.classList.toggle('active',button.dataset.v3Group===group)
       button.setAttribute('aria-selected',String(button.dataset.v3Group===group))
     })
-    renderSubnav(group,pane)
+    renderSubnav(group,pane,target||'')
     if(pane){
       const tab=legacyTab(pane)
       if(tab&&!tab.classList.contains('active')){
@@ -2837,14 +2837,16 @@
     ]
   }[group]||[])
 
-  const renderSubnav=(group,currentPane)=>{
+  const renderSubnav=(group,currentPane,currentTarget='')=>{
     const host=$('#atsV3Subnav')
     if(!host)return
     const items=subnavItems(group)
     host.hidden=!items.length
     if(!items.length){host.innerHTML='';return}
     host.innerHTML=items.map((item,index)=>{
-      const active=item.pane===(currentPane||GROUPS[group].defaultPane) && (!item.target || index===0)
+      const paneMatch=item.pane===(currentPane||GROUPS[group].defaultPane)
+      const targetMatch=currentTarget?item.target===currentTarget:(!item.target||index===0)
+      const active=paneMatch&&targetMatch
       return '<button type="button" class="'+(active?'active':'')+'" data-v3-sub-pane="'+item.pane+'"'+(item.target?' data-v3-sub-target="'+item.target.replace(/"/g,'&quot;')+'"':'')+'>'+item.label+'</button>'
     }).join('')
   }
@@ -2980,7 +2982,7 @@
       button.classList.toggle('active',button.dataset.v3Group===group)
       button.setAttribute('aria-selected',String(button.dataset.v3Group===group))
     })
-    renderSubnav(group,pane)
+    renderSubnav(group,pane,'')
     updateNextAction()
   }
 
