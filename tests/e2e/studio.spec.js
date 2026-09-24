@@ -491,3 +491,47 @@ test('static template search filters the 20-template library', async ({ page }) 
   await expect(page.locator('.template-card')).toHaveCount(20)
   await expect(page.locator('#templateCountLabel')).toContainText('20 curated templates')
 })
+
+
+test('Revenue Driver tagline and quote are directly editable without forced line breaks', async ({ page }) => {
+  await page.goto('/studio/')
+  await page.locator('.template-card').filter({ hasText: 'Revenue Driver' }).click()
+
+  const tagline = page.locator('#paper .ref-revenue-driver > header p')
+  const quote = page.locator('#paper .ref-sales-body blockquote')
+
+  await expect(tagline).toContainText('Driving revenue')
+  await tagline.click()
+  await expect(page.locator('#headline')).toBeVisible()
+  await expect(page.locator('#headline')).toBeFocused()
+  await page.locator('#headline').fill('Build trust. Create value. Grow revenue.')
+  await expect(tagline).toHaveText('Build trust. Create value. Grow revenue.')
+
+  await quote.click()
+  await expect(page.locator('#quote')).toBeVisible()
+  await expect(page.locator('#quote')).toBeFocused()
+  await page.locator('#quote').fill('One clear sentence, no forced break.')
+  await expect(quote).toContainText('One clear sentence, no forced break.')
+  await expect(quote.locator('br')).toHaveCount(0)
+})
+
+test('PDF export computes a one-page print fit when CV content exceeds A4', async ({ page }) => {
+  await page.goto('/studio/')
+  await page.locator('.template-card').filter({ hasText: 'Revenue Driver' }).click()
+
+  await page.evaluate(() => {
+    window.print = () => { window.__printCalled = true }
+    const experience = document.querySelector('#paper .ref-sales-experience')
+    if (experience) experience.style.paddingBottom = '620px'
+  })
+
+  await page.locator('#print').click()
+
+  const result = await page.locator('#paper').evaluate((node) => ({
+    fit: Number(node.dataset.printFit || '1'),
+    called: Boolean(window.__printCalled),
+  }))
+  expect(result.called).toBe(true)
+  expect(result.fit).toBeLessThan(1)
+  expect(result.fit).toBeGreaterThanOrEqual(.68)
+})
