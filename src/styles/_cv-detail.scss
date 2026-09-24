@@ -64,3 +64,26 @@
     text-decoration: none;
   }
 }
+
+
+/* Preserve on-screen composition and fit edited CV content into one A4 sheet. */
+@media print {
+  .cv-sheet {
+    width: var(--print-width, 210mm) !important;
+    min-height: var(--print-min-height, 297mm) !important;
+    zoom: var(--print-fit, 1);
+    margin: 0 auto !important;
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  .ref-revenue-driver {
+    min-height: 0 !important;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .ref-sales-body blockquote {
+    white-space: normal !important;
+  }
+}
