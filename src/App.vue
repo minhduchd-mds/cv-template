@@ -624,7 +624,31 @@ export default {
         localStorage.removeItem(STORAGE_KEY)
       } catch (error) { console.warn('Unable to clear saved CV profile.', error) }
     },
-    printCv() { window.print() },
+    resetPrintFit() {
+      const sheet = document.querySelector('.preview-stage .cv-sheet')
+      if (!sheet) return
+      sheet.style.removeProperty('--print-fit')
+      sheet.style.removeProperty('--print-width')
+      sheet.style.removeProperty('--print-min-height')
+    },
+    preparePrintFit() {
+      const sheet = document.querySelector('.preview-stage .cv-sheet')
+      if (!sheet) return 1
+      this.resetPrintFit()
+      const a4HeightPx = 1123
+      const measuredHeight = Math.max(a4HeightPx, sheet.scrollHeight, sheet.offsetHeight)
+      const fit = Math.max(0.68, Math.min(1, a4HeightPx / measuredHeight))
+      sheet.style.setProperty('--print-fit', fit.toFixed(4))
+      sheet.style.setProperty('--print-width', `${(210 / fit).toFixed(2)}mm`)
+      sheet.style.setProperty('--print-min-height', `${(297 / fit).toFixed(2)}mm`)
+      sheet.dataset.printFit = fit.toFixed(4)
+      return fit
+    },
+    printCv() {
+      this.preparePrintFit()
+      window.print()
+      window.setTimeout(() => this.resetPrintFit(), 0)
+    },
   },
 }
 </script>
