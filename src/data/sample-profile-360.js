@@ -274,6 +274,7 @@ export const resumeCandidateFrom360 = (profile = sampleProfile360) => ({
   website: profile.identity.website,
   avatar: profile.identity.avatar,
   headline: profile.identity.headline,
+  quote: profile.testimonials?.[0]?.quote || '',
   availability: profile.identity.availability,
   summary: profile.positioning.shortBio,
   sections: [
