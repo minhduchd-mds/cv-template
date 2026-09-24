@@ -120,14 +120,20 @@ test.describe('20-template visual layout audit', () => {
   test('template preview remains contained at the current viewport', async ({ page }) => {
     for(const template of templates){
       await selectTemplate(page,template)
-      const shell=await page.evaluate(()=>({
-        bodyScroll:document.documentElement.scrollWidth,
-        viewport:window.innerWidth,
-        stageScroll:document.querySelector('.paper-stage')?.scrollWidth||0,
-        stageClient:document.querySelector('.paper-stage')?.clientWidth||0,
-      }))
+      const shell=await page.evaluate(()=>{
+        const stage=document.querySelector('.paper-stage')
+        const paper=document.querySelector('#paper')
+        const stageRect=stage?.getBoundingClientRect()
+        const paperRect=paper?.getBoundingClientRect()
+        return {
+          bodyScroll:document.documentElement.scrollWidth,
+          viewport:window.innerWidth,
+          stageWidth:stageRect?.width||0,
+          paperWidth:paperRect?.width||0,
+        }
+      })
       expect(shell.bodyScroll).toBeLessThanOrEqual(shell.viewport+2)
-      expect(shell.stageScroll).toBeGreaterThanOrEqual(shell.stageClient)
+      expect(shell.paperWidth).toBeLessThanOrEqual(shell.stageWidth+2)
     }
   })
 })

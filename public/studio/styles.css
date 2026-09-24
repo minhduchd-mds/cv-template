@@ -3481,3 +3481,23 @@ button{cursor:pointer}
 .paper:is(.theme-strategy-brief,.theme-clinical-clean,.theme-finance-ledger,.theme-studio-director,.theme-research-scholar) .contact span{
   max-width:100%;
 }
+
+
+/* MOBILE_A4_PREVIEW_FIT_V1 */
+@media(max-width:760px){
+  .paper-stage{overflow-x:hidden}
+}
+@media(max-width:520px){
+  .paper{
+    transform:scale(.54);
+    transform-origin:top left;
+    margin-bottom:-515px;
+  }
+}
+@media(max-width:420px){
+  .paper{
+    transform:scale(.44);
+    transform-origin:top left;
+    margin-bottom:-630px;
+  }
+}
