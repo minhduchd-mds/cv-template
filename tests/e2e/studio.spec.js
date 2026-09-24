@@ -526,12 +526,17 @@ test('PDF export computes a one-page print fit when CV content exceeds A4', asyn
   })
 
   await page.locator('#print').click()
+  await expect(page.getByRole('heading',{name:'PDF Preflight'})).toBeVisible()
+  await page.locator('#exportModeOne').check()
+  await page.locator('#exportPreflightPrint').click()
 
   const result = await page.locator('#paper').evaluate((node) => ({
     fit: Number(node.dataset.printFit || '1'),
+    mode: node.dataset.printMode,
     called: Boolean(window.__printCalled),
   }))
   expect(result.called).toBe(true)
+  expect(result.mode).toBe('one')
   expect(result.fit).toBeLessThan(1)
   expect(result.fit).toBeGreaterThanOrEqual(.68)
 })
@@ -568,4 +573,17 @@ test('workspace backup previews import before restore', async ({ page }) => {
   await expect(page.locator('#backupImportPreview')).toContainText('Imported Candidate')
   await expect(page.locator('#backupRestoreNow')).toBeEnabled()
   expect(runtimeErrors).toEqual([])
+})
+
+
+test('PDF preflight recommends multi-page when one-page fit would be unreadable', async ({ page }) => {
+  await page.goto('/studio/')
+  await page.evaluate(() => {
+    const paper=document.querySelector('#paper')
+    if(paper) paper.style.paddingBottom='1800px'
+  })
+  await page.locator('#print').click()
+  await expect(page.locator('#exportPreflightStatus')).toContainText('Multi-page recommended')
+  await expect(page.locator('#exportModeOne')).toBeDisabled()
+  await expect(page.locator('#exportModeMulti')).toBeChecked()
 })

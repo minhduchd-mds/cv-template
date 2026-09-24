@@ -1189,29 +1189,149 @@
     paper.style.removeProperty('--print-fit')
     paper.style.removeProperty('--print-width')
     paper.style.removeProperty('--print-min-height')
+    delete paper.dataset.printMode
   }
 
-  const preparePrintFit = () => {
+  const measurePrintHealth = () => {
+    const paper = $('#paper')
+    const a4HeightPx = 1123
+    if (!paper) return { a4HeightPx, measuredHeight: a4HeightPx, requiredFit: 1, appliedFit: 1, onePagePossible: true, naturalPages: 1, pressure: [] }
+    const measuredHeight = Math.max(a4HeightPx, paper.scrollHeight, paper.offsetHeight)
+    const requiredFit = Math.min(1, a4HeightPx / measuredHeight)
+    const appliedFit = Math.max(0.68, requiredFit)
+    const onePagePossible = requiredFit >= 0.68
+    const naturalPages = Math.max(1, Math.ceil(measuredHeight / a4HeightPx))
+    const rawSections = [...paper.querySelectorAll('[data-section-key]'), ...paper.querySelectorAll('.ref-cv section')]
+    const seen = new Set()
+    const pressure = rawSections.filter((node) => {
+      if (!node || seen.has(node)) return false
+      seen.add(node)
+      return node.offsetHeight > 0
+    }).map((node) => {
+      const heading = node.querySelector('h2,h3,.section-title,.ref-section-title')
+      const fallback = node.dataset.sectionKey || 'Section'
+      return { label: String(heading?.textContent || fallback).trim().replace(/\s+/g, ' ').slice(0, 64), height: Math.max(node.scrollHeight, node.offsetHeight) }
+    }).sort((a, b) => b.height - a.height).slice(0, 3)
+    return { a4HeightPx, measuredHeight, requiredFit, appliedFit, onePagePossible, naturalPages, pressure }
+  }
+
+  const preparePrintFit = (mode = 'one') => {
     const paper = $('#paper')
     if (!paper) return 1
     resetPrintFit()
-    const a4HeightPx = 1123
-    const measuredHeight = Math.max(a4HeightPx, paper.scrollHeight, paper.offsetHeight)
-    const fit = Math.max(0.68, Math.min(1, a4HeightPx / measuredHeight))
+    if (mode === 'multi') {
+      paper.style.setProperty('--print-fit', '1')
+      paper.style.setProperty('--print-width', '210mm')
+      paper.style.setProperty('--print-min-height', '297mm')
+      paper.dataset.printFit = '1.0000'
+      paper.dataset.printMode = 'multi'
+      return 1
+    }
+    const health = measurePrintHealth()
+    const fit = health.appliedFit
     paper.style.setProperty('--print-fit', fit.toFixed(4))
-    paper.style.setProperty('--print-width', `${(210 / fit).toFixed(2)}mm`)
-    paper.style.setProperty('--print-min-height', `${(297 / fit).toFixed(2)}mm`)
+    paper.style.setProperty('--print-width', (210 / fit).toFixed(2) + 'mm')
+    paper.style.setProperty('--print-min-height', (297 / fit).toFixed(2) + 'mm')
     paper.dataset.printFit = fit.toFixed(4)
+    paper.dataset.printMode = 'one'
     return fit
   }
 
-  const printCv = () => {
-    preparePrintFit()
+  const printCv = (mode = 'one') => {
+    preparePrintFit(mode)
+    setExportPreflightOpen(false)
     window.print()
   }
 
+  const ensureExportPreflightUi = () => {
+    if ($('#exportPreflightShell')) return
+    const shell = document.createElement('div')
+    shell.id = 'exportPreflightShell'
+    shell.className = 'export-preflight-shell no-print'
+    shell.hidden = true
+    shell.innerHTML =
+      '<div class="export-preflight-backdrop" data-export-close></div>' +
+      '<section class="export-preflight-dialog" role="dialog" aria-modal="true" aria-labelledby="exportPreflightTitle">' +
+        '<header><div><span>Export check</span><h2 id="exportPreflightTitle">PDF Preflight</h2><p>Check A4 fit before opening the browser print dialog.</p></div><button type="button" data-export-close aria-label="Close export check">×</button></header>' +
+        '<div id="exportPreflightStatus" class="export-preflight-status"></div>' +
+        '<div class="export-preflight-pressure"><div><span>Content pressure</span><strong>Largest sections</strong></div><div id="exportPressureList"></div></div>' +
+        '<fieldset class="export-preflight-modes"><legend>Export mode</legend>' +
+          '<label><input id="exportModeOne" type="radio" name="exportMode" value="one" checked /><span><strong>Fit to one A4 page</strong><small>Uses the existing safe fit engine, never below 68%.</small></span></label>' +
+          '<label><input id="exportModeMulti" type="radio" name="exportMode" value="multi" /><span><strong>Allow multiple pages</strong><small>Keeps text at 100% and lets the browser paginate naturally.</small></span></label>' +
+        '</fieldset>' +
+        '<div id="exportPreflightAdvice" class="export-preflight-advice"></div>' +
+        '<footer><button type="button" class="button ghost" data-export-close>Cancel</button><button id="exportPreflightPrint" type="button" class="button primary">Open print dialog</button></footer>' +
+      '</section>'
+    document.body.appendChild(shell)
+    shell.addEventListener('click', (event) => {
+      if (event.target.closest('[data-export-close]')) setExportPreflightOpen(false)
+    })
+    $('#exportPreflightPrint').addEventListener('click', () => {
+      const mode = $('#exportModeMulti').checked ? 'multi' : 'one'
+      printCv(mode)
+    })
+  }
+
+  const renderExportPreflight = () => {
+    ensureExportPreflightUi()
+    const health = measurePrintHealth()
+    const status = $('#exportPreflightStatus')
+    const one = $('#exportModeOne')
+    const multi = $('#exportModeMulti')
+    const percent = Math.round(health.appliedFit * 100)
+    let tone = 'ready'
+    let title = 'A4 ready'
+    let detail = 'Current content fits without meaningful scaling.'
+    if (!health.onePagePossible) {
+      tone = 'overflow'
+      title = 'Multi-page recommended'
+      detail = 'A one-page export would need to shrink below the 68% readability floor.'
+    } else if (health.appliedFit < 0.8) {
+      tone = 'tight'
+      title = 'Very tight one-page fit'
+      detail = 'The CV can fit one page, but text will scale to about ' + percent + '%.'
+    } else if (health.appliedFit < 0.94) {
+      tone = 'scaled'
+      title = 'One-page fit with scaling'
+      detail = 'The CV will scale to about ' + percent + '% to stay on one A4 page.'
+    }
+    status.className = 'export-preflight-status ' + tone
+    status.innerHTML =
+      '<div><span>Status</span><strong>' + escapeHtml(title) + '</strong><p>' + escapeHtml(detail) + '</p></div>' +
+      '<div class="export-preflight-metrics"><span><small>One-page scale</small><strong>' + percent + '%</strong></span><span><small>Natural length</small><strong>' + health.naturalPages + ' page' + (health.naturalPages === 1 ? '' : 's') + '</strong></span></div>'
+    const pressure = $('#exportPressureList')
+    pressure.innerHTML = health.pressure.length
+      ? health.pressure.map((item) => '<span><strong>' + escapeHtml(item.label) + '</strong><small>' + Math.round(item.height / health.measuredHeight * 100) + '% of content height</small></span>').join('')
+      : '<small>No large section detected.</small>'
+    one.disabled = !health.onePagePossible
+    if (!health.onePagePossible) {
+      multi.checked = true
+      one.checked = false
+      $('#exportPreflightAdvice').innerHTML = '<strong>Why one-page is disabled</strong><p>CV Studio will not shrink below 68%. Shorten content, use Compact spacing, or export multiple pages.</p>'
+    } else if (health.appliedFit < 0.8) {
+      one.checked = true
+      multi.checked = false
+      $('#exportPreflightAdvice').innerHTML = '<strong>Readable, but compressed</strong><p>Consider Compact spacing or shortening the largest section before sending the CV.</p>'
+    } else {
+      one.checked = true
+      multi.checked = false
+      $('#exportPreflightAdvice').innerHTML = '<strong>Preflight passed</strong><p>Web content is within the supported one-page fit range. Verify the exported PDF text layer in ATS after saving.</p>'
+    }
+  }
+
+  const setExportPreflightOpen = (open) => {
+    ensureExportPreflightUi()
+    const shell = $('#exportPreflightShell')
+    shell.hidden = !open
+    document.body.classList.toggle('export-preflight-open', open)
+    if (open) {
+      renderExportPreflight()
+      setTimeout(() => $('#exportPreflightPrint')?.focus(), 0)
+    }
+  }
+
   window.addEventListener('afterprint', resetPrintFit)
-  $('#print').addEventListener('click', printCv)
+  $('#print').addEventListener('click', () => setExportPreflightOpen(true))
 
   $('#reset').addEventListener('click', () => {
     profile = clone(demoProfile)
@@ -1408,7 +1528,7 @@
     if (key === 'e') setEditorOpen(true)
     if (key === 'p') {
       event.preventDefault()
-      printCv()
+      setExportPreflightOpen(true)
     }
     if (event.key === 'Escape') setEditorOpen(false)
   })
