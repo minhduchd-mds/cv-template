@@ -328,6 +328,7 @@
       window.requestAnimationFrame(() => {
         const target = $(focusSelector)
         target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        target?.focus({ preventScroll: true })
       })
     }
   }
