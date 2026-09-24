@@ -494,3 +494,126 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot)
   else boot()
 })()
+
+
+/* ATS_PRO_V2: transparent readiness + role/industry target fit */
+(() => {
+  'use strict'
+  const PROFILE_KEY = 'cv-studio-static-v2'
+  const TARGET_KEY = 'cv-studio-ats-target-v2'
+  const $ = (s, r = document) => r.querySelector(s)
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)]
+  const clamp = (n) => Math.max(0, Math.min(100, Math.round(n)))
+  const norm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}+#./%-]+/gu, ' ').replace(/\s+/g, ' ').trim()
+  const read = (key, fallback = {}) => { try { return JSON.parse(localStorage.getItem(key) || '') || fallback } catch { return fallback } }
+
+  const ROLES = {
+    auto: ['Auto from template', []],
+    uiux: ['UI/UX · Product Design', ['product design','user research','prototyping','design systems','interaction design','usability testing','figma','accessibility','information architecture','user flows']],
+    designEngineer: ['Design Engineer', ['frontend','typescript','javascript','react','vue','design systems','component library','accessibility','css','html','performance']],
+    product: ['Product Management', ['product strategy','roadmap','prioritization','product discovery','metrics','experimentation','stakeholder management','requirements','user research']],
+    sales: ['Sales · Business Development', ['business development','revenue','pipeline','sales','account management','negotiation','partnership','go to market','crm','quota']],
+    engineering: ['Software Engineering', ['javascript','typescript','react','node','api','testing','git','ci cd','architecture','performance','cloud']],
+    data: ['Data · BI', ['sql','dashboard','analytics','business intelligence','python','data visualization','metrics','reporting']],
+    marketing: ['Marketing · Growth', ['campaign','brand','seo','content','acquisition','conversion','analytics','crm','growth']],
+    hr: ['HR · Talent', ['recruitment','talent acquisition','employee engagement','hr operations','performance management','onboarding','learning and development']],
+    finance: ['Finance · Banking', ['financial analysis','budgeting','forecasting','reporting','investment','risk','excel','financial modeling','compliance']],
+    research: ['Research · Academic', ['research','publication','methodology','analysis','teaching','grant','peer review','study']],
+    general: ['General professional', ['leadership','communication','project management','stakeholder management','problem solving','collaboration','delivery']],
+  }
+  const INDUSTRIES = {
+    general: ['Any industry', []], technology: ['Technology · SaaS', ['saas','platform','software','digital product','cloud','enterprise','b2b']], telecom: ['Telecom', ['telecom','telecommunications','network','5g','subscriber','mobile']], finance: ['Banking · Fintech', ['banking','fintech','finance','risk','compliance','payments','investment']], ecommerce: ['E-commerce', ['ecommerce','marketplace','conversion','checkout','retention','growth']], healthcare: ['Healthcare', ['healthcare','clinical','patient','medical','compliance','healthtech']], public: ['Public sector', ['public sector','government','citizen','policy','administration']], manufacturing: ['Manufacturing', ['manufacturing','supply chain','operations','quality','production']]
+  }
+  const SENIORITY = {
+    entry: ['Entry / Graduate', ['intern','internship','graduate','coursework','project']], mid: ['Mid-level', ['owned','delivered','shipped','collaborated','implemented','improved']], senior: ['Senior', ['led','strategy','mentored','system','stakeholder','ownership','cross functional']], lead: ['Lead / Manager', ['managed','team','roadmap','strategy','governance','scale','leadership']], executive: ['Director / Executive', ['revenue','portfolio','transformation','p&l','organization','board','strategy']]
+  }
+  const TEMPLATE_ROLE = { 'Soft Portfolio':'uiux','Bento Resume':'uiux','Creator Cards':'uiux','Code Aware':'designEngineer','Mono Grid':'engineering','ATS Precision':'engineering','Product Operator':'product','Revenue Driver':'sales','Insight Grid':'data','Brand Motion':'marketing','People First':'hr','Finance Ledger':'finance','Research Scholar':'research','Studio Director':'marketing' }
+  const FIELD_MAP = { Name:'#name','Role / title':'#role',Headline:'#headline',Email:'#email',Phone:'#phone',Location:'#location',Website:'#website',Summary:'#summary',Skills:'#skills',Experience:'#experienceEditor',Projects:'#projectEditor',Languages:'#languages' }
+  const ACTIONS = ['led','built','designed','delivered','launched','improved','increased','reduced','created','managed','developed','implemented','shipped','owned','drove','scaled','automated','mentored','achieved']
+
+  let target = { role:'auto', industry:'general', seniority:'senior', ...(read(TARGET_KEY, {})) }
+  const saveTarget = () => { try { localStorage.setItem(TARGET_KEY, JSON.stringify(target)) } catch {} }
+  const options = (lib, value) => Object.entries(lib).map(([k,[label]]) => \`<option value="\${k}"\${k === value ? ' selected' : ''}>\${label}</option>\`).join('')
+  const activeTemplate = () => String($('#activeTemplateLabel')?.textContent || '').trim()
+  const roleKey = () => target.role === 'auto' ? (TEMPLATE_ROLE[activeTemplate()] || 'general') : target.role
+  const plain = () => String($('#paper')?.innerText || '').replace(/\n{3,}/g, '\n\n').trim()
+  const profile = () => read(PROFILE_KEY, {})
+  const hit = (source, term) => source.includes(norm(term))
+  const termScore = (source, terms) => !terms.length ? null : clamp(terms.filter((t) => hit(source, t)).length / terms.length * 100)
+
+  const readiness = () => {
+    const p = profile(), text = plain(), source = norm(text)
+    const fields = [p.name,p.role,p.headline,p.email,p.phone,p.location,p.website,p.summary,p.skills,p.experience,p.projects,p.languages].filter((v) => Array.isArray(v) ? v.length : String(v || '').trim())
+    const flatten = (v) => Array.isArray(v) ? v.flatMap(flatten) : v && typeof v === 'object' ? Object.values(v).flatMap(flatten) : String(v || '').trim() ? [String(v).trim()] : []
+    const coverage = fields.flatMap(flatten).filter((v) => v.length < 350).map((v) => hit(source, v) || hit(source, norm(v).split(' ').slice(0,5).join(' ')) ? 1 : 0)
+    const extraction = coverage.length ? clamp(coverage.reduce((a,b) => a+b, 0) / coverage.length * 100) : 0
+    const critical = [p.name,p.role,p.email,p.experience,p.skills].map((v) => flatten(v).some((x) => hit(source, x) || hit(source, norm(x).split(' ').slice(0,5).join(' '))) ? 100 : 0).reduce((a,b)=>a+b,0) / 5
+    const paper = $('#paper'), rect = paper?.getBoundingClientRect(), columns = rect ? $$('*', paper).filter((n) => { const r=n.getBoundingClientRect(), s=getComputedStyle(n); return r.width > rect.width*.62 && r.height>100 && s.display==='grid' && s.gridTemplateColumns.split(' ').filter((x)=>x&&x!=='none').length>1 }).length : 0
+    const tables = $$('table', paper).length, graphics = $$('img,svg,canvas', paper).length
+    const headingWords = ['summary','experience','skills','education','projects','certificates','languages'], headingCount = headingWords.filter((h)=>source.includes(h)).length
+    const structure = clamp(100 - (columns ? 30 + Math.min(15,(columns-1)*5) : 0) - Math.min(30,tables*18) - (headingCount < 3 ? 20 : 0))
+    const periods = [...(p.experience||[]),...(p.education||[]),...(p.certificates||[])].map((x)=>x?.period).filter(Boolean), badDates = periods.filter((x)=>!/(19|20)\d{2}/.test(String(x))).length
+    const format = clamp(100 - Math.min(18,graphics*4) - badDates*15 - (!p.email ? 8 : 0) - (!p.phone ? 5 : 0))
+    const exp = norm((p.experience||[]).flatMap(flatten).join(' ')), metrics = (exp.match(/\d+(?:[.,]\d+)?%|\d+\+|\$\s?\d+/g)||[]).length, verbs = ACTIONS.filter((v)=>exp.includes(v)).length
+    const evidence = clamp(100 - (!p.summary ? 20 : 0) - (!(p.skills||[]).length ? 20 : 0) - (!(p.experience||[]).length ? 35 : 0) - ((p.experience||[]).length && !metrics ? 15 : 0) - ((p.experience||[]).length && verbs<2 ? 10 : 0))
+    const score = clamp(extraction*.30 + critical*.25 + structure*.15 + format*.10 + evidence*.20)
+    return { score, metrics:[['Text extraction',extraction,30],['Critical fields',critical,25],['Structure',structure,15],['Format hygiene',format,10],['Evidence quality',evidence,20]] }
+  }
+
+  const fit = () => {
+    const source = norm(plain()), rKey = roleKey(), r = termScore(source, ROLES[rKey][1]), i = termScore(source, INDUSTRIES[target.industry][1]), s = termScore(source, SENIORITY[target.seniority][1])
+    const jd = $('#atsJobDescription')?.value || target.jd || '', terms = [...new Set(norm(jd).split(' ').filter((w)=>w.length>3))].slice(0,28), j = termScore(source, terms)
+    const parts = j == null ? [[r,target.industry==='general'?70:55],[i,20],[s,target.industry==='general'?30:25]] : [[r,35],[i,15],[s,15],[j,35]]
+    const active = parts.filter(([score])=>score!=null), total = active.reduce((a,[,w])=>a+w,0) || 1, score = clamp(active.reduce((a,[v,w])=>a+v*w,0)/total)
+    return { score, role:r, industry:i, seniority:s, jd:j, terms, matched:terms.filter((t)=>hit(source,t)), missing:terms.filter((t)=>!hit(source,t)), rKey }
+  }
+
+  const scoreLabel = (n) => n>=85?'Strong':n>=70?'Good':n>=55?'Needs review':'High risk'
+  const inject = () => {
+    const panel = $('.ats-panel'); if (!panel || $('#atsProTarget')) return
+    $('.ats-score-hero')?.classList.add('ats-pro-legacy-score')
+    $('.ats-tabs [data-ats-tab="scan"]') && ($('.ats-tabs [data-ats-tab="scan"]').textContent = 'Overview')
+    $('.ats-tabs [data-ats-tab="job"]') && ($('.ats-tabs [data-ats-tab="job"]').textContent = 'Target fit')
+    panel.querySelector('.ats-head').insertAdjacentHTML('afterend', \`<section class="ats-pro-scoreboard"><article><span>ATS Readiness</span><strong id="atsProReadiness">—</strong><b id="atsProReadinessLabel">Scan ready</b><small>Machine readability · fixed criteria</small></article><article><span>Target Fit</span><strong id="atsProFit">—</strong><b id="atsProFitLabel">Target profile</b><small>Role + industry + seniority + JD</small></article></section>\`)
+    panel.querySelector('.ats-tabs').insertAdjacentHTML('beforebegin', \`<section id="atsProTarget" class="ats-pro-target"><div><span>Target profile</span><strong>What are you applying for?</strong></div><div class="ats-pro-target-grid"><label>Role<select id="atsProRole">\${options(ROLES,target.role)}</select></label><label>Industry<select id="atsProIndustry">\${options(INDUSTRIES,target.industry)}</select></label><label>Seniority<select id="atsProSeniority">\${options(SENIORITY,target.seniority)}</select></label></div><p id="atsProTargetHint"></p></section>\`)
+    const scanPane = $('[data-ats-pane="scan"]'); scanPane?.insertAdjacentHTML('afterbegin', \`<section class="ats-pro-method"><div class="ats-section-title"><div><span>Scoring model</span><strong>Transparent ATS Readiness</strong></div><small>100 points</small></div><div id="atsProMetrics"></div><details><summary>How the score is calculated</summary><p>Text extraction 30% · Critical fields 25% · Structure 15% · Format hygiene 10% · Evidence quality 20%. Role and industry never change ATS Readiness.</p></details></section>\`)
+    const jobPane = $('[data-ats-pane="job"]'); jobPane?.insertAdjacentHTML('afterbegin', \`<section class="ats-pro-fit-section"><div class="ats-section-title"><div><span>Profile fit</span><strong>Role, industry & seniority</strong></div><small>Editable target</small></div><div id="atsProFitBreakdown"></div></section>\`)
+
+    $('#atsProRole').addEventListener('change', syncTarget); $('#atsProIndustry').addEventListener('change', syncTarget); $('#atsProSeniority').addEventListener('change', syncTarget)
+    $('#atsJobDescription')?.addEventListener('input', () => { target.jd = $('#atsJobDescription').value; saveTarget(); render() })
+    panel.addEventListener('click', (e) => {
+      const edit = e.target.closest('[data-ats-pro-edit]'); if (edit) return openEditor(edit.dataset.atsProEdit)
+      if (e.target.closest('[data-ats-pro-template]')) return useAtsTemplate()
+    })
+    const lists = ['#atsFieldList','#atsCheckList','#atsContentNotes'].map($).filter(Boolean)
+    lists.forEach((node)=>new MutationObserver(decorateActions).observe(node,{childList:true,subtree:true}))
+    decorateActions()
+  }
+
+  const syncTarget = () => { target.role=$('#atsProRole').value; target.industry=$('#atsProIndustry').value; target.seniority=$('#atsProSeniority').value; saveTarget(); render() }
+  const openEditor = (selector) => { $('#atsShell').hidden=true; document.body.classList.remove('ats-open'); setTimeout(()=>{ if ($('#editor')?.classList.contains('collapsed')) $('#toggleEditor')?.click(); $('.tab[data-tab="content"]')?.click(); const n=$(selector); n?.scrollIntoView({behavior:'smooth',block:'center'}); (n?.matches('input,textarea,select')?n:n?.querySelector('input,textarea,select,button'))?.focus({preventScroll:true}) },80) }
+  const useAtsTemplate = () => { $('#atsShell').hidden=true; document.body.classList.remove('ats-open'); setTimeout(()=>{ const n=$$('.template-card').find((x)=>/ATS Precision/i.test(x.textContent||'')) || $$('.template-card').find((x)=>/ATS Clean/i.test(x.textContent||'')); n?.click(); n?.scrollIntoView({behavior:'smooth',block:'center'}) },80) }
+  const decorateActions = () => {
+    $$('#atsFieldList .ats-field-row').forEach((row)=>{ if (row.querySelector('.ats-pro-action')) return; const label=row.querySelector('strong')?.textContent?.trim(), selector=FIELD_MAP[label]; if (selector) row.insertAdjacentHTML('beforeend', \`<button class="ats-pro-action" type="button" data-ats-pro-edit="\${selector}">Edit</button>\`) })
+    $$('#atsCheckList .ats-check').forEach((row)=>{ if (row.querySelector('.ats-pro-action')) return; const label=row.querySelector('strong')?.textContent||''; if (/Reading order|Tables/.test(label)) row.insertAdjacentHTML('beforeend','<button class="ats-pro-action" type="button" data-ats-pro-template>Use ATS template</button>'); else if (/Dates/.test(label)) row.insertAdjacentHTML('beforeend','<button class="ats-pro-action" type="button" data-ats-pro-edit="#experienceEditor">Edit</button>') })
+    $$('#atsContentNotes article').forEach((row)=>{ if (row.querySelector('.ats-pro-action')) return; const t=row.textContent.toLowerCase(), selector=t.includes('skill')?'#skills':t.includes('experience')||t.includes('action')||t.includes('measurable')?'#experienceEditor':t.includes('summary')?'#summary':''; if (selector) row.insertAdjacentHTML('beforeend',\`<button class="ats-pro-action" type="button" data-ats-pro-edit="\${selector}">Fix</button>\`) })
+  }
+
+  const render = () => {
+    if (!$('#atsProTarget')) return
+    const r=readiness(), f=fit(); $('#atsProReadiness').textContent=r.score; $('#atsProReadinessLabel').textContent=scoreLabel(r.score); $('#atsProFit').textContent=f.score; $('#atsProFitLabel').textContent=scoreLabel(f.score); if ($('#atsScoreBadge')) $('#atsScoreBadge').textContent=r.score
+    $('#atsProTargetHint').textContent = \`\${ROLES[f.rKey][0]} · \${INDUSTRIES[target.industry][0]} · \${SENIORITY[target.seniority][0]}\`
+    $('#atsProMetrics').innerHTML = r.metrics.map(([label,score,weight])=>\`<article><div><strong>\${label}</strong><span>\${weight}%</span></div><div class="ats-pro-meter"><i style="width:\${score}%"></i></div><b>\${clamp(score)}</b></article>\`).join('')
+    const rows=[['Role match',f.role,ROLES[f.rKey][0]],['Industry signals',f.industry,INDUSTRIES[target.industry][0]],['Seniority signals',f.seniority,SENIORITY[target.seniority][0]]]
+    $('#atsProFitBreakdown').innerHTML=rows.map(([label,score,detail])=>\`<article><div><strong>\${label}</strong><small>\${detail}</small></div><div class="ats-pro-meter"><i style="width:\${score==null?0:score}%"></i></div><b>\${score==null?'—':score}</b></article>\`).join('')
+    decorateActions()
+  }
+
+  const boot = () => {
+    inject(); render()
+    $('#atsScanButton')?.addEventListener('click',()=>setTimeout(()=>{ inject(); render() },0))
+    $('#atsRescan')?.addEventListener('click',()=>setTimeout(render,0))
+    const paper=$('#paper'); if (paper) new MutationObserver(()=>setTimeout(render,0)).observe(paper,{childList:true,subtree:true,characterData:true,attributes:true})
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot()
+})()
