@@ -1621,7 +1621,11 @@
     const text=normalize(paperText())
     const roleTerms=(ROLE_TERMS[roleKey()]||ROLE_TERMS.general).map((term)=>normalize(term))
     const jdTerms=extractJdTerms()
-    const missing=unique(roleTerms.concat(jdTerms)).filter((term)=>!text.includes(term)).slice(0,10)
+    const missingRaw=unique(roleTerms.concat(jdTerms)).filter((term)=>!text.includes(term))
+    const missingPhrases=missingRaw.filter((term)=>term.includes(' '))
+    const missing=missingRaw
+      .filter((term)=>term.includes(' ') || !missingPhrases.some((phrase)=>phrase.split(' ').includes(term)))
+      .slice(0,10)
     if(!missing.length)return null
     return {
       id:'review-keywords',

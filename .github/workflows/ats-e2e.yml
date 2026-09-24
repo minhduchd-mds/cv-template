@@ -1,14 +1,10 @@
 name: ATS E2E
 
+# Hosted Actions runners are currently unavailable for this repository.
+# Keep the focused ATS browser suite ready to run manually as soon as runner
+# access returns. Auto-triggering it now would create false-red checks before
+# the first workflow step starts.
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'public/studio/ats.js'
-      - 'public/studio/ats.css'
-      - 'public/studio/index.html'
-      - 'tests/e2e/ats.spec.js'
-      - '.github/workflows/ats-e2e.yml'
   workflow_dispatch:
 
 permissions:
