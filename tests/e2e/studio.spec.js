@@ -587,3 +587,36 @@ test('PDF preflight recommends multi-page when one-page fit would be unreadable'
   await expect(page.locator('#exportModeOne')).toBeDisabled()
   await expect(page.locator('#exportModeMulti')).toBeChecked()
 })
+
+
+test('Content Health finds editorial and template coverage issues', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+  await page.addInitScript(() => {
+    const key='cv-studio-static-v2'
+    const saved=JSON.parse(localStorage.getItem(key)||'{}')
+    saved.summary=Array.from({length:120},(_,i)=>'word'+i).join(' ')
+    saved.skills=['Figma','Design Systems','figma']
+    saved.projects=[
+      {name:'Hidden Project',type:'Product',impact:'',description:'A useful project description.'}
+    ]
+    saved.experience=[
+      {role:'Product Designer',company:'Example',period:'2024 — Present',location:'Hanoi',bullets:['Designed product workflows for enterprise users.','Improved cross-team collaboration and delivery quality.']}
+    ]
+    localStorage.setItem(key,JSON.stringify(saved))
+  })
+  await page.goto('/studio/')
+  await page.locator('#toggleEditor').click()
+  await expect(page.getByText('Content Health')).toBeVisible()
+  await expect(page.locator('#contentHealthList')).toContainText('Summary is too long')
+  await expect(page.locator('#contentHealthList')).toContainText('Duplicate skills found')
+  await expect(page.locator('#contentHealthList')).toContainText('Project is missing impact')
+
+  await page.locator('.template-card').filter({hasText:'Revenue Driver'}).click()
+  await expect(page.locator('#contentHealthList')).toContainText('Projects are not used by this template')
+
+  await page.getByRole('button',{name:'Remove duplicates'}).click()
+  const skills=await page.locator('#skills').inputValue()
+  expect(skills.split('\n').filter((x)=>x.toLowerCase()==='figma')).toHaveLength(1)
+  expect(runtimeErrors).toEqual([])
+})

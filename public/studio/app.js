@@ -985,11 +985,291 @@
     if (framing) framing.hidden = !avatar
   }
 
+
+  /* CONTENT_HEALTH_V1 */
+  const normalizeHealthText = (value) => String(value == null ? '' : value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}+#%$./@×-]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  const healthWords = (value) => String(value || '').trim().split(/\s+/).filter(Boolean).length
+
+  const valueAppearsInPaper = (value, minLength = 5) => {
+    const source = normalizeHealthText(value)
+    if (source.length < minLength) return false
+    const paper = normalizeHealthText($('#paper')?.innerText || '')
+    if (!paper) return false
+    const probe = source.length > 90 ? source.slice(0, 90).trim() : source
+    return probe.length >= minLength && paper.includes(probe)
+  }
+
+  const visibleItemCount = (items, getter) => {
+    const values = (items || []).map(getter).filter((value) => String(value || '').trim())
+    return values.filter((value) => valueAppearsInPaper(value)).length
+  }
+
+  const contentHealthChecks = () => {
+    const checks = []
+    const add = (id, group, level, title, detail, action, actionLabel) => {
+      checks.push({ id, group, level, title, detail, action, actionLabel })
+    }
+
+    const summaryWords = healthWords(profile.summary)
+    if (summaryWords > 110) {
+      add('summary-long','Readability','warning','Summary is too long',summaryWords + ' words. Aim for a tighter recruiter-first summary.','focus:#summary','Open summary')
+    } else if (summaryWords > 85) {
+      add('summary-tight','Readability','review','Summary is getting dense',summaryWords + ' words may create unnecessary A4 pressure.','focus:#summary','Review summary')
+    } else if (summaryWords > 0 && summaryWords < 28) {
+      add('summary-thin','Evidence','review','Summary is very short',summaryWords + ' words may not explain scope, domain and strengths clearly.','focus:#summary','Open summary')
+    }
+
+    const longBullets = []
+    ;(profile.experience || []).forEach((job, jobIndex) => {
+      ;(job.bullets || []).forEach((bullet, bulletIndex) => {
+        const words = healthWords(bullet)
+        const chars = String(bullet || '').length
+        if (chars > 210 || words > 34) longBullets.push({ jobIndex, bulletIndex, words, chars, role: job.role || ('Experience ' + (jobIndex + 1)) })
+      })
+    })
+    longBullets.slice(0,3).forEach((item) => {
+      add(
+        'bullet-long-' + item.jobIndex + '-' + item.bulletIndex,
+        'Readability',
+        item.chars > 260 ? 'warning' : 'review',
+        'Long experience bullet',
+        item.role + ' · bullet ' + (item.bulletIndex + 1) + ' is ' + item.words + ' words.',
+        'focus:#experienceEditor .editor-card:nth-child(' + (item.jobIndex + 1) + ') textarea[data-key="bullets"]',
+        'Open bullet'
+      )
+    })
+
+    ;(profile.experience || []).forEach((job, jobIndex) => {
+      const bullets = (job.bullets || []).filter(Boolean)
+      const evidenceText = bullets.join(' ')
+      if (bullets.length >= 2 && !/(\d|%|\$|€|£|×|\bx\b)/i.test(evidenceText)) {
+        add(
+          'experience-evidence-' + jobIndex,
+          'Evidence',
+          'review',
+          'Experience has no measurable evidence',
+          (job.role || ('Experience ' + (jobIndex + 1))) + ' has achievements but no numeric result, scale or measurable scope.',
+          'focus:#experienceEditor .editor-card:nth-child(' + (jobIndex + 1) + ') textarea[data-key="bullets"]',
+          'Review achievements'
+        )
+      }
+    })
+
+    const normalizedSkills = (profile.skills || []).map((skill) => normalizeHealthText(skill)).filter(Boolean)
+    const duplicateKeys = [...new Set(normalizedSkills.filter((skill, index) => normalizedSkills.indexOf(skill) !== index))]
+    if (duplicateKeys.length) {
+      const labels = duplicateKeys.map((key) => (profile.skills || []).find((skill) => normalizeHealthText(skill) === key)).filter(Boolean)
+      add('skills-duplicate','Readability','warning','Duplicate skills found',labels.join(', ') + '. Removing exact duplicates keeps the section cleaner.','dedupe-skills','Remove duplicates')
+    }
+
+    ;(profile.projects || []).forEach((project, projectIndex) => {
+      if (!String(project.impact || '').trim()) {
+        add(
+          'project-impact-' + projectIndex,
+          'Evidence',
+          'warning',
+          'Project is missing impact',
+          (project.name || ('Project ' + (projectIndex + 1))) + ' has no outcome / impact statement.',
+          'focus:#projectEditor .editor-card:nth-child(' + (projectIndex + 1) + ') [data-key="impact"]',
+          'Add impact'
+        )
+      }
+      if (healthWords(project.description) > 55) {
+        add(
+          'project-description-' + projectIndex,
+          'Readability',
+          'review',
+          'Project description is long',
+          (project.name || ('Project ' + (projectIndex + 1))) + ' is ' + healthWords(project.description) + ' words.',
+          'focus:#projectEditor .editor-card:nth-child(' + (projectIndex + 1) + ') textarea[data-key="description"]',
+          'Review project'
+        )
+      }
+    })
+
+    const template = activeTemplate()
+    const designMeta = templateDesignMeta[template.id] || { projects: true }
+
+    const coverageChecks = [
+      { key:'summary', label:'Summary', values:[profile.summary], setting:'showSummary', target:'#summary' },
+      { key:'skills', label:'Skills', values:profile.skills || [], setting:'showSkills', target:'#skills' },
+      { key:'experience', label:'Experience', values:(profile.experience || []).map((job) => job.role), setting:'showExperience', target:'#experienceEditor' },
+      { key:'projects', label:'Projects', values:(profile.projects || []).map((project) => project.name), setting:'showProjects', target:'#projectEditor' },
+      { key:'languages', label:'Languages', values:profile.languages || [], setting:null, target:'#languages' },
+    ]
+
+    coverageChecks.forEach((section) => {
+      const values = section.values.filter((value) => String(value || '').trim())
+      if (!values.length) return
+      const visible = visibleItemCount(values, (value) => value)
+      const expected = values.length
+      if (visible >= expected) return
+
+      if (section.setting && settings[section.setting] === false) {
+        add(
+          'hidden-' + section.key,
+          'Template coverage',
+          'warning',
+          section.label + ' is hidden',
+          expected + ' source item' + (expected === 1 ? '' : 's') + ' exist but the section is disabled in Layout.',
+          'show-section:' + section.setting,
+          'Show section'
+        )
+        return
+      }
+
+      if (section.key === 'projects' && designMeta.projects === false) {
+        add(
+          'template-projects',
+          'Template coverage',
+          'info',
+          'Projects are not used by this template',
+          template.name + ' intentionally prioritizes another content structure. Project data remains saved.',
+          'browse-templates',
+          'Browse templates'
+        )
+        return
+      }
+
+      add(
+        'coverage-' + section.key,
+        'Template coverage',
+        'info',
+        section.label + ' is only partly shown',
+        visible + ' of ' + expected + ' source item' + (expected === 1 ? '' : 's') + ' appear in ' + template.name + '.',
+        'focus:' + section.target,
+        'Review source'
+      )
+    })
+
+    if (String(profile.headline || '').trim() && !valueAppearsInPaper(profile.headline)) {
+      add('headline-hidden','Template coverage','info','Headline is not shown',template.name + ' does not currently render the saved headline.','focus:#headline','Open headline')
+    }
+    if (String(profile.quote || '').trim() && !valueAppearsInPaper(profile.quote)) {
+      add('quote-hidden','Template coverage','info','Quote is not shown',template.name + ' does not currently render the saved quote.','focus:#quote','Open quote')
+    }
+
+    const projectDescriptions = (profile.projects || []).map((project) => project.description).filter((value) => String(value || '').trim())
+    if (projectDescriptions.length) {
+      const renderedDescriptions = visibleItemCount(projectDescriptions, (value) => value)
+      const renderedProjectNames = visibleItemCount(profile.projects || [], (project) => project.name)
+      if (renderedProjectNames > 0 && renderedDescriptions < projectDescriptions.length) {
+        add(
+          'project-description-coverage',
+          'Template coverage',
+          'info',
+          'Some project descriptions are compacted',
+          renderedDescriptions + ' of ' + projectDescriptions.length + ' descriptions are visible; this template may show project name / impact only.',
+          'focus:#projectEditor',
+          'Review projects'
+        )
+      }
+    }
+
+    return checks
+  }
+
+  const ensureContentHealthUi = () => {
+    if ($('#contentHealth')) return
+    const pane = $('[data-pane="content"]')
+    if (!pane) return
+    const section = document.createElement('section')
+    section.id = 'contentHealth'
+    section.className = 'content-health'
+    section.innerHTML =
+      '<div class="content-health-head"><div><span>Content intelligence</span><strong>Content Health</strong><small id="contentHealthSummary">Checking…</small></div><button id="contentHealthToggle" type="button" aria-expanded="true">Hide</button></div>' +
+      '<div id="contentHealthGroups" class="content-health-groups"></div>' +
+      '<div id="contentHealthList" class="content-health-list"></div>'
+    pane.insertBefore(section, pane.firstElementChild)
+    $('#contentHealthToggle').addEventListener('click', () => {
+      const collapsed = section.classList.toggle('collapsed')
+      $('#contentHealthToggle').textContent = collapsed ? 'Show' : 'Hide'
+      $('#contentHealthToggle').setAttribute('aria-expanded', collapsed ? 'false' : 'true')
+    })
+    section.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-health-action]')
+      if (!button) return
+      const action = button.dataset.healthAction || ''
+      if (action === 'dedupe-skills') {
+        const seen = new Set()
+        profile.skills = (profile.skills || []).filter((skill) => {
+          const key = normalizeHealthText(skill)
+          if (!key || seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+        persist()
+        renderPaper()
+        syncEditorFields()
+        return
+      }
+      if (action.startsWith('show-section:')) {
+        const key = action.split(':')[1]
+        if (key && Object.prototype.hasOwnProperty.call(settings, key)) {
+          settings[key] = true
+          renderAll()
+        }
+        return
+      }
+      if (action === 'browse-templates') {
+        setEditorOpen(false)
+        $('.templates')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        return
+      }
+      if (action.startsWith('focus:')) {
+        activatePane('content', action.slice(6))
+      }
+    })
+  }
+
+  const renderContentHealth = () => {
+    ensureContentHealthUi()
+    const host = $('#contentHealthList')
+    const summary = $('#contentHealthSummary')
+    const groups = $('#contentHealthGroups')
+    if (!host || !summary || !groups) return
+
+    const checks = contentHealthChecks()
+    const blockers = checks.filter((item) => item.level === 'warning').length
+    const reviews = checks.filter((item) => item.level === 'review').length
+    const infos = checks.filter((item) => item.level === 'info').length
+    const totalChecks = 10
+    const clear = Math.max(0, totalChecks - Math.min(totalChecks, blockers + reviews))
+    summary.textContent = clear + '/' + totalChecks + ' checks clear · ' + blockers + ' action' + (blockers === 1 ? '' : 's') + ' needed'
+
+    const groupNames = ['Readability','Evidence','Template coverage']
+    groups.innerHTML = groupNames.map((group) => {
+      const count = checks.filter((item) => item.group === group).length
+      return '<span><strong>' + escapeHtml(group) + '</strong><small>' + (count ? count + ' finding' + (count === 1 ? '' : 's') : 'Clear') + '</small></span>'
+    }).join('')
+
+    if (!checks.length) {
+      host.innerHTML = '<div class="content-health-clear"><strong>No content issues detected</strong><p>Current content length, evidence fields and template coverage look clean.</p></div>'
+      return
+    }
+
+    const order = { warning:0, review:1, info:2 }
+    host.innerHTML = checks.sort((a,b) => order[a.level]-order[b.level]).map((item) => (
+      '<article class="content-health-item ' + item.level + '">' +
+        '<i></i><div><span>' + escapeHtml(item.group) + '</span><strong>' + escapeHtml(item.title) + '</strong><p>' + escapeHtml(item.detail) + '</p></div>' +
+        '<button type="button" data-health-action="' + escapeHtml(item.action) + '">' + escapeHtml(item.actionLabel) + '</button>' +
+      '</article>'
+    )).join('')
+  }
+
   const renderEditors = () => {
     syncEditorFields()
     renderExperienceEditor()
     renderProjectsEditor()
     renderQuickAvatar()
+    renderContentHealth()
   }
 
   const renderAll = () => {
@@ -1505,6 +1785,7 @@
   renderPaper = () => {
     originalRenderPaper()
     enhancePreviewAccessibility()
+    renderContentHealth()
   }
 
   window.addEventListener('keydown', (event) => {
