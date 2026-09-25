@@ -25,6 +25,7 @@ GitHub Pages is the canonical and supported production deployment for this repos
 | --- | --- | --- |
 | Marketing landing | `/` | Explain the product, workflow, templates, sample cases and privacy model |
 | CV Builder | `#studio` | Edit one structured profile, preview templates and export A4/PDF |
+| Interview Prep | `#interview` | Practice role-aware interview questions mapped from the selected CV, with sourced answer frameworks |
 | Apple Editorial | `#concept-apple` | Typography-first portfolio CV |
 | Bento Product | `#concept-bento` | Metrics, modular proof and product storytelling |
 | Design Engineer | `#concept-engineer` | Design × engineering positioning |
@@ -35,6 +36,7 @@ GitHub Pages is the canonical and supported production deployment for this repos
 
 - **6 A4 CV directions**: Senior Product Designer, ATS Clean, Creative Portfolio, Executive Minimal, Design System Lead and Design Engineer.
 - **5 full-screen web identities** with different information architecture and visual language.
+- **Role-aware Interview Prep** maps all CV templates to interview packs, question intent, answer frameworks, follow-ups, avoid lists and external reference sources.
 - Structured 360° sample profile projected into a concise CV data model.
 - Builder editing for profile, impact, experience, projects, education, certificates, skills and languages.
 - Section show/hide and ordering controls.
