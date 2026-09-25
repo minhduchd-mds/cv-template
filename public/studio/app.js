@@ -1629,10 +1629,13 @@
   const renderPageGuides = () => {
     const paper=$('#paper')
     const button=$('#pageGuides')
-    if(!paper||!button)return
+    const inspector=$('#pageGuideInspector')
+    if(!paper||!button||!inspector)return
     paper.querySelector('.static-page-guide-layer')?.remove()
+    paper.querySelectorAll('[data-page-risk-id]').forEach((node)=>node.removeAttribute('data-page-risk-id'))
     button.classList.toggle('active',pageGuidesOpen)
     button.setAttribute('aria-pressed',pageGuidesOpen?'true':'false')
+    inspector.hidden=!pageGuidesOpen
     if(!pageGuidesOpen){button.textContent='Page guides';return}
     const a4=1123
     const height=Math.max(a4,paper.scrollHeight,paper.offsetHeight)
@@ -1640,6 +1643,7 @@
     const paperRect=paper.getBoundingClientRect()
     const scale=paper.offsetWidth>0?paperRect.width/paper.offsetWidth:1
     const nodes=[...new Set([...paper.querySelectorAll(pageGuideCandidates())])]
+    nodes.forEach((node,index)=>{node.dataset.pageRiskId='risk-'+index})
     const layer=document.createElement('div')
     layer.className='static-page-guide-layer no-print'
     layer.style.height=height+'px'
@@ -1648,29 +1652,41 @@
     first.style.top='8px'
     first.textContent='Page 1'
     layer.appendChild(first)
-    let riskCount=0
+    const riskMap=new Map()
     for(let page=2;page<=pages;page+=1){
       const top=(page-1)*a4
-      const risks=[]
+      const lineRiskIds=[]
       nodes.forEach((node)=>{
         const rect=node.getBoundingClientRect()
         const y=(rect.top-paperRect.top)/Math.max(scale,.001)
         const bottom=(rect.bottom-paperRect.top)/Math.max(scale,.001)
-        const near=Math.min(Math.abs(y-top),Math.abs(bottom-top))<=28
+        const distance=Math.min(Math.abs(y-top),Math.abs(bottom-top))
+        const near=distance<=28
         const crosses=y<top&&bottom>top
         if(!near&&!crosses)return
-        const label=String(node.querySelector('strong,h3,h2')?.textContent||'Content block').trim().replace(/\s+/g,' ').slice(0,52)
-        if(label&&!risks.includes(label))risks.push(label)
+        const label=String(node.querySelector('strong,h3,h2')?.textContent||'Content block').trim().replace(/\s+/g,' ').slice(0,64)
+        const section=node.closest('[data-section-key]')?.dataset.sectionKey||''
+        const id=node.dataset.pageRiskId
+        const risk={id,label,section,page,distance,crosses}
+        if(!riskMap.has(id)||crosses)riskMap.set(id,risk)
+        lineRiskIds.push(id)
       })
-      riskCount+=risks.length
       const line=document.createElement('div')
-      line.className='static-page-guide-line'+(risks.length?' risk':'')
+      line.className='static-page-guide-line'+(lineRiskIds.length?' risk':'')
       line.style.top=top+'px'
-      line.innerHTML='<span>Page '+page+(risks.length?' · '+risks.length+' near cut':'')+'</span>'
+      line.innerHTML='<span>Page '+page+(lineRiskIds.length?' · '+new Set(lineRiskIds).size+' near cut':'')+'</span>'
       layer.appendChild(line)
     }
     paper.appendChild(layer)
-    button.textContent=riskCount?pages+' pages · '+riskCount+' edge risk'+(riskCount===1?'':'s'):pages+' page'+(pages===1?'':'s')
+    const risks=[...riskMap.values()]
+    button.textContent=risks.length?pages+' pages · '+risks.length+' edge risk'+(risks.length===1?'':'s'):pages+' page'+(pages===1?'':'s')
+    $('#pageGuideInspectorSummary').textContent=pages+' page'+(pages===1?'':'s')+' · '+risks.length+' edge risk'+(risks.length===1?'':'s')
+    const list=$('#pageGuideRiskList')
+    if(!risks.length){
+      list.innerHTML='<div class="static-page-guide-clean"><strong>No risky block near an A4 cut</strong><span>Current natural flow has no detected item in the 28px edge zone.</span></div>'
+      return
+    }
+    list.innerHTML=risks.map((risk)=>'<button type="button" data-page-risk-focus="'+escapeHtml(risk.id)+'" data-page-risk-section="'+escapeHtml(risk.section||'')+'" class="'+(risk.crosses?'crossing':'')+'"><span>Page '+risk.page+' · '+(risk.crosses?'Crossing cut':'Near cut')+'</span><strong>'+escapeHtml(risk.label)+'</strong><small>'+escapeHtml(risk.section||'Content')+' · '+Math.round(risk.distance)+'px from boundary</small><em data-page-risk-edit>Edit block</em></button>').join('')
   }
 
   const renderAll = () => {
@@ -2026,6 +2042,27 @@
     pageGuidesOpen=!pageGuidesOpen
     renderPageGuides()
   })
+  $('#pageGuideRiskList')?.addEventListener('click',(event)=>{
+    const button=event.target.closest('[data-page-risk-focus]')
+    if(!button)return
+    const node=$('#paper')?.querySelector('[data-page-risk-id="'+button.dataset.pageRiskFocus+'"]')
+    if(event.target.closest('[data-page-risk-edit]')){
+      const section=button.dataset.pageRiskSection||'content'
+      const pane=['experience','projects'].includes(section)?'content':'layout'
+      activatePane(pane)
+      return
+    }
+    if(!node)return
+    $('#paper').querySelectorAll('.page-break-risk-focus').forEach((item)=>item.classList.remove('page-break-risk-focus'))
+    node.classList.add('page-break-risk-focus')
+    node.scrollIntoView({behavior:'smooth',block:'center'})
+    window.setTimeout(()=>node.classList.remove('page-break-risk-focus'),2200)
+  })
+  $('#pageGuideCompact')?.addEventListener('click',()=>{
+    settings.sectionSpacing='compact'
+    renderAll()
+  })
+  $('#pageGuidePreflight')?.addEventListener('click',()=>setExportPreflightOpen(true))
 
   $('#zoom').addEventListener('change', (event) => {
     settings.zoom = Number(event.currentTarget.value)

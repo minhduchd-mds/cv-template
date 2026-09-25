@@ -749,3 +749,33 @@ test('static page break guides render without entering print output', async ({ p
   await expect(page.locator('#pageGuides')).toContainText('3 pages')
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('page break intelligence focuses risky blocks', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.preview-stage .cv-sheet').evaluate((sheet)=>{
+    const item=sheet.querySelector('.experience-item, .ref-experience article, .ref-soft-experience article')
+    if(item)item.style.marginTop='1030px'
+  })
+  await page.getByRole('button',{name:'Page guides'}).click()
+  const risk=page.locator('.page-guide-risk-list button').first()
+  await expect(risk).toBeVisible()
+  await risk.click()
+  await expect(page.locator('.preview-stage .page-break-risk-focus')).toHaveCount(1)
+})
+
+test('static page break intelligence inspector is interactive', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+  await page.goto('/studio/')
+  await page.locator('#paper').evaluate((paper)=>{
+    const item=paper.querySelector('.job, .ref-experience article, .ref-soft-experience article')
+    if(item)item.style.marginTop='1030px'
+  })
+  await page.locator('#pageGuides').click()
+  const risk=page.locator('#pageGuideRiskList [data-page-risk-focus]').first()
+  await expect(risk).toBeVisible()
+  await risk.click()
+  await expect(page.locator('#paper .page-break-risk-focus')).toHaveCount(1)
+  expect(runtimeErrors).toEqual([])
+})

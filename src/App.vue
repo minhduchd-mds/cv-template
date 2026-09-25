@@ -164,6 +164,27 @@
               <label class="color-control toolbar-control accent-toolbar"><span>Accent</span><input :value="accent" type="color" aria-label="Change CV accent color" @input="updateAccent($event.target.value)" /></label>
             </div>
           </div>
+          <section v-if="pageGuidesOpen" class="page-guide-inspector studio-only" aria-label="Page break intelligence">
+            <div class="page-guide-inspector__head">
+              <div><span>PAGE BREAK INTELLIGENCE</span><strong>{{ pageGuideState.pages }} page{{ pageGuideState.pages === 1 ? '' : 's' }} · {{ pageGuideState.riskCount }} edge risk{{ pageGuideState.riskCount === 1 ? '' : 's' }}</strong></div>
+              <div class="page-guide-inspector__actions">
+                <button type="button" @click="applyCompactForPageRisks">Compact spacing</button>
+                <button type="button" @click="openExportPreflight">PDF preflight</button>
+              </div>
+            </div>
+            <div v-if="pageGuideState.risks.length" class="page-guide-risk-list">
+              <button v-for="risk in pageGuideState.risks" :key="risk.id" type="button" :class="{ crossing: risk.crosses }" @click="focusPageRisk(risk)">
+                <span>Page {{ risk.page }} · {{ risk.crosses ? 'Crossing cut' : 'Near cut' }}</span>
+                <strong>{{ risk.label }}</strong>
+                <small>{{ risk.sectionLabel }} · {{ Math.round(risk.distance) }}px from boundary</small>
+                <em @click.stop="editPageRisk(risk)">Edit block</em>
+              </button>
+            </div>
+            <div v-else class="page-guide-clean">
+              <strong>No risky block near an A4 cut</strong>
+              <span>Current natural flow has no detected job/project/credential within the 28px edge zone.</span>
+            </div>
+          </section>
           <div class="preview-stage"><div class="preview-zoom" :style="{ '--preview-zoom': zoom }"><CvDocument
                 :key="selectedTemplate.id"
                 :profile="candidate"
@@ -311,8 +332,9 @@ export default {
       exportPreflightOpen: false,
       printHealth: { a4HeightPx:1123, measuredHeight:1123, requiredFit:1, appliedFit:1, onePagePossible:true, naturalPages:1, pressure:[] },
       pageGuidesOpen: false,
-      pageGuideState: { height:1123, pages:1, lines:[], riskCount:0 },
+      pageGuideState: { height:1123, pages:1, lines:[], risks:[], riskCount:0 },
       pageGuideTimer: null,
+      activePageRiskId: '',
     }
   },
   computed: {
@@ -486,22 +508,52 @@ export default {
         '.ref-projects article','.ref-education article','.ref-certificates article','.credential-list>p'
       ]
       const nodes=[...new Set([...sheet.querySelectorAll(selectors.join(','))])]
+      nodes.forEach((node,index)=>{node.dataset.pageRiskId='risk-'+index})
+      const riskMap=new Map()
       const boundaries=Array.from({length:Math.max(0,pages-1)},(_,index)=>(index+1)*a4)
       const lines=boundaries.map((top,index)=>{
-        const risks=[]
+        const lineRisks=[]
         nodes.forEach((node)=>{
           const rect=node.getBoundingClientRect()
           const y=(rect.top-sheetRect.top)/Math.max(scale,.001)
           const bottom=(rect.bottom-sheetRect.top)/Math.max(scale,.001)
-          const near=Math.min(Math.abs(y-top),Math.abs(bottom-top))<=28
+          const distance=Math.min(Math.abs(y-top),Math.abs(bottom-top))
+          const near=distance<=28
           const crosses=y<top&&bottom>top
           if(!near&&!crosses)return
-          const label=String(node.querySelector('strong,h3,h2')?.textContent||'Content block').trim().replace(/\s+/g,' ').slice(0,52)
-          if(label&&!risks.includes(label))risks.push(label)
+          const sectionId=node.closest('[data-section-id]')?.dataset.sectionId||''
+          const sectionLabels={experience:'Experience',projects:'Projects',education:'Education',certificates:'Certificates',skills:'Skills',summary:'Summary'}
+          const label=String(node.querySelector('strong,h3,h2')?.textContent||'Content block').trim().replace(/\s+/g,' ').slice(0,64)
+          const id=node.dataset.pageRiskId
+          const risk={id,label,sectionId,sectionLabel:sectionLabels[sectionId]||'Content',page:index+2,distance,crosses}
+          if(!riskMap.has(id)||crosses)riskMap.set(id,risk)
+          lineRisks.push(id)
         })
-        return{page:index+2,top,risks:risks.slice(0,4)}
+        return{page:index+2,top,risks:[...new Set(lineRisks)]}
       })
-      this.pageGuideState={height,pages,lines,riskCount:lines.reduce((sum,line)=>sum+line.risks.length,0)}
+      this.pageGuideState={height,pages,lines,risks:[...riskMap.values()],riskCount:riskMap.size}
+    },
+    focusPageRisk(risk) {
+      if(!risk?.id)return
+      const sheet=document.querySelector('.preview-stage .cv-sheet')
+      const node=sheet?.querySelector('[data-page-risk-id="'+risk.id+'"]')
+      if(!node)return
+      this.activePageRiskId=risk.id
+      sheet.querySelectorAll('.page-break-risk-focus').forEach((item)=>item.classList.remove('page-break-risk-focus'))
+      node.classList.add('page-break-risk-focus')
+      node.scrollIntoView({behavior:'smooth',block:'center'})
+      window.setTimeout(()=>node.classList.remove('page-break-risk-focus'),2200)
+    },
+    editPageRisk(risk) {
+      if(!risk)return
+      const tab=['experience','projects','education','skills'].includes(risk.sectionId)?risk.sectionId:'profile'
+      this.openEditor({tab})
+    },
+    applyCompactForPageRisks() {
+      if(this.appearance.sectionSpacing==='compact')return
+      this.checkpointHistory('Compact spacing for page breaks')
+      this.appearance={...this.appearance,sectionSpacing:'compact'}
+      this.schedulePageGuides()
     },
     openEditor(request = 'profile') {
       const allowed = ['profile', 'impact', 'experience', 'projects', 'education', 'skills', 'design', 'layout']
