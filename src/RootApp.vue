@@ -1,6 +1,7 @@
 <template>
   <div>
-    <ConceptExperience v-if="isConceptRoute" :concept-id="conceptId" @back="goStudio" />
+    <InterviewPrep v-if="isInterviewRoute" @back="goLanding" />
+    <ConceptExperience v-else-if="isConceptRoute" :concept-id="conceptId" @back="goStudio" />
     <template v-else-if="isStudioRoute">
       <StudioView />
       <nav class="studio-route-dock" aria-label="Studio routes">
@@ -20,6 +21,7 @@
 import StudioView from './App.vue'
 import MarketingLanding from './landing/MarketingLanding.vue'
 import ConceptExperience from './concepts/ConceptExperience.vue'
+import InterviewPrep from './interview/InterviewPrep.vue'
 
 const IDS = ['apple', 'bento', 'engineer', 'case-study', 'executive']
 const STUDIO_INTERNAL_HASHES = new Set(['#top', '#templates'])
@@ -27,7 +29,12 @@ const CANONICAL_URL = 'https://minhduchd-mds.github.io/cv-template/'
 const SOCIAL_IMAGE = `${CANONICAL_URL}og-card.svg`
 const INDEX_ROBOTS = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
 const INTERNAL_ROBOTS = 'noindex,follow'
-const initialMode = (hash) => hash === '#studio' ? 'studio' : hash.startsWith('#concept-') ? 'concept' : 'landing'
+const initialMode = (hash) => {
+  if (hash === '#interview') return 'interview'
+  if (hash === '#studio') return 'studio'
+  if (hash.startsWith('#concept-')) return 'concept'
+  return 'landing'
+}
 const META = {
   landing: {
     lang: 'en',
@@ -40,6 +47,12 @@ const META = {
     robots: INTERNAL_ROBOTS,
     title: 'CV Builder · CV Studio',
     description: 'Edit, preview and export modern CV templates for UI/UX, Product Design and technology roles.',
+  },
+  interview: {
+    lang: 'vi',
+    robots: INTERNAL_ROBOTS,
+    title: 'Interview Prep · CV Studio',
+    description: 'Luyện phỏng vấn theo mẫu CV, nhóm nghề, seniority và vòng phỏng vấn với nguồn tham khảo Internet.',
   },
   apple: {
     lang: 'vi',
@@ -75,12 +88,15 @@ const META = {
 
 export default {
   name: 'RootApp',
-  components: { StudioView, MarketingLanding, ConceptExperience },
+  components: { StudioView, MarketingLanding, ConceptExperience, InterviewPrep },
   data() {
     const routeHash = window.location.hash
     return { routeHash, routeMode: initialMode(routeHash) }
   },
   computed: {
+    isInterviewRoute() {
+      return this.routeMode === 'interview'
+    },
     isConceptRoute() {
       return this.routeMode === 'concept'
     },
@@ -105,7 +121,8 @@ export default {
       const nextHash = window.location.hash
       this.routeHash = nextHash
 
-      if (nextHash.startsWith('#concept-')) this.routeMode = 'concept'
+      if (nextHash === '#interview') this.routeMode = 'interview'
+      else if (nextHash.startsWith('#concept-')) this.routeMode = 'concept'
       else if (nextHash === '#studio') this.routeMode = 'studio'
       else if (previousMode === 'studio' && STUDIO_INTERNAL_HASHES.has(nextHash)) this.routeMode = 'studio'
       else this.routeMode = 'landing'
@@ -135,7 +152,7 @@ export default {
       element.setAttribute('content', value)
     },
     updateMeta() {
-      const key = this.isConceptRoute ? this.conceptId : this.isStudioRoute ? 'studio' : 'landing'
+      const key = this.isInterviewRoute ? 'interview' : this.isConceptRoute ? this.conceptId : this.isStudioRoute ? 'studio' : 'landing'
       const meta = META[key] || META.landing
 
       document.documentElement.lang = meta.lang
