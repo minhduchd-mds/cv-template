@@ -311,3 +311,8 @@
 .vue-health-item.warning>button{border-color:#f3bdc8;color:#b42318}.vue-health-clear{margin-top:8px;padding:12px;border:1px dashed #cdd4de;border-radius:10px;background:#fff;text-align:center}.vue-health-clear strong{font-size:12px}.vue-health-clear p{margin:3px 0 0;color:#737d8c;font-size:11px}
 .vue-content-health.collapsed{padding-bottom:10px}
 @media(max-width:720px){.vue-content-health-groups{grid-template-columns:1fr}.vue-health-item{grid-template-columns:7px minmax(0,1fr)}.vue-health-item>button{grid-column:2;width:100%}}
+
+
+/* FIELD_CONTRACT_AWARENESS_V1 */
+.template-field-note{display:block;margin-top:4px;padding:6px 8px;border:1px solid #e1e5eb;border-radius:8px;background:#f8fafc;color:#7b8494;font-size:10px;line-height:1.4}
+.editor-field.field-not-used>span{display:flex;align-items:center;justify-content:space-between;gap:8px}.editor-field.field-not-used>span>small{padding:3px 6px;border-radius:999px;background:#f2f4f7;color:#8a93a3;font-size:9px;font-weight:700}.editor-field.field-not-used input,.editor-field.field-not-used textarea{background:#fafbfc;border-style:dashed}.project-cover-note{margin:-2px 0 8px}

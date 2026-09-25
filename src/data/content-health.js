@@ -1,4 +1,4 @@
-import { getTemplateLayoutContract, getTemplateSectionConfig } from './template-layout-contracts'
+import { getTemplateFieldConfig, getTemplateLayoutContract, getTemplateSectionConfig } from './template-layout-contracts'
 
 const words=(value)=>String(value||'').trim().split(/\s+/).filter(Boolean).length
 const numericEvidence=(value)=>(/\d|%|\$|€|£|×|\bx\b/i).test(String(value||''))
@@ -47,6 +47,26 @@ export function analyzeContentHealth(profile={},templateId=''){
   if((profile.highlights||[]).length){
     const invalid=(profile.highlights||[]).filter((item)=>!String(item?.value||'').trim()||!String(item?.label||'').trim())
     if(invalid.length)out.push(finding('highlights-incomplete','Evidence','warning','Impact metrics are incomplete',invalid.length+' metric'+(invalid.length===1?'':'s')+' need both a value and a label.',{tab:'impact'}))
+  }
+
+  const fieldValues={
+    avatar:String(profile.avatar||'').trim(),
+    headline:String(profile.headline||'').trim(),
+    quote:String(profile.quote||'').trim(),
+  }
+  const fieldLabels={avatar:'Profile photo',headline:'Headline',quote:'Quote'}
+  for(const [field,value] of Object.entries(fieldValues)){
+    if(!value)continue
+    if(getTemplateFieldConfig(templateId,field).supported===false){
+      out.push(finding(
+        'field-unused-'+field,
+        'Template coverage',
+        'info',
+        fieldLabels[field]+' is saved but not shown',
+        contract.label+' does not render this field. The value stays available when you switch templates.',
+        {tab:'profile',field}
+      ))
+    }
   }
 
   const sourceCounts={

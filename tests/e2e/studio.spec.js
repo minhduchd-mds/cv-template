@@ -698,3 +698,19 @@ test('static Template Browser V2 filters by contract capabilities', async ({ pag
   await page.locator('#clearStaticTemplateFilters').click()
   await expect(page.locator('.template-card')).toHaveCount(20)
 })
+
+
+test('Vue Template Browser V2 uses field contracts', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button',{name:'1-page'}).click()
+  await expect(page.locator('.template-card')).toHaveCount(1)
+  await expect(page.locator('.template-card')).toContainText('Next Start')
+  await page.locator('.template-quick-filters button').filter({hasText:'All'}).click()
+  await page.locator('.template-quick-filters button').filter({hasText:'Avatar'}).click()
+  await expect(page.locator('.template-card').filter({hasText:'Executive Edge'})).toHaveCount(0)
+  await page.locator('.template-quick-filters button').filter({hasText:'All'}).click()
+  await page.locator('.template-card').filter({hasText:'Executive Edge'}).click()
+  await page.getByRole('button',{name:'Edit CV'}).click()
+  await expect(page.locator('.template-field-note').filter({hasText:'does not display an avatar'})).toBeVisible()
+  await expect(page.locator('[data-profile-field="headline"]').locator('..')).toContainText('Not used by Executive Edge')
+})

@@ -77,6 +77,7 @@
             <div>
               <strong>Profile photo</strong>
               <p>Upload JPG, PNG or WebP. The image is compressed locally before it is saved.</p>
+              <small v-if="!fieldSupported('avatar')" class="template-field-note">Saved globally · {{ template?.name }} does not display an avatar.</small>
               <div class="image-actions">
                 <label class="image-upload-button">
                   <input type="file" accept="image/jpeg,image/png,image/webp" @change="uploadAvatar" />
@@ -142,13 +143,13 @@
           <div class="editor-grid">
             <label class="editor-field editor-field-wide"><span>Full name</span><input :value="profile.name" type="text" @input="update('name', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Role / title</span><input :value="profile.role" type="text" @input="update('role', $event.target.value)" /></label>
-            <label class="editor-field editor-field-wide"><span>Headline / tagline</span><input data-profile-field="headline" :value="profile.headline || ''" type="text" @input="update('headline', $event.target.value)" /></label>
+            <label class="editor-field editor-field-wide" :class="{ 'field-not-used': !fieldSupported('headline') }"><span>Headline / tagline <small v-if="!fieldSupported('headline')">Not used by {{ template?.name }}</small></span><input data-profile-field="headline" :value="profile.headline || ''" type="text" @input="update('headline', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Location</span><input :value="profile.location" type="text" @input="update('location', $event.target.value)" /></label>
             <label class="editor-field"><span>Email</span><input :value="profile.email" type="email" @input="update('email', $event.target.value)" /></label>
             <label class="editor-field"><span>Phone</span><input :value="profile.phone" type="text" @input="update('phone', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Website / portfolio</span><input :value="profile.website" type="text" @input="update('website', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Professional summary</span><textarea data-profile-field="summary" :value="profile.summary" rows="7" @input="update('summary', $event.target.value)"></textarea><small>{{ profile.summary.length }} characters</small></label>
-            <label class="editor-field editor-field-wide"><span>Personal quote / statement</span><textarea data-profile-field="quote" :value="profile.quote || ''" rows="3" @input="update('quote', $event.target.value)"></textarea><small>Optional — used by selected templates such as Revenue Driver.</small></label>
+            <label class="editor-field editor-field-wide" :class="{ 'field-not-used': !fieldSupported('quote') }"><span>Personal quote / statement <small v-if="!fieldSupported('quote')">Not used by {{ template?.name }}</small></span><textarea data-profile-field="quote" :value="profile.quote || ''" rows="3" @input="update('quote', $event.target.value)"></textarea><small>{{ fieldSupported('quote') ? 'Rendered by the selected template.' : 'Saved globally and available when you switch to a template that supports quotes.' }}</small></label>
           </div>
         </section>
 
@@ -196,6 +197,7 @@
             <article v-for="(project, index) in profile.projects" :key="`project-${index}`" class="builder-card">
               <div class="builder-card-top"><strong>{{ project.name || `Project ${index + 1}` }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('projects', index, -1)">↑</button><button type="button" :disabled="index === profile.projects.length - 1" @click="move('projects', index, 1)">↓</button><button type="button" class="danger" @click="remove('projects', index)">×</button></div></div>
               <div class="project-cover-preview" :class="{ empty: !project.image }" :style="imageStyle(project.image)"><span v-if="!project.image">Project cover</span></div>
+              <small v-if="!fieldSupported('projectImages')" class="template-field-note project-cover-note">Cover stays saved, but {{ template?.name }} does not render project images.</small>
               <div class="project-upload-row">
                 <label class="image-upload-button compact"><input type="file" accept="image/jpeg,image/png,image/webp" @change="uploadProjectImage(index, $event)" />Upload cover</label>
                 <button v-if="project.image" type="button" class="image-clear" @click="updateItem('projects', index, 'image', '')">Remove image</button>
@@ -384,7 +386,7 @@
 </template>
 
 <script>
-import { getTemplateLayoutContract, getTemplateSectionConfig, isTemplateSectionVisible, sameTemplateSectionGroup } from '../data/template-layout-contracts'
+import { getTemplateFieldConfig, getTemplateLayoutContract, getTemplateSectionConfig, isTemplateSectionVisible, sameTemplateSectionGroup } from '../data/template-layout-contracts'
 import { analyzeContentHealth, contentHealthSummary } from '../data/content-health'
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
@@ -502,6 +504,7 @@ export default {
     },
   },
   methods: {
+    fieldSupported(id) { return getTemplateFieldConfig(this.template?.id, id).supported !== false },
     sectionSupport(id) { return getTemplateSectionConfig(this.template?.id, id) },
     sectionVisible(id) { return isTemplateSectionVisible(this.profile, this.template?.id, id) },
     sectionReorderable(id) { return this.layoutContract.mode === 'flexible' && this.sectionSupport(id).supported !== false },
@@ -547,7 +550,7 @@ export default {
       if (this.tabs.some((tab) => tab.id === value)) this.activeTab = value
     },
     focusRequestedField(value) {
-      if (!['headline', 'quote'].includes(value)) return
+      if (!['summary', 'headline', 'quote'].includes(value)) return
       this.$nextTick(() => {
         const target = this.$el?.querySelector?.(`[data-profile-field="${value}"]`)
         target?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
