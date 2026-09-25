@@ -1,0 +1,59 @@
+name: PDF Fidelity Audit
+
+# Manual-only while custom hosted runners remain unavailable for this repository.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pdf-fidelity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22.23.2'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify PDF text tools
+        shell: bash
+        run: |
+          command -v pdftotext
+          command -v pdfinfo
+          pdftotext -v
+          pdfinfo -v
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build production app
+        run: npm run build
+
+      - name: Run PDF Fidelity 20/20
+        run: npm run test:pdf-fidelity
+
+      - name: Upload PDF fidelity artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: pdf-fidelity-${{ github.run_id }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
