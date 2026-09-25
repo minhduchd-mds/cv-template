@@ -1,6 +1,6 @@
 <template>
   <div>
-    <InterviewPrep v-if="isInterviewRoute" @back="goLanding" />
+    <InterviewStudio v-if="isInterviewRoute" @back="goLanding" />
     <ConceptExperience v-else-if="isConceptRoute" :concept-id="conceptId" @back="goStudio" />
     <template v-else-if="isStudioRoute">
       <StudioView />
@@ -21,7 +21,7 @@
 import StudioView from './App.vue'
 import MarketingLanding from './landing/MarketingLanding.vue'
 import ConceptExperience from './concepts/ConceptExperience.vue'
-import InterviewPrep from './interview/InterviewPrep.vue'
+import InterviewStudio from './interview/InterviewStudio.vue'
 
 const IDS = ['apple', 'bento', 'engineer', 'case-study', 'executive']
 const STUDIO_INTERNAL_HASHES = new Set(['#top', '#templates'])
@@ -30,7 +30,7 @@ const SOCIAL_IMAGE = `${CANONICAL_URL}og-card.svg`
 const INDEX_ROBOTS = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
 const INTERNAL_ROBOTS = 'noindex,follow'
 const initialMode = (hash) => {
-  if (hash === '#interview') return 'interview'
+  if (hash === '#interview' || hash === '#interview-studio') return 'interview'
   if (hash === '#studio') return 'studio'
   if (hash.startsWith('#concept-')) return 'concept'
   return 'landing'
@@ -51,8 +51,8 @@ const META = {
   interview: {
     lang: 'vi',
     robots: INTERNAL_ROBOTS,
-    title: 'Interview Prep · CV Studio',
-    description: 'Luyện phỏng vấn theo mẫu CV, nhóm nghề, seniority và vòng phỏng vấn với nguồn tham khảo Internet.',
+    title: 'Interview Studio · Practice & Evidence Lab',
+    description: 'Interview Studio connects CV claims, job context, sourced question banks, mock practice, evidence checks and interview reports.',
   },
   apple: {
     lang: 'vi',
@@ -88,7 +88,7 @@ const META = {
 
 export default {
   name: 'RootApp',
-  components: { StudioView, MarketingLanding, ConceptExperience, InterviewPrep },
+  components: { StudioView, MarketingLanding, ConceptExperience, InterviewStudio },
   data() {
     const routeHash = window.location.hash
     return { routeHash, routeMode: initialMode(routeHash) }
@@ -121,7 +121,7 @@ export default {
       const nextHash = window.location.hash
       this.routeHash = nextHash
 
-      if (nextHash === '#interview') this.routeMode = 'interview'
+      if (nextHash === '#interview' || nextHash === '#interview-studio') this.routeMode = 'interview'
       else if (nextHash.startsWith('#concept-')) this.routeMode = 'concept'
       else if (nextHash === '#studio') this.routeMode = 'studio'
       else if (previousMode === 'studio' && STUDIO_INTERNAL_HASHES.has(nextHash)) this.routeMode = 'studio'
