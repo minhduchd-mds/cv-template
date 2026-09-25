@@ -83,3 +83,23 @@
     page-break-inside: avoid;
   }
 }
+
+
+/* PDF_FIDELITY_PRINT_V1 */
+@media print {
+  .print-document {
+    overflow: visible !important;
+  }
+
+  .print-document .cv-sheet[data-print-mode="one"] {
+    transform-origin: top left !important;
+    break-after: avoid-page !important;
+    page-break-after: avoid !important;
+  }
+
+  .print-document .cv-sheet[data-print-mode="multi"] {
+    zoom: 1 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+  }
+}

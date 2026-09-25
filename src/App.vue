@@ -734,12 +734,17 @@ export default {
       } catch (error) { console.warn('Unable to clear saved CV profile.', error) }
     },
     resetPrintFit() {
-      const sheet = document.querySelector('.preview-stage .cv-sheet')
-      if (!sheet) return
-      sheet.style.removeProperty('--print-fit')
-      sheet.style.removeProperty('--print-width')
-      sheet.style.removeProperty('--print-min-height')
-      delete sheet.dataset.printMode
+      const sheets = [
+        document.querySelector('.preview-stage .cv-sheet'),
+        document.querySelector('.print-document .cv-sheet'),
+      ].filter(Boolean)
+      sheets.forEach((sheet) => {
+        sheet.style.removeProperty('--print-fit')
+        sheet.style.removeProperty('--print-width')
+        sheet.style.removeProperty('--print-min-height')
+        delete sheet.dataset.printMode
+        delete sheet.dataset.printFit
+      })
     },
     measurePrintHealth() {
       const sheet=document.querySelector('.preview-stage .cv-sheet')
@@ -761,24 +766,31 @@ export default {
       this.exportPreflightOpen=true
     },
     preparePrintFit(mode='one') {
-      const sheet = document.querySelector('.preview-stage .cv-sheet')
-      if (!sheet) return 1
+      const sheets = [
+        document.querySelector('.preview-stage .cv-sheet'),
+        document.querySelector('.print-document .cv-sheet'),
+      ].filter(Boolean)
+      if (!sheets.length) return 1
       this.resetPrintFit()
       if(mode==='multi'){
-        sheet.style.setProperty('--print-fit','1')
-        sheet.style.setProperty('--print-width','210mm')
-        sheet.style.setProperty('--print-min-height','297mm')
-        sheet.dataset.printFit='1.0000'
-        sheet.dataset.printMode='multi'
+        sheets.forEach((sheet) => {
+          sheet.style.setProperty('--print-fit','1')
+          sheet.style.setProperty('--print-width','210mm')
+          sheet.style.setProperty('--print-min-height','297mm')
+          sheet.dataset.printFit='1.0000'
+          sheet.dataset.printMode='multi'
+        })
         return 1
       }
       const health=this.measurePrintHealth()
       const fit=health.appliedFit
-      sheet.style.setProperty('--print-fit', fit.toFixed(4))
-      sheet.style.setProperty('--print-width', (210 / fit).toFixed(2)+'mm')
-      sheet.style.setProperty('--print-min-height', (297 / fit).toFixed(2)+'mm')
-      sheet.dataset.printFit = fit.toFixed(4)
-      sheet.dataset.printMode='one'
+      sheets.forEach((sheet) => {
+        sheet.style.setProperty('--print-fit', fit.toFixed(4))
+        sheet.style.setProperty('--print-width', (210 / fit).toFixed(2)+'mm')
+        sheet.style.setProperty('--print-min-height', (297 / fit).toFixed(2)+'mm')
+        sheet.dataset.printFit = fit.toFixed(4)
+        sheet.dataset.printMode='one'
+      })
       return fit
     },
     printCv(mode='one') {
