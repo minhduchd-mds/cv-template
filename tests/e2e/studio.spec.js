@@ -728,3 +728,24 @@ test('static Studio quick filters initialize without runtime errors', async ({ p
   await expect(page.locator('.template-card')).toHaveCount(20)
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('page break guides visualize natural A4 boundaries', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.preview-stage .cv-sheet').evaluate((node)=>{node.style.paddingBottom='1400px'})
+  await page.getByRole('button',{name:'Page guides'}).click()
+  await expect(page.locator('.page-guide-line')).toHaveCount(2)
+  await expect(page.locator('.page-guide-control')).toContainText('3 pages')
+  await expect(page.locator('.print-document .page-guide-layer')).toHaveCount(0)
+})
+
+test('static page break guides render without entering print output', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+  await page.goto('/studio/')
+  await page.locator('#paper').evaluate((node)=>{node.style.paddingBottom='1400px'})
+  await page.locator('#pageGuides').click()
+  await expect(page.locator('#paper .static-page-guide-line')).toHaveCount(2)
+  await expect(page.locator('#pageGuides')).toContainText('3 pages')
+  expect(runtimeErrors).toEqual([])
+})

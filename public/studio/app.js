@@ -481,6 +481,7 @@
   let historyRestoring = false
   let lastHistoryState = null
   let templateQuickFilter = 'all'
+  let pageGuidesOpen = false
 
   if (!Array.isArray(profile.experience)) profile.experience = clone(demoProfile.experience)
   if (!Array.isArray(profile.projects)) profile.projects = clone(demoProfile.projects)
@@ -1616,6 +1617,62 @@
     renderContentHealth()
   }
 
+  const pageGuideCandidates = () => [
+    '.job','.project',
+    '.ref-experience article','.ref-exec-experience article','.ref-soft-experience article',
+    '.ref-product-experience article','.ref-code-experience article','.ref-ats-experience article',
+    '.ref-insight-experience article','.ref-brand-experience article','.ref-sales-experience article',
+    '.ref-people-experience article','.ref-next-experience article',
+    '.ref-projects article','.ref-education article','.ref-certificates article'
+  ].join(',')
+
+  const renderPageGuides = () => {
+    const paper=$('#paper')
+    const button=$('#pageGuides')
+    if(!paper||!button)return
+    paper.querySelector('.static-page-guide-layer')?.remove()
+    button.classList.toggle('active',pageGuidesOpen)
+    button.setAttribute('aria-pressed',pageGuidesOpen?'true':'false')
+    if(!pageGuidesOpen){button.textContent='Page guides';return}
+    const a4=1123
+    const height=Math.max(a4,paper.scrollHeight,paper.offsetHeight)
+    const pages=Math.max(1,Math.ceil(height/a4))
+    const paperRect=paper.getBoundingClientRect()
+    const scale=paper.offsetWidth>0?paperRect.width/paper.offsetWidth:1
+    const nodes=[...new Set([...paper.querySelectorAll(pageGuideCandidates())])]
+    const layer=document.createElement('div')
+    layer.className='static-page-guide-layer no-print'
+    layer.style.height=height+'px'
+    const first=document.createElement('span')
+    first.className='static-page-guide-page-label'
+    first.style.top='8px'
+    first.textContent='Page 1'
+    layer.appendChild(first)
+    let riskCount=0
+    for(let page=2;page<=pages;page+=1){
+      const top=(page-1)*a4
+      const risks=[]
+      nodes.forEach((node)=>{
+        const rect=node.getBoundingClientRect()
+        const y=(rect.top-paperRect.top)/Math.max(scale,.001)
+        const bottom=(rect.bottom-paperRect.top)/Math.max(scale,.001)
+        const near=Math.min(Math.abs(y-top),Math.abs(bottom-top))<=28
+        const crosses=y<top&&bottom>top
+        if(!near&&!crosses)return
+        const label=String(node.querySelector('strong,h3,h2')?.textContent||'Content block').trim().replace(/\s+/g,' ').slice(0,52)
+        if(label&&!risks.includes(label))risks.push(label)
+      })
+      riskCount+=risks.length
+      const line=document.createElement('div')
+      line.className='static-page-guide-line'+(risks.length?' risk':'')
+      line.style.top=top+'px'
+      line.innerHTML='<span>Page '+page+(risks.length?' · '+risks.length+' near cut':'')+'</span>'
+      layer.appendChild(line)
+    }
+    paper.appendChild(layer)
+    button.textContent=riskCount?pages+' pages · '+riskCount+' edge risk'+(riskCount===1?'':'s'):pages+' page'+(pages===1?'':'s')
+  }
+
   const renderAll = () => {
     persist()
     renderTemplates()
@@ -1965,6 +2022,11 @@
     renderAll()
   })
 
+  $('#pageGuides')?.addEventListener('click',()=>{
+    pageGuidesOpen=!pageGuidesOpen
+    renderPageGuides()
+  })
+
   $('#zoom').addEventListener('change', (event) => {
     settings.zoom = Number(event.currentTarget.value)
     renderAll()
@@ -2256,6 +2318,7 @@
     originalRenderPaper()
     enhancePreviewAccessibility()
     renderContentHealth()
+    window.requestAnimationFrame(renderPageGuides)
   }
 
   window.addEventListener('keydown', (event) => {

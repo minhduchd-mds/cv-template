@@ -159,6 +159,7 @@
               <div class="quality-score" :style="{ '--score-angle': `${cvScore * 3.6}deg` }" :title="`CV quality score: ${cvScore}/100 · ${scoreLabel}`" aria-live="polite"><span class="score-ring"><span>{{ cvScore }}</span></span><span><strong>CV score</strong><small>{{ scoreLabel }}</small></span></div>
               <button class="cycle-control" type="button" title="Next template (N)" @click="cycleTemplate">Next style ↻</button>
               <button class="focus-control" :class="{ active: focusMode }" type="button" :aria-pressed="focusMode" title="Toggle focus preview (F)" @click="focusMode = !focusMode">{{ focusMode ? 'Exit focus' : 'Focus' }}</button>
+              <button class="page-guide-control" :class="{ active: pageGuidesOpen }" type="button" :aria-pressed="pageGuidesOpen" title="Show A4 page boundaries" @click="togglePageGuides">{{ pageGuidesOpen ? pageGuideSummaryLabel : 'Page guides' }}</button>
               <label class="zoom-control toolbar-control"><span>Zoom</span><select :value="zoom" aria-label="CV preview zoom" @change="setZoom(Number($event.target.value))"><option :value="0.75">75%</option><option :value="0.85">85%</option><option :value="1">100%</option></select></label>
               <label class="color-control toolbar-control accent-toolbar"><span>Accent</span><input :value="accent" type="color" aria-label="Change CV accent color" @input="updateAccent($event.target.value)" /></label>
             </div>
@@ -172,7 +173,14 @@
                 :interactive="true"
                 @edit-section="openEditor"
                 @reorder-section="reorderSection"
-              /></div></div>
+              />
+              <div v-if="pageGuidesOpen" class="page-guide-layer studio-only" :style="{ height: pageGuideState.height + 'px' }" aria-hidden="true">
+                <span class="page-guide-page-label" style="top:8px">Page 1</span>
+                <div v-for="line in pageGuideState.lines" :key="line.page" class="page-guide-line" :class="{ risk: line.risks.length }" :style="{ top: line.top + 'px' }">
+                  <span>Page {{ line.page }}<template v-if="line.risks.length"> · {{ line.risks.length }} near cut</template></span>
+                </div>
+              </div>
+            </div></div>
         </div>
       </section>
 
@@ -302,6 +310,9 @@ export default {
       backupOpen: false,
       exportPreflightOpen: false,
       printHealth: { a4HeightPx:1123, measuredHeight:1123, requiredFit:1, appliedFit:1, onePagePossible:true, naturalPages:1, pressure:[] },
+      pageGuidesOpen: false,
+      pageGuideState: { height:1123, pages:1, lines:[], riskCount:0 },
+      pageGuideTimer: null,
     }
   },
   computed: {
@@ -389,11 +400,17 @@ export default {
       return Math.min(score, 100)
     },
     scoreLabel() { if (this.cvScore >= 90) return 'Excellent'; if (this.cvScore >= 80) return 'Strong'; if (this.cvScore >= 65) return 'Good base'; return 'Needs detail' },
+    pageGuideSummaryLabel() {
+      const pages=this.pageGuideState.pages||1
+      const risks=this.pageGuideState.riskCount||0
+      return risks ? pages+' pages · '+risks+' edge risk'+(risks===1?'':'s') : pages+' page'+(pages===1?'':'s')
+    },
   },
   watch: {
     candidate: { deep: true, handler(value) {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)) } catch (error) { console.warn('Unable to persist CV profile locally. Uploaded images may exceed browser storage.', error) }
       this.persistCanonicalWorkspace()
+      this.schedulePageGuides()
     } },
     selectedId: 'persistStudioSettings',
     accent: 'persistStudioSettings',
@@ -426,16 +443,66 @@ export default {
       this.workspaceReady = true
     }
     window.addEventListener('keydown', this.handleShortcut)
+    window.addEventListener('resize', this.schedulePageGuides)
   },
   beforeUnmount() {
     window.removeEventListener('keydown', this.handleShortcut)
+    window.removeEventListener('resize', this.schedulePageGuides)
     window.clearTimeout(this.historyCoalesceTimer)
+    window.clearTimeout(this.pageGuideTimer)
   },
   methods: {
     templateContract(template) { return getTemplateLayoutContract(template?.id) },
     templateSupportsField(templateId,fieldId) { return templateSupportsField(templateId,fieldId) },
     templateHasTrait(templateId,trait) { return templateHasTrait(templateId,trait) },
     clearTemplateFilters() { this.templateSearch=''; this.templateFilter='all'; this.category='All' },
+    togglePageGuides() {
+      this.pageGuidesOpen=!this.pageGuidesOpen
+      if(this.pageGuidesOpen)this.schedulePageGuides(true)
+    },
+    schedulePageGuides(immediate=false) {
+      if(!this.pageGuidesOpen)return
+      window.clearTimeout(this.pageGuideTimer)
+      const run=()=>this.$nextTick(()=>window.requestAnimationFrame(()=>this.refreshPageGuides()))
+      if(immediate)run()
+      else this.pageGuideTimer=window.setTimeout(run,90)
+    },
+    refreshPageGuides() {
+      if(!this.pageGuidesOpen)return
+      const sheet=document.querySelector('.preview-stage .cv-sheet')
+      if(!sheet)return
+      const a4=1123
+      const height=Math.max(a4,sheet.scrollHeight,sheet.offsetHeight)
+      const pages=Math.max(1,Math.ceil(height/a4))
+      const sheetRect=sheet.getBoundingClientRect()
+      const scale=sheet.offsetWidth>0?sheetRect.width/sheet.offsetWidth:1
+      const selectors=[
+        '.experience-item',
+        '.product-projects article','.ats-project-grid article','.creative-projects article','.executive-project',
+        '.ref-experience article','.ref-exec-experience article','.ref-soft-experience article',
+        '.ref-product-experience article','.ref-code-experience article','.ref-ats-experience article',
+        '.ref-insight-experience article','.ref-brand-experience article','.ref-sales-experience article',
+        '.ref-people-experience article','.ref-next-experience article',
+        '.ref-projects article','.ref-education article','.ref-certificates article','.credential-list>p'
+      ]
+      const nodes=[...new Set([...sheet.querySelectorAll(selectors.join(','))])]
+      const boundaries=Array.from({length:Math.max(0,pages-1)},(_,index)=>(index+1)*a4)
+      const lines=boundaries.map((top,index)=>{
+        const risks=[]
+        nodes.forEach((node)=>{
+          const rect=node.getBoundingClientRect()
+          const y=(rect.top-sheetRect.top)/Math.max(scale,.001)
+          const bottom=(rect.bottom-sheetRect.top)/Math.max(scale,.001)
+          const near=Math.min(Math.abs(y-top),Math.abs(bottom-top))<=28
+          const crosses=y<top&&bottom>top
+          if(!near&&!crosses)return
+          const label=String(node.querySelector('strong,h3,h2')?.textContent||'Content block').trim().replace(/\s+/g,' ').slice(0,52)
+          if(label&&!risks.includes(label))risks.push(label)
+        })
+        return{page:index+2,top,risks:risks.slice(0,4)}
+      })
+      this.pageGuideState={height,pages,lines,riskCount:lines.reduce((sum,line)=>sum+line.risks.length,0)}
+    },
     openEditor(request = 'profile') {
       const allowed = ['profile', 'impact', 'experience', 'projects', 'education', 'skills', 'design', 'layout']
       const tab = request && typeof request === 'object' ? request.tab : request
@@ -671,6 +738,7 @@ export default {
         console.warn('Unable to persist CV Studio settings.', error)
       }
       this.persistCanonicalWorkspace()
+      this.schedulePageGuides()
     },
     updateAppearance({ key, value }) {
       if (!['font', 'density', 'radius', 'projectLayout', 'textScale', 'headingScale', 'sectionSpacing', 'avatarShape', 'avatarSize', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
