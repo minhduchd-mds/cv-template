@@ -1,0 +1,70 @@
+name: Template Layout Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'public/studio/**'
+      - 'src/components/**'
+      - 'src/data/**'
+      - 'src/styles/**'
+      - 'tests/e2e/template-layout-audit.spec.js'
+      - 'scripts/check-template-layout-contracts.mjs'
+      - 'package.json'
+      - '.github/workflows/template-layout-audit.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: template-layout-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22.23.2'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Check layout contracts
+        run: npm run layout:check
+
+      - name: Build production app
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run template layout audit
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            npm run test:templates
+          else
+            npx playwright test tests/e2e/template-layout-audit.spec.js --project=desktop-chromium
+          fi
+
+      - name: Upload QA artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: template-layout-audit-${{ github.run_id }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
