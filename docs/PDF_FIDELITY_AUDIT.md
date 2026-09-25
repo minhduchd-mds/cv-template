@@ -39,3 +39,15 @@ The audit intentionally fails early when these tools are unavailable rather than
 - Multi-page stress output must preserve the final evidence marker.
 
 This does not claim compatibility with every third-party ATS vendor. It verifies browser PDF integrity and machine-readable text before the file is passed to the separate ATS PDF verifier.
+
+
+## Page-break policy
+
+Each template now has an explicit multi-page print policy:
+
+- `preserve-flow`: the renderer can paginate without changing its primary composition.
+- `stack-safe`: one-page output keeps the designed columns, while multi-page export reflows high-risk two-column containers into a safe document flow.
+
+For multi-page exports, large sections such as Experience and Projects may fragment between items. Individual jobs, project cards, education records, certificates, metrics, contact blocks and list bullets use keep-together rules to avoid being split across a page boundary.
+
+The policy is synchronized between the Vue renderer and static Studio. `npm run layout:check` fails when their policy maps diverge.

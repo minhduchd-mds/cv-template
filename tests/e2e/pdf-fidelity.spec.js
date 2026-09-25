@@ -97,6 +97,7 @@ const prepareVuePrint = async (page) => {
   const state=await page.locator('.print-document .cv-sheet').evaluate((sheet)=>({
     mode:sheet.dataset.printMode || '',
     fit:Number(sheet.dataset.printFit || '1'),
+    policy:sheet.classList.contains('print-stack-safe')?'stack-safe':'preserve-flow',
     width:sheet.style.getPropertyValue('--print-width'),
     minHeight:sheet.style.getPropertyValue('--print-min-height'),
   }))
@@ -169,6 +170,7 @@ test('PDF Fidelity 20/20: A4 output retains semantic text and respects preflight
       id,name,
       mode:printState.mode,
       fit:printState.fit,
+      policy:printState.policy,
       pages:info.pages,
       pageSizePt:[info.widthPt,info.heightPt],
       anchors:{matched:anchorMatched,total:semantic.anchors.length,retention:Number(anchorRetention.toFixed(3))},
@@ -234,4 +236,65 @@ test('multi-page export keeps the final evidence instead of clipping it', async 
   const extracted=normalize(pdfText(pdfPath))
   expect(info.pages).toBeGreaterThanOrEqual(2)
   expect(extracted).toContain(normalize('PDF FINAL EVIDENCE MARKER 98427'))
+})
+
+
+test('dedicated stack-safe export preserves final experience evidence', async ({page},testInfo) => {
+  test.setTimeout(70_000)
+  await page.goto('/')
+
+  await page.evaluate(() => {
+    const key='cv-studio-workspace-v3'
+    const workspace=JSON.parse(localStorage.getItem(key)||'null')
+    if(!workspace?.profile)throw new Error('Canonical workspace was not initialized.')
+    const base=workspace.profile.experience?.[0]||{
+      role:'Business Development Manager',
+      company:'Example Corp',
+      location:'Hanoi',
+      period:'2024 — Present',
+      bullets:['Delivered commercial growth.'],
+    }
+    workspace.profile.experience=Array.from({length:8},(_,index)=>({
+      ...base,
+      role:'Revenue Stress Role '+(index+1),
+      company:'Revenue Stress Company '+(index+1),
+      period:'202'+(index%6)+' — 202'+((index+1)%7),
+      bullets:[
+        'Built and managed complex commercial partnerships across multiple stakeholders, product lines and delivery teams.',
+        'Improved pipeline quality through account planning, structured discovery and measurable follow-up actions.',
+        index===7 ? 'REVENUE FINAL EVIDENCE MARKER 77193' : 'Maintained documented outcomes and commercial evidence for this account portfolio.',
+      ],
+    }))
+    workspace.updatedAt=new Date().toISOString()
+    localStorage.setItem(key,JSON.stringify(workspace))
+    localStorage.setItem('cv-studio-profile-v1',JSON.stringify(workspace.profile))
+  })
+  await page.reload()
+  await selectTemplate(page,'Revenue Driver')
+
+  await page.evaluate(() => {
+    window.__printCalled=false
+    window.print=()=>{ window.__printCalled=true }
+  })
+  await page.getByRole('button',{name:/Export PDF/i}).click()
+  await expect(page.getByRole('heading',{name:'PDF Preflight'})).toBeVisible()
+  await page.locator('.vue-preflight-dialog input[value="multi"]').check()
+  await page.getByRole('button',{name:'Open print dialog'}).click()
+
+  await page.emulateMedia({media:'print'})
+  const policy=await page.locator('.print-document .cv-sheet').evaluate((sheet)=>({
+    stackSafe:sheet.classList.contains('print-stack-safe'),
+    mode:sheet.dataset.printMode,
+    salesDisplay:getComputedStyle(sheet.querySelector('.ref-sales-body')).display,
+  }))
+  expect(policy.stackSafe).toBe(true)
+  expect(policy.mode).toBe('multi')
+  expect(policy.salesDisplay).toBe('block')
+
+  const pdfPath=testInfo.outputPath('pdf-revenue-driver-stack-safe.pdf')
+  await page.pdf({path:pdfPath,printBackground:true,preferCSSPageSize:true,tagged:true})
+  const info=pdfInfo(pdfPath)
+  const extracted=normalize(pdfText(pdfPath))
+  expect(info.pages).toBeGreaterThanOrEqual(2)
+  expect(extracted).toContain(normalize('REVENUE FINAL EVIDENCE MARKER 77193'))
 })

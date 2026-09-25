@@ -1,5 +1,5 @@
 import fs from 'node:fs'
-import { DEFAULT_TEMPLATE_FIELDS, TEMPLATE_LAYOUT_CONTRACTS, getTemplateLayoutContract } from '../src/data/template-layout-contracts.js'
+import { DEFAULT_TEMPLATE_FIELDS, TEMPLATE_LAYOUT_CONTRACTS, TEMPLATE_PRINT_POLICIES, getTemplateLayoutContract } from '../src/data/template-layout-contracts.js'
 
 const fail=(message)=>{ console.error('✗ '+message); process.exitCode=1 }
 const cvSource=fs.readFileSync(new URL('../src/data/cv.js',import.meta.url),'utf8')
@@ -24,6 +24,7 @@ for(const id of ids){
   }
   if(!contract.structure)fail('Missing structure for '+id)
   if(!Array.isArray(contract.traits))fail('Missing traits for '+id)
+  if(!['preserve-flow','stack-safe'].includes(contract.print?.multiPage))fail('Invalid print policy for '+id)
 }
 for(const id of contractIds){
   if(!ids.includes(id))fail('Layout contract has unknown template '+id)
@@ -42,6 +43,15 @@ for(const id of ids){
 }
 for(const field of ['avatar','headline','quote']){
   if(!staticV2.includes(field+':'))fail('Static Studio field metadata missing '+field)
+}
+const staticPolicyStart=staticSource.indexOf('const stackSafeTemplates = new Set([')
+const staticPolicyEnd=staticSource.indexOf('])',staticPolicyStart)
+const staticPolicy=staticPolicyStart>=0&&staticPolicyEnd>staticPolicyStart?staticSource.slice(staticPolicyStart,staticPolicyEnd):''
+if(!staticPolicy)fail('Static Studio print policy metadata missing')
+for(const id of ids){
+  const sourcePolicy=TEMPLATE_PRINT_POLICIES[id]?.multiPage||'preserve-flow'
+  const staticStack=staticPolicy.includes("'"+id+"'")
+  if((sourcePolicy==='stack-safe')!==staticStack)fail('Static/Vue print policy mismatch '+id)
 }
 const audit=fs.readFileSync(new URL('../docs/TEMPLATE_LAYOUT_AUDIT.md',import.meta.url),'utf8')
 for(const template of templates){
