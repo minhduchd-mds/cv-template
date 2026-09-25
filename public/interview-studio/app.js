@@ -1,0 +1,340 @@
+import {
+  coreQuestions,
+  interviewPacks,
+  interviewSources,
+  interviewStages,
+  questionCategories,
+  seniorityLevels,
+  templateInterviewPack,
+  vietnamQuestionBank,
+} from '../../src/data/interview-prep.js'
+import {
+  aggregateInterviewReport,
+  claimProbes,
+  evaluateInterviewResponse,
+  extractCvClaims,
+  matchQuestionsToClaim,
+  questionRelevanceScore,
+} from '../../src/interview/interview-studio-engine.js'
+
+const WORKSPACE_KEY='cv-studio-workspace-v3'
+const SESSION_KEY='interview-studio-sessions-v2'
+const CLAIM_KEY='interview-studio-claim-evidence-v1'
+const modules=[
+  {id:'overview',label:'Overview',icon:'◇'},
+  {id:'questions',label:'Question Bank',icon:'?'},
+  {id:'claims',label:'Claim Defense',icon:'⌁',badge:'CV'},
+  {id:'mock',label:'Mock Interview',icon:'▶'},
+  {id:'reports',label:'Reports',icon:'▥'},
+]
+const templates=[
+  ['executive-edge','Executive Edge'],['soft-portfolio-pro','Soft Portfolio'],['product-operator','Product Operator'],
+  ['code-aware','Code Aware'],['ats-precision','ATS Precision'],['insight-grid','Insight Grid'],
+  ['brand-motion','Brand Motion'],['revenue-driver','Revenue Driver'],['people-first','People First'],
+  ['next-start','Next Start'],['modern-bento','Bento Resume'],['executive-navy','Executive Navy'],
+  ['ats-clean','ATS Clean'],['modern-mono','Mono Grid'],['young-creator-cards','Creator Cards'],
+  ['strategy-brief','Strategy Brief'],['clinical-clean','Clinical Clean'],['finance-ledger','Finance Ledger'],
+  ['studio-director','Studio Director'],['research-scholar','Research Scholar'],
+].map(([id,name])=>({id,name}))
+
+const readJson=(key,fallback)=>{
+  try{const value=JSON.parse(localStorage.getItem(key)||'null');return value??fallback}catch{return fallback}
+}
+const workspace=readJson(WORKSPACE_KEY,{profile:{},studio:{},ats:{applications:[]}})
+const initialTemplate=workspace?.studio?.selectedId&&templates.some(t=>t.id===workspace.studio.selectedId)?workspace.studio.selectedId:'soft-portfolio-pro'
+const state={
+  activeModule:'overview',
+  selectedTemplateId:initialTemplate,
+  rolePackId:templateInterviewPack[initialTemplate]||'general',
+  seniority:'Senior',
+  stageId:'hiring-manager',
+  market:'vietnam',
+  categoryId:'all',
+  query:'',
+  applicationId:'',
+  selectedClaimId:'',
+  claimEvidence:readJson(CLAIM_KEY,{}),
+  sessions:readJson(SESSION_KEY,[]),
+  practice:null,
+  timerId:null,
+  timerRunning:false,
+  timerRemaining:90,
+  speech:null,
+  speechRecording:false,
+}
+const root=document.querySelector('#app-view')
+const nav=document.querySelector('#module-nav')
+const moduleTitle=document.querySelector('#module-title')
+const applicationLabel=document.querySelector('#application-label')
+const applicationSelect=document.querySelector('#application-select')
+const profileContext=document.querySelector('#profile-context')
+
+const e=(value='')=>String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]))
+const list=(items=[],tag='li')=>items.map(item=>`<${tag}>${e(item)}</${tag}>`).join('')
+const activePack=()=>interviewPacks.find(p=>p.id===state.rolePackId)||interviewPacks.find(p=>p.id==='general')||interviewPacks[0]
+const activeStage=()=>interviewStages.find(s=>s.id===state.stageId)||interviewStages[0]
+const applications=()=>Array.isArray(workspace?.ats?.applications)?workspace.ats.applications:[]
+const activeApplication=()=>applications().find(a=>a.id===state.applicationId)||null
+const cvClaims=()=>extractCvClaims(workspace?.profile||{})
+const claimRisk=item=>Math.min(99,34+(item?.numbers?.length?22:0)+(item?.leadershipSignal?20:0)+(item?.outcomeSignal?17:0)+(item?.specificity>=75?8:0))
+const highRiskClaims=()=>cvClaims().filter(item=>claimRisk(item)>=70)
+const marketLabel=()=>state.market==='vietnam'?'Việt Nam':state.market==='global'?'Quốc tế':'VN + Quốc tế'
+const categoryName=id=>questionCategories.find(c=>c.id===id)?.label||'Role-specific'
+const dimensionLabel=key=>({relevance:'Question fit',structure:'Structure',evidence:'Evidence',ownership:'Ownership',depth:'Depth',credibility:'Credibility',delivery:'Delivery'})[key]||key
+const stageWeight=item=>{
+  const maps={
+    hr:{core:1,behavioral:2,challenge:3,role:4,case:5,askback:6},
+    'hiring-manager':{role:1,core:2,case:3,behavioral:4,challenge:5,askback:6},
+    technical:{role:1,case:2,challenge:3,core:4,behavioral:5,askback:6},
+    portfolio:{case:1,role:2,core:3,behavioral:4,challenge:5,askback:6},
+    final:{behavioral:1,challenge:2,role:3,core:4,case:5,askback:6},
+  }
+  return maps[state.stageId]?.[item.category]||9
+}
+const questionDeck=()=>{
+  const local=state.market==='global'?[]:vietnamQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
+  const seen=new Set()
+  return [...coreQuestions,...activePack().questions,...local].filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true}).sort((a,b)=>stageWeight(a)-stageWeight(b))
+}
+const filteredQuestions=()=>questionDeck().filter(item=>{
+  if(state.categoryId!=='all'&&item.category!==state.categoryId)return false
+  if(!state.query)return true
+  return [item.question,item.why,item.example,...(item.framework||[]),...(item.followUps||[]),...(item.avoid||[])].join(' ').toLocaleLowerCase('vi').includes(state.query.toLocaleLowerCase('vi'))
+})
+const activeSources=()=>{
+  const seen=new Set()
+  return interviewSources.filter(source=>{
+    const pack=source.packs.includes(state.rolePackId)||source.packs.includes('general')
+    if(!pack)return false
+    const region=source.region||'global'
+    if(state.market==='vietnam'&&region!=='vietnam')return false
+    if(state.market==='global'&&region==='vietnam')return false
+    if(seen.has(source.id))return false
+    seen.add(source.id);return true
+  }).slice(0,10)
+}
+const questionSources=item=>(item?.sourceIds||[]).map(id=>interviewSources.find(s=>s.id===id)).filter(Boolean)
+const evidenceReadyCount=()=>cvClaims().filter(item=>state.claimEvidence[item.id]?.ready).length
+const latestReport=()=>state.sessions.find(session=>session.report)||null
+const readiness=()=>{
+  const latest=latestReport()
+  if(!latest){const claims=cvClaims();const base=claims.length?Math.round(evidenceReadyCount()/claims.length*45):0;return Math.min(55,20+base)}
+  return Math.round(latest.report.overall*.78+Math.min(22,evidenceReadyCount()*2))
+}
+const readinessLabel=()=>{
+  const score=readiness()
+  return score>=82?'Sẵn sàng luyện vòng sâu':score>=68?'Nền tốt · còn evidence gaps':score>=50?'Cần củng cố câu chuyện':'Chưa có đủ dữ liệu luyện tập'
+}
+const saveClaims=()=>localStorage.setItem(CLAIM_KEY,JSON.stringify(state.claimEvidence))
+const saveSessions=()=>{state.sessions=state.sessions.slice(0,30);localStorage.setItem(SESSION_KEY,JSON.stringify(state.sessions))}
+const toast=message=>{
+  document.querySelector('.toast')?.remove()
+  const node=document.createElement('div');node.className='toast';node.textContent=message;document.body.appendChild(node)
+  setTimeout(()=>node.remove(),2200)
+}
+const formatDate=value=>{try{return new Intl.DateTimeFormat('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(value))}catch{return value}}
+const options=(items,valueFn,labelFn,selected)=>items.map(item=>`<option value="${e(valueFn(item))}" ${valueFn(item)===selected?'selected':''}>${e(labelFn(item))}</option>`).join('')
+
+function renderNav(){
+  nav.innerHTML=modules.map(item=>`<button type="button" data-module="${item.id}" class="${state.activeModule===item.id?'active':''}"><span class="icon">${item.icon}</span><span>${item.label}</span>${item.badge?`<b>${item.badge}</b>`:''}</button>`).join('')
+  nav.querySelectorAll('[data-module]').forEach(button=>button.addEventListener('click',()=>{state.activeModule=button.dataset.module;render()}))
+}
+function renderTop(){
+  moduleTitle.textContent=modules.find(m=>m.id===state.activeModule)?.label||'Interview Studio'
+  const app=activeApplication()
+  applicationLabel.textContent=app?`${app.company} · ${app.role}`:'CV hiện tại · chưa gắn job'
+  applicationSelect.innerHTML=`<option value="">CV hiện tại · không gắn job</option>`+applications().map(a=>`<option value="${e(a.id)}" ${a.id===state.applicationId?'selected':''}>${e(a.company)} · ${e(a.role)}</option>`).join('')
+  applicationSelect.onchange=()=>{state.applicationId=applicationSelect.value;renderTop();if(state.activeModule==='overview'||state.activeModule==='mock')renderView()}
+  const template=templates.find(t=>t.id===state.selectedTemplateId)
+  profileContext.innerHTML=`<span class="eyebrow">ACTIVE PROFILE</span><strong>${e(template?.name||state.selectedTemplateId)}</strong><p>${e(activePack().label)}</p><div class="chips"><span>${e(state.seniority)}</span><span>${e(marketLabel())}</span></div>`
+}
+document.querySelector('#quick-practice').addEventListener('click',()=>{state.activeModule='mock';render()})
+
+function render(){
+  renderNav();renderTop();renderView()
+}
+function pageHeading(kicker,title,description,count){
+  return `<div class="page-heading"><div><span class="eyebrow">${e(kicker)}</span><h1>${title}</h1><p>${e(description)}</p></div><div class="heading-number">${e(count)}</div></div>`
+}
+function renderOverview(){
+  const claims=cvClaims(),ready=evidenceReadyCount(),vn=questionDeck().filter(q=>q.market==='vietnam').length
+  const practiced=state.sessions.reduce((sum,s)=>sum+Number(s.answered||0),0)
+  root.innerHTML=`
+    <section class="hero">
+      <div><span class="eyebrow">INTERVIEW STUDIO · VIETNAM-FIRST</span><h1>Biến CV thành <em>lợi thế trong phòng phỏng vấn.</em></h1><p>Interview Studio đọc CV, JD và lịch sử luyện tập để chuẩn bị câu hỏi, bảo vệ từng claim bằng evidence và giúp anh luyện cách trả lời trước vòng thật.</p><div class="hero-actions"><button class="primary" data-go="mock">Bắt đầu mock interview</button><button class="secondary" data-go="claims">Kiểm tra CV claims</button></div></div>
+      <article class="readiness"><div class="score-row"><span>READINESS SIGNAL</span><b>${readiness()}</b></div><strong>${e(readinessLabel())}</strong><p>Đây là tín hiệu luyện tập nội bộ, không phải dự đoán kết quả tuyển dụng.</p><div class="bar"><span style="width:${readiness()}%"></span></div></article>
+    </section>
+    <section class="stats">
+      <article><span>Question bank</span><b>${questionDeck().length}</b><small>${vn} câu có nguồn Việt Nam</small></article>
+      <article><span>CV claims</span><b>${claims.length}</b><small>${highRiskClaims().length} claim cần chuẩn bị kỹ</small></article>
+      <article><span>Practice sessions</span><b>${state.sessions.length}</b><small>${practiced} câu đã luyện</small></article>
+      <article><span>Evidence ready</span><b>${ready}</b><small>claim đã có ghi chú bảo vệ</small></article>
+    </section>
+    <div class="grid2">
+      <section class="panel"><span class="eyebrow">INTERVIEW CONTEXT</span><h2>Chuẩn bị theo cơ hội đang ứng tuyển</h2><div class="fields">
+        <label class="field"><span>Mẫu CV</span><select id="template-field">${options(templates,x=>x.id,x=>x.name,state.selectedTemplateId)}</select></label>
+        <label class="field"><span>Role pack</span><select id="pack-field">${options(interviewPacks,x=>x.id,x=>x.label,state.rolePackId)}</select></label>
+        <label class="field"><span>Seniority</span><select id="seniority-field">${seniorityLevels.map(x=>`<option ${x===state.seniority?'selected':''}>${e(x)}</option>`).join('')}</select></label>
+        <label class="field"><span>Vòng phỏng vấn</span><select id="stage-field">${options(interviewStages,x=>x.id,x=>x.label,state.stageId)}</select></label>
+        <label class="field"><span>Nguồn dữ liệu</span><select id="market-field"><option value="vietnam" ${state.market==='vietnam'?'selected':''}>Việt Nam · ưu tiên</option><option value="all" ${state.market==='all'?'selected':''}>Việt Nam + Quốc tế</option><option value="global" ${state.market==='global'?'selected':''}>Quốc tế</option></select></label>
+      </div><div class="signal"><span>CV SIGNAL</span><strong>${e(activePack().signal)}</strong><p>Khả năng bị đào sâu: ${e(activePack().probe)}</p></div></section>
+      <section class="panel"><span class="eyebrow">NEXT ACTION</span><h2>3 việc nên làm trước vòng phỏng vấn</h2><ol class="actions">
+        <li><b>01</b><div><strong>Bảo vệ claim mạnh nhất</strong><p>Baseline, contribution, trade-off và cách đo cho claim có số liệu.</p></div><button data-go="claims">Mở →</button></li>
+        <li><b>02</b><div><strong>Luyện 5 câu theo JD</strong><p>Question engine ưu tiên CV, role pack, vòng phỏng vấn và application context.</p></div><button data-go="mock">Luyện →</button></li>
+        <li><b>03</b><div><strong>Xem evidence gaps</strong><p>Report chỉ ra câu dài dòng, thiếu ownership hoặc số liệu chưa có trong CV.</p></div><button data-go="reports">Xem →</button></li>
+      </ol></section>
+    </div>
+    <section class="panel"><span class="eyebrow">SOURCE LAYER · ${e(marketLabel())}</span><h2>Dữ liệu có provenance, không phải câu hỏi sinh ngẫu nhiên</h2><div class="sources">${activeSources().map(s=>`<a href="${e(s.url)}" target="_blank" rel="noreferrer noopener"><span>${s.region==='vietnam'?'VN':'GL'}</span><strong>${e(s.name)}</strong><small>${e(s.label)}</small><p>${e(s.note)}</p></a>`).join('')}</div></section>
+  `
+  bindGo()
+  document.querySelector('#template-field').onchange=ev=>{state.selectedTemplateId=ev.target.value;state.rolePackId=templateInterviewPack[state.selectedTemplateId]||'general';render()}
+  document.querySelector('#pack-field').onchange=ev=>{state.rolePackId=ev.target.value;render()}
+  document.querySelector('#seniority-field').onchange=ev=>{state.seniority=ev.target.value;render()}
+  document.querySelector('#stage-field').onchange=ev=>{state.stageId=ev.target.value;render()}
+  document.querySelector('#market-field').onchange=ev=>{state.market=ev.target.value;render()}
+}
+function bindGo(){root.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{state.activeModule=b.dataset.go;render()}))}
+
+function renderQuestions(){
+  const qs=filteredQuestions()
+  root.innerHTML=pageHeading('QUESTION BANK','Câu hỏi theo <em>role, CV, JD và vòng tuyển dụng.</em>','Mỗi câu có recruiter intent, framework, follow-up, red flags và provenance khi có.',qs.length)+`
+    <section class="filterbar">
+      <label><span>Tìm câu hỏi</span><input id="q-search" type="search" value="${e(state.query)}" placeholder="stakeholder, design system, failure, metric..." /></label>
+      <label><span>Nhóm</span><select id="q-category">${options(questionCategories,x=>x.id,x=>x.label,state.categoryId)}</select></label>
+      <label><span>Dữ liệu</span><select id="q-market"><option value="vietnam" ${state.market==='vietnam'?'selected':''}>Việt Nam</option><option value="all" ${state.market==='all'?'selected':''}>VN + Quốc tế</option><option value="global" ${state.market==='global'?'selected':''}>Quốc tế</option></select></label>
+    </section>
+    <div class="questions">${qs.map((q,i)=>`
+      <details class="question" ${i===0?'open':''}><summary><span class="qnum">${String(i+1).padStart(2,'0')}</span><div><small>${e(categoryName(q.category))}${q.market==='vietnam'?' <b>SOURCE VN</b>':''}</small><strong>${e(q.question)}</strong></div><span class="plus">+</span></summary>
+      <div class="qbody"><section><span>Recruiter intent</span><p>${e(q.why)}</p></section><section><span>Answer framework</span><ol>${list(q.framework)}</ol></section><section class="wide"><span>Ví dụ tham khảo</span><p>“${e(q.example)}”</p></section><section><span>Follow-up</span><ul>${list(q.followUps)}</ul></section><section><span>Red flags</span><ul>${list(q.avoid)}</ul></section>
+      ${questionSources(q).length?`<section class="wide"><span>Provenance</span><div class="source-links">${questionSources(q).map(s=>`<a href="${e(s.url)}" target="_blank" rel="noreferrer noopener">${e(s.name)} · ${e(s.label)} ↗</a>`).join('')}</div></section>`:''}</div></details>`).join('')}</div>`
+  let timer
+  document.querySelector('#q-search').addEventListener('input',ev=>{clearTimeout(timer);state.query=ev.target.value;timer=setTimeout(renderQuestions,120)})
+  document.querySelector('#q-category').onchange=ev=>{state.categoryId=ev.target.value;renderQuestions()}
+  document.querySelector('#q-market').onchange=ev=>{state.market=ev.target.value;render()}
+}
+
+function renderClaims(){
+  const claims=cvClaims()
+  if(!state.selectedClaimId||!claims.some(c=>c.id===state.selectedClaimId))state.selectedClaimId=claims[0]?.id||''
+  const selected=claims.find(c=>c.id===state.selectedClaimId)
+  root.innerHTML=pageHeading('CLAIM DEFENSE','Mọi claim trong CV đều phải <em>chịu được câu hỏi đào sâu.</em>','Hệ thống trích xuất statement quan trọng, phát hiện số liệu/ownership và tạo recruiter probes để chuẩn bị evidence.',claims.length)+`
+  <div class="claim-layout">
+    <aside class="claim-list">${claims.map(c=>`<button data-claim="${c.id}" class="${c.id===state.selectedClaimId?'active':''}"><span><small>${e(c.source)} · ${e(c.label)}</small><strong>${e(c.text)}</strong></span><b class="risk ${claimRisk(c)>=70?'high':''}">${claimRisk(c)}</b></button>`).join('')}</aside>
+    ${selected?`<section class="claim-detail">
+      <div class="claim-head"><div><span class="eyebrow">CLAIM ${claims.findIndex(c=>c.id===selected.id)+1} / ${claims.length}</span><h2>${e(selected.text)}</h2></div><div class="risk-ring"><b>${claimRisk(selected)}</b><span>probe risk</span></div></div>
+      <div class="meta chips">${selected.numbers.map(n=>`<span># Có số liệu: ${e(n)}</span>`).join('')}${selected.leadershipSignal?'<span># Ownership / leadership</span>':''}${selected.outcomeSignal?'<span># Outcome claim</span>':''}<span># ${e(selected.source)}</span></div>
+      <div class="section"><span class="eyebrow">RECRUITER PROBES</span><ol class="probe-list">${list(claimProbes(selected))}</ol></div>
+      <div class="section"><span class="eyebrow">MATCHED QUESTIONS</span><ol class="probe-list">${list(matchQuestionsToClaim(selected,questionDeck()).map(q=>q.question))||'<li>Chưa có câu hỏi đủ gần; dùng recruiter probes phía trên.</li>'}</ol></div>
+      <div class="section evidence-box"><span class="eyebrow">EVIDENCE NOTE</span><textarea id="claim-note" rows="6" placeholder="Baseline, phạm vi mình sở hữu, cách đo, ai tham gia, trade-off, result...">${e(state.claimEvidence[selected.id]?.note||'')}</textarea><div class="evidence-footer"><span id="claim-count">${(state.claimEvidence[selected.id]?.note||'').length} ký tự</span><button id="claim-ready" class="${state.claimEvidence[selected.id]?.ready?'ready':''}">${state.claimEvidence[selected.id]?.ready?'✓ Evidence ready':'Đánh dấu evidence ready'}</button></div></div>
+    </section>`:'<section class="empty">CV hiện tại chưa có đủ nội dung để trích xuất claim.</section>'}
+  </div>`
+  root.querySelectorAll('[data-claim]').forEach(b=>b.onclick=()=>{state.selectedClaimId=b.dataset.claim;renderClaims()})
+  if(selected){
+    const note=document.querySelector('#claim-note')
+    note.oninput=()=>{state.claimEvidence[selected.id]={...(state.claimEvidence[selected.id]||{}),note:note.value};document.querySelector('#claim-count').textContent=note.value.length+' ký tự'}
+    note.onchange=saveClaims
+    document.querySelector('#claim-ready').onclick=()=>{const current=state.claimEvidence[selected.id]||{};state.claimEvidence[selected.id]={...current,ready:!current.ready};saveClaims();renderClaims()}
+  }
+}
+
+function stopTimer(){if(state.timerId)clearInterval(state.timerId);state.timerId=null;state.timerRunning=false}
+function startTimer(){stopTimer();state.timerRemaining=state.practice?.timerChoice||90;state.timerRunning=true;state.timerId=setInterval(()=>{if(!state.timerRunning)return;if(state.timerRemaining<=1){state.timerRemaining=0;state.timerRunning=false;stopSpeech()}else state.timerRemaining--;const node=document.querySelector('#timer-value');if(node){node.textContent=formatTimer();node.parentElement.classList.toggle('warning',state.timerRemaining<=20)}},1000)}
+const formatTimer=()=>`${String(Math.floor(state.timerRemaining/60)).padStart(2,'0')}:${String(state.timerRemaining%60).padStart(2,'0')}`
+function startMock(size,timerChoice){
+  const app=activeApplication()||{}
+  const ranked=questionDeck().map(q=>({q,score:questionRelevanceScore(q,app,cvClaims())+(8-stageWeight(q))})).sort((a,b)=>b.score-a.score)
+  const selected=[],cats=new Set()
+  ranked.forEach(({q})=>{if(selected.length>=size)return;if(!cats.has(q.category)||selected.length>=Math.ceil(size/2)){selected.push(q);cats.add(q.category)}})
+  ranked.forEach(({q})=>{if(selected.length<size&&!selected.some(x=>x.id===q.id))selected.push(q)})
+  state.practice={questions:selected.slice(0,size),index:0,drafts:{},startedAt:new Date().toISOString(),timerChoice}
+  state.practice.questions.forEach(q=>state.practice.drafts[q.id]={answer:'',evidence:'',confidence:3,evaluation:null})
+  startTimer();renderMock()
+}
+const currentQuestion=()=>state.practice?.questions[state.practice.index]
+const currentDraft=()=>state.practice?.drafts[currentQuestion()?.id]
+function evaluateCurrent(){
+  const q=currentQuestion(),draft=currentDraft();if(!q||!draft)return
+  draft.evaluation=evaluateInterviewResponse({answer:draft.answer,evidence:draft.evidence,confidence:draft.confidence,question:q,claims:cvClaims(),elapsedSeconds:Math.max(0,state.practice.timerChoice-state.timerRemaining)})
+}
+function nextMock(){
+  if(!currentDraft()?.evaluation)evaluateCurrent()
+  if(state.practice.index<state.practice.questions.length-1){stopSpeech();state.practice.index++;startTimer();renderMock();return}
+  finishMock()
+}
+function finishMock(){
+  stopTimer();stopSpeech()
+  const responses=state.practice.questions.map(q=>{const d=state.practice.drafts[q.id];if(!d.evaluation)d.evaluation=evaluateInterviewResponse({answer:d.answer,evidence:d.evidence,confidence:d.confidence,question:q,claims:cvClaims(),elapsedSeconds:state.practice.timerChoice});return{questionId:q.id,question:q.question,answer:d.answer.trim(),evidence:d.evidence.trim(),confidence:d.confidence,evaluation:d.evaluation}})
+  const report=aggregateInterviewReport(responses),app=activeApplication()
+  state.sessions=[{id:'interview-studio-'+Date.now(),createdAt:new Date().toISOString(),startedAt:state.practice.startedAt,applicationId:app?.id||'',contextLabel:app?`${app.company} · ${app.role}`:`${activePack().label} · CV`,stageLabel:activeStage().label,total:responses.length,answered:responses.filter(r=>r.answer||r.evidence).length,responses,report},...state.sessions]
+  saveSessions();state.practice=null;state.activeModule='reports';render();toast('Đã tạo Interview Report')
+}
+function stopSpeech(){if(state.speech){try{state.speech.stop()}catch{}}state.speech=null;state.speechRecording=false}
+function startSpeech(){
+  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition
+  if(!Recognition){toast('Trình duyệt này chưa hỗ trợ speech recognition');return}
+  const q=currentQuestion(),draft=currentDraft();if(!q||!draft)return
+  stopSpeech();const recognition=new Recognition();recognition.lang='vi-VN';recognition.continuous=true;recognition.interimResults=true
+  const base=draft.answer.replace(/\s*\[đang nghe:.*$/s,'').trim();let committed=''
+  recognition.onresult=event=>{let interim='';for(let i=event.resultIndex;i<event.results.length;i++){const t=event.results[i][0]?.transcript||'';if(event.results[i].isFinal)committed+=t+' ';else interim+=t}draft.answer=[base,committed.trim()].filter(Boolean).join(' ')+(interim?` [đang nghe: ${interim}]`:'');const ta=document.querySelector('#mock-answer');if(ta)ta.value=draft.answer}
+  recognition.onend=()=>{state.speechRecording=false;draft.answer=draft.answer.replace(/\s*\[đang nghe:.*$/s,'').trim();renderMock()}
+  recognition.onerror=()=>{state.speechRecording=false}
+  state.speech=recognition;state.speechRecording=true;recognition.start();renderMock()
+}
+function speakQuestion(){if(!window.speechSynthesis||!currentQuestion())return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(currentQuestion().question);u.lang='vi-VN';u.rate=.96;window.speechSynthesis.speak(u)}
+
+function renderMock(){
+  if(!state.practice){
+    root.innerHTML=pageHeading('MOCK INTERVIEW','Trả lời như vòng thật. <em>Coach chỉ xuất hiện sau.</em>','Question engine ưu tiên JD, CV claims và vòng phỏng vấn. Có timer, speech input và evidence check.', '5Q')+`
+      <section class="mock-start"><div class="mock-config"><h2>Tạo một vòng luyện có context</h2>
+      <label class="field"><span>Application</span><select id="mock-app"><option value="">CV hiện tại · không gắn job</option>${applications().map(a=>`<option value="${e(a.id)}" ${a.id===state.applicationId?'selected':''}>${e(a.company)} · ${e(a.role)}</option>`).join('')}</select></label>
+      <label class="field"><span>Vòng phỏng vấn</span><select id="mock-stage">${options(interviewStages,x=>x.id,x=>x.label,state.stageId)}</select></label>
+      <label class="field"><span>Timer / câu</span><select id="mock-timer"><option value="60">60 giây</option><option value="90" selected>90 giây</option><option value="120">120 giây</option></select></label>
+      <label class="field"><span>Số câu</span><select id="mock-size"><option value="5">5 câu · Quick round</option><option value="8">8 câu · Full round</option></select></label>
+      </div><div class="mock-preview"><span class="eyebrow">WHAT THE ENGINE USES</span><div><b>${cvClaims().length}</b><span>CV claims</span></div><div><b>${activeApplication()?'JD':'CV'}</b><span>application context</span></div><div><b>${e(activeStage().label)}</b><span>interview stage</span></div><div><b>${e(marketLabel())}</b><span>question sources</span></div><button id="start-mock" class="primary">Bắt đầu session →</button></div></section>`
+    document.querySelector('#mock-app').onchange=ev=>{state.applicationId=ev.target.value;renderTop()}
+    document.querySelector('#mock-stage').onchange=ev=>{state.stageId=ev.target.value}
+    document.querySelector('#start-mock').onclick=()=>startMock(Number(document.querySelector('#mock-size').value),Number(document.querySelector('#mock-timer').value))
+    return
+  }
+  const q=currentQuestion(),draft=currentDraft(),evaluation=draft.evaluation
+  root.innerHTML=pageHeading('MOCK INTERVIEW','Trả lời như vòng thật. <em>Coach chỉ xuất hiện sau.</em>','Đánh giá là practice signal, không phải dự đoán tuyển dụng.',`${state.practice.index+1}/${state.practice.questions.length}`)+`
+    <section class="live"><div class="live-meta"><div><span>QUESTION ${state.practice.index+1} / ${state.practice.questions.length}</span><small>${e(categoryName(q.category))} · ${e(activeStage().label)}</small></div><div class="timer ${state.timerRemaining<=20?'warning':''}"><b id="timer-value">${formatTimer()}</b><span>${state.timerRunning?'đang chạy':'tạm dừng'}</span></div></div>
+    <h2>${e(q.question)}</h2><div class="tools"><button id="speak-q">🔊 Đọc câu hỏi</button><button id="speech-q" class="${state.speechRecording?'recording':''}">${state.speechRecording?'■ Dừng ghi âm':'🎙 Trả lời bằng giọng nói'}</button><button id="pause-timer">${state.timerRunning?'Ⅱ Tạm dừng timer':'▶ Tiếp tục timer'}</button></div>
+    <div class="answer-grid"><label><span>Câu trả lời của anh</span><textarea id="mock-answer" rows="9" placeholder="Nói hoặc nhập đúng cách anh sẽ trả lời trong buổi phỏng vấn thật...">${e(draft.answer)}</textarea><small id="word-count">${draft.answer.trim().split(/\s+/).filter(Boolean).length} từ</small></label><label><span>Evidence / STAR anchors</span><textarea id="mock-evidence" rows="6" placeholder="Project · ownership · baseline · decision · trade-off · result · learning">${e(draft.evidence)}</textarea><small>Evidence riêng giúp engine không nhầm câu dài với câu có bằng chứng.</small></label></div>
+    <label class="confidence"><span>Mức tự tin</span><input id="mock-confidence" type="range" min="1" max="5" value="${draft.confidence}"><b id="confidence-value">${draft.confidence}/5</b></label>
+    ${evaluation?`<div class="evaluation"><div class="eval-score"><b>${evaluation.overall}</b><span>practice signal</span></div><div class="metric-bars">${Object.entries(evaluation.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div>${evaluation.warnings.length?`<ul class="warnings">${list(evaluation.warnings)}</ul>`:''}</div>`:''}
+    <button id="coach-toggle" class="coach-toggle">Mở Answer Coach</button><div id="coach" class="coach-grid hidden"><section><span>Recruiter intent</span><p>${e(q.why)}</p></section><section><span>Framework</span><ol>${list(q.framework)}</ol></section><section><span>Reference answer</span><p>“${e(q.example)}”</p></section><section><span>Adaptive follow-up</span><ul>${list([...(evaluation?.dimensions?.evidence<65?['Evidence cụ thể nào chứng minh kết quả này? Baseline và nguồn đo là gì?']:[]),...(evaluation?.dimensions?.ownership<65?['Phần nào anh trực tiếp sở hữu, phần nào thuộc team?']:[]),...(q.followUps||[])].slice(0,4))}</ul></section></div>
+    <div class="session-actions"><button id="eval-q" class="secondary">Đánh giá câu này</button><button id="next-q" class="primary">${state.practice.index===state.practice.questions.length-1?'Hoàn tất & tạo report':'Câu tiếp theo →'}</button></div></section>`
+  const answer=document.querySelector('#mock-answer'),evd=document.querySelector('#mock-evidence'),conf=document.querySelector('#mock-confidence')
+  answer.oninput=()=>{draft.answer=answer.value;document.querySelector('#word-count').textContent=answer.value.trim().split(/\s+/).filter(Boolean).length+' từ'}
+  evd.oninput=()=>{draft.evidence=evd.value}
+  conf.oninput=()=>{draft.confidence=Number(conf.value);document.querySelector('#confidence-value').textContent=conf.value+'/5'}
+  document.querySelector('#eval-q').onclick=()=>{evaluateCurrent();renderMock()}
+  document.querySelector('#next-q').onclick=nextMock
+  document.querySelector('#coach-toggle').onclick=()=>document.querySelector('#coach').classList.toggle('hidden')
+  document.querySelector('#pause-timer').onclick=()=>{state.timerRunning=!state.timerRunning;renderMock()}
+  document.querySelector('#speak-q').onclick=speakQuestion
+  document.querySelector('#speech-q').onclick=()=>state.speechRecording?stopSpeech():startSpeech()
+}
+
+function renderReports(){
+  const latest=latestReport()
+  root.innerHTML=pageHeading('INTERVIEW REPORTS','Đo tiến bộ bằng <em>evidence và hành vi quan sát được.</em>','Không chấm cảm xúc hay dự đoán tuyển dụng. Report tập trung relevance, structure, evidence, ownership, depth, credibility và delivery.',state.sessions.length)+
+  (latest?`<section class="report-hero"><div class="report-score"><span>LATEST PRACTICE SIGNAL</span><b>${latest.report.overall}</b><small>/100</small></div><div><strong>${e(latest.contextLabel)}</strong><p>${e(formatDate(latest.createdAt))} · ${e(latest.stageLabel)} · ${latest.answered}/${latest.total} câu</p><span class="chip">${latest.report.evidenceReady}/${latest.total} câu có evidence note</span></div></section><div class="grid2"><section class="panel"><span class="eyebrow">DIMENSIONS</span><h2>Điểm cần cải thiện</h2><div class="metric-bars">${Object.entries(latest.report.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div></section><section class="panel"><span class="eyebrow">EVIDENCE GAPS</span><h2>Việc cần sửa trước lần luyện sau</h2><ul class="warnings">${list(latest.report.warnings.length?latest.report.warnings:['Chưa phát hiện cảnh báo lớn trong session gần nhất.'])}</ul></section></div>`:'')+
+  `<section class="panel"><span class="eyebrow">HISTORY</span><h2>Lịch sử luyện tập</h2>${state.sessions.length?`<div class="history">${state.sessions.map(s=>`<article><div><strong>${e(s.contextLabel)}</strong><small>${e(formatDate(s.createdAt))}</small></div><span>${e(s.stageLabel||'')}</span><span>${s.answered||0}/${s.total||0} answered</span><span>${s.report?.evidenceReady||s.evidenceReady||0} evidence</span><b>${s.report?.overall||'—'}</b></article>`).join('')}</div><button id="clear-history" class="text-btn">Xóa lịch sử local</button>`:`<div class="empty">Chưa có report.<button class="text-btn" data-go="mock">Bắt đầu luyện →</button></div>`}</section>`
+  bindGo()
+  const clear=document.querySelector('#clear-history');if(clear)clear.onclick=()=>{state.sessions=[];saveSessions();renderReports()}
+}
+
+function renderView(){
+  stopSpeech()
+  if(state.activeModule!=='mock')stopTimer()
+  if(state.activeModule==='overview')renderOverview()
+  else if(state.activeModule==='questions')renderQuestions()
+  else if(state.activeModule==='claims')renderClaims()
+  else if(state.activeModule==='mock')renderMock()
+  else renderReports()
+}
+
+window.addEventListener('beforeunload',()=>{stopTimer();stopSpeech()})
+render()
