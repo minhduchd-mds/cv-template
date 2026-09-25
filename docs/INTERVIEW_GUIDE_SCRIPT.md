@@ -798,7 +798,37 @@ Do **not** add AI scoring in V1. First make the content reliable and easy to pra
 
 ---
 
-# 11. Internet research sources used by V1
+# 11. Vietnam-first research layer
+
+The Interview Prep surface now defaults to **Việt Nam · ưu tiên** and keeps provenance on every curated Vietnam question.
+
+Vietnam source policy:
+
+- Prefer established recruitment platforms, staffing firms and IT career publishers.
+- Keep a source URL on every curated question group.
+- Paraphrase question themes and write original answer frameworks; do not copy source answers verbatim.
+- Separate **question-bank evidence** from **job-description signals**.
+- Avoid anonymous forum posts, unverified social posts and fabricated recruiter quotes.
+- Keep international references available as a separate filter.
+
+Current Vietnam source set includes **TopCV, CareerViet, VietnamWorks InTECH, Glints Vietnam, Manpower Vietnam and ITviec**.
+
+Curated Vietnam packs currently add source-backed questions for:
+
+- General / HR screening
+- UI/UX & Product Design
+- Design Engineer / Frontend
+- Software / Technical
+- Product / BA
+- HR / People
+- Sales
+- Graduate / Intern
+
+The UI supports **Việt Nam · ưu tiên / Việt Nam + Quốc tế / Quốc tế**.
+
+---
+
+# 12. Internet research sources used by V1
 
 V1 now keeps an explicit source library in `src/data/interview-prep.js`. Sources are used to validate themes and preparation patterns; the product does not copy source answers verbatim.
 
