@@ -1105,6 +1105,7 @@ export default {
       recognition.continuous = true
       recognition.interimResults = true
       let committed = ''
+      const baseAnswer = String(this.currentDraft.answer || '').replace(/\s*\[đang nghe:.*$/s, '').trim()
       recognition.onresult = (event) => {
         let interim = ''
         for (let index = event.resultIndex; index < event.results.length; index += 1) {
@@ -1115,8 +1116,7 @@ export default {
         const id = this.practiceCurrent?.id
         if (!id) return
         const draft = this.practiceDrafts[id] || {}
-        const base = String(draft.answer || '').replace(/\s*\[đang nghe:.*$/s, '').trim()
-        const next = [base, committed.trim()].filter(Boolean).join(' ')
+        const next = [baseAnswer, committed.trim()].filter(Boolean).join(' ')
         this.practiceDrafts = {
           ...this.practiceDrafts,
           [id]: {
