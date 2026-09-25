@@ -2161,6 +2161,25 @@
   const versions=()=>readJson(VERSIONS_KEY,[]).filter((item)=>item&&item.id)
   const now=()=>new Date().toISOString()
   const statusOrder=['Draft','Ready','Applied','Interview','Offer','Closed']
+  const milestoneOrder=['Applied','Interview','Offer']
+  const milestoneHistory=(history,status,at=now())=>{
+    const next=(Array.isArray(history)?history:[])
+      .filter((entry)=>entry&&entry.status)
+      .map((entry)=>({...entry}))
+    const existing=new Set(next.map((entry)=>entry.status))
+    const milestoneIndex=milestoneOrder.indexOf(status)
+    if(milestoneIndex>=0){
+      milestoneOrder.slice(0,milestoneIndex+1).forEach((milestone)=>{
+        if(existing.has(milestone))return
+        const explicit=milestone===status
+        next.push({status:milestone,at,inferred:!explicit})
+        existing.add(milestone)
+      })
+      return next
+    }
+    if(!existing.has(status))next.push({status,at,inferred:false})
+    return next
+  }
   const statusClass=(status)=>String(status||'Draft').toLowerCase().replace(/\s+/g,'-')
   const formatDate=(iso)=>{
     try{return new Intl.DateTimeFormat(undefined,{month:'short',day:'2-digit',year:'numeric'}).format(new Date(iso))}
@@ -2280,7 +2299,7 @@
       jd,
       notes:String($('#atsAppNotes')?.value||'').trim(),
       followUpDate:String($('#atsAppFollowUp')?.value||'').trim(),
-      stageHistory:[{status:$('#atsAppStatus')?.value||'Draft',at:now()}],
+      stageHistory:milestoneHistory([],($('#atsAppStatus')?.value||'Draft')),
       pdf:null
     }
     const items=applications()
@@ -2308,7 +2327,7 @@
     const current=items[index]
     const next=Object.assign({},current,patch,{updatedAt:now()})
     if(patch.status&&patch.status!==current.status){
-      next.stageHistory=[...(Array.isArray(current.stageHistory)?current.stageHistory:[]),{status:patch.status,at:now()}]
+      next.stageHistory=milestoneHistory(current.stageHistory,patch.status)
     }
     items[index]=next
     saveApplications(items)
@@ -3069,4 +3088,54 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
   else inject()
+})()
+
+
+/* ATS_APPLICATION_ANALYTICS_V2 */
+(() => {
+  'use strict'
+  const APPLICATIONS_KEY='cv-studio-ats-applications-v1'
+  const $=(selector,root=document)=>root.querySelector(selector)
+  const esc=(value)=>String(value==null?'':value).replace(/[&<>"']/g,(char)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
+  const normalize=(value)=>String(value==null?'':value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^\p{L}\p{N}+#./@%-]+/gu,' ').replace(/\s+/g,' ').trim()
+  const stopWords=new Set(['with','from','that','this','your','have','will','role','team','work','years','year','experience','skills','skill','required','preferred','responsibilities','candidate','using','about','into','and','the','for','you','are','our','job','who','what','when','where','how','ability','strong','including','plus','within','support','responsible','looking','knowledge','excellent','good','must','should','would','could'])
+  const phrases=['design systems','user research','stakeholder management','product strategy','product discovery','usability testing','interaction design','information architecture','user flows','business development','account management','go to market','talent acquisition','employee engagement','performance management','financial analysis','financial modeling','data visualization','business intelligence','project management','content marketing','machine learning','cloud computing','continuous integration','continuous delivery','api design','software architecture','quality assurance','design thinking','customer experience','product management','roadmap prioritization','conversion optimization','search engine optimization','data analysis','data analytics','risk management','change management']
+  const milestoneOrder=['Applied','Interview','Offer']
+  const readApps=()=>{try{const local=localStorage.getItem(APPLICATIONS_KEY);const parsed=local?JSON.parse(local):(window.CVStudioWorkspace?.read?.()?.ats?.applications||[]);return (Array.isArray(parsed)?parsed:[]).filter((item)=>item&&item.id)}catch{return []}}
+  const history=(item)=>Array.isArray(item?.stageHistory)?item.stageHistory.filter((entry)=>entry&&entry.status):[]
+  const currentRank=(item)=>milestoneOrder.indexOf(item?.status)
+  const reached=(item,status)=>{if(history(item).some((entry)=>entry.status===status))return true;const target=milestoneOrder.indexOf(status);const current=currentRank(item);return target>=0&&current>=target}
+  const funnel=(apps)=>{const applied=apps.filter((item)=>reached(item,'Applied')).length;const interview=apps.filter((item)=>reached(item,'Interview')).length;const offer=apps.filter((item)=>reached(item,'Offer')).length;return{applied,interview,offer,interviewRate:applied?Math.round(interview/applied*100):null,offerRate:interview?Math.round(offer/interview*100):null}}
+  const explicitEvent=(item,status)=>history(item).filter((entry)=>entry.status===status&&!entry.inferred&&entry.at).sort((a,b)=>String(a.at).localeCompare(String(b.at)))[0]||null
+  const dayDiff=(from,to)=>{const a=Date.parse(from),b=Date.parse(to);if(!Number.isFinite(a)||!Number.isFinite(b)||b<a)return null;return Math.round((b-a)/8640000)/10}
+  const median=(values)=>{const nums=values.filter((value)=>Number.isFinite(value)).sort((a,b)=>a-b);if(!nums.length)return null;const mid=Math.floor(nums.length/2);return nums.length%2?nums[mid]:Math.round(((nums[mid-1]+nums[mid])/2)*10)/10}
+  const stageTiming=(apps,fromStatus,toStatus)=>median(apps.map((item)=>{const from=explicitEvent(item,fromStatus);const to=explicitEvent(item,toStatus);return from&&to?dayDiff(from.at,to.at):null}))
+  const snapshotText=(item)=>{const p=item?.profile||{};return normalize([p.role,p.summary,...(p.skills||[]),...(p.experience||[]).flatMap((job)=>[job.role,job.company,...(job.bullets||[])]),...(p.projects||[]).flatMap((project)=>[project.name,project.type,project.description,project.impact])].filter(Boolean).join(' '))}
+  const jdTerms=(jd)=>{const normalized=normalize(jd);if(!normalized)return[];const foundPhrases=phrases.filter((phrase)=>normalized.includes(phrase));const phraseWords=new Set(foundPhrases.flatMap((phrase)=>phrase.split(' ')));const counts=new Map();normalized.split(' ').filter((word)=>word.length>=4&&!stopWords.has(word)&&!/^\d+$/.test(word)&&!phraseWords.has(word)).forEach((word)=>counts.set(word,(counts.get(word)||0)+1));const singles=[...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).map(([word])=>word);return[...new Set([...foundPhrases,...singles])].slice(0,24)}
+  const missingTerms=(apps)=>{const counts=new Map();apps.forEach((item)=>{if(!item.jd)return;const source=snapshotText(item);jdTerms(item.jd).forEach((term)=>{if(!source.includes(term))counts.set(term,(counts.get(term)||0)+1)})});return[...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,12)}
+  const avg=(values)=>{const nums=values.filter((value)=>Number.isFinite(Number(value))).map(Number);return nums.length?Math.round(nums.reduce((sum,value)=>sum+value,0)/nums.length):null}
+  const versionEvidence=(apps)=>{const map=new Map();apps.forEach((item)=>{const name=String(item?.source?.versionName||'Current CV').trim()||'Current CV';if(!map.has(name))map.set(name,[]);map.get(name).push(item)});return[...map.entries()].map(([name,items])=>({name,uses:items.length,interviews:items.filter((item)=>reached(item,'Interview')).length,offers:items.filter((item)=>reached(item,'Offer')).length,fit:avg(items.map((item)=>item.scores?.targetFit))})).sort((a,b)=>b.uses-a.uses||a.name.localeCompare(b.name))}
+  const dataCoverage=(apps)=>{const total=apps.length;const percentage=(count)=>total?Math.round(count/total*100):0;return{history:percentage(apps.filter((item)=>history(item).length).length),jd:percentage(apps.filter((item)=>String(item.jd||'').trim()).length),scores:percentage(apps.filter((item)=>item.scores&&Object.values(item.scores).some((value)=>Number.isFinite(Number(value)))).length),followup:percentage(apps.filter((item)=>item.followUpDate).length)}}
+  const timingText=(value)=>value==null?'—':(value<1?'<1 day':value+' d')
+  const pctText=(value)=>value==null?'—':value+'%'
+  const renderMetrics=(apps)=>{
+    const host=$('#atsAnalyticsV2Velocity');if(!host)return
+    const flow=funnel(apps),toInterview=stageTiming(apps,'Applied','Interview'),toOffer=stageTiming(apps,'Interview','Offer')
+    host.innerHTML=[['Reached Applied',flow.applied,apps.length?Math.round(flow.applied/apps.length*100)+'% of workspaces':'No data'],['Reached Interview',flow.interview,pctText(flow.interviewRate)+' of Applied'],['Median Applied → Interview',timingText(toInterview),'Explicit timestamps only'],['Median Interview → Offer',timingText(toOffer),'Explicit timestamps only']].map(([label,value,meta])=>'<article><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong><small>'+esc(meta)+'</small></article>').join('')
+    const funnelHost=$('#atsAnalyticsFunnel');if(funnelHost)funnelHost.innerHTML=[['Applied',flow.applied,100],['Interview',flow.interview,flow.applied?Math.round(flow.interview/flow.applied*100):0],['Offer',flow.offer,flow.interview?Math.round(flow.offer/flow.interview*100):0]].map(([label,count,width])=>'<article><div><strong>'+label+'</strong><span>'+count+'</span></div><i><b style="width:'+Math.max(count?8:0,Math.min(100,width))+'%"></b></i></article>').join('')
+    const caveat=$('#atsAnalyticsCaveat');if(caveat)caveat.textContent='Funnel may infer skipped milestones from a later current stage. Timing uses explicit stage timestamps only.'
+  }
+  const renderVersions=(apps)=>{const host=$('#atsAnalyticsVersionEvidence');if(!host)return;const rows=versionEvidence(apps);host.innerHTML=rows.length?rows.map((row)=>'<article><div><strong>'+esc(row.name)+'</strong><small>'+row.uses+' application'+(row.uses===1?'':'s')+'</small></div><span><b>'+row.interviews+'</b><small>Interview reached</small></span><span><b>'+row.offers+'</b><small>Offer reached</small></span><span><b>'+(row.fit==null?'—':row.fit)+'</b><small>Avg target fit</small></span></article>').join(''):'<div class="ats-analytics-empty">No CV version evidence yet.</div>'}
+  const renderKeywords=(apps)=>{const host=$('#atsAnalyticsKeywords');if(!host)return;const missing=missingTerms(apps);host.innerHTML=missing.length?missing.map(([term,count])=>'<span><strong>'+esc(term)+'</strong><small>'+count+' JD'+(count===1?'':'s')+'</small></span>').join(''):'<div class="ats-analytics-empty">No repeated missing JD terms yet.</div>'}
+  const renderCoverage=(apps)=>{const host=$('#atsAnalyticsDataCoverage');if(!host)return;const coverage=dataCoverage(apps);host.innerHTML=[['Stage history',coverage.history],['Job descriptions',coverage.jd],['Score snapshots',coverage.scores],['Follow-up dates',coverage.followup]].map(([label,value])=>'<article><div><strong>'+esc(label)+'</strong><span>'+value+'%</span></div><i><b style="width:'+value+'%"></b></i></article>').join('')}
+  const render=()=>{const pane=$('#atsAnalyticsPane');if(!pane)return;const apps=readApps();renderMetrics(apps);renderVersions(apps);renderKeywords(apps);renderCoverage(apps)}
+  const inject=()=>{
+    const pane=$('#atsAnalyticsPane'),tab=$('#atsAnalyticsTab');if(!pane||!tab||$('#atsAnalyticsV2Velocity'))return
+    const headline=$('#atsAnalyticsHeadline')
+    if(headline){const velocity=document.createElement('section');velocity.className='ats-analytics-v2-section';velocity.innerHTML='<div class="ats-section-title"><div><span>Velocity</span><strong>Recorded progression timing</strong></div><small>Explicit events only</small></div><div id="atsAnalyticsV2Velocity" class="ats-analytics-headline"></div>';headline.insertAdjacentElement('afterend',velocity)}
+    const scores=$('#atsAnalyticsScores')
+    if(scores){const evidence=document.createElement('section');evidence.className='ats-analytics-v2-section';evidence.innerHTML='<div class="ats-section-title"><div><span>CV version evidence</span><strong>Observed application outcomes</strong></div><small>Descriptive, not causal</small></div><div id="atsAnalyticsVersionEvidence" class="ats-analytics-version-evidence"></div><div class="ats-section-title"><div><span>Data quality</span><strong>Analytics coverage</strong></div><small>Saved workspace fields</small></div><div id="atsAnalyticsDataCoverage" class="ats-analytics-bars ats-analytics-coverage"></div>';scores.insertAdjacentElement('afterend',evidence)}
+    tab.addEventListener('click',()=>setTimeout(render,0));window.addEventListener('ats-applications-changed',()=>setTimeout(render,0));window.addEventListener('storage',(event)=>{if(event.key===APPLICATIONS_KEY)setTimeout(render,0)});render()
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject);else inject()
 })()

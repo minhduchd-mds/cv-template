@@ -306,3 +306,40 @@ test('ATS V3 layout remains bounded across viewport sizes', async ({ page }) => 
   }
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('ATS analytics V2 infers skipped funnel stages but times explicit events only', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+  await page.addInitScript(() => {
+    localStorage.setItem('cv-studio-ats-applications-v1',JSON.stringify([
+      {id:'v2-a1',company:'Alpha',role:'Senior Product Designer',status:'Offer',createdAt:'2026-09-01T08:00:00.000Z',updatedAt:'2026-09-10T08:00:00.000Z',source:{versionName:'UIUX Baseline'},scores:{readiness:90,targetFit:82,pdfFidelity:96,jdMatch:80},jd:'User research stakeholder management design systems accessibility',profile:{role:'Senior Product Designer',skills:['Design Systems'],summary:'Enterprise product designer',experience:[],projects:[]},stageHistory:[{status:'Applied',at:'2026-09-02T08:00:00.000Z',inferred:false},{status:'Interview',at:'2026-09-05T08:00:00.000Z',inferred:false},{status:'Offer',at:'2026-09-08T08:00:00.000Z',inferred:false}]},
+      {id:'v2-a2',company:'Beta',role:'Product Designer',status:'Interview',createdAt:'2026-09-03T08:00:00.000Z',updatedAt:'2026-09-06T08:00:00.000Z',source:{versionName:'UIUX Tailored'},scores:{readiness:88,targetFit:78,pdfFidelity:94,jdMatch:75},jd:'Accessibility user research product strategy',profile:{role:'Product Designer',skills:['Product Strategy'],summary:'Product designer',experience:[],projects:[]},stageHistory:[{status:'Interview',at:'2026-09-06T08:00:00.000Z',inferred:false}]}
+    ]))
+  })
+  await page.goto('/studio/')
+  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/Applications/}).click()
+  await page.getByRole('button',{name:'Analytics'}).click()
+  await expect(page.locator('#atsAnalyticsV2Velocity')).toContainText('Reached Applied')
+  await expect(page.locator('#atsAnalyticsV2Velocity')).toContainText('2')
+  await expect(page.locator('#atsAnalyticsV2Velocity')).toContainText('3 d')
+  await expect(page.locator('#atsAnalyticsVersionEvidence')).toContainText('UIUX Baseline')
+  await expect(page.locator('#atsAnalyticsKeywords')).toContainText('user research')
+  await expect(page.locator('#atsAnalyticsKeywords')).toContainText('stakeholder management')
+  await expect(page.locator('#atsAnalyticsDataCoverage')).toContainText('Stage history')
+  expect(runtimeErrors).toEqual([])
+})
+
+test('ATS application stage jump records inferred milestones for funnel integrity', async ({ page }) => {
+  await page.goto('/studio/')
+  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/Applications/}).click()
+  await page.locator('#atsAppCompany').fill('Jump Corp')
+  await page.locator('#atsAppRole').fill('Product Designer')
+  await page.locator('#atsAppCreate').click()
+  await page.locator('[data-app-status]').selectOption('Interview')
+  const history=await page.evaluate(() => {const apps=JSON.parse(localStorage.getItem('cv-studio-ats-applications-v1')||'[]');return apps[0]?.stageHistory||[]})
+  expect(history.some((entry)=>entry.status==='Applied'&&entry.inferred===true)).toBeTruthy()
+  expect(history.some((entry)=>entry.status==='Interview'&&entry.inferred===false)).toBeTruthy()
+})
