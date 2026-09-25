@@ -1,5 +1,5 @@
 import fs from 'node:fs'
-import { TEMPLATE_LAYOUT_CONTRACTS, getTemplateLayoutContract } from '../src/data/template-layout-contracts.js'
+import { DEFAULT_TEMPLATE_FIELDS, TEMPLATE_LAYOUT_CONTRACTS, getTemplateLayoutContract } from '../src/data/template-layout-contracts.js'
 
 const fail=(message)=>{ console.error('✗ '+message); process.exitCode=1 }
 const cvSource=fs.readFileSync(new URL('../src/data/cv.js',import.meta.url),'utf8')
@@ -18,6 +18,12 @@ for(const id of ids){
     if(config.supported!==false && !['main','side'].includes(config.group))fail('Invalid group '+id+' / '+section)
     if(config.limit!=null && (!Number.isInteger(config.limit)||config.limit<1))fail('Invalid limit '+id+' / '+section)
   }
+  for(const field of Object.keys(DEFAULT_TEMPLATE_FIELDS)){
+    const config=contract.fields[field]
+    if(!config||typeof config.supported!=='boolean')fail('Invalid field contract '+id+' / '+field)
+  }
+  if(!contract.structure)fail('Missing structure for '+id)
+  if(!Array.isArray(contract.traits))fail('Missing traits for '+id)
 }
 for(const id of contractIds){
   if(!ids.includes(id))fail('Layout contract has unknown template '+id)

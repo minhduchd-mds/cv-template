@@ -54,3 +54,25 @@ The suite checks all 20 templates on desktop, tablet and mobile for:
 - browser runtime errors.
 
 Desktop runs also capture one screenshot per template into the Playwright test output directory.
+
+
+## Field-level contract V2
+
+The contract now also declares renderer-level capabilities, not only section visibility.
+
+- `avatar`: whether the selected renderer actually displays the profile photo.
+- `headline`: whether the one-line headline is rendered.
+- `quote`: whether the personal quote is rendered.
+- `projectImages`: whether project cover images are rendered.
+- `traits`: factual browser tags such as `ats`, `portfolio`, `avatar`, `one-page` and `visual`.
+- `structure`: canonical hierarchy text used by the browser and editor.
+
+Dedicated renderers must explicitly declare unsupported sections. Flexible renderers inherit the generic renderer capabilities.
+
+Notable renderer contracts:
+
+- Revenue Driver is currently the only dedicated renderer that uses both Headline and Quote.
+- Next Start is the only template with a one-page-preferred contract.
+- Soft Portfolio caps Experience and Projects at 3.
+- Insight Grid now gives Highlights independent visibility instead of coupling KPI metrics to Summary.
+- Code Aware, ATS Precision, People First and Next Start do not expose a Highlights section.
