@@ -73,6 +73,14 @@
               </option>
             </select>
           </label>
+          <label>
+            <span>Nguồn dữ liệu</span>
+            <select v-model="market">
+              <option value="vietnam">Việt Nam · ưu tiên</option>
+              <option value="all">Việt Nam + Quốc tế</option>
+              <option value="global">Quốc tế</option>
+            </select>
+          </label>
         </div>
 
         <div class="interview-control-group">
@@ -123,7 +131,10 @@
             <summary>
               <span class="interview-question__index">{{ String(index + 1).padStart(2, '0') }}</span>
               <div>
-                <small>{{ categoryName(item.category) }}</small>
+                <small>
+                  {{ categoryName(item.category) }}
+                  <b v-if="item.market === 'vietnam'" class="interview-vn-badge">Nguồn VN</b>
+                </small>
                 <strong>{{ item.question }}</strong>
               </div>
               <b class="interview-question__toggle" aria-hidden="true">+</b>
@@ -154,6 +165,20 @@
                 <ul>
                   <li v-for="risk in item.avoid" :key="risk">{{ risk }}</li>
                 </ul>
+              </section>
+              <section v-if="questionSources(item).length" class="interview-question__sources">
+                <span>Nguồn tham khảo Việt Nam</span>
+                <div>
+                  <a
+                    v-for="source in questionSources(item)"
+                    :key="source.id"
+                    :href="source.url"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    {{ source.name }} · {{ source.label }} ↗
+                  </a>
+                </div>
               </section>
             </div>
           </details>
@@ -188,8 +213,8 @@
 
         <section class="interview-source-panel">
           <div class="interview-source-panel__heading">
-            <span class="interview-control-label">Nguồn Internet</span>
-            <small>Đối chiếu, không copy nguyên văn</small>
+            <span class="interview-control-label">Nguồn Internet · {{ marketLabel }}</span>
+            <small>Nguồn tuyển dụng / nghề nghiệp đã chọn lọc</small>
           </div>
           <a
             v-for="source in activeSources"
@@ -220,6 +245,7 @@ import {
   questionCategories,
   seniorityLevels,
   templateInterviewPack,
+  vietnamQuestionBank,
 } from '../data/interview-prep'
 
 export default {
@@ -240,6 +266,7 @@ export default {
       stageId: 'hiring-manager',
       categoryId: 'all',
       query: '',
+      market: 'vietnam',
     }
   },
   computed: {
@@ -257,9 +284,27 @@ export default {
     categoryLabel() {
       return this.questionCategories.find((category) => category.id === this.categoryId)?.label || 'Tất cả'
     },
+    marketLabel() {
+      if (this.market === 'vietnam') return 'Việt Nam'
+      if (this.market === 'global') return 'Quốc tế'
+      return 'Tất cả'
+    },
+    vietnamQuestions() {
+      if (this.market === 'global') return []
+      return vietnamQuestionBank.filter((item) =>
+        item.pack === 'general' || item.pack === this.rolePackId
+      )
+    },
     questionDeck() {
-      const merged = [...coreQuestions, ...this.activePack.questions]
-      return [...merged].sort((a, b) => this.stageWeight(a) - this.stageWeight(b))
+      const merged = [...coreQuestions, ...this.activePack.questions, ...this.vietnamQuestions]
+      const seen = new Set()
+      return merged
+        .filter((item) => {
+          if (seen.has(item.id)) return false
+          seen.add(item.id)
+          return true
+        })
+        .sort((a, b) => this.stageWeight(a) - this.stageWeight(b))
     },
     filteredQuestions() {
       const keyword = this.query.toLocaleLowerCase('vi')
@@ -278,15 +323,20 @@ export default {
       })
     },
     activeSources() {
-      const preferred = this.interviewSources.filter((source) =>
-        source.packs.includes(this.rolePackId) || source.packs.includes('general')
-      )
+      const preferred = this.interviewSources.filter((source) => {
+        const packMatch = source.packs.includes(this.rolePackId) || source.packs.includes('general')
+        if (!packMatch) return false
+        const region = source.region || 'global'
+        if (this.market === 'vietnam') return region === 'vietnam'
+        if (this.market === 'global') return region !== 'vietnam'
+        return true
+      })
       const seen = new Set()
       return preferred.filter((source) => {
         if (seen.has(source.id)) return false
         seen.add(source.id)
         return true
-      }).slice(0, 6)
+      }).slice(0, 8)
     },
     pitchText() {
       const profile = this.workspace?.profile || {}
@@ -323,6 +373,12 @@ export default {
     categoryCount(id) {
       if (id === 'all') return this.questionDeck.length
       return this.questionDeck.filter((item) => item.category === id).length
+    },
+    questionSources(item) {
+      if (!Array.isArray(item.sourceIds)) return []
+      return item.sourceIds
+        .map((id) => this.interviewSources.find((source) => source.id === id))
+        .filter(Boolean)
     },
     stageWeight(item) {
       const maps = {
@@ -743,6 +799,37 @@ export default {
 }
 
 .interview-question__avoid li::marker { color: #c9342f; }
+
+.interview-vn-badge {
+  display: inline-flex;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(0, 113, 227, .08);
+  color: var(--blue);
+  font-size: 9px;
+  letter-spacing: .04em;
+  text-transform: none;
+}
+
+.interview-question__sources {
+  grid-column: 1 / -1;
+
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+  }
+
+  a {
+    color: var(--blue);
+    font-size: 12px;
+    line-height: 1.45;
+    text-decoration: none;
+  }
+
+  a:hover { text-decoration: underline; }
+}
 
 .interview-empty {
   padding: 48px 24px;
