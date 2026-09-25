@@ -92,9 +92,12 @@
       window.__cvStudioFallbackTimer = window.setTimeout(function () {
         var app = document.getElementById('app')
         if (app && app.childElementCount === 0) {
-          var target = window.location.hash === '#studio'
-            ? './public/studio/?v=20260924-revenuefix-v6'
-            : './public/directions/'
+          var hash = window.location.hash
+          var target = (hash === '#interview' || hash === '#interview-studio')
+            ? './public/interview-studio/?v=20260926-is1'
+            : hash === '#studio'
+              ? './public/studio/?v=20260924-revenuefix-v6'
+              : './public/directions/'
           window.location.replace(target)
         }
       }, 1800)
