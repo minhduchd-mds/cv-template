@@ -683,3 +683,18 @@ test('Vue export opens PDF Preflight and Backup uses canonical workspace', async
   const workspace=await page.evaluate(()=>JSON.parse(localStorage.getItem('cv-studio-workspace-v3')||'null'))
   expect(workspace?.schemaVersion).toBe(3)
 })
+
+
+test('static Template Browser V2 filters by contract capabilities', async ({ page }) => {
+  await page.goto('/studio/')
+  await expect(page.locator('#staticTemplateContract')).toContainText('Soft Portfolio')
+  await page.locator('[data-static-template-filter="one-page"]').click()
+  await expect(page.locator('.template-card')).toHaveCount(1)
+  await expect(page.locator('.template-card')).toContainText('Next Start')
+  await page.locator('[data-static-template-filter="ats"]').click()
+  await expect(page.locator('.template-card').filter({hasText:'ATS Precision'})).toHaveCount(1)
+  await page.locator('#templateSearch').fill('Revenue')
+  await expect(page.locator('.template-card')).toHaveCount(0)
+  await page.locator('#clearStaticTemplateFilters').click()
+  await expect(page.locator('.template-card')).toHaveCount(20)
+})

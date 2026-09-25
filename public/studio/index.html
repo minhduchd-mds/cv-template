@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,follow" />
   <meta name="description" content="Static fallback CV Studio builder for GitHub Pages." />
   <title>CV Studio · Builder</title>
-  <link rel="stylesheet" href="./styles.css?v=20260924-layout-mobile-fit-v2" />
+  <link rel="stylesheet" href="./styles.css?v=20260925-template-browser-v2" />
   <link rel="stylesheet" href="./ats.css?v=20260924-ats-ux-v3-stable" />
 </head>
 <body>
@@ -33,8 +33,16 @@
         </div>
         <label class="template-search">
           <span>Search templates</span>
-          <input id="templateSearch" type="search" placeholder="Name, role or industry…" autocomplete="off" />
+          <input id="templateSearch" type="search" placeholder="Role, industry, ATS, portfolio…" autocomplete="off" />
         </label>
+        <div class="static-template-filters" role="group" aria-label="Template capabilities">
+          <button type="button" class="active" data-static-template-filter="all">All</button>
+          <button type="button" data-static-template-filter="ats">ATS-ready</button>
+          <button type="button" data-static-template-filter="portfolio">Portfolio</button>
+          <button type="button" data-static-template-filter="avatar">Avatar</button>
+          <button type="button" data-static-template-filter="one-page">1-page</button>
+          <button type="button" data-static-template-filter="flexible">Flexible</button>
+        </div>
         <div class="static-avatar-panel">
           <div id="staticAvatarPreview" class="static-avatar-preview">AC</div>
           <div>
@@ -71,6 +79,7 @@
           <button type="button" data-target-preset="lead"><span class="preset-avatar" data-preset-avatar>AC</span><span><strong>Leadership</strong><small>Outcome led</small></span></button>
         </div>
         <p class="preview-edit-hint">Tip: click a block in the CV preview to jump into editing.</p>
+        <section id="staticTemplateContract" class="static-template-contract" aria-label="Selected template contract"></section>
         <div id="templateList" class="template-list"></div>
       </aside>
 
@@ -219,7 +228,7 @@
   </div>
 
   <script src="./workspace-store.js?v=20260925-workspace-v3-2"></script>
-  <script src="./app.js?v=20260925-workspace-v3-2"></script>
+  <script src="./app.js?v=20260925-template-browser-v2"></script>
   <script src="./ats.js?v=20260925-workspace-v3-2"></script>
 </body>
 </html>

@@ -223,6 +223,40 @@
     'research-scholar': {mode:'flexible',label:'Academic flexible',page:'1–2 pages'},
   }
 
+  /* TEMPLATE_CONTRACT_V2_META */
+  const templateContractV2Meta = {
+    'executive-edge': {structure:'Header → Summary → Leadership impact → Experience → Achievements → Education',traits:['executive','impact'],fields:{avatar:false,headline:false,quote:false}},
+    'soft-portfolio-pro': {structure:'Hero → Metrics → Case studies → Skills & tools → Experience highlights',traits:['portfolio','visual','avatar'],fields:{avatar:true,headline:false,quote:false},sections:{experience:{supported:true,limit:3,placement:'Experience highlights'}}},
+    'product-operator': {structure:'Profile rail → Impact metrics → Experience → Product highlights → Roadmap',traits:['product','impact','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'code-aware': {structure:'Code hero → About → Experience → Skills → Selected work',traits:['technical','ats-readable'],fields:{avatar:false,headline:false,quote:false}},
+    'ats-precision': {structure:'Profile → Experience & education → Skills → Selected projects → Certifications',traits:['ats','recruiter'],fields:{avatar:false,headline:false,quote:false}},
+    'insight-grid': {structure:'Header → Data summary → KPI metrics → Skills → Achievements → Experience → Credentials',traits:['data','impact'],fields:{avatar:false,headline:false,quote:false}},
+    'brand-motion': {structure:'Visual rail → Brand hero → Metrics → Experience → Campaigns',traits:['portfolio','visual','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'revenue-driver': {structure:'Sales hero → Summary → KPI highlights → Experience → Skills & clients → Quote',traits:['sales','impact','avatar'],fields:{avatar:true,headline:true,quote:true}},
+    'people-first': {structure:'People hero → Competencies → Experience → Education → Additional info',traits:['people','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'next-start': {structure:'Graduate hero → Skills rail → Education → Projects → Internships → Activities',traits:['entry-level','one-page','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'modern-bento': {structure:'Profile → Summary → Impact → Experience → Projects → Skills & credentials',traits:['portfolio','visual','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'executive-navy': {structure:'Executive profile → Summary → Impact → Experience → Projects → Expertise & credentials',traits:['executive','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'ats-clean': {structure:'Recruiter-first profile → Summary → Impact → Experience → Projects → Skills & credentials',traits:['ats','recruiter','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'modern-mono': {structure:'Technical profile → Summary → Impact → Experience → Projects → Skills & credentials',traits:['technical','ats-readable','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'young-creator-cards': {structure:'Creative profile → Summary → Impact → Experience → Portfolio projects → Skills & credentials',traits:['portfolio','visual','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'strategy-brief': {structure:'Executive profile → Summary → Engagement impact → Experience → Selected work → Expertise',traits:['consulting','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'clinical-clean': {structure:'Clinical profile → Summary → Experience → Selected work → Skills → Credentials & languages',traits:['ats','healthcare','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'finance-ledger': {structure:'Executive profile → Summary → Quantified impact → Experience → Selected work → Expertise',traits:['finance','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'studio-director': {structure:'Editorial hero → Summary → Experience → Portfolio work → Capabilities',traits:['portfolio','visual','avatar'],fields:{avatar:true,headline:false,quote:false}},
+    'research-scholar': {structure:'Research profile → Summary → Experience → Selected work → Skills → Education & credentials',traits:['ats-readable','academic','avatar'],fields:{avatar:true,headline:false,quote:false}},
+  }
+  Object.entries(templateContractV2Meta).forEach(([id,meta]) => {
+    const base=templateLayoutContracts[id]||{}
+    templateLayoutContracts[id]={
+      ...base,
+      ...meta,
+      fields:{avatar:true,headline:false,quote:false,...(base.fields||{}),...(meta.fields||{})},
+      traits:[...(meta.traits||[])],
+      sections:{...(base.sections||{}),...(meta.sections||{})},
+    }
+  })
+
   const sectionSettingKey = {
     summary:'showSummary',
     skills:'showSkills',
@@ -438,6 +472,7 @@
   let redoStack = []
   let historyRestoring = false
   let lastHistoryState = null
+  let templateQuickFilter = 'all'
 
   if (!Array.isArray(profile.experience)) profile.experience = clone(demoProfile.experience)
   if (!Array.isArray(profile.projects)) profile.projects = clone(demoProfile.projects)
@@ -597,35 +632,76 @@
     }
   }
 
+  const templateContract = (template) => {
+    const contract=templateLayoutContracts[template.id]||{mode:'flexible',page:'1–2 pages',structure:'Profile → Experience → Projects → Skills',traits:[],fields:{avatar:true,headline:false,quote:false}}
+    return {
+      ...contract,
+      traits:Array.isArray(contract.traits)?contract.traits:[],
+      fields:{avatar:true,headline:false,quote:false,...(contract.fields||{})},
+    }
+  }
+
+  const staticTemplateFilterMatch = (template,contract) => {
+    if(templateQuickFilter==='all')return true
+    if(templateQuickFilter==='ats')return contract.traits.includes('ats')||contract.traits.includes('ats-readable')
+    if(templateQuickFilter==='portfolio')return contract.traits.includes('portfolio')
+    if(templateQuickFilter==='avatar')return contract.fields.avatar!==false
+    if(templateQuickFilter==='one-page')return String(contract.page||'').toLowerCase().includes('1 page preferred')
+    if(templateQuickFilter==='flexible')return contract.mode==='flexible'
+    return true
+  }
+
+  const renderStaticTemplateContract = () => {
+    const host=$('#staticTemplateContract')
+    if(!host)return
+    const template=activeTemplate()
+    const contract=templateContract(template)
+    const hierarchy=contract.mode==='flexible'?'Flexible hierarchy':contract.mode==='guided'?'Guided hierarchy':'Fixed hierarchy'
+    const pills=[
+      contract.page||'1–2 pages',
+      contract.fields.avatar!==false?'Avatar':'No avatar',
+      contract.traits.includes('ats')||contract.traits.includes('ats-readable')?'ATS-readable':'',
+      contract.traits.includes('portfolio')?'Portfolio':'',
+    ].filter(Boolean)
+    host.innerHTML=
+      '<div><span>'+escapeHtml(hierarchy)+'</span><strong>'+escapeHtml(template.name)+'</strong><p>'+escapeHtml(contract.structure||template.role||'Template structure')+'</p></div>'+
+      '<div>'+pills.map((item)=>'<small>'+escapeHtml(item)+'</small>').join('')+'</div>'
+  }
+
   const renderTemplates = () => {
     const list = $('#templateList')
     const query = String($('#templateSearch')?.value || '').trim().toLowerCase()
     const visibleTemplates = templates.filter((template) => {
-      if (!query) return true
-      return [template.name, template.category, template.role].some((value) => String(value || '').toLowerCase().includes(query))
+      const contract=templateContract(template)
+      const source=[template.name,template.category,template.role,contract.structure,...contract.traits].join(' ').toLowerCase()
+      return (!query||source.includes(query))&&staticTemplateFilterMatch(template,contract)
     })
     const countLabel = $('#templateCountLabel')
-    if (countLabel) {
-      countLabel.textContent = query
-        ? `${visibleTemplates.length} of ${templates.length} templates · 4 role presets`
-        : `${templates.length} curated templates · 4 role presets`
-    }
+    if (countLabel) countLabel.textContent = visibleTemplates.length+' of '+templates.length+' templates · 4 role presets'
     list.innerHTML = ''
+    renderStaticTemplateContract()
 
     if (!visibleTemplates.length) {
-      list.innerHTML = '<div class="template-list-empty">No template matches this search.<br>Try a role, industry or style name.</div>'
+      list.innerHTML = '<div class="template-list-empty"><strong>No template matches these filters.</strong><span>Clear search or change capability filter.</span><button type="button" id="clearStaticTemplateFilters">Clear filters</button></div>'
+      $('#clearStaticTemplateFilters')?.addEventListener('click',()=>{
+        const search=$('#templateSearch'); if(search)search.value=''
+        templateQuickFilter='all'
+        $$('[data-static-template-filter]').forEach((button)=>button.classList.toggle('active',button.dataset.staticTemplateFilter==='all'))
+        renderTemplates()
+      })
       return
     }
 
     visibleTemplates.forEach((template) => {
+      const contract=templateContract(template)
       const button = document.createElement('button')
       button.type = 'button'
-      button.className = `template-card${template.id === settings.templateId ? ' active' : ''}`
+      button.className = 'template-card'+(template.id === settings.templateId ? ' active' : '')
       button.setAttribute('aria-pressed', template.id === settings.templateId ? 'true' : 'false')
-      button.innerHTML = `
-        <span class="template-thumb thumb-${template.id}" style="--thumb-accent:${template.accent}"><i></i><i></i><i></i></span>
-        <span><strong>${escapeHtml(template.name)}</strong><small>${escapeHtml(template.role || template.category)}</small></span>
-      `
+      button.innerHTML =
+        '<span class="template-thumb thumb-'+template.id+'" style="--thumb-accent:'+template.accent+'"><i></i><i></i><i></i></span>'+
+        '<span class="static-template-copy"><strong>'+escapeHtml(template.name)+'</strong><small>'+escapeHtml(template.role || template.category)+'</small>'+
+        '<span class="static-template-chips"><i>'+escapeHtml(contract.page||'1–2 pages')+'</i><i>'+escapeHtml(contract.mode||'flexible')+'</i>'+(contract.fields.avatar!==false?'<i>avatar</i>':'')+'</span></span>'
       button.addEventListener('click', () => {
         settings.templateId = template.id
         settings.accent = template.accent
@@ -1887,6 +1963,14 @@
 
   $('#templateSearch')?.addEventListener('input', () => {
     renderTemplates()
+  })
+
+  $('[data-static-template-filter]').forEach((button)=>{
+    button.addEventListener('click',()=>{
+      templateQuickFilter=button.dataset.staticTemplateFilter||'all'
+      $('[data-static-template-filter]').forEach((item)=>item.classList.toggle('active',item===button))
+      renderTemplates()
+    })
   })
 
   $('#accent').addEventListener('input', (event) => {
