@@ -3139,3 +3139,122 @@
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject);else inject()
 })()
+
+
+/* ATS_APPLICATION_TIMELINE_V1 */
+(() => {
+  'use strict'
+  const KEY='cv-studio-ats-applications-v1'
+  const $=(s,r=document)=>r.querySelector(s)
+  const $$=(s,r=document)=>[...r.querySelectorAll(s)]
+  const esc=(v)=>String(v==null?'':v).replace(/[&<>"']/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))
+  const clean=(v)=>String(v==null?'':v).trim().replace(/\s+/g,' ')
+  const now=()=>new Date().toISOString()
+  const read=()=>{try{const raw=localStorage.getItem(KEY);const data=raw?JSON.parse(raw):(window.CVStudioWorkspace?.read?.()?.ats?.applications||[]);return(Array.isArray(data)?data:[]).filter(x=>x&&x.id)}catch{return[]}}
+  const write=(items)=>localStorage.setItem(KEY,JSON.stringify(items))
+  const fmt=(v)=>{if(!v)return'Unknown time';try{return new Intl.DateTimeFormat(undefined,{month:'short',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}catch{return String(v)}}
+  const fmtDate=(v)=>{if(!v)return'';try{return new Intl.DateTimeFormat(undefined,{month:'short',day:'2-digit',year:'numeric'}).format(new Date(v+'T12:00:00'))}catch{return String(v)}}
+
+  const timelineEvents=(item)=>{
+    if(!item)return[]
+    const events=[]
+    if(item.createdAt)events.push({type:'created',at:item.createdAt,title:'Workspace created',detail:(item.source?.versionName||'Current CV')+' snapshot saved'})
+    ;(Array.isArray(item.stageHistory)?item.stageHistory:[]).forEach((entry)=>{
+      if(!entry?.status)return
+      events.push({type:'stage',at:entry.at||item.updatedAt||item.createdAt||'',title:'Stage · '+entry.status,detail:entry.inferred?'Inferred to preserve funnel continuity':'Recorded status change',inferred:Boolean(entry.inferred)})
+    })
+    ;(Array.isArray(item.activityLog)?item.activityLog:[]).forEach((entry)=>{
+      if(!entry)return
+      events.push({type:entry.type||'note',at:entry.at||item.updatedAt||'',title:entry.title||'Activity note',detail:entry.text||entry.detail||''})
+    })
+    if(item.pdf?.attachedAt)events.push({type:'pdf',at:item.pdf.attachedAt,title:'Final PDF attached',detail:item.pdf.name||'PDF saved locally'})
+    return events.sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')))
+  }
+
+  const nextAction=(item)=>{
+    if(!item)return{label:'No application',tone:'neutral',detail:''}
+    if(item.status==='Closed')return{label:'Closed',tone:'neutral',detail:'No follow-up scheduled.'}
+    if(!item.followUpDate)return{label:'Schedule follow-up',tone:'warn',detail:'No next follow-up date yet.'}
+    const today=new Date();today.setHours(0,0,0,0)
+    const due=new Date(item.followUpDate+'T00:00:00')
+    const diff=Math.round((due-today)/86400000)
+    if(diff<0)return{label:'Follow-up overdue',tone:'danger',detail:fmtDate(item.followUpDate)}
+    if(diff===0)return{label:'Follow up today',tone:'warn',detail:fmtDate(item.followUpDate)}
+    if(diff===1)return{label:'Follow up tomorrow',tone:'good',detail:fmtDate(item.followUpDate)}
+    return{label:'Next follow-up',tone:'good',detail:fmtDate(item.followUpDate)}
+  }
+
+  const mutate=(id,fn)=>{
+    const items=read(),i=items.findIndex(x=>x.id===id)
+    if(i<0)return false
+    items[i]=fn({...items[i]})
+    write(items)
+    window.dispatchEvent(new CustomEvent('ats-applications-changed'))
+    return true
+  }
+
+  const addNote=(id,text)=>{
+    const value=clean(text);if(!value)return false
+    return mutate(id,(item)=>{
+      const activityLog=Array.isArray(item.activityLog)?item.activityLog.slice():[]
+      activityLog.push({id:'activity-'+Date.now(),type:'note',at:now(),title:'Activity note',text:value})
+      return{...item,activityLog,updatedAt:now()}
+    })
+  }
+
+  const setFollowUp=(id,value)=>{
+    return mutate(id,(item)=>{
+      const previous=item.followUpDate||'',next=String(value||'')
+      if(previous===next)return item
+      const activityLog=Array.isArray(item.activityLog)?item.activityLog.slice():[]
+      activityLog.push({id:'activity-'+Date.now(),type:'followup',at:now(),title:next?'Follow-up scheduled':'Follow-up cleared',text:next?(previous?'Rescheduled from '+fmtDate(previous)+' to '+fmtDate(next):'Scheduled for '+fmtDate(next)):(previous?'Cleared '+fmtDate(previous):'')})
+      return{...item,followUpDate:next,activityLog,updatedAt:now()}
+    })
+  }
+
+  const render=(id)=>{
+    const sheet=$('#atsAppTimelineSheet'),item=read().find(x=>x.id===id)
+    if(!sheet||!item)return
+    sheet.dataset.applicationId=id
+    $('#atsTimelineCompany').textContent=item.company||'Application'
+    $('#atsTimelineRole').textContent=item.role||''
+    const action=nextAction(item)
+    const next=$('#atsTimelineNext');next.className='ats-timeline-next '+action.tone;next.innerHTML='<strong>'+esc(action.label)+'</strong><small>'+esc(action.detail)+'</small>'
+    const events=timelineEvents(item)
+    $('#atsTimelineEvents').innerHTML=events.length?events.map((event)=>'<article class="ats-timeline-event '+esc(event.type)+(event.inferred?' inferred':'')+'"><i></i><div><div><strong>'+esc(event.title)+'</strong>'+(event.inferred?'<span>Inferred</span>':'')+'</div><p>'+esc(event.detail||'')+'</p><time>'+esc(fmt(event.at))+'</time></div></article>').join(''):'<div class="ats-timeline-empty">No activity recorded yet.</div>'
+    $('#atsTimelineFollowUp').value=item.followUpDate||''
+    $('#atsTimelineNote').value=''
+    sheet.hidden=false
+    document.body.classList.add('ats-timeline-open')
+  }
+
+  const close=()=>{const sheet=$('#atsAppTimelineSheet');if(sheet)sheet.hidden=true;document.body.classList.remove('ats-timeline-open')}
+
+  const decorate=()=>$$('.ats-app-card[data-app-id]').forEach((card)=>{
+    if(card.querySelector('[data-app-timeline]'))return
+    const actions=card.querySelector('.ats-app-actions');if(!actions)return
+    const b=document.createElement('button');b.type='button';b.dataset.appTimeline=card.dataset.appId;b.textContent='Timeline';actions.insertBefore(b,actions.firstChild)
+  })
+
+  const inject=()=>{
+    const panel=$('.ats-panel');if(!panel||$('#atsAppTimelineSheet'))return
+    const sheet=document.createElement('aside');sheet.id='atsAppTimelineSheet';sheet.className='ats-timeline-sheet';sheet.hidden=true
+    sheet.innerHTML='<div class="ats-timeline-backdrop" data-timeline-close></div><section class="ats-timeline-panel" role="dialog" aria-modal="true" aria-labelledby="atsTimelineCompany"><header><div><span>Application timeline</span><strong id="atsTimelineCompany"></strong><small id="atsTimelineRole"></small></div><button type="button" data-timeline-close aria-label="Close timeline">×</button></header><div id="atsTimelineNext" class="ats-timeline-next neutral"></div><label class="ats-timeline-followup"><span>Next follow-up</span><input id="atsTimelineFollowUp" type="date" /></label><div id="atsTimelineEvents" class="ats-timeline-events"></div><div class="ats-timeline-note"><label for="atsTimelineNote">Add activity note</label><textarea id="atsTimelineNote" rows="3" maxlength="600" placeholder="Recruiter reply, interview takeaway, next action…"></textarea><div><small>Saved locally with this application.</small><button id="atsTimelineAddNote" type="button">Add note</button></div></div></section>'
+    panel.appendChild(sheet)
+
+    document.addEventListener('click',(event)=>{
+      const open=event.target.closest('[data-app-timeline]');if(open)return render(open.dataset.appTimeline)
+      if(event.target.closest('[data-timeline-close]'))return close()
+    })
+    $('#atsTimelineAddNote').addEventListener('click',()=>{const id=sheet.dataset.applicationId;if(addNote(id,$('#atsTimelineNote').value))render(id)})
+    $('#atsTimelineNote').addEventListener('keydown',(event)=>{if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){event.preventDefault();const id=sheet.dataset.applicationId;if(addNote(id,event.target.value))render(id)}})
+    $('#atsTimelineFollowUp').addEventListener('change',(event)=>{const id=sheet.dataset.applicationId;setFollowUp(id,event.target.value);render(id)})
+    document.addEventListener('keydown',(event)=>{if(event.key==='Escape'&&!sheet.hidden)close()})
+    const list=$('#atsAppList');if(list)new MutationObserver(decorate).observe(list,{childList:true,subtree:true})
+    window.addEventListener('ats-applications-changed',()=>{decorate();if(!sheet.hidden&&sheet.dataset.applicationId)render(sheet.dataset.applicationId)})
+    decorate()
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
+  else inject()
+})()
