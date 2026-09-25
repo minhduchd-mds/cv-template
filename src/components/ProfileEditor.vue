@@ -321,7 +321,7 @@
         <section v-else class="editor-section">
           <div class="editor-section-heading">
             <div><span>08</span><h3>Section layout</h3></div>
-            <p>Drag sections to reorder them. Turn a section off to hide it from every CV template.</p>
+            <p>Visibility follows the selected template. Only flexible templates allow section reordering, and only within the same content group.</p>
           </div>
           <div class="layout-contract-summary"><div><span>{{ layoutModeLabel }}</span><strong>{{ template?.name || 'Template' }}</strong><small>{{ layoutContract.label }} · {{ layoutContract.page }}</small></div><p>{{ layoutContract.mode === 'flexible' ? 'Reorder only inside Main or Side groups.' : 'Hierarchy is locked to protect this composition.' }}</p></div>
           <div class="layout-list">

@@ -1,18 +1,10 @@
 name: Template Layout Audit
 
+# Custom hosted runners are currently unavailable for this repository
+# (runner_id=0, no workflow steps start). Keep the full 20-template audit
+# ready for manual execution as soon as runner access returns.
 on:
   workflow_dispatch:
-  push:
-    branches: [master]
-    paths:
-      - 'public/studio/**'
-      - 'src/components/**'
-      - 'src/data/**'
-      - 'src/styles/**'
-      - 'tests/e2e/template-layout-audit.spec.js'
-      - 'scripts/check-template-layout-contracts.mjs'
-      - 'package.json'
-      - '.github/workflows/template-layout-audit.yml'
 
 permissions:
   contents: read
@@ -49,14 +41,8 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run template layout audit
-        shell: bash
-        run: |
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-            npm run test:templates
-          else
-            npx playwright test tests/e2e/template-layout-audit.spec.js --project=desktop-chromium
-          fi
+      - name: Run 20-template layout audit
+        run: npm run test:templates
 
       - name: Upload QA artifacts
         if: always()
