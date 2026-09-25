@@ -137,12 +137,37 @@ export async function restoreWorkspaceBackup(payload){
   if(canonical&&canonical.format==='cv-studio-workspace'&&Number(canonical.schemaVersion)===3){
     localStorage.setItem(WORKSPACE_KEY,JSON.stringify(canonical))
   }else{
-    const profile=payload.data?.['cv-studio-profile-v1']||payload.data?.['cv-studio-static-v2']||{}
+    const rawProfile=payload.data?.['cv-studio-profile-v1']||payload.data?.['cv-studio-static-v2']||{}
+    const staticSettings=payload.data?.['cv-studio-static-settings-v2']||{}
     const vueSettings=payload.data?.['cv-studio-settings-v1']||{}
+    const staticOrder=Array.isArray(staticSettings.sectionOrder)&&staticSettings.sectionOrder.length
+      ? staticSettings.sectionOrder
+      : ['summary','experience','projects','skills','languages']
+    const labels={summary:'Profile',experience:'Experience',projects:'Projects',skills:'Skills',languages:'Languages'}
+    const visibility={summary:'showSummary',experience:'showExperience',projects:'showProjects',skills:'showSkills',languages:'showLanguages'}
+    const profile={
+      ...rawProfile,
+      availability:typeof rawProfile.availability==='string'?rawProfile.availability:'',
+      highlights:Array.isArray(rawProfile.highlights)?rawProfile.highlights:[],
+      education:Array.isArray(rawProfile.education)?rawProfile.education:[],
+      certificates:Array.isArray(rawProfile.certificates)?rawProfile.certificates:[],
+      sections:Array.isArray(rawProfile.sections)&&rawProfile.sections.length
+        ? rawProfile.sections
+        : staticOrder.map((id)=>({id,label:labels[id]||id,enabled:visibility[id]?staticSettings[visibility[id]]!==false:true})),
+    }
+    const appearanceKeys=['font','density','radius','projectLayout','textScale','headingScale','sectionSpacing','avatarShape','avatarSize','avatarX','avatarY','avatarZoom','avatarRotate']
+    const staticAppearance={}
+    appearanceKeys.forEach((key)=>{if(staticSettings[key]!=null)staticAppearance[key]=staticSettings[key]})
+    const studio=Object.keys(vueSettings).length?vueSettings:{
+      selectedId:staticSettings.templateId,
+      accent:staticSettings.accent,
+      zoom:staticSettings.zoom,
+      appearance:staticAppearance,
+    }
     const target=payload.data?.['cv-studio-ats-target-v2']||{}
     const versions=payload.data?.['cv-studio-ats-versions-v1']||[]
     const applications=payload.data?.['cv-studio-ats-applications-v1']||[]
-    patchCanonicalWorkspace({profile,studio:vueSettings,ats:{target,versions,applications}},'restore')
+    patchCanonicalWorkspace({profile,studio,ats:{target,versions,applications}},'restore')
   }
 
   for(const key of legacyKeys){

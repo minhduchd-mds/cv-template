@@ -475,7 +475,15 @@
     const existingProfile = current?.profile && typeof current.profile === 'object' ? current.profile : {}
     const existingStudio = current?.studio && typeof current.studio === 'object' ? current.studio : {}
     workspaceStore.patch({
-      profile: { ...clone(existingProfile), ...clone(profile), sections: mergedCanonicalSections() },
+      profile: {
+        ...clone(existingProfile),
+        ...clone(profile),
+        availability: typeof existingProfile.availability === 'string' ? existingProfile.availability : '',
+        highlights: Array.isArray(existingProfile.highlights) ? clone(existingProfile.highlights) : [],
+        education: Array.isArray(existingProfile.education) ? clone(existingProfile.education) : [],
+        certificates: Array.isArray(existingProfile.certificates) ? clone(existingProfile.certificates) : [],
+        sections: mergedCanonicalSections(),
+      },
       studio: {
         ...clone(existingStudio),
         selectedId: settings.templateId,

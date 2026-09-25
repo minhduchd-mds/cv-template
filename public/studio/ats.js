@@ -586,7 +586,9 @@
 
   const ACTIONS = ['led','built','designed','delivered','launched','improved','increased','reduced','created','managed','developed','implemented','shipped','owned','drove','scaled','automated','mentored','achieved']
 
-  let target = Object.assign({ role:'auto', industry:'general', seniority:'senior', jd:'' }, readJson(TARGET_KEY, {}))
+  const legacyTargetRaw=localStorage.getItem(TARGET_KEY)
+  const canonicalTarget=window.CVStudioWorkspace?.read?.()?.ats?.target||{}
+  let target = Object.assign({ role:'auto', industry:'general', seniority:'senior', jd:'' }, legacyTargetRaw ? readJson(TARGET_KEY, {}) : canonicalTarget)
 
   const saveTarget = () => {
     try { localStorage.setItem(TARGET_KEY, JSON.stringify(target)); window.CVStudioWorkspace?.patch?.({ats:{target}},'ats') }
@@ -1834,8 +1836,8 @@
   }
   const writeJson=(key,value)=>{
     localStorage.setItem(key,JSON.stringify(value))
-    if(key===VERSIONS_KEY)window.CVStudioWorkspace?.patch?.({ats:{versions:value}},'ats')
-    if(typeof APPLICATIONS_KEY!=='undefined'&&key===APPLICATIONS_KEY)window.CVStudioWorkspace?.patch?.({ats:{applications:value}},'ats')
+    if(key==='cv-studio-ats-versions-v1')window.CVStudioWorkspace?.patch?.({ats:{versions:value}},'ats')
+    if(key==='cv-studio-ats-applications-v1')window.CVStudioWorkspace?.patch?.({ats:{applications:value}},'ats')
   }
   const deepClone=(value)=>JSON.parse(JSON.stringify(value))
   const normalize=(value)=>String(value==null?'':value).trim().replace(/\s+/g,' ')
@@ -1845,7 +1847,10 @@
     const match=raw.match(/-?\d+(?:\.\d+)?/)
     return match?Number(match[0]):null
   }
-  const versions=()=>readJson(VERSIONS_KEY,[]).filter((item)=>item&&item.id)
+  const versions=()=>{
+    const source=localStorage.getItem(VERSIONS_KEY)?readJson(VERSIONS_KEY,[]):(window.CVStudioWorkspace?.read?.()?.ats?.versions||[])
+    return (Array.isArray(source)?source:[]).filter((item)=>item&&item.id)
+  }
   const saveVersions=(items)=>writeJson(VERSIONS_KEY,items)
 
   const sanitizedProfile=()=>{
@@ -2148,7 +2153,10 @@
     if(profile&&typeof profile==='object')profile.avatar=''
     return profile
   }
-  const applications=()=>readJson(APPLICATIONS_KEY,[]).filter((item)=>item&&item.id)
+  const applications=()=>{
+    const source=localStorage.getItem(APPLICATIONS_KEY)?readJson(APPLICATIONS_KEY,[]):(window.CVStudioWorkspace?.read?.()?.ats?.applications||[])
+    return (Array.isArray(source)?source:[]).filter((item)=>item&&item.id)
+  }
   const saveApplications=(items)=>writeJson(APPLICATIONS_KEY,items)
   const versions=()=>readJson(VERSIONS_KEY,[]).filter((item)=>item&&item.id)
   const now=()=>new Date().toISOString()
