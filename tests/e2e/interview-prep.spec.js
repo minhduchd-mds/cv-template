@@ -3,10 +3,25 @@ import { expect, test } from '@playwright/test'
 const workspace = {
   format: 'cv-studio-workspace',
   schemaVersion: 3,
-  updatedAt: '2026-09-25T00:00:00.000Z',
+  updatedAt: '2026-09-26T00:00:00.000Z',
   source: 'test',
   profile: {
-    personal: { role: 'Senior Product Designer' },
+    name: 'Nguyen Test',
+    role: 'Senior Product Designer',
+    summary: 'Product designer focused on complex B2B workflows, design systems and measurable outcomes.',
+    experience: [{
+      role: 'Senior Product Designer',
+      company: 'Example Co',
+      bullets: [
+        'Led a design system across 15 modules and improved design-to-development handoff by 40%.',
+        'Redesigned a complex workflow that reduced task completion time by 31% in usability testing.',
+      ],
+    }],
+    projects: [{
+      name: 'Design QA',
+      impact: 'Reduced recurring visual defects by 25%',
+      result: 'Created a repeatable design QA workflow with engineering.',
+    }],
   },
   studio: {
     selectedId: 'soft-portfolio-pro',
@@ -14,115 +29,115 @@ const workspace = {
   ats: {
     target: {},
     versions: [],
-    applications: [],
-  },
-}
-
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript((value) => {
-    window.localStorage.setItem('cv-studio-workspace-v3', JSON.stringify(value))
-  }, workspace)
-})
-
-test('opens role-aware Interview Prep from the selected CV', async ({ page }) => {
-  const pageErrors = []
-  page.on('pageerror', (error) => pageErrors.push(error.message))
-
-  await page.goto('/#interview')
-
-  await expect(page.getByRole('heading', { name: /Các câu hỏi phỏng vấn thường gặp/i })).toBeVisible()
-  await expect(page.getByText('Soft Portfolio', { exact: true })).toBeVisible()
-  await expect(page.getByText(/UI\/UX & Product Design/).first()).toBeVisible()
-  await expect(page.getByLabel('Nguồn dữ liệu')).toHaveValue('vietnam')
-  await expect(page.getByText(/Glints Vietnam/).first()).toBeVisible()
-  await expect(page.getByText(/TopCV/).first()).toBeVisible()
-  await expect(page.locator('.interview-question')).toHaveCount(20)
-  expect(pageErrors).toEqual([])
-})
-
-test('can change pack, stage and search interview questions', async ({ page }) => {
-  await page.goto('/#interview')
-
-  await page.getByLabel('Role pack').selectOption('technical')
-  await page.getByLabel('Vòng phỏng vấn').selectOption('technical')
-  await page.getByLabel('Nguồn dữ liệu').selectOption('all')
-  await page.getByPlaceholder('Tìm: stakeholder, metric, failure...').fill('debug')
-
-  await expect(page.getByText(/debug lỗi không tái hiện được/i)).toBeVisible()
-  await expect(page.getByText(/Software \/ Technical/).first()).toBeVisible()
-})
-
-test('mobile Interview Prep has no horizontal page overflow', async ({ page }, testInfo) => {
-  test.skip(!testInfo.project.name.includes('mobile'), 'Mobile-only overflow check')
-
-  await page.goto('/#interview')
-
-  const overflow = await page.evaluate(() => ({
-    viewport: document.documentElement.clientWidth,
-    page: document.documentElement.scrollWidth,
-  }))
-
-  expect(overflow.page).toBeLessThanOrEqual(overflow.viewport + 1)
-  await expect(page.getByRole('link', { name: 'Mở CV Studio' })).toBeHidden()
-})
-
-
-test('Vietnam dataset keeps source provenance visible on question cards', async ({ page }) => {
-  await page.goto('/#interview')
-
-  await page.getByPlaceholder('Tìm: stakeholder, metric, failure...').fill('quy trình thiết kế')
-  const question = page.locator('.interview-question').filter({ hasText: 'Quy trình thiết kế' }).first()
-  await expect(question).toBeVisible()
-  await question.locator('summary').click()
-  await expect(question.getByText(/Glints Vietnam/)).toBeVisible()
-  await expect(question.getByText(/ITviec/)).toBeVisible()
-})
-
-
-test('mock interview session uses application context and stores practice evidence locally', async ({ page }) => {
-  await page.addInitScript(() => {
-    const value = JSON.parse(window.localStorage.getItem('cv-studio-workspace-v3') || 'null')
-    value.ats.applications = [{
+    applications: [{
       id: 'app-vn-1',
       company: 'Viettel Digital',
       role: 'Senior Product Designer',
       status: 'Interview',
       jd: 'Design systems user research stakeholder management product metrics',
       notes: 'Hiring manager round',
-    }]
+    }],
+  },
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript((value) => {
     window.localStorage.setItem('cv-studio-workspace-v3', JSON.stringify(value))
-  })
+    window.localStorage.removeItem('interview-studio-sessions-v2')
+    window.localStorage.removeItem('interview-studio-claim-evidence-v1')
+  }, workspace)
+})
 
+test('opens standalone Interview Studio from selected CV', async ({ page }) => {
+  const pageErrors = []
+  page.on('pageerror', (error) => pageErrors.push(error.message))
+
+  await page.goto('/#interview-studio')
+
+  await expect(page.getByText('Interview Studio', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Practice & Evidence Lab')).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Biến CV thành/i })).toBeVisible()
+  await expect(page.getByText('Soft Portfolio', { exact: true })).toBeVisible()
+  await expect(page.getByText(/UI\/UX & Product Design/).first()).toBeVisible()
+  await expect(page.getByText(/TopCV/).first()).toBeVisible()
+  expect(pageErrors).toEqual([])
+})
+
+test('legacy interview hash stays compatible with Interview Studio', async ({ page }) => {
   await page.goto('/#interview')
+  await expect(page.getByText('Interview Studio', { exact: true }).first()).toBeVisible()
+})
 
-  await page.getByLabel('Application context').selectOption('app-vn-1')
-  await page.getByRole('button', { name: 'Bắt đầu mock interview' }).click()
+test('question bank keeps Vietnam source provenance', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  await page.getByRole('button', { name: /Question Bank/ }).click()
 
-  await expect(page.locator('.interview-practice-session')).toBeVisible()
-  await expect(page.getByText(/QUESTION 1 \/ 5/)).toBeVisible()
-  await expect(page.getByText(/Viettel Digital · Senior Product Designer/)).toBeVisible()
+  await page.getByPlaceholder(/stakeholder, design system/).fill('quy trình thiết kế')
+  const question = page.locator('.is-question').filter({ hasText: 'Quy trình thiết kế' }).first()
+  await expect(question).toBeVisible()
+  await question.locator('summary').click()
+  await expect(question.getByText(/Glints Vietnam/)).toBeVisible()
+  await expect(question.getByText(/ITviec/)).toBeVisible()
+})
+
+test('claim defense extracts measurable CV claims and persists evidence', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  await page.getByRole('button', { name: /Claim Defense/ }).click()
+
+  await expect(page.getByText(/Led a design system across 15 modules/)).toBeVisible()
+  await expect(page.getByText(/Con số này lấy baseline nào/)).toBeVisible()
+
+  const note = page.getByPlaceholder(/Baseline, phạm vi mình sở hữu/)
+  await note.fill('15 modules · design system owner · adoption tracked in release review')
+  await note.blur()
+  await page.getByRole('button', { name: /Đánh dấu evidence ready/ }).click()
+
+  const stored = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('interview-studio-claim-evidence-v1') || '{}')
+  )
+  expect(Object.values(stored).some((item) => item.ready)).toBeTruthy()
+})
+
+test('mock interview uses application context and creates report', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  await page.getByRole('button', { name: /Mock Interview/ }).click()
+
+  await page.getByLabel('Application').selectOption('app-vn-1')
+  await page.getByLabel('Timer / câu').selectOption('60')
+  await page.getByLabel('Số câu').selectOption('5')
+  await page.getByRole('button', { name: /Bắt đầu session/ }).click()
 
   for (let index = 0; index < 5; index += 1) {
-    const session = page.locator('.interview-practice-session')
-    await session.getByPlaceholder(/Trả lời theo cách anh sẽ nói thật/).fill('Tôi sẽ trả lời bằng một ví dụ thực tế.')
-    await session.getByPlaceholder(/Project, phạm vi mình sở hữu/).fill('Project A · ownership · trade-off · result')
-    await session.getByLabel('Mức tự tin').selectOption('4')
-    if (index === 0) {
-      await page.getByRole('button', { name: /Mở coach guidance/ }).click()
-      await expect(page.getByText('Họ muốn kiểm tra gì?')).toBeVisible()
-    }
-    await session.getByRole('button', { name: index === 4 ? 'Hoàn tất & lưu session' : 'Câu tiếp theo →' }).click()
+    await page.getByPlaceholder(/Nói hoặc nhập đúng cách/).fill(
+      'Tôi trực tiếp sở hữu phần thiết kế. Bối cảnh là workflow phức tạp. Tôi chọn phương án dựa trên usability test, chấp nhận trade-off về thời gian và kết quả cải thiện 31%. Nếu làm lại tôi sẽ validate sớm hơn.'
+    )
+    await page.getByPlaceholder(/Project · ownership/).fill(
+      'Project Atlas · tôi sở hữu flow và interaction · baseline usability · result 31% · learning validate sớm'
+    )
+    await page.getByRole('button', { name: /Đánh giá câu này/ }).click()
+    await expect(page.getByText('practice signal')).toBeVisible()
+    await page.getByRole('button', { name: index === 4 ? /Hoàn tất & tạo report/ : /Câu tiếp theo/ }).click()
   }
 
-  await expect(page.getByText(/Đã lưu session/)).toBeVisible()
-  await expect(page.locator('.interview-practice-history article')).toHaveCount(1)
+  await expect(page.getByText(/LATEST PRACTICE SIGNAL/)).toBeVisible()
+  await expect(page.getByText(/Viettel Digital · Senior Product Designer/)).toBeVisible()
 
   const sessions = await page.evaluate(() =>
-    JSON.parse(window.localStorage.getItem('cv-studio-interview-sessions-v1') || '[]')
+    JSON.parse(window.localStorage.getItem('interview-studio-sessions-v2') || '[]')
   )
   expect(sessions).toHaveLength(1)
   expect(sessions[0].applicationId).toBe('app-vn-1')
-  expect(sessions[0].answered).toBe(5)
-  expect(sessions[0].evidenceReady).toBe(5)
-  expect(sessions[0].averageConfidence).toBe(4)
+  expect(sessions[0].report.overall).toBeGreaterThan(0)
+})
+
+test('mobile Interview Studio has no horizontal page overflow', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.includes('mobile'), 'Mobile-only overflow check')
+
+  await page.goto('/#interview-studio')
+  const overflow = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    page: document.documentElement.scrollWidth,
+  }))
+
+  expect(overflow.page).toBeLessThanOrEqual(overflow.viewport + 1)
 })
