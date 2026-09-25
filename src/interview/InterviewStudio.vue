@@ -1,0 +1,2126 @@
+<template>
+  <main class="is-shell">
+    <aside class="is-sidebar">
+      <a class="is-brand" href="#interview-studio" aria-label="Interview Studio">
+        <span class="is-brand__mark">IS</span>
+        <span>
+          <strong>Interview Studio</strong>
+          <small>Practice & Evidence Lab</small>
+        </span>
+      </a>
+
+      <nav class="is-nav" aria-label="Interview Studio modules">
+        <button
+          v-for="item in modules"
+          :key="item.id"
+          type="button"
+          :class="{ active: activeModule === item.id }"
+          @click="activeModule = item.id"
+        >
+          <span class="is-nav__icon">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+          <b v-if="item.badge">{{ item.badge }}</b>
+        </button>
+      </nav>
+
+      <section class="is-sidebar__context">
+        <span class="is-eyebrow">ACTIVE PROFILE</span>
+        <strong>{{ selectedTemplate?.name || 'CV' }}</strong>
+        <p>{{ activePack.label }}</p>
+        <div>
+          <span>{{ seniority }}</span>
+          <span>{{ marketLabel }}</span>
+        </div>
+      </section>
+
+      <div class="is-sidebar__footer">
+        <a href="#studio">← CV Studio</a>
+        <button type="button" @click="goHome">Trang chủ</button>
+      </div>
+    </aside>
+
+    <section class="is-stage">
+      <header class="is-topbar">
+        <div>
+          <span class="is-topbar__dot"></span>
+          <span>{{ activeModuleLabel }}</span>
+          <small>{{ activeApplication ? activeApplication.company + ' · ' + activeApplication.role : 'CV hiện tại · chưa gắn job' }}</small>
+        </div>
+        <div class="is-topbar__actions">
+          <label>
+            <span class="sr-only">Application</span>
+            <select v-model="applicationId">
+              <option value="">CV hiện tại · không gắn job</option>
+              <option v-for="application in applications" :key="application.id" :value="application.id">
+                {{ application.company }} · {{ application.role }}
+              </option>
+            </select>
+          </label>
+          <button type="button" class="is-command" @click="activeModule = 'mock'">▶ Luyện ngay</button>
+        </div>
+      </header>
+
+      <div class="is-content">
+        <section v-if="activeModule === 'overview'" class="is-view">
+          <div class="is-hero">
+            <div>
+              <span class="is-eyebrow">INTERVIEW STUDIO · VIETNAM-FIRST</span>
+              <h1>Biến CV thành <em>lợi thế trong phòng phỏng vấn.</em></h1>
+              <p>
+                Interview Studio đọc CV, JD và lịch sử luyện tập để chuẩn bị câu hỏi,
+                bảo vệ từng claim bằng evidence và giúp anh luyện cách trả lời trước vòng thật.
+              </p>
+              <div class="is-hero__actions">
+                <button type="button" class="is-button is-button--primary" @click="activeModule = 'mock'">Bắt đầu mock interview</button>
+                <button type="button" class="is-button" @click="activeModule = 'claims'">Kiểm tra CV claims</button>
+              </div>
+            </div>
+            <article class="is-readiness">
+              <div>
+                <span>READINESS SIGNAL</span>
+                <b>{{ readinessSignal }}</b>
+              </div>
+              <strong>{{ readinessLabel }}</strong>
+              <p>Đây là tín hiệu luyện tập nội bộ, không phải dự đoán kết quả tuyển dụng.</p>
+              <div class="is-readiness__bar"><span :style="{ width: readinessSignal + '%' }"></span></div>
+            </article>
+          </div>
+
+          <div class="is-stat-grid">
+            <article>
+              <span>Question bank</span>
+              <b>{{ questionDeck.length }}</b>
+              <small>{{ vietnamQuestionCount }} câu có nguồn Việt Nam</small>
+            </article>
+            <article>
+              <span>CV claims</span>
+              <b>{{ cvClaims.length }}</b>
+              <small>{{ highRiskClaims.length }} claim cần chuẩn bị kỹ</small>
+            </article>
+            <article>
+              <span>Practice sessions</span>
+              <b>{{ practiceSessions.length }}</b>
+              <small>{{ totalPracticedAnswers }} câu đã luyện</small>
+            </article>
+            <article>
+              <span>Evidence ready</span>
+              <b>{{ evidenceReadyCount }}</b>
+              <small>claim đã có ghi chú bảo vệ</small>
+            </article>
+          </div>
+
+          <div class="is-overview-grid">
+            <section class="is-panel">
+              <div class="is-panel__heading">
+                <div>
+                  <span class="is-eyebrow">INTERVIEW CONTEXT</span>
+                  <h2>Chuẩn bị theo cơ hội đang ứng tuyển</h2>
+                </div>
+              </div>
+              <div class="is-context-grid">
+                <label>
+                  <span>Mẫu CV</span>
+                  <select v-model="selectedTemplateId">
+                    <option v-for="template in templates" :key="template.id" :value="template.id">{{ template.name }}</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Role pack</span>
+                  <select v-model="rolePackId">
+                    <option v-for="pack in interviewPacks" :key="pack.id" :value="pack.id">{{ pack.label }}</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Seniority</span>
+                  <select v-model="seniority">
+                    <option v-for="level in seniorityLevels" :key="level" :value="level">{{ level }}</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Vòng phỏng vấn</span>
+                  <select v-model="stageId">
+                    <option v-for="stage in interviewStages" :key="stage.id" :value="stage.id">{{ stage.label }}</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Nguồn dữ liệu</span>
+                  <select v-model="market">
+                    <option value="vietnam">Việt Nam · ưu tiên</option>
+                    <option value="all">Việt Nam + Quốc tế</option>
+                    <option value="global">Quốc tế</option>
+                  </select>
+                </label>
+              </div>
+              <div class="is-signal">
+                <span>CV SIGNAL</span>
+                <strong>{{ activePack.signal }}</strong>
+                <p>Khả năng bị đào sâu: {{ activePack.probe }}</p>
+              </div>
+            </section>
+
+            <section class="is-panel">
+              <div class="is-panel__heading">
+                <div>
+                  <span class="is-eyebrow">NEXT ACTION</span>
+                  <h2>3 việc nên làm trước vòng phỏng vấn</h2>
+                </div>
+              </div>
+              <ol class="is-action-list">
+                <li>
+                  <b>01</b>
+                  <div><strong>Bảo vệ claim mạnh nhất</strong><p>Chuẩn bị baseline, contribution, trade-off và cách đo cho claim có số liệu.</p></div>
+                  <button type="button" @click="openFirstRiskClaim">Mở →</button>
+                </li>
+                <li>
+                  <b>02</b>
+                  <div><strong>Luyện 5 câu theo JD</strong><p>Question engine ưu tiên CV, role pack, vòng phỏng vấn và application context.</p></div>
+                  <button type="button" @click="activeModule = 'mock'">Luyện →</button>
+                </li>
+                <li>
+                  <b>03</b>
+                  <div><strong>Xem evidence gaps</strong><p>Report chỉ ra câu trả lời dài dòng, thiếu ownership hoặc số liệu chưa có trong CV.</p></div>
+                  <button type="button" @click="activeModule = 'reports'">Xem →</button>
+                </li>
+              </ol>
+            </section>
+          </div>
+
+          <section class="is-panel">
+            <div class="is-panel__heading is-panel__heading--split">
+              <div>
+                <span class="is-eyebrow">SOURCE LAYER</span>
+                <h2>Dữ liệu có provenance, không phải câu hỏi sinh ngẫu nhiên</h2>
+              </div>
+              <span class="is-source-status">{{ activeSources.length }} nguồn đang áp dụng</span>
+            </div>
+            <div class="is-source-grid">
+              <a v-for="source in activeSources" :key="source.id" :href="source.url" target="_blank" rel="noreferrer noopener">
+                <span>{{ source.region === 'vietnam' ? 'VN' : 'GL' }}</span>
+                <strong>{{ source.name }}</strong>
+                <small>{{ source.label }}</small>
+                <p>{{ source.note }}</p>
+              </a>
+            </div>
+          </section>
+        </section>
+
+        <section v-else-if="activeModule === 'questions'" class="is-view">
+          <div class="is-page-heading">
+            <div>
+              <span class="is-eyebrow">QUESTION BANK</span>
+              <h1>Câu hỏi theo <em>role, CV, JD và vòng tuyển dụng.</em></h1>
+              <p>Mỗi câu đều có recruiter intent, framework, follow-up, red flags và nguồn tham khảo khi có.</p>
+            </div>
+            <div class="is-heading-number">{{ filteredQuestions.length }}</div>
+          </div>
+
+          <section class="is-filterbar">
+            <label class="is-search">
+              <span>Tìm câu hỏi</span>
+              <input v-model.trim="query" type="search" placeholder="stakeholder, design system, failure, metric..." />
+            </label>
+            <label>
+              <span>Nhóm</span>
+              <select v-model="categoryId">
+                <option v-for="category in questionCategories" :key="category.id" :value="category.id">{{ category.label }}</option>
+              </select>
+            </label>
+            <label>
+              <span>Dữ liệu</span>
+              <select v-model="market">
+                <option value="vietnam">Việt Nam</option>
+                <option value="all">VN + Quốc tế</option>
+                <option value="global">Quốc tế</option>
+              </select>
+            </label>
+          </section>
+
+          <div class="is-question-grid">
+            <details v-for="(item, index) in filteredQuestions" :key="item.id" class="is-question" :open="index === 0">
+              <summary>
+                <span class="is-question__number">{{ String(index + 1).padStart(2, '0') }}</span>
+                <div>
+                  <small>{{ categoryName(item.category) }} <b v-if="item.market === 'vietnam'">SOURCE VN</b></small>
+                  <strong>{{ item.question }}</strong>
+                </div>
+                <span class="is-question__plus">+</span>
+              </summary>
+              <div class="is-question__body">
+                <section>
+                  <span>Recruiter intent</span>
+                  <p>{{ item.why }}</p>
+                </section>
+                <section>
+                  <span>Answer framework</span>
+                  <ol><li v-for="step in item.framework" :key="step">{{ step }}</li></ol>
+                </section>
+                <section class="is-question__example">
+                  <span>Ví dụ tham khảo</span>
+                  <p>“{{ item.example }}”</p>
+                </section>
+                <section>
+                  <span>Follow-up</span>
+                  <ul><li v-for="followUp in item.followUps" :key="followUp">{{ followUp }}</li></ul>
+                </section>
+                <section class="is-question__avoid">
+                  <span>Red flags</span>
+                  <ul><li v-for="risk in item.avoid" :key="risk">{{ risk }}</li></ul>
+                </section>
+                <section v-if="questionSources(item).length" class="is-question__sources">
+                  <span>Provenance</span>
+                  <div>
+                    <a v-for="source in questionSources(item)" :key="source.id" :href="source.url" target="_blank" rel="noreferrer noopener">
+                      {{ source.name }} · {{ source.label }} ↗
+                    </a>
+                  </div>
+                </section>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section v-else-if="activeModule === 'claims'" class="is-view">
+          <div class="is-page-heading">
+            <div>
+              <span class="is-eyebrow">CLAIM DEFENSE</span>
+              <h1>Mọi claim trong CV đều phải <em>chịu được câu hỏi đào sâu.</em></h1>
+              <p>Interview Studio trích xuất các statement quan trọng, phát hiện claim có số liệu/ownership và tạo recruiter probes để anh chuẩn bị evidence.</p>
+            </div>
+            <div class="is-heading-number">{{ cvClaims.length }}</div>
+          </div>
+
+          <div class="is-claim-layout">
+            <aside class="is-claim-list">
+              <button
+                v-for="item in cvClaims"
+                :key="item.id"
+                type="button"
+                :class="{ active: selectedClaimId === item.id }"
+                @click="selectedClaimId = item.id"
+              >
+                <span>
+                  <small>{{ item.source }} · {{ item.label }}</small>
+                  <strong>{{ item.text }}</strong>
+                </span>
+                <b :class="{ high: claimRisk(item) >= 70 }">{{ claimRisk(item) }}</b>
+              </button>
+            </aside>
+
+            <section v-if="selectedClaim" class="is-claim-detail">
+              <div class="is-claim-detail__header">
+                <div>
+                  <span class="is-eyebrow">CLAIM {{ selectedClaimIndex + 1 }} / {{ cvClaims.length }}</span>
+                  <h2>{{ selectedClaim.text }}</h2>
+                </div>
+                <div class="is-risk-ring">
+                  <b>{{ claimRisk(selectedClaim) }}</b>
+                  <span>probe risk</span>
+                </div>
+              </div>
+
+              <div class="is-claim-meta">
+                <span v-if="selectedClaim.numbers.length"># Có số liệu: {{ selectedClaim.numbers.join(', ') }}</span>
+                <span v-if="selectedClaim.leadershipSignal"># Ownership / leadership</span>
+                <span v-if="selectedClaim.outcomeSignal"># Outcome claim</span>
+                <span># {{ selectedClaim.source }}</span>
+              </div>
+
+              <div class="is-claim-section">
+                <span class="is-eyebrow">RECRUITER PROBES</span>
+                <ol class="is-probe-list">
+                  <li v-for="probe in selectedClaimProbes" :key="probe">{{ probe }}</li>
+                </ol>
+              </div>
+
+              <div class="is-claim-section">
+                <span class="is-eyebrow">MATCHED QUESTIONS</span>
+                <div class="is-matched-questions">
+                  <button v-for="question in selectedClaimQuestions" :key="question.id" type="button" @click="jumpToQuestion(question)">
+                    <span>{{ categoryName(question.category) }}</span>
+                    <strong>{{ question.question }}</strong>
+                    <b>→</b>
+                  </button>
+                  <p v-if="!selectedClaimQuestions.length">Chưa có câu hỏi đủ gần; dùng recruiter probes phía trên để luyện trực tiếp.</p>
+                </div>
+              </div>
+
+              <div class="is-claim-section">
+                <span class="is-eyebrow">EVIDENCE NOTE</span>
+                <textarea
+                  v-model="claimNote"
+                  rows="6"
+                  placeholder="Baseline, phạm vi mình sở hữu, cách đo, ai tham gia, trade-off, result, tài liệu có thể kiểm chứng..."
+                  @change="saveClaimNote"
+                ></textarea>
+                <div class="is-claim-note-footer">
+                  <span>{{ claimNote.length }} ký tự</span>
+                  <button type="button" :class="{ ready: selectedClaimReady }" @click="toggleClaimReady">
+                    {{ selectedClaimReady ? '✓ Evidence ready' : 'Đánh dấu evidence ready' }}
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section v-else-if="activeModule === 'mock'" class="is-view">
+          <div class="is-page-heading">
+            <div>
+              <span class="is-eyebrow">MOCK INTERVIEW</span>
+              <h1>Trả lời như vòng thật. <em>Coach chỉ xuất hiện sau.</em></h1>
+              <p>Question engine ưu tiên JD, CV claims và vòng phỏng vấn. Có timer, speech input khi trình duyệt hỗ trợ và evidence check sau từng câu.</p>
+            </div>
+            <div class="is-heading-number">{{ practiceActive ? practiceIndex + 1 + '/' + practiceQuestions.length : '5Q' }}</div>
+          </div>
+
+          <section v-if="!practiceActive" class="is-mock-start">
+            <div class="is-mock-config">
+              <div>
+                <span class="is-eyebrow">SESSION CONFIG</span>
+                <h2>Tạo một vòng luyện có context</h2>
+              </div>
+              <label>
+                <span>Application</span>
+                <select v-model="applicationId">
+                  <option value="">CV hiện tại · không gắn job</option>
+                  <option v-for="application in applications" :key="application.id" :value="application.id">
+                    {{ application.company }} · {{ application.role }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>Vòng phỏng vấn</span>
+                <select v-model="stageId">
+                  <option v-for="stage in interviewStages" :key="stage.id" :value="stage.id">{{ stage.label }}</option>
+                </select>
+              </label>
+              <label>
+                <span>Timer / câu</span>
+                <select v-model.number="timerChoice">
+                  <option :value="60">60 giây</option>
+                  <option :value="90">90 giây</option>
+                  <option :value="120">120 giây</option>
+                </select>
+              </label>
+              <label>
+                <span>Số câu</span>
+                <select v-model.number="practiceSize">
+                  <option :value="5">5 câu · Quick round</option>
+                  <option :value="8">8 câu · Full round</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="is-mock-preview">
+              <span class="is-eyebrow">WHAT THE ENGINE USES</span>
+              <div><b>{{ cvClaims.length }}</b><span>CV claims</span></div>
+              <div><b>{{ activeApplication ? 'JD' : 'CV' }}</b><span>application context</span></div>
+              <div><b>{{ activeStageLabel }}</b><span>interview stage</span></div>
+              <div><b>{{ marketLabel }}</b><span>question sources</span></div>
+              <button type="button" class="is-button is-button--primary" @click="startPractice">Bắt đầu session →</button>
+            </div>
+          </section>
+
+          <section v-else-if="practiceCurrent" class="is-live-session">
+            <div class="is-live-session__meta">
+              <div>
+                <span>QUESTION {{ practiceIndex + 1 }} / {{ practiceQuestions.length }}</span>
+                <small>{{ categoryName(practiceCurrent.category) }} · {{ activeStageLabel }}</small>
+              </div>
+              <div class="is-timer" :class="{ warning: timerRemaining <= 20 }">
+                <b>{{ formattedTimer }}</b>
+                <span>{{ timerRunning ? 'đang chạy' : 'tạm dừng' }}</span>
+              </div>
+            </div>
+
+            <h2>{{ practiceCurrent.question }}</h2>
+
+            <div class="is-live-session__tools">
+              <button type="button" @click="speakQuestion">🔊 Đọc câu hỏi</button>
+              <button type="button" :disabled="!speechSupported" :class="{ recording: speechRecording }" @click="toggleDictation">
+                {{ speechRecording ? '■ Dừng ghi âm' : '🎙 Trả lời bằng giọng nói' }}
+              </button>
+              <button type="button" @click="toggleTimer">{{ timerRunning ? 'Ⅱ Tạm dừng timer' : '▶ Tiếp tục timer' }}</button>
+            </div>
+
+            <div class="is-answer-grid">
+              <label>
+                <span>Câu trả lời của anh</span>
+                <textarea
+                  v-model="currentDraft.answer"
+                  rows="9"
+                  placeholder="Nói hoặc nhập đúng cách anh sẽ trả lời trong buổi phỏng vấn thật..."
+                ></textarea>
+                <small>{{ currentAnswerWords }} từ · {{ speechSupported ? 'Speech input khả dụng' : 'Trình duyệt chưa hỗ trợ speech input' }}</small>
+              </label>
+              <label>
+                <span>Evidence / STAR anchors</span>
+                <textarea
+                  v-model="currentDraft.evidence"
+                  rows="6"
+                  placeholder="Project · ownership · baseline · decision · trade-off · result · learning"
+                ></textarea>
+                <small>Evidence riêng giúp engine không nhầm câu trả lời dài với câu trả lời có bằng chứng.</small>
+              </label>
+            </div>
+
+            <label class="is-confidence">
+              <span>Mức tự tin</span>
+              <input v-model.number="currentDraft.confidence" type="range" min="1" max="5" step="1" />
+              <b>{{ currentDraft.confidence }}/5</b>
+            </label>
+
+            <div v-if="currentDraft.evaluation" class="is-evaluation">
+              <div class="is-evaluation__score">
+                <b>{{ currentDraft.evaluation.overall }}</b>
+                <span>practice signal</span>
+              </div>
+              <div class="is-evaluation__bars">
+                <div v-for="(score, key) in currentDraft.evaluation.dimensions" :key="key">
+                  <span>{{ dimensionLabel(key) }}</span>
+                  <i><b :style="{ width: score + '%' }"></b></i>
+                  <strong>{{ score }}</strong>
+                </div>
+              </div>
+              <ul v-if="currentDraft.evaluation.warnings.length">
+                <li v-for="warning in currentDraft.evaluation.warnings" :key="warning">{{ warning }}</li>
+              </ul>
+            </div>
+
+            <button type="button" class="is-coach-toggle" @click="practiceShowGuide = !practiceShowGuide">
+              {{ practiceShowGuide ? 'Ẩn Answer Coach' : 'Mở Answer Coach sau khi đã trả lời' }}
+            </button>
+
+            <div v-if="practiceShowGuide" class="is-coach-grid">
+              <section><span>Recruiter intent</span><p>{{ practiceCurrent.why }}</p></section>
+              <section><span>Framework</span><ol><li v-for="step in practiceCurrent.framework" :key="step">{{ step }}</li></ol></section>
+              <section><span>Reference answer</span><p>“{{ practiceCurrent.example }}”</p></section>
+              <section><span>Adaptive follow-up</span><ul><li v-for="followUp in adaptiveFollowUps" :key="followUp">{{ followUp }}</li></ul></section>
+            </div>
+
+            <div class="is-session-actions">
+              <button type="button" class="is-button" @click="evaluateCurrent">Đánh giá câu này</button>
+              <button type="button" class="is-button is-button--primary" @click="nextPractice">
+                {{ practiceIndex === practiceQuestions.length - 1 ? 'Hoàn tất & tạo report' : 'Câu tiếp theo →' }}
+              </button>
+            </div>
+          </section>
+        </section>
+
+        <section v-else-if="activeModule === 'reports'" class="is-view">
+          <div class="is-page-heading">
+            <div>
+              <span class="is-eyebrow">INTERVIEW REPORTS</span>
+              <h1>Đo tiến bộ bằng <em>evidence và hành vi quan sát được.</em></h1>
+              <p>Không chấm “cảm xúc” hay dự đoán tuyển dụng. Report tập trung relevance, structure, evidence, ownership, depth, credibility và delivery.</p>
+            </div>
+            <div class="is-heading-number">{{ practiceSessions.length }}</div>
+          </div>
+
+          <section v-if="latestReport" class="is-report-hero">
+            <div class="is-report-score">
+              <span>LATEST PRACTICE SIGNAL</span>
+              <b>{{ latestReport.report.overall }}</b>
+              <small>/100</small>
+            </div>
+            <div>
+              <strong>{{ latestReport.contextLabel }}</strong>
+              <p>{{ formatSessionDate(latestReport.createdAt) }} · {{ latestReport.stageLabel }} · {{ latestReport.answered }}/{{ latestReport.total }} câu</p>
+              <span>{{ latestReport.report.evidenceReady }}/{{ latestReport.total }} câu có evidence note</span>
+            </div>
+          </section>
+
+          <div v-if="latestReport" class="is-report-grid">
+            <section class="is-panel">
+              <div class="is-panel__heading"><div><span class="is-eyebrow">DIMENSIONS</span><h2>Điểm cần cải thiện</h2></div></div>
+              <div class="is-report-bars">
+                <div v-for="(score, key) in latestReport.report.dimensions" :key="key">
+                  <span>{{ dimensionLabel(key) }}</span>
+                  <i><b :style="{ width: score + '%' }"></b></i>
+                  <strong>{{ score }}</strong>
+                </div>
+              </div>
+            </section>
+            <section class="is-panel">
+              <div class="is-panel__heading"><div><span class="is-eyebrow">EVIDENCE GAPS</span><h2>Việc cần sửa trước lần luyện sau</h2></div></div>
+              <ul class="is-warning-list">
+                <li v-for="warning in latestReport.report.warnings" :key="warning">{{ warning }}</li>
+                <li v-if="!latestReport.report.warnings.length">Chưa phát hiện cảnh báo lớn trong session gần nhất.</li>
+              </ul>
+            </section>
+          </div>
+
+          <section class="is-panel">
+            <div class="is-panel__heading is-panel__heading--split">
+              <div><span class="is-eyebrow">HISTORY</span><h2>Lịch sử luyện tập</h2></div>
+              <button v-if="practiceSessions.length" type="button" class="is-text-button" @click="clearPracticeHistory">Xóa lịch sử local</button>
+            </div>
+            <div v-if="practiceSessions.length" class="is-history-table">
+              <article v-for="session in practiceSessions" :key="session.id">
+                <div><strong>{{ session.contextLabel }}</strong><small>{{ formatSessionDate(session.createdAt) }}</small></div>
+                <span>{{ session.stageLabel }}</span>
+                <span>{{ session.answered }}/{{ session.total }} answered</span>
+                <span>{{ session.report?.evidenceReady || session.evidenceReady || 0 }} evidence</span>
+                <b>{{ session.report?.overall || session.averageConfidence * 20 || '—' }}</b>
+              </article>
+            </div>
+            <div v-else class="is-empty">
+              Chưa có report. Bắt đầu một mock interview để tạo baseline đầu tiên.
+              <button type="button" @click="activeModule = 'mock'">Bắt đầu luyện →</button>
+            </div>
+          </section>
+        </section>
+      </div>
+    </section>
+  </main>
+</template>
+
+<script>
+import { templates } from '../data/cv'
+import { readCanonicalWorkspace } from '../data/workspace-store'
+import {
+  coreQuestions,
+  interviewPacks,
+  interviewSources,
+  interviewStages,
+  questionCategories,
+  seniorityLevels,
+  templateInterviewPack,
+  vietnamQuestionBank,
+} from '../data/interview-prep'
+import {
+  aggregateInterviewReport,
+  claimProbes,
+  evaluateInterviewResponse,
+  extractCvClaims,
+  matchQuestionsToClaim,
+  questionRelevanceScore,
+} from './interview-studio-engine'
+
+const SESSION_KEY = 'interview-studio-sessions-v2'
+const CLAIM_KEY = 'interview-studio-claim-evidence-v1'
+
+export default {
+  name: 'InterviewStudio',
+  emits: ['back'],
+  data() {
+    return {
+      templates,
+      interviewPacks,
+      interviewStages,
+      questionCategories,
+      seniorityLevels,
+      interviewSources,
+      modules: [
+        { id: 'overview', label: 'Overview', icon: '◇' },
+        { id: 'questions', label: 'Question Bank', icon: '?' },
+        { id: 'claims', label: 'Claim Defense', icon: '⌁', badge: 'CV' },
+        { id: 'mock', label: 'Mock Interview', icon: '▶' },
+        { id: 'reports', label: 'Reports', icon: '▥' },
+      ],
+      activeModule: 'overview',
+      workspace: null,
+      selectedTemplateId: templates[0]?.id || '',
+      rolePackId: 'general',
+      seniority: 'Senior',
+      stageId: 'hiring-manager',
+      market: 'vietnam',
+      categoryId: 'all',
+      query: '',
+      applicationId: '',
+      selectedClaimId: '',
+      claimEvidence: {},
+      practiceActive: false,
+      practiceQuestions: [],
+      practiceIndex: 0,
+      practiceDrafts: {},
+      practiceShowGuide: false,
+      practiceStartedAt: '',
+      practiceSessions: [],
+      practiceSize: 5,
+      timerChoice: 90,
+      timerRemaining: 90,
+      timerId: null,
+      timerRunning: false,
+      speechRecognition: null,
+      speechRecording: false,
+      speechSupported: false,
+    }
+  },
+  computed: {
+    activeModuleLabel() {
+      return this.modules.find((item) => item.id === this.activeModule)?.label || 'Interview Studio'
+    },
+    selectedTemplate() {
+      return this.templates.find((template) => template.id === this.selectedTemplateId) || this.templates[0]
+    },
+    activePack() {
+      return this.interviewPacks.find((pack) => pack.id === this.rolePackId)
+        || this.interviewPacks.find((pack) => pack.id === 'general')
+        || this.interviewPacks[0]
+    },
+    activeStageLabel() {
+      return this.interviewStages.find((stage) => stage.id === this.stageId)?.label || 'Hiring Manager'
+    },
+    marketLabel() {
+      if (this.market === 'vietnam') return 'Việt Nam'
+      if (this.market === 'global') return 'Quốc tế'
+      return 'VN + Quốc tế'
+    },
+    applications() {
+      return Array.isArray(this.workspace?.ats?.applications) ? this.workspace.ats.applications : []
+    },
+    activeApplication() {
+      if (!this.applicationId) return null
+      return this.applications.find((application) => application.id === this.applicationId) || null
+    },
+    vietnamQuestions() {
+      if (this.market === 'global') return []
+      return vietnamQuestionBank.filter((item) => item.pack === 'general' || item.pack === this.rolePackId)
+    },
+    questionDeck() {
+      const merged = [...coreQuestions, ...this.activePack.questions, ...this.vietnamQuestions]
+      const seen = new Set()
+      return merged
+        .filter((item) => {
+          if (seen.has(item.id)) return false
+          seen.add(item.id)
+          return true
+        })
+        .sort((a, b) => this.stageWeight(a) - this.stageWeight(b))
+    },
+    filteredQuestions() {
+      const keyword = this.query.toLocaleLowerCase('vi')
+      return this.questionDeck.filter((item) => {
+        const categoryMatch = this.categoryId === 'all' || item.category === this.categoryId
+        if (!categoryMatch) return false
+        if (!keyword) return true
+        return [
+          item.question,
+          item.why,
+          item.example,
+          ...(item.framework || []),
+          ...(item.followUps || []),
+          ...(item.avoid || []),
+        ].join(' ').toLocaleLowerCase('vi').includes(keyword)
+      })
+    },
+    activeSources() {
+      const preferred = this.interviewSources.filter((source) => {
+        const packMatch = source.packs.includes(this.rolePackId) || source.packs.includes('general')
+        if (!packMatch) return false
+        const region = source.region || 'global'
+        if (this.market === 'vietnam') return region === 'vietnam'
+        if (this.market === 'global') return region !== 'vietnam'
+        return true
+      })
+      const seen = new Set()
+      return preferred.filter((source) => {
+        if (seen.has(source.id)) return false
+        seen.add(source.id)
+        return true
+      }).slice(0, 10)
+    },
+    cvClaims() {
+      return extractCvClaims(this.workspace?.profile || {})
+    },
+    selectedClaim() {
+      return this.cvClaims.find((item) => item.id === this.selectedClaimId) || this.cvClaims[0] || null
+    },
+    selectedClaimIndex() {
+      return Math.max(0, this.cvClaims.findIndex((item) => item.id === this.selectedClaim?.id))
+    },
+    selectedClaimProbes() {
+      return claimProbes(this.selectedClaim)
+    },
+    selectedClaimQuestions() {
+      return matchQuestionsToClaim(this.selectedClaim, this.questionDeck)
+    },
+    claimNote: {
+      get() {
+        return this.claimEvidence[this.selectedClaim?.id]?.note || ''
+      },
+      set(value) {
+        if (!this.selectedClaim) return
+        this.claimEvidence = {
+          ...this.claimEvidence,
+          [this.selectedClaim.id]: {
+            ...(this.claimEvidence[this.selectedClaim.id] || {}),
+            note: value,
+          },
+        }
+      },
+    },
+    selectedClaimReady() {
+      return Boolean(this.claimEvidence[this.selectedClaim?.id]?.ready)
+    },
+    highRiskClaims() {
+      return this.cvClaims.filter((item) => this.claimRisk(item) >= 70)
+    },
+    evidenceReadyCount() {
+      return this.cvClaims.filter((item) => this.claimEvidence[item.id]?.ready).length
+    },
+    vietnamQuestionCount() {
+      return this.questionDeck.filter((item) => item.market === 'vietnam').length
+    },
+    practiceCurrent() {
+      return this.practiceQuestions[this.practiceIndex] || null
+    },
+    currentDraft() {
+      return this.practiceCurrent
+        ? this.practiceDrafts[this.practiceCurrent.id] || { answer: '', evidence: '', confidence: 3, evaluation: null }
+        : { answer: '', evidence: '', confidence: 3, evaluation: null }
+    },
+    currentAnswerWords() {
+      return String(this.currentDraft.answer || '').trim().split(/\s+/).filter(Boolean).length
+    },
+    formattedTimer() {
+      const minutes = Math.floor(this.timerRemaining / 60)
+      const seconds = this.timerRemaining % 60
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    },
+    adaptiveFollowUps() {
+      const base = this.practiceCurrent?.followUps || []
+      const evaluation = this.currentDraft.evaluation
+      const dynamic = []
+      if (evaluation?.dimensions?.evidence < 65) dynamic.push('Evidence cụ thể nào chứng minh kết quả này? Baseline và nguồn đo là gì?')
+      if (evaluation?.dimensions?.ownership < 65) dynamic.push('Phần nào anh trực tiếp sở hữu, phần nào thuộc team hoặc stakeholder khác?')
+      if (evaluation?.unsupportedNumbers?.length) dynamic.push('Các con số vừa nêu có nằm trong CV hoặc tài liệu anh có thể bảo vệ không?')
+      if (evaluation?.dimensions?.depth < 65) dynamic.push('Trade-off khó nhất là gì và nếu làm lại anh sẽ thay đổi quyết định nào?')
+      return Array.from(new Set([...dynamic, ...base])).slice(0, 4)
+    },
+    latestReport() {
+      return this.practiceSessions.find((session) => session.report) || null
+    },
+    readinessSignal() {
+      if (!this.latestReport) {
+        const claimBase = this.cvClaims.length ? Math.round((this.evidenceReadyCount / this.cvClaims.length) * 45) : 0
+        return Math.min(55, 20 + claimBase)
+      }
+      return Math.round(this.latestReport.report.overall * 0.78 + Math.min(22, this.evidenceReadyCount * 2))
+    },
+    readinessLabel() {
+      const score = this.readinessSignal
+      if (score >= 82) return 'Sẵn sàng luyện vòng sâu'
+      if (score >= 68) return 'Nền tốt · còn evidence gaps'
+      if (score >= 50) return 'Cần củng cố câu chuyện'
+      return 'Chưa có đủ dữ liệu luyện tập'
+    },
+    totalPracticedAnswers() {
+      return this.practiceSessions.reduce((sum, session) => sum + Number(session.answered || 0), 0)
+    },
+  },
+  watch: {
+    selectedTemplateId(nextId) {
+      const mapped = templateInterviewPack[nextId]
+      if (mapped) this.rolePackId = mapped
+    },
+    selectedClaim(next) {
+      if (next && !this.selectedClaimId) this.selectedClaimId = next.id
+    },
+  },
+  mounted() {
+    this.workspace = readCanonicalWorkspace()
+    const storedId = this.workspace?.studio?.selectedId
+    if (storedId && this.templates.some((template) => template.id === storedId)) this.selectedTemplateId = storedId
+    else this.rolePackId = templateInterviewPack[this.selectedTemplateId] || 'general'
+    this.loadClaimEvidence()
+    this.loadPracticeSessions()
+    this.selectedClaimId = this.cvClaims[0]?.id || ''
+    this.speechSupported = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition)
+  },
+  beforeUnmount() {
+    this.stopQuestionTimer()
+    this.stopDictation()
+    window.speechSynthesis?.cancel()
+  },
+  methods: {
+    goHome() {
+      this.$emit('back')
+    },
+    categoryName(id) {
+      return this.questionCategories.find((category) => category.id === id)?.label || 'Role-specific'
+    },
+    dimensionLabel(key) {
+      return ({
+        relevance: 'Question fit',
+        structure: 'Structure',
+        evidence: 'Evidence',
+        ownership: 'Ownership',
+        depth: 'Depth',
+        credibility: 'Credibility',
+        delivery: 'Delivery',
+      })[key] || key
+    },
+    stageWeight(item) {
+      const maps = {
+        hr: { core: 1, behavioral: 2, challenge: 3, role: 4, case: 5, askback: 6 },
+        'hiring-manager': { role: 1, core: 2, case: 3, behavioral: 4, challenge: 5, askback: 6 },
+        technical: { role: 1, case: 2, challenge: 3, core: 4, behavioral: 5, askback: 6 },
+        portfolio: { case: 1, role: 2, core: 3, behavioral: 4, challenge: 5, askback: 6 },
+        final: { behavioral: 1, challenge: 2, role: 3, core: 4, case: 5, askback: 6 },
+      }
+      return maps[this.stageId]?.[item.category] || 9
+    },
+    questionSources(item) {
+      if (!Array.isArray(item?.sourceIds)) return []
+      return item.sourceIds.map((id) => this.interviewSources.find((source) => source.id === id)).filter(Boolean)
+    },
+    claimRisk(item) {
+      if (!item) return 0
+      return Math.min(99,
+        34
+        + (item.numbers?.length ? 22 : 0)
+        + (item.leadershipSignal ? 20 : 0)
+        + (item.outcomeSignal ? 17 : 0)
+        + (item.specificity >= 75 ? 8 : 0)
+      )
+    },
+    openFirstRiskClaim() {
+      this.selectedClaimId = (this.highRiskClaims[0] || this.cvClaims[0])?.id || ''
+      this.activeModule = 'claims'
+    },
+    jumpToQuestion(question) {
+      this.query = question.question
+      this.categoryId = 'all'
+      this.activeModule = 'questions'
+    },
+    loadClaimEvidence() {
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(CLAIM_KEY) || '{}')
+        this.claimEvidence = parsed && typeof parsed === 'object' ? parsed : {}
+      } catch {
+        this.claimEvidence = {}
+      }
+    },
+    saveClaimEvidence() {
+      try {
+        window.localStorage.setItem(CLAIM_KEY, JSON.stringify(this.claimEvidence))
+      } catch (error) {
+        console.warn('Unable to persist claim evidence.', error)
+      }
+    },
+    saveClaimNote() {
+      this.saveClaimEvidence()
+    },
+    toggleClaimReady() {
+      if (!this.selectedClaim) return
+      const current = this.claimEvidence[this.selectedClaim.id] || {}
+      this.claimEvidence = {
+        ...this.claimEvidence,
+        [this.selectedClaim.id]: { ...current, ready: !current.ready },
+      }
+      this.saveClaimEvidence()
+    },
+    loadPracticeSessions() {
+      try {
+        const current = JSON.parse(window.localStorage.getItem(SESSION_KEY) || '[]')
+        const legacy = JSON.parse(window.localStorage.getItem('cv-studio-interview-sessions-v1') || '[]')
+        this.practiceSessions = (Array.isArray(current) && current.length ? current : Array.isArray(legacy) ? legacy : []).slice(0, 30)
+      } catch {
+        this.practiceSessions = []
+      }
+    },
+    savePracticeSessions() {
+      this.practiceSessions = this.practiceSessions.slice(0, 30)
+      try {
+        window.localStorage.setItem(SESSION_KEY, JSON.stringify(this.practiceSessions))
+      } catch (error) {
+        console.warn('Unable to persist Interview Studio sessions.', error)
+      }
+    },
+    startPractice() {
+      const application = this.activeApplication || {}
+      const ranked = [...this.questionDeck]
+        .map((question) => ({
+          question,
+          score: questionRelevanceScore(question, application, this.cvClaims) + (8 - this.stageWeight(question)),
+        }))
+        .sort((a, b) => b.score - a.score)
+
+      const selected = []
+      const categories = new Set()
+      ranked.forEach(({ question }) => {
+        if (selected.length >= this.practiceSize) return
+        if (!categories.has(question.category) || selected.length >= Math.ceil(this.practiceSize / 2)) {
+          selected.push(question)
+          categories.add(question.category)
+        }
+      })
+      ranked.forEach(({ question }) => {
+        if (selected.length >= this.practiceSize) return
+        if (!selected.some((item) => item.id === question.id)) selected.push(question)
+      })
+
+      this.practiceQuestions = selected.slice(0, this.practiceSize)
+      this.practiceDrafts = Object.fromEntries(this.practiceQuestions.map((item) => [
+        item.id,
+        { answer: '', evidence: '', confidence: 3, evaluation: null },
+      ]))
+      this.practiceIndex = 0
+      this.practiceShowGuide = false
+      this.practiceStartedAt = new Date().toISOString()
+      this.practiceActive = Boolean(this.practiceQuestions.length)
+      this.startQuestionTimer()
+    },
+    startQuestionTimer() {
+      this.stopQuestionTimer()
+      this.timerRemaining = this.timerChoice
+      this.timerRunning = true
+      this.timerId = window.setInterval(() => {
+        if (!this.timerRunning) return
+        if (this.timerRemaining <= 1) {
+          this.timerRemaining = 0
+          this.timerRunning = false
+          this.stopDictation()
+          return
+        }
+        this.timerRemaining -= 1
+      }, 1000)
+    },
+    stopQuestionTimer() {
+      if (this.timerId) window.clearInterval(this.timerId)
+      this.timerId = null
+      this.timerRunning = false
+    },
+    toggleTimer() {
+      if (!this.practiceActive) return
+      this.timerRunning = !this.timerRunning
+    },
+    elapsedSeconds() {
+      return Math.max(0, this.timerChoice - this.timerRemaining)
+    },
+    evaluateCurrent() {
+      if (!this.practiceCurrent) return
+      const id = this.practiceCurrent.id
+      const draft = this.practiceDrafts[id]
+      const evaluation = evaluateInterviewResponse({
+        answer: draft.answer,
+        evidence: draft.evidence,
+        confidence: draft.confidence,
+        question: this.practiceCurrent,
+        claims: this.cvClaims,
+        elapsedSeconds: this.elapsedSeconds(),
+      })
+      this.practiceDrafts = {
+        ...this.practiceDrafts,
+        [id]: { ...draft, evaluation },
+      }
+      this.practiceShowGuide = true
+    },
+    nextPractice() {
+      if (!this.practiceCurrent) return
+      if (!this.currentDraft.evaluation) this.evaluateCurrent()
+      if (this.practiceIndex < this.practiceQuestions.length - 1) {
+        this.stopDictation()
+        this.practiceIndex += 1
+        this.practiceShowGuide = false
+        this.startQuestionTimer()
+        return
+      }
+      this.finishPractice()
+    },
+    finishPractice() {
+      this.stopQuestionTimer()
+      this.stopDictation()
+      const responses = this.practiceQuestions.map((item) => {
+        const draft = this.practiceDrafts[item.id] || {}
+        const evaluation = draft.evaluation || evaluateInterviewResponse({
+          answer: draft.answer,
+          evidence: draft.evidence,
+          confidence: draft.confidence,
+          question: item,
+          claims: this.cvClaims,
+          elapsedSeconds: this.timerChoice,
+        })
+        return {
+          questionId: item.id,
+          question: item.question,
+          answer: String(draft.answer || '').trim(),
+          evidence: String(draft.evidence || '').trim(),
+          confidence: Number(draft.confidence || 0),
+          evaluation,
+        }
+      })
+      const report = aggregateInterviewReport(responses)
+      const session = {
+        id: 'interview-studio-' + Date.now(),
+        createdAt: new Date().toISOString(),
+        startedAt: this.practiceStartedAt,
+        applicationId: this.activeApplication?.id || '',
+        contextLabel: this.activeApplication
+          ? this.activeApplication.company + ' · ' + this.activeApplication.role
+          : this.activePack.label + ' · ' + (this.selectedTemplate?.name || 'CV'),
+        rolePackId: this.rolePackId,
+        seniority: this.seniority,
+        stageId: this.stageId,
+        stageLabel: this.activeStageLabel,
+        market: this.market,
+        total: responses.length,
+        answered: responses.filter((item) => item.answer || item.evidence).length,
+        evidenceReady: responses.filter((item) => item.evidence.length >= 12).length,
+        responses,
+        report,
+      }
+      this.practiceSessions = [session, ...this.practiceSessions]
+      this.savePracticeSessions()
+      this.practiceActive = false
+      this.activeModule = 'reports'
+    },
+    clearPracticeHistory() {
+      this.practiceSessions = []
+      this.savePracticeSessions()
+    },
+    formatSessionDate(value) {
+      try {
+        return new Intl.DateTimeFormat('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date(value))
+      } catch {
+        return value
+      }
+    },
+    speakQuestion() {
+      if (!this.practiceCurrent || !window.speechSynthesis) return
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(this.practiceCurrent.question)
+      utterance.lang = 'vi-VN'
+      utterance.rate = 0.96
+      window.speechSynthesis.speak(utterance)
+    },
+    toggleDictation() {
+      if (this.speechRecording) this.stopDictation()
+      else this.startDictation()
+    },
+    startDictation() {
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (!Recognition || !this.practiceCurrent) return
+      this.stopDictation()
+      const recognition = new Recognition()
+      recognition.lang = 'vi-VN'
+      recognition.continuous = true
+      recognition.interimResults = true
+      let committed = ''
+      recognition.onresult = (event) => {
+        let interim = ''
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          const transcript = event.results[index][0]?.transcript || ''
+          if (event.results[index].isFinal) committed += transcript + ' '
+          else interim += transcript
+        }
+        const id = this.practiceCurrent?.id
+        if (!id) return
+        const draft = this.practiceDrafts[id] || {}
+        const base = String(draft.answer || '').replace(/\s*\[đang nghe:.*$/s, '').trim()
+        const next = [base, committed.trim()].filter(Boolean).join(' ')
+        this.practiceDrafts = {
+          ...this.practiceDrafts,
+          [id]: {
+            ...draft,
+            answer: interim ? `${next} [đang nghe: ${interim}]` : next,
+          },
+        }
+      }
+      recognition.onerror = () => {
+        this.speechRecording = false
+      }
+      recognition.onend = () => {
+        this.speechRecording = false
+        const id = this.practiceCurrent?.id
+        if (!id) return
+        const draft = this.practiceDrafts[id] || {}
+        this.practiceDrafts = {
+          ...this.practiceDrafts,
+          [id]: {
+            ...draft,
+            answer: String(draft.answer || '').replace(/\s*\[đang nghe:.*$/s, '').trim(),
+          },
+        }
+      }
+      this.speechRecognition = recognition
+      this.speechRecording = true
+      recognition.start()
+    },
+    stopDictation() {
+      if (this.speechRecognition) {
+        try { this.speechRecognition.stop() } catch {}
+      }
+      this.speechRecognition = null
+      this.speechRecording = false
+    },
+  },
+}
+</script>
+
+<style scoped lang="scss">
+.is-shell {
+  --ink: #eef7f7;
+  --muted: #8fa5aa;
+  --faint: #60757a;
+  --line: rgba(159, 199, 199, .14);
+  --surface: #0c171d;
+  --surface-2: #101f26;
+  --surface-3: #14272e;
+  --accent: #72e7d4;
+  --accent-2: #9db7ff;
+  --warning: #f3c86a;
+  --danger: #ff827c;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 238px minmax(0, 1fr);
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 82% 3%, rgba(114, 231, 212, .08), transparent 27%),
+    radial-gradient(circle at 34% 90%, rgba(157, 183, 255, .05), transparent 30%),
+    #071116;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+}
+
+.is-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  background: rgba(7, 17, 22, .94);
+  backdrop-filter: blur(24px);
+}
+
+.is-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 4px 8px 24px;
+  color: inherit;
+  text-decoration: none;
+
+  strong, small { display: block; }
+  strong { font-size: 14px; letter-spacing: -.02em; }
+  small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+}
+
+.is-brand__mark {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(114, 231, 212, .35);
+  border-radius: 12px;
+  color: #071116;
+  background: var(--accent);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: -.03em;
+  box-shadow: 0 8px 28px rgba(114, 231, 212, .12);
+}
+
+.is-nav {
+  display: grid;
+  gap: 5px;
+
+  button {
+    min-height: 45px;
+    padding: 0 10px;
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  button:hover { background: rgba(255,255,255,.035); color: var(--ink); }
+  button.active {
+    background: rgba(114, 231, 212, .09);
+    color: var(--accent);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+
+  b {
+    padding: 2px 5px;
+    border-radius: 5px;
+    background: rgba(157, 183, 255, .1);
+    color: var(--accent-2);
+    font-size: 9px;
+  }
+}
+
+.is-nav__icon {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.is-sidebar__context {
+  margin-top: auto;
+  padding: 16px 10px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+
+  > strong { display: block; margin-top: 9px; font-size: 13px; }
+  > p { margin: 4px 0 11px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+  > div { display: flex; flex-wrap: wrap; gap: 5px; }
+  > div span {
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: rgba(255,255,255,.045);
+    color: var(--muted);
+    font-size: 9px;
+  }
+}
+
+.is-sidebar__footer {
+  padding: 15px 8px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+
+  a, button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 10px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  a:hover, button:hover { color: var(--accent); }
+}
+
+.is-stage { min-width: 0; }
+
+.is-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: 68px;
+  padding: 10px clamp(20px, 3vw, 44px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(7, 17, 22, .82);
+  backdrop-filter: blur(22px);
+
+  > div:first-child {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 9px auto 1fr;
+    gap: 8px;
+    align-items: center;
+
+    > span:not(.is-topbar__dot) { font-size: 12px; font-weight: 700; }
+    small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  }
+}
+
+.is-topbar__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 14px rgba(114,231,212,.7);
+}
+
+.is-topbar__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  select {
+    max-width: 260px;
+    min-height: 38px;
+    padding: 0 32px 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    color: var(--muted);
+    background: var(--surface);
+    font: inherit;
+    font-size: 10px;
+  }
+}
+
+.is-command {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #071116;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.is-content {
+  width: min(1500px, 100%);
+  margin: 0 auto;
+  padding: 42px clamp(20px, 4vw, 58px) 100px;
+}
+
+.is-view { animation: is-enter 220ms ease both; }
+
+@keyframes is-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.is-eyebrow {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 780;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.is-hero {
+  min-height: 430px;
+  padding: clamp(38px, 5vw, 72px) 0 46px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, .6fr);
+  gap: clamp(50px, 8vw, 120px);
+  align-items: end;
+
+  h1 {
+    max-width: 15ch;
+    margin: 16px 0 24px;
+    font-size: clamp(48px, 6.3vw, 88px);
+    line-height: .94;
+    letter-spacing: -.062em;
+    font-weight: 690;
+  }
+
+  h1 em { color: var(--accent); font-style: normal; font-weight: 520; }
+
+  > div > p {
+    max-width: 65ch;
+    margin: 0;
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.65;
+  }
+}
+
+.is-hero__actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 9px; }
+
+.is-button {
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255,255,255,.035);
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 720;
+  cursor: pointer;
+}
+
+.is-button--primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: #071116;
+}
+
+.is-readiness {
+  padding: 25px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(114,231,212,.08), rgba(255,255,255,.02));
+
+  > div:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  > div:first-child span { color: var(--muted); font-size: 9px; font-weight: 720; letter-spacing: .1em; }
+  > div:first-child b { color: var(--accent); font-size: 42px; letter-spacing: -.05em; }
+  > strong { display: block; margin-top: 22px; font-size: 18px; }
+  > p { margin: 7px 0 22px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+}
+
+.is-readiness__bar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(255,255,255,.07);
+
+  span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent-2), var(--accent)); }
+}
+
+.is-stat-grid {
+  margin-bottom: 22px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+
+  article {
+    padding: 22px 20px;
+    border-right: 1px solid var(--line);
+  }
+  article:last-child { border-right: 0; }
+  span, small, b { display: block; }
+  span { color: var(--muted); font-size: 10px; }
+  b { margin: 12px 0 5px; font-size: 30px; letter-spacing: -.04em; }
+  small { color: var(--faint); font-size: 9px; line-height: 1.4; }
+}
+
+.is-overview-grid,
+.is-report-grid {
+  margin-bottom: 22px;
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 18px;
+}
+
+.is-panel {
+  padding: 25px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(12,23,29,.7);
+}
+
+.is-panel__heading {
+  margin-bottom: 21px;
+
+  h2 { margin: 8px 0 0; font-size: 19px; letter-spacing: -.025em; }
+}
+
+.is-panel__heading--split { display: flex; justify-content: space-between; gap: 18px; align-items: end; }
+
+.is-context-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 11px;
+
+  label, .is-filterbar label, .is-mock-config label {
+    display: grid;
+    gap: 6px;
+  }
+
+  label > span, .is-filterbar label > span, .is-mock-config label > span {
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 650;
+  }
+}
+
+.is-shell select,
+.is-shell input[type="search"],
+.is-shell textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #09151b;
+  color: var(--ink);
+  font: inherit;
+}
+
+.is-shell select { min-height: 40px; padding: 0 10px; font-size: 10px; }
+.is-shell textarea { padding: 13px; resize: vertical; font-size: 12px; line-height: 1.55; }
+.is-shell input[type="search"] { min-height: 42px; padding: 0 12px; font-size: 11px; }
+
+.is-shell select:focus-visible,
+.is-shell textarea:focus-visible,
+.is-shell input:focus-visible,
+.is-shell button:focus-visible,
+.is-shell a:focus-visible,
+.is-shell summary:focus-visible {
+  outline: 2px solid rgba(114,231,212,.55);
+  outline-offset: 2px;
+}
+
+.is-signal {
+  margin-top: 18px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+
+  > span { color: var(--accent-2); font-size: 9px; font-weight: 780; letter-spacing: .1em; }
+  strong { display: block; margin-top: 8px; font-size: 12px; line-height: 1.5; }
+  p { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+}
+
+.is-action-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 15px 0;
+    display: grid;
+    grid-template-columns: 30px 1fr auto;
+    gap: 12px;
+    align-items: start;
+    border-top: 1px solid var(--line);
+  }
+
+  li:first-child { border-top: 0; }
+  li > b { color: var(--accent); font-size: 9px; }
+  strong { display: block; font-size: 11px; }
+  p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+  button { padding: 0; border: 0; background: transparent; color: var(--accent); font: inherit; font-size: 9px; cursor: pointer; }
+}
+
+.is-source-status {
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: rgba(114,231,212,.08);
+  color: var(--accent);
+  font-size: 9px;
+}
+
+.is-source-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+
+  a {
+    min-height: 150px;
+    padding: 15px;
+    display: block;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a:hover { background: rgba(114,231,212,.035); }
+  a > span { display: inline-flex; padding: 3px 5px; border-radius: 5px; background: rgba(157,183,255,.09); color: var(--accent-2); font-size: 8px; }
+  strong, small { display: block; }
+  strong { margin-top: 12px; font-size: 11px; }
+  small { margin-top: 3px; color: var(--muted); font-size: 9px; }
+  p { margin: 10px 0 0; color: var(--faint); font-size: 9px; line-height: 1.45; }
+}
+
+.is-page-heading {
+  min-height: 250px;
+  padding: 28px 0 44px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 44px;
+  border-bottom: 1px solid var(--line);
+
+  h1 {
+    max-width: 18ch;
+    margin: 13px 0 16px;
+    font-size: clamp(38px, 5vw, 66px);
+    line-height: .98;
+    letter-spacing: -.052em;
+    font-weight: 650;
+  }
+
+  h1 em { color: var(--accent); font-style: normal; font-weight: 520; }
+  p { max-width: 70ch; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+}
+
+.is-heading-number { color: rgba(114,231,212,.16); font-size: clamp(70px, 10vw, 150px); line-height: .75; font-weight: 780; letter-spacing: -.07em; }
+
+.is-filterbar {
+  padding: 18px 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 190px 170px;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+
+  label { display: grid; gap: 6px; }
+  label > span { color: var(--muted); font-size: 9px; }
+}
+
+.is-question-grid { padding-top: 18px; display: grid; gap: 8px; }
+
+.is-question {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(12,23,29,.62);
+
+  summary {
+    min-height: 72px;
+    padding: 15px 18px;
+    display: grid;
+    grid-template-columns: 32px 1fr 22px;
+    gap: 12px;
+    align-items: center;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  summary::-webkit-details-marker { display: none; }
+  summary small { display: block; margin-bottom: 4px; color: var(--muted); font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
+  summary small b { margin-left: 7px; color: var(--accent); font-size: 7px; }
+  summary strong { font-size: 13px; line-height: 1.4; }
+}
+
+.is-question__number { color: var(--faint); font-size: 9px; }
+.is-question__plus { color: var(--accent); font-size: 18px; transition: transform 160ms ease; }
+.is-question[open] .is-question__plus { transform: rotate(45deg); }
+
+.is-question__body {
+  padding: 0 18px 20px 62px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+
+  section { padding-top: 14px; border-top: 1px solid var(--line); }
+  section > span { display: block; margin-bottom: 7px; color: var(--accent-2); font-size: 8px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+  p, li { color: var(--muted); font-size: 10px; line-height: 1.55; }
+  p { margin: 0; }
+  ol, ul { margin: 0; padding-left: 16px; }
+}
+
+.is-question__example,
+.is-question__sources { grid-column: 1 / -1; }
+.is-question__example p { max-width: 80ch; color: var(--ink); font-size: 11px; }
+.is-question__avoid li::marker { color: var(--danger); }
+.is-question__sources > div { display: flex; flex-wrap: wrap; gap: 7px 12px; }
+.is-question__sources a { color: var(--accent); font-size: 9px; text-decoration: none; }
+
+.is-claim-layout {
+  padding-top: 20px;
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.is-claim-list {
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+
+  button {
+    padding: 13px;
+    display: grid;
+    grid-template-columns: 1fr 38px;
+    gap: 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(12,23,29,.62);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  button.active { border-color: rgba(114,231,212,.38); background: rgba(114,231,212,.06); }
+  small { display: block; margin-bottom: 6px; color: var(--faint); font-size: 8px; text-transform: uppercase; }
+  strong { display: -webkit-box; overflow: hidden; font-size: 10px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+  b { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: rgba(157,183,255,.08); color: var(--accent-2); font-size: 9px; }
+  b.high { background: rgba(243,200,106,.09); color: var(--warning); }
+}
+
+.is-claim-detail {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(12,23,29,.66);
+}
+
+.is-claim-detail__header {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  gap: 28px;
+  align-items: start;
+
+  h2 { max-width: 34ch; margin: 10px 0 0; font-size: clamp(24px, 3vw, 40px); line-height: 1.1; letter-spacing: -.035em; }
+}
+
+.is-risk-ring {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border: 1px solid rgba(243,200,106,.26);
+  border-radius: 50%;
+  background: rgba(243,200,106,.04);
+
+  b { color: var(--warning); font-size: 26px; }
+  span { margin-top: 2px; color: var(--muted); font-size: 8px; }
+}
+
+.is-claim-meta { margin: 22px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.is-claim-meta span { padding: 5px 7px; border-radius: 6px; background: rgba(255,255,255,.035); color: var(--muted); font-size: 8px; }
+
+.is-claim-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+
+.is-probe-list {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: probes;
+
+  li {
+    padding: 13px 0;
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 10px;
+    border-top: 1px solid var(--line);
+    color: var(--ink);
+    font-size: 11px;
+    line-height: 1.5;
+    counter-increment: probes;
+  }
+  li:first-child { border-top: 0; }
+  li::before { content: "0" counter(probes); color: var(--accent); font-size: 8px; }
+}
+
+.is-matched-questions { margin-top: 12px; display: grid; gap: 6px; }
+.is-matched-questions button {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 90px 1fr 20px;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #09151b;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  span { color: var(--muted); font-size: 8px; }
+  strong { font-size: 10px; line-height: 1.45; }
+  b { color: var(--accent); }
+}
+
+.is-claim-note-footer { margin-top: 9px; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.is-claim-note-footer > span { color: var(--faint); font-size: 8px; }
+.is-claim-note-footer button { min-height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); font: inherit; font-size: 9px; cursor: pointer; }
+.is-claim-note-footer button.ready { border-color: rgba(114,231,212,.3); color: var(--accent); background: rgba(114,231,212,.06); }
+
+.is-mock-start {
+  padding-top: 24px;
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 18px;
+}
+
+.is-mock-config,
+.is-mock-preview {
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(12,23,29,.65);
+}
+
+.is-mock-config {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+
+  > div { grid-column: 1 / -1; margin-bottom: 10px; }
+  h2 { margin: 8px 0 0; font-size: 24px; letter-spacing: -.03em; }
+  label { display: grid; gap: 6px; }
+  label > span { color: var(--muted); font-size: 9px; }
+}
+
+.is-mock-preview {
+  display: grid;
+  gap: 0;
+
+  > span { margin-bottom: 8px; }
+  > div {
+    padding: 14px 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    border-top: 1px solid var(--line);
+  }
+  > div b { font-size: 18px; }
+  > div span { color: var(--muted); font-size: 9px; }
+  > button { margin-top: 18px; width: 100%; }
+}
+
+.is-live-session {
+  max-width: 1050px;
+  margin: 26px auto 0;
+  padding: clamp(24px, 4vw, 46px);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(12,23,29,.74);
+
+  > h2 {
+    max-width: 28ch;
+    margin: 36px 0 22px;
+    font-size: clamp(28px, 4vw, 46px);
+    line-height: 1.08;
+    letter-spacing: -.04em;
+  }
+}
+
+.is-live-session__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+
+  > div:first-child span, > div:first-child small { display: block; }
+  > div:first-child span { color: var(--accent); font-size: 9px; font-weight: 780; letter-spacing: .1em; }
+  > div:first-child small { margin-top: 5px; color: var(--muted); font-size: 9px; }
+}
+
+.is-timer {
+  text-align: right;
+
+  b, span { display: block; }
+  b { color: var(--accent); font-size: 28px; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+  span { color: var(--muted); font-size: 8px; }
+}
+.is-timer.warning b { color: var(--warning); }
+
+.is-live-session__tools { margin-bottom: 17px; display: flex; flex-wrap: wrap; gap: 6px; }
+.is-live-session__tools button,
+.is-coach-toggle {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+.is-live-session__tools button:disabled { opacity: .4; cursor: not-allowed; }
+.is-live-session__tools button.recording { border-color: rgba(255,130,124,.35); color: var(--danger); }
+
+.is-answer-grid {
+  display: grid;
+  grid-template-columns: 1.25fr .75fr;
+  gap: 10px;
+
+  label { display: grid; gap: 7px; }
+  label > span { color: var(--muted); font-size: 9px; font-weight: 680; }
+  label > small { color: var(--faint); font-size: 8px; line-height: 1.4; }
+}
+
+.is-confidence {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 100px 1fr 38px;
+  gap: 10px;
+  align-items: center;
+
+  > span { color: var(--muted); font-size: 9px; }
+  input { accent-color: var(--accent); }
+  b { font-size: 10px; }
+}
+
+.is-evaluation {
+  margin-top: 20px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 20px;
+  border: 1px solid rgba(114,231,212,.15);
+  border-radius: 12px;
+  background: rgba(114,231,212,.035);
+
+  > ul { grid-column: 1 / -1; margin: 0; padding-left: 17px; color: var(--warning); }
+  > ul li { margin-top: 5px; font-size: 9px; line-height: 1.45; }
+}
+
+.is-evaluation__score {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border-right: 1px solid var(--line);
+
+  b { color: var(--accent); font-size: 42px; letter-spacing: -.05em; }
+  span { color: var(--muted); font-size: 8px; }
+}
+
+.is-evaluation__bars,
+.is-report-bars {
+  display: grid;
+  gap: 7px;
+
+  > div { display: grid; grid-template-columns: 82px 1fr 28px; gap: 8px; align-items: center; }
+  > div > span { color: var(--muted); font-size: 8px; }
+  > div > i { height: 4px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.06); }
+  > div > i > b { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent-2), var(--accent)); }
+  > div > strong { text-align: right; font-size: 8px; }
+}
+
+.is-coach-toggle { margin-top: 15px; color: var(--accent); }
+
+.is-coach-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+
+  section { padding: 13px; border: 1px solid var(--line); border-radius: 9px; background: #09151b; }
+  section > span { color: var(--accent-2); font-size: 8px; font-weight: 750; text-transform: uppercase; }
+  p, li { color: var(--muted); font-size: 9px; line-height: 1.5; }
+  p { margin: 7px 0 0; }
+  ol, ul { margin: 7px 0 0; padding-left: 15px; }
+}
+
+.is-session-actions {
+  margin-top: 22px;
+  padding-top: 17px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.is-report-hero {
+  margin: 24px 0 18px;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 145px 1fr;
+  gap: 24px;
+  align-items: center;
+  border: 1px solid rgba(114,231,212,.18);
+  border-radius: 14px;
+  background: linear-gradient(100deg, rgba(114,231,212,.07), rgba(157,183,255,.025));
+
+  > div:last-child strong { font-size: 20px; }
+  > div:last-child p { margin: 6px 0; color: var(--muted); font-size: 10px; }
+  > div:last-child span { color: var(--accent); font-size: 9px; }
+}
+
+.is-report-score {
+  padding-right: 24px;
+  border-right: 1px solid var(--line);
+  text-align: center;
+
+  span { display: block; color: var(--muted); font-size: 7px; letter-spacing: .08em; }
+  b { color: var(--accent); font-size: 58px; letter-spacing: -.07em; }
+  small { color: var(--muted); font-size: 9px; }
+}
+
+.is-warning-list { margin: 0; padding: 0; list-style: none; }
+.is-warning-list li { padding: 11px 0 11px 20px; position: relative; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; line-height: 1.5; }
+.is-warning-list li::before { content: "!"; position: absolute; left: 0; color: var(--warning); font-weight: 800; }
+
+.is-text-button { padding: 0; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 9px; cursor: pointer; }
+
+.is-history-table {
+  border-top: 1px solid var(--line);
+
+  article {
+    padding: 13px 0;
+    display: grid;
+    grid-template-columns: 1.3fr .75fr .6fr .55fr 42px;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+  }
+
+  strong, small { display: block; }
+  strong { font-size: 10px; }
+  small { margin-top: 3px; color: var(--faint); font-size: 8px; }
+  article > span { color: var(--muted); font-size: 9px; }
+  article > b { color: var(--accent); text-align: right; font-size: 12px; }
+}
+
+.is-empty { padding: 36px; text-align: center; color: var(--muted); font-size: 10px; }
+.is-empty button { display: block; margin: 12px auto 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 1180px) {
+  .is-shell { grid-template-columns: 190px minmax(0, 1fr); }
+  .is-source-grid { grid-template-columns: repeat(3, 1fr); }
+  .is-claim-layout { grid-template-columns: 300px minmax(0, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .is-shell { display: block; }
+  .is-sidebar {
+    position: sticky;
+    z-index: 30;
+    height: auto;
+    padding: 9px 12px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .is-brand { padding: 0; }
+  .is-brand small, .is-sidebar__context, .is-sidebar__footer { display: none; }
+  .is-nav { display: flex; justify-content: flex-end; overflow: auto; }
+  .is-nav button { min-width: max-content; min-height: 38px; display: flex; }
+  .is-nav button span:not(.is-nav__icon) { display: none; }
+  .is-nav__icon { width: 28px; height: 28px; }
+  .is-topbar { top: 58px; }
+  .is-hero { min-height: auto; grid-template-columns: 1fr; gap: 30px; }
+  .is-stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .is-stat-grid article:nth-child(2) { border-right: 0; }
+  .is-overview-grid, .is-report-grid, .is-mock-start { grid-template-columns: 1fr; }
+  .is-source-grid { grid-template-columns: repeat(2, 1fr); }
+  .is-claim-layout { grid-template-columns: 1fr; }
+  .is-claim-list { max-height: 340px; grid-template-columns: repeat(2, 1fr); }
+  .is-answer-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .is-sidebar { grid-template-columns: auto 1fr; }
+  .is-brand span:last-child { display: none; }
+  .is-topbar { padding-inline: 14px; }
+  .is-topbar > div:first-child small, .is-topbar__actions label { display: none; }
+  .is-content { padding: 24px 14px 70px; }
+  .is-hero { padding-top: 28px; }
+  .is-hero h1 { font-size: 44px; }
+  .is-stat-grid { grid-template-columns: 1fr 1fr; }
+  .is-stat-grid article { padding: 16px 10px; }
+  .is-context-grid, .is-mock-config { grid-template-columns: 1fr; }
+  .is-mock-config > div { grid-column: auto; }
+  .is-source-grid { grid-template-columns: 1fr; }
+  .is-page-heading { min-height: 200px; align-items: start; }
+  .is-page-heading h1 { font-size: 40px; }
+  .is-heading-number { display: none; }
+  .is-filterbar { grid-template-columns: 1fr; }
+  .is-question__body { padding-left: 16px; grid-template-columns: 1fr; }
+  .is-question__example, .is-question__sources { grid-column: auto; }
+  .is-claim-list { grid-template-columns: 1fr; }
+  .is-claim-detail { padding: 18px; }
+  .is-claim-detail__header { grid-template-columns: 1fr; }
+  .is-risk-ring { width: 80px; }
+  .is-live-session { padding: 20px 15px; }
+  .is-live-session__meta { align-items: start; }
+  .is-live-session > h2 { font-size: 30px; }
+  .is-coach-grid { grid-template-columns: 1fr; }
+  .is-evaluation { grid-template-columns: 1fr; }
+  .is-evaluation__score { padding-bottom: 14px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .is-session-actions { flex-direction: column; }
+  .is-session-actions button { width: 100%; }
+  .is-history-table article { grid-template-columns: 1fr auto; }
+  .is-history-table article > span { display: none; }
+  .is-report-hero { grid-template-columns: 1fr; }
+  .is-report-score { padding-right: 0; padding-bottom: 14px; border-right: 0; border-bottom: 1px solid var(--line); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-view, .is-question__plus { animation: none; transition: none; }
+}
+</style>
