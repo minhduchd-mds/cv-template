@@ -6,6 +6,7 @@
     :accent="accent"
     :appearance="appearance"
     :interactive="interactive"
+    :template-id="template.id"
     @edit-section="$emit('edit-section', $event)"
     @reorder-section="$emit('reorder-section', $event)"
   />
@@ -142,6 +143,7 @@
 </template>
 
 <script>
+import { getTemplateSectionConfig, isTemplateSectionVisible, sameTemplateSectionGroup } from '../data/template-layout-contracts'
 import ExecutiveEdgeTemplate from './templates/ExecutiveEdgeTemplate.vue'
 import SoftPortfolioTemplate from './templates/SoftPortfolioTemplate.vue'
 import ProductOperatorTemplate from './templates/ProductOperatorTemplate.vue'
@@ -279,7 +281,7 @@ export default {
       const section = event.target?.closest?.('[data-section-id]')
       if (!section || !this.$el.contains(section)) return
       const targetId = section.getAttribute('data-section-id')
-      if (!targetId || targetId === this.dragSectionId) return
+      if (!targetId || targetId === this.dragSectionId || !sameTemplateSectionGroup(this.template?.id, this.dragSectionId, targetId)) return
       event.preventDefault()
       this.$el.querySelectorAll('.is-section-drop-target').forEach((node) => node.classList.remove('is-section-drop-target'))
       section.classList.add('is-section-drop-target')
@@ -289,7 +291,7 @@ export default {
       if (!this.interactive || !this.dragSectionId) return
       const section = event.target?.closest?.('[data-section-id]')
       const targetId = section?.getAttribute?.('data-section-id')
-      if (!targetId || targetId === this.dragSectionId) {
+      if (!targetId || targetId === this.dragSectionId || !sameTemplateSectionGroup(this.template?.id, this.dragSectionId, targetId)) {
         this.handleSectionDragEnd()
         return
       }
@@ -306,13 +308,11 @@ export default {
     sectionConfig(id) {
       return (this.profile.sections || []).find((section) => section.id === id)
     },
-    visible(id) {
-      const config = this.sectionConfig(id)
-      return config ? config.enabled !== false : true
-    },
+    visible(id) { return isTemplateSectionVisible(this.profile, this.template?.id, id) },
     sectionStyle(id) {
       const index = (this.profile.sections || []).findIndex((section) => section.id === id)
-      return { order: index === -1 ? 99 : index }
+      const config = getTemplateSectionConfig(this.template?.id, id)
+      return { order: index === -1 ? 99 : index, '--layout-group': config.group }
     },
     imageStyle(url) {
       if (!url) return {}

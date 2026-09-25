@@ -323,24 +323,28 @@
             <div><span>08</span><h3>Section layout</h3></div>
             <p>Drag sections to reorder them. Turn a section off to hide it from every CV template.</p>
           </div>
+          <div class="layout-contract-summary"><div><span>{{ layoutModeLabel }}</span><strong>{{ template?.name || 'Template' }}</strong><small>{{ layoutContract.label }} · {{ layoutContract.page }}</small></div><p>{{ layoutContract.mode === 'flexible' ? 'Reorder only inside Main or Side groups.' : 'Hierarchy is locked to protect this composition.' }}</p></div>
           <div class="layout-list">
             <article
               v-for="(section, index) in profile.sections"
               :key="section.id"
               class="layout-item"
-              :class="{ dragging: dragIndex === index, disabled: !section.enabled }"
-              draggable="true"
+              :class="{ dragging: dragIndex === index, disabled: !section.enabled, unsupported: !sectionSupport(section.id).supported }"
+              :draggable="sectionReorderable(section.id)"
               @dragstart="startDrag(index)"
               @dragend="dragIndex = null"
               @dragover.prevent
               @drop="dropSection(index)"
             >
-              <span class="drag-handle" aria-hidden="true">⋮⋮</span>
-              <div><strong>{{ section.label }}</strong><small>{{ section.id }}</small></div>
+              <span class="drag-handle" aria-hidden="true">{{ sectionReorderable(section.id) ? '⋮⋮' : '•' }}</span>
+              <div><strong>{{ section.label }}</strong><small>{{ sectionMeta(section.id) }}</small></div>
               <div class="layout-actions">
-                <button type="button" :disabled="index === 0" aria-label="Move section up" @click="moveSection(index, -1)">↑</button>
-                <button type="button" :disabled="index === profile.sections.length - 1" aria-label="Move section down" @click="moveSection(index, 1)">↓</button>
-                <label class="section-toggle"><input type="checkbox" :checked="section.enabled" @change="toggleSection(section.id, $event.target.checked)" /><span></span></label>
+                <template v-if="sectionReorderable(section.id)">
+                  <button type="button" :disabled="!canMoveSection(index, -1)" aria-label="Move section up" @click="moveSection(index, -1)">↑</button>
+                  <button type="button" :disabled="!canMoveSection(index, 1)" aria-label="Move section down" @click="moveSection(index, 1)">↓</button>
+                </template>
+                <span v-else class="layout-lock">{{ sectionSupport(section.id).supported ? 'Locked' : 'Unavailable' }}</span>
+                <label v-if="sectionSupport(section.id).supported" class="section-toggle"><input type="checkbox" :checked="sectionVisible(section.id)" @change="toggleSection(section.id, $event.target.checked)" /><span></span></label>
               </div>
             </article>
           </div>
@@ -358,6 +362,8 @@
 </template>
 
 <script>
+import { getTemplateLayoutContract, getTemplateSectionConfig, isTemplateSectionVisible, sameTemplateSectionGroup } from '../data/template-layout-contracts'
+
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 
 export default {
@@ -406,6 +412,8 @@ export default {
     }
   },
   computed: {
+    layoutContract() { return getTemplateLayoutContract(this.template?.id) },
+    layoutModeLabel() { return this.layoutContract.mode === 'fixed' ? 'Fixed hierarchy' : this.layoutContract.mode === 'guided' ? 'Guided hierarchy' : 'Flexible hierarchy' },
     initials() {
       return String(this.profile.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
     },
@@ -481,6 +489,11 @@ export default {
     },
   },
   methods: {
+    sectionSupport(id) { return getTemplateSectionConfig(this.template?.id, id) },
+    sectionVisible(id) { return isTemplateSectionVisible(this.profile, this.template?.id, id) },
+    sectionReorderable(id) { return this.layoutContract.mode === 'flexible' && this.sectionSupport(id).supported !== false },
+    sectionMeta(id) { const c=this.sectionSupport(id); if(c.supported===false)return 'Not used by this template'; return (c.group==='side'?'Side':'Main')+(c.placement?' · '+c.placement:'')+(c.limit?' · max '+c.limit:'') },
+    canMoveSection(index,direction) { const s=this.profile.sections||[]; const a=s[index],b=s[index+direction]; return !!(a&&b&&this.sectionReorderable(a.id)&&this.sectionReorderable(b.id)&&sameTemplateSectionGroup(this.template?.id,a.id,b.id)) },
     syncRequestedTab(value) {
       if (this.tabs.some((tab) => tab.id === value)) this.activeTab = value
     },
@@ -609,22 +622,25 @@ export default {
       })
     },
     toggleSection(id, enabled) {
+      if (this.sectionSupport(id).supported === false) return
       const sections = (this.profile.sections || []).map((section) => section.id === id ? { ...section, enabled } : { ...section })
       this.updateArray('sections', sections)
     },
-    startDrag(index) { this.dragIndex = index },
+    startDrag(index) { const section=(this.profile.sections||[])[index]; this.dragIndex=section&&this.sectionReorderable(section.id)?index:null },
     dropSection(index) {
       if (this.dragIndex === null || this.dragIndex === index) return
       const sections = (this.profile.sections || []).map((section) => ({ ...section }))
+      const source=sections[this.dragIndex], target=sections[index]
+      if(!source||!target||!sameTemplateSectionGroup(this.template?.id,source.id,target.id)){ this.dragIndex=null; return }
       const [moved] = sections.splice(this.dragIndex, 1)
       sections.splice(index, 0, moved)
       this.updateArray('sections', sections)
       this.dragIndex = null
     },
     moveSection(index, direction) {
+      if(!this.canMoveSection(index,direction))return
       const sections = (this.profile.sections || []).map((section) => ({ ...section }))
       const nextIndex = index + direction
-      if (nextIndex < 0 || nextIndex >= sections.length) return
       const [moved] = sections.splice(index, 1)
       sections.splice(nextIndex, 0, moved)
       this.updateArray('sections', sections)

@@ -1,9 +1,12 @@
+import { canReorderTemplateSection, getTemplateLayoutContract, isTemplateSectionVisible, sameTemplateSectionGroup } from '../../data/template-layout-contracts'
+
 export const referenceTemplateMixin = {
   props: {
     profile: { type: Object, required: true },
     accent: { type: String, required: true },
     appearance: { type: Object, default: () => ({}) },
     interactive: { type: Boolean, default: false },
+    templateId: { type: String, default: '' },
   },
   emits: ['edit-section', 'reorder-section'],
   data() {
@@ -55,22 +58,25 @@ export const referenceTemplateMixin = {
     },
   },
   methods: {
+    visible(sectionId) { return isTemplateSectionVisible(this.profile, this.templateId, sectionId) },
+    canReorder(sectionId) { return canReorderTemplateSection(this.templateId, sectionId) },
     imageStyle(url) {
       if (!url) return {}
       return { backgroundImage: `url("${String(url).replace(/"/g, '%22')}")` }
     },
     editAttrs(tab, sectionId = null, field = '') {
-      if (!this.interactive) return {}
-      const attrs = {
-        'data-edit-section': tab,
-        tabindex: 0,
-        role: 'button',
-        'aria-label': field ? `Edit ${field}` : `Edit ${tab} section`,
-      }
+      const attrs = {}
       if (sectionId) {
         attrs['data-section-id'] = sectionId
-        attrs.draggable = 'true'
+        attrs['data-section-supported'] = String(getTemplateLayoutContract(this.templateId).sections[sectionId]?.supported !== false)
+        if (!this.visible(sectionId)) attrs.style = { display: 'none' }
       }
+      if (!this.interactive) return attrs
+      attrs['data-edit-section'] = tab
+      attrs.tabindex = 0
+      attrs.role = 'button'
+      attrs['aria-label'] = field ? `Edit ${field}` : `Edit ${tab} section`
+      if (sectionId && this.canReorder(sectionId)) attrs.draggable = 'true'
       if (field) attrs['data-edit-field'] = field
       return attrs
     },
@@ -99,7 +105,7 @@ export const referenceTemplateMixin = {
       const section = event.target?.closest?.('[data-section-id]')
       if (!section || !this.$el.contains(section)) return
       this.dragSectionId = section.getAttribute('data-section-id')
-      if (!this.dragSectionId) return
+      if (!this.dragSectionId || !this.canReorder(this.dragSectionId)) { this.dragSectionId = null; return }
       section.classList.add('is-section-dragging')
       event.dataTransfer?.setData('text/plain', this.dragSectionId)
       if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
@@ -109,7 +115,7 @@ export const referenceTemplateMixin = {
       const section = event.target?.closest?.('[data-section-id]')
       if (!section || !this.$el.contains(section)) return
       const targetId = section.getAttribute('data-section-id')
-      if (!targetId || targetId === this.dragSectionId) return
+      if (!targetId || targetId === this.dragSectionId || !this.canReorder(targetId) || !sameTemplateSectionGroup(this.templateId, this.dragSectionId, targetId)) return
       event.preventDefault()
       this.$el.querySelectorAll('.is-section-drop-target').forEach((node) => node.classList.remove('is-section-drop-target'))
       section.classList.add('is-section-drop-target')
@@ -118,7 +124,7 @@ export const referenceTemplateMixin = {
       if (!this.dragSectionId) return
       const section = event.target?.closest?.('[data-section-id]')
       const targetId = section?.getAttribute?.('data-section-id')
-      if (targetId && targetId !== this.dragSectionId) {
+      if (targetId && targetId !== this.dragSectionId && this.canReorder(targetId) && sameTemplateSectionGroup(this.templateId, this.dragSectionId, targetId)) {
         event.preventDefault()
         this.$emit('reorder-section', { source: this.dragSectionId, target: targetId })
       }
