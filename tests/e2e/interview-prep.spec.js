@@ -77,3 +77,52 @@ test('Vietnam dataset keeps source provenance visible on question cards', async 
   await expect(question.getByText(/Glints Vietnam/)).toBeVisible()
   await expect(question.getByText(/ITviec/)).toBeVisible()
 })
+
+
+test('mock interview session uses application context and stores practice evidence locally', async ({ page }) => {
+  await page.addInitScript(() => {
+    const value = JSON.parse(window.localStorage.getItem('cv-studio-workspace-v3') || 'null')
+    value.ats.applications = [{
+      id: 'app-vn-1',
+      company: 'Viettel Digital',
+      role: 'Senior Product Designer',
+      status: 'Interview',
+      jd: 'Design systems user research stakeholder management product metrics',
+      notes: 'Hiring manager round',
+    }]
+    window.localStorage.setItem('cv-studio-workspace-v3', JSON.stringify(value))
+  })
+
+  await page.goto('/#interview')
+
+  await page.getByLabel('Application context').selectOption('app-vn-1')
+  await page.getByRole('button', { name: 'Bắt đầu mock interview' }).click()
+
+  await expect(page.locator('.interview-practice-session')).toBeVisible()
+  await expect(page.getByText(/QUESTION 1 \/ 5/)).toBeVisible()
+  await expect(page.getByText(/Viettel Digital · Senior Product Designer/)).toBeVisible()
+
+  for (let index = 0; index < 5; index += 1) {
+    const session = page.locator('.interview-practice-session')
+    await session.getByPlaceholder(/Trả lời theo cách anh sẽ nói thật/).fill('Tôi sẽ trả lời bằng một ví dụ thực tế.')
+    await session.getByPlaceholder(/Project, phạm vi mình sở hữu/).fill('Project A · ownership · trade-off · result')
+    await session.getByLabel('Mức tự tin').selectOption('4')
+    if (index === 0) {
+      await page.getByRole('button', { name: /Mở coach guidance/ }).click()
+      await expect(page.getByText('Họ muốn kiểm tra gì?')).toBeVisible()
+    }
+    await session.getByRole('button', { name: index === 4 ? 'Hoàn tất & lưu session' : 'Câu tiếp theo →' }).click()
+  }
+
+  await expect(page.getByText(/Đã lưu session/)).toBeVisible()
+  await expect(page.locator('.interview-practice-history article')).toHaveCount(1)
+
+  const sessions = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('cv-studio-interview-sessions-v1') || '[]')
+  )
+  expect(sessions).toHaveLength(1)
+  expect(sessions[0].applicationId).toBe('app-vn-1')
+  expect(sessions[0].answered).toBe(5)
+  expect(sessions[0].evidenceReady).toBe(5)
+  expect(sessions[0].averageConfidence).toBe(4)
+})

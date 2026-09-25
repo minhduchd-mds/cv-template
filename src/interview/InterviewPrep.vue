@@ -110,6 +110,129 @@
           <small>Không thêm số liệu hoặc claim nếu anh không chắc nguồn và phạm vi contribution.</small>
         </article>
 
+        <section class="interview-practice" aria-label="Mock interview session">
+          <div class="interview-practice__heading">
+            <div>
+              <span class="interview-kicker">MOCK INTERVIEW</span>
+              <h2>Luyện 5 câu theo CV, vòng phỏng vấn và JD đang nhắm tới.</h2>
+              <p>Trả lời trước, mở coach sau. Session chỉ lưu ghi chú và mức tự tin của anh trong trình duyệt.</p>
+            </div>
+            <div class="interview-practice__controls">
+              <label>
+                <span>Application context</span>
+                <select v-model="applicationId">
+                  <option value="">CV hiện tại · không gắn job</option>
+                  <option v-for="application in applications" :key="application.id" :value="application.id">
+                    {{ application.company }} · {{ application.role }}
+                  </option>
+                </select>
+              </label>
+              <button type="button" class="interview-practice__start" @click="startPractice">
+                {{ practiceActive ? 'Tạo lại 5 câu' : 'Bắt đầu mock interview' }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="activeApplication" class="interview-practice__context">
+            <div>
+              <span>Đang luyện cho</span>
+              <strong>{{ activeApplication.company }} · {{ activeApplication.role }}</strong>
+            </div>
+            <p v-if="activeApplication.jd">{{ activeApplication.jd }}</p>
+            <small v-if="activeApplication.status">Pipeline: {{ activeApplication.status }}</small>
+          </div>
+
+          <div v-if="practiceActive && practiceCurrent" class="interview-practice-session">
+            <div class="interview-practice-session__top">
+              <div>
+                <span>QUESTION {{ practiceIndex + 1 }} / {{ practiceQuestions.length }}</span>
+                <strong>{{ practiceCurrent.question }}</strong>
+              </div>
+              <b>{{ practiceProgress }}%</b>
+            </div>
+            <div class="interview-practice-progress" aria-hidden="true">
+              <span :style="{ width: practiceProgress + '%' }"></span>
+            </div>
+
+            <div class="interview-practice-fields">
+              <label>
+                <span>Ý trả lời của anh</span>
+                <textarea
+                  v-model="practiceDrafts[practiceCurrent.id].answer"
+                  rows="5"
+                  placeholder="Trả lời theo cách anh sẽ nói thật trong buổi phỏng vấn…"
+                ></textarea>
+              </label>
+              <label>
+                <span>Evidence / STAR anchors</span>
+                <textarea
+                  v-model="practiceDrafts[practiceCurrent.id].evidence"
+                  rows="3"
+                  placeholder="Project, phạm vi mình sở hữu, trade-off, result, learning…"
+                ></textarea>
+              </label>
+              <label class="interview-practice-confidence">
+                <span>Mức tự tin</span>
+                <select v-model.number="practiceDrafts[practiceCurrent.id].confidence">
+                  <option :value="0">Chưa đánh giá</option>
+                  <option :value="1">1 · Cần luyện lại</option>
+                  <option :value="2">2 · Còn yếu</option>
+                  <option :value="3">3 · Tạm ổn</option>
+                  <option :value="4">4 · Tự tin</option>
+                  <option :value="5">5 · Sẵn sàng</option>
+                </select>
+              </label>
+            </div>
+
+            <button type="button" class="interview-practice__reveal" @click="practiceShowGuide = !practiceShowGuide">
+              {{ practiceShowGuide ? 'Ẩn coach guidance' : 'Mở coach guidance sau khi đã trả lời' }}
+            </button>
+
+            <div v-if="practiceShowGuide" class="interview-practice-guide">
+              <section>
+                <span>Họ muốn kiểm tra gì?</span>
+                <p>{{ practiceCurrent.why }}</p>
+              </section>
+              <section>
+                <span>Khung trả lời</span>
+                <ol><li v-for="step in practiceCurrent.framework" :key="step">{{ step }}</li></ol>
+              </section>
+              <section>
+                <span>Ví dụ tham khảo</span>
+                <p>“{{ practiceCurrent.example }}”</p>
+              </section>
+              <section>
+                <span>Follow-up có thể gặp</span>
+                <ul><li v-for="followUp in practiceCurrent.followUps" :key="followUp">{{ followUp }}</li></ul>
+              </section>
+            </div>
+
+            <div class="interview-practice-session__actions">
+              <small>{{ practiceAnsweredCount }}/{{ practiceQuestions.length }} câu đã có ghi chú · confidence TB {{ practiceAverageConfidence }}</small>
+              <button type="button" @click="nextPractice">
+                {{ practiceIndex === practiceQuestions.length - 1 ? 'Hoàn tất & lưu session' : 'Câu tiếp theo →' }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="practiceNotice" class="interview-practice__notice" role="status">{{ practiceNotice }}</div>
+
+          <div v-if="recentPracticeSessions.length" class="interview-practice-history">
+            <div class="interview-practice-history__heading">
+              <span>RECENT SESSIONS</span>
+              <small>Lưu local · tối đa 30 session gần nhất</small>
+            </div>
+            <article v-for="session in recentPracticeSessions" :key="session.id">
+              <div>
+                <strong>{{ session.contextLabel }}</strong>
+                <small>{{ formatSessionDate(session.createdAt) }} · {{ session.stageLabel }}</small>
+              </div>
+              <span>{{ session.answered }}/{{ session.total }} answered</span>
+              <b>{{ session.averageConfidence || '—' }}/5</b>
+            </article>
+          </div>
+        </section>
+
         <div class="interview-question-toolbar">
           <div>
             <span class="interview-kicker">{{ filteredQuestions.length }} QUESTIONS</span>
@@ -267,6 +390,15 @@ export default {
       categoryId: 'all',
       query: '',
       market: 'vietnam',
+      applicationId: '',
+      practiceActive: false,
+      practiceQuestions: [],
+      practiceIndex: 0,
+      practiceShowGuide: false,
+      practiceDrafts: {},
+      practiceStartedAt: '',
+      practiceSessions: [],
+      practiceNotice: '',
     }
   },
   computed: {
@@ -322,6 +454,36 @@ export default {
         ].join(' ').toLocaleLowerCase('vi').includes(keyword)
       })
     },
+    applications() {
+      return Array.isArray(this.workspace?.ats?.applications) ? this.workspace.ats.applications : []
+    },
+    activeApplication() {
+      if (!this.applicationId) return null
+      return this.applications.find((application) => application.id === this.applicationId) || null
+    },
+    practiceCurrent() {
+      return this.practiceQuestions[this.practiceIndex] || null
+    },
+    practiceProgress() {
+      if (!this.practiceQuestions.length) return 0
+      return Math.round(((this.practiceIndex + 1) / this.practiceQuestions.length) * 100)
+    },
+    practiceAnsweredCount() {
+      return this.practiceQuestions.filter((item) => {
+        const draft = this.practiceDrafts[item.id] || {}
+        return Boolean(String(draft.answer || '').trim() || String(draft.evidence || '').trim() || Number(draft.confidence || 0))
+      }).length
+    },
+    practiceAverageConfidence() {
+      const values = this.practiceQuestions
+        .map((item) => Number(this.practiceDrafts[item.id]?.confidence || 0))
+        .filter((value) => value > 0)
+      if (!values.length) return '—'
+      return (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1)
+    },
+    recentPracticeSessions() {
+      return this.practiceSessions.slice(0, 5)
+    },
     activeSources() {
       const preferred = this.interviewSources.filter((source) => {
         const packMatch = source.packs.includes(this.rolePackId) || source.packs.includes('general')
@@ -356,6 +518,7 @@ export default {
   },
   mounted() {
     this.workspace = readCanonicalWorkspace()
+    this.loadPracticeSessions()
     const storedId = this.workspace?.studio?.selectedId
     if (storedId && this.templates.some((template) => template.id === storedId)) {
       this.selectedTemplateId = storedId
@@ -364,6 +527,133 @@ export default {
     }
   },
   methods: {
+    loadPracticeSessions() {
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem('cv-studio-interview-sessions-v1') || '[]')
+        this.practiceSessions = Array.isArray(parsed) ? parsed : []
+      } catch {
+        this.practiceSessions = []
+      }
+    },
+    savePracticeSessions() {
+      this.practiceSessions = this.practiceSessions.slice(0, 30)
+      try {
+        window.localStorage.setItem('cv-studio-interview-sessions-v1', JSON.stringify(this.practiceSessions))
+      } catch (error) {
+        console.warn('Unable to persist interview practice sessions.', error)
+      }
+    },
+    practiceContextTerms() {
+      const application = this.activeApplication
+      if (!application) return []
+      return [
+        application.role,
+        application.jd,
+        application.notes,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('vi')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .split(/[^a-z0-9+#.]+/i)
+        .filter((term) => term.length >= 4)
+        .filter((term, index, list) => list.indexOf(term) === index)
+        .slice(0, 40)
+    },
+    practiceQuestionScore(item) {
+      const terms = this.practiceContextTerms()
+      if (!terms.length) return 0
+      const text = [
+        item.question,
+        item.why,
+        item.example,
+        ...(item.framework || []),
+        ...(item.followUps || []),
+      ]
+        .join(' ')
+        .toLocaleLowerCase('vi')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+      return terms.reduce((score, term) => score + (text.includes(term) ? 1 : 0), 0)
+    },
+    startPractice() {
+      const pool = [...this.filteredQuestions]
+        .sort((a, b) => {
+          const relevance = this.practiceQuestionScore(b) - this.practiceQuestionScore(a)
+          if (relevance) return relevance
+          return this.stageWeight(a) - this.stageWeight(b)
+        })
+      this.practiceQuestions = pool.slice(0, 5)
+      this.practiceDrafts = Object.fromEntries(this.practiceQuestions.map((item) => [
+        item.id,
+        { answer: '', evidence: '', confidence: 0 },
+      ]))
+      this.practiceIndex = 0
+      this.practiceShowGuide = false
+      this.practiceActive = this.practiceQuestions.length > 0
+      this.practiceStartedAt = new Date().toISOString()
+      this.practiceNotice = this.practiceActive
+        ? 'Mock session đã sẵn sàng. Trả lời trước rồi mới mở coach guidance.'
+        : 'Không có câu hỏi phù hợp với bộ lọc hiện tại.'
+    },
+    nextPractice() {
+      if (!this.practiceQuestions.length) return
+      if (this.practiceIndex < this.practiceQuestions.length - 1) {
+        this.practiceIndex += 1
+        this.practiceShowGuide = false
+        return
+      }
+      this.finishPractice()
+    },
+    finishPractice() {
+      const confidences = this.practiceQuestions
+        .map((item) => Number(this.practiceDrafts[item.id]?.confidence || 0))
+        .filter((value) => value > 0)
+      const session = {
+        id: 'session-' + Date.now(),
+        createdAt: new Date().toISOString(),
+        startedAt: this.practiceStartedAt,
+        applicationId: this.activeApplication?.id || '',
+        contextLabel: this.activeApplication
+          ? this.activeApplication.company + ' · ' + this.activeApplication.role
+          : this.activePack.label + ' · ' + (this.selectedTemplate?.name || 'CV Studio'),
+        rolePackId: this.rolePackId,
+        seniority: this.seniority,
+        stageId: this.stageId,
+        stageLabel: this.activeStageLabel,
+        market: this.market,
+        total: this.practiceQuestions.length,
+        answered: this.practiceAnsweredCount,
+        evidenceReady: this.practiceQuestions.filter((item) => String(this.practiceDrafts[item.id]?.evidence || '').trim()).length,
+        averageConfidence: confidences.length
+          ? Number((confidences.reduce((sum, value) => sum + value, 0) / confidences.length).toFixed(1))
+          : 0,
+        responses: this.practiceQuestions.map((item) => ({
+          questionId: item.id,
+          question: item.question,
+          answer: String(this.practiceDrafts[item.id]?.answer || '').trim(),
+          evidence: String(this.practiceDrafts[item.id]?.evidence || '').trim(),
+          confidence: Number(this.practiceDrafts[item.id]?.confidence || 0),
+        })),
+      }
+      this.practiceSessions = [session, ...this.practiceSessions]
+      this.savePracticeSessions()
+      this.practiceActive = false
+      this.practiceNotice = 'Đã lưu session. Dùng confidence và evidence gap để chọn câu cần luyện lại.'
+    },
+    formatSessionDate(value) {
+      try {
+        return new Intl.DateTimeFormat('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date(value))
+      } catch {
+        return value
+      }
+    },
     goHome() {
       this.$emit('back')
     },
@@ -1018,4 +1308,295 @@ export default {
     transition: none;
   }
 }
+
+.interview-practice {
+  margin-bottom: 34px;
+  padding: 28px;
+  border: 1px solid var(--separator);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .72);
+  box-shadow: 0 18px 55px rgba(15, 23, 42, .05);
+}
+
+.interview-practice__heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, .62fr);
+  gap: 28px;
+  align-items: end;
+
+  h2 {
+    max-width: 24ch;
+    margin: 10px 0 8px;
+    font-size: clamp(24px, 3vw, 38px);
+    line-height: 1.04;
+    letter-spacing: -.04em;
+  }
+
+  p {
+    max-width: 68ch;
+    margin: 0;
+    color: var(--secondary);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}
+
+.interview-practice__controls {
+  display: grid;
+  gap: 8px;
+
+  label {
+    display: grid;
+    gap: 6px;
+  }
+
+  label > span {
+    color: var(--tertiary);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  select {
+    min-height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--separator);
+    border-radius: 11px;
+    background: #fff;
+    color: var(--label);
+    font: inherit;
+  }
+}
+
+.interview-practice__start,
+.interview-practice-session__actions button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--label);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.interview-practice__context {
+  margin-top: 18px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr) auto;
+  gap: 18px;
+  align-items: start;
+  border-radius: 14px;
+  background: var(--fill);
+
+  span, small { color: var(--tertiary); font-size: 11px; }
+  strong { display: block; margin-top: 4px; font-size: 14px; }
+  p { max-height: 80px; overflow: auto; margin: 0; color: var(--secondary); font-size: 12px; line-height: 1.5; }
+}
+
+.interview-practice-session {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--separator);
+}
+
+.interview-practice-session__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+
+  span { display: block; color: var(--tertiary); font-size: 11px; font-weight: 750; letter-spacing: .08em; }
+  strong { display: block; max-width: 62ch; margin-top: 7px; font-size: 20px; line-height: 1.35; }
+  b { color: var(--blue); font-size: 14px; }
+}
+
+.interview-practice-progress {
+  height: 5px;
+  margin: 15px 0 20px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--fill);
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--blue);
+    transition: width 180ms ease;
+  }
+}
+
+.interview-practice-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  label {
+    display: grid;
+    gap: 7px;
+  }
+
+  label > span {
+    color: var(--secondary);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  textarea,
+  select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--separator);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--label);
+    font: inherit;
+  }
+
+  textarea {
+    resize: vertical;
+    line-height: 1.55;
+  }
+}
+
+.interview-practice-confidence {
+  grid-column: 1 / -1;
+  max-width: 280px;
+}
+
+.interview-practice__reveal {
+  margin-top: 13px;
+  padding: 9px 12px;
+  border: 1px solid var(--separator);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--label);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.interview-practice-guide {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+
+  section {
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--fill);
+  }
+
+  span {
+    color: var(--tertiary);
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  p, ol, ul {
+    margin: 8px 0 0;
+    color: var(--secondary);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+}
+
+.interview-practice-session__actions {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  small { color: var(--secondary); font-size: 11px; }
+  button { min-width: 160px; padding: 0 15px; }
+}
+
+.interview-practice__notice {
+  margin-top: 12px;
+  color: var(--secondary);
+  font-size: 12px;
+}
+
+.interview-practice-history {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--separator);
+}
+
+.interview-practice-history__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+
+  span {
+    color: var(--tertiary);
+    font-size: 10px;
+    font-weight: 760;
+    letter-spacing: .1em;
+  }
+
+  small { color: var(--tertiary); font-size: 10px; }
+}
+
+.interview-practice-history article {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--separator);
+
+  strong, small { display: block; }
+  strong { font-size: 12px; }
+  small { margin-top: 2px; color: var(--tertiary); font-size: 10px; }
+  > span { color: var(--secondary); font-size: 11px; }
+  > b { min-width: 44px; text-align: right; font-size: 12px; }
+}
+
+@media (max-width: 900px) {
+  .interview-practice__heading,
+  .interview-practice__context {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-practice-fields,
+  .interview-practice-guide {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-practice-confidence {
+    grid-column: auto;
+    max-width: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .interview-practice {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+
+  .interview-practice-session__actions,
+  .interview-practice-history__heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .interview-practice-session__actions button {
+    width: 100%;
+  }
+
+  .interview-practice-history article {
+    grid-template-columns: 1fr auto;
+  }
+
+  .interview-practice-history article > span {
+    grid-column: 1 / -1;
+  }
+}
+
 </style>
