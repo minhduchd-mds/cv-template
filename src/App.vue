@@ -98,9 +98,32 @@
               </span>
             </button>
           </div>
+          <div class="template-browser-tools">
+            <label class="template-browser-search">
+              <span>Find template</span>
+              <input v-model="templateSearch" type="search" placeholder="Role, industry, ATS, portfolio…" autocomplete="off" />
+            </label>
+            <div class="template-quick-filters" role="group" aria-label="Template capabilities">
+              <button v-for="filter in templateFilters" :key="filter.id" type="button" :class="{ active: templateFilter === filter.id }" :aria-pressed="templateFilter === filter.id" @click="templateFilter = filter.id">{{ filter.label }}</button>
+            </div>
+            <div class="template-browser-count">{{ templateResultLabel }}</div>
+          </div>
           <div class="category-tabs" role="tablist" aria-label="CV template categories">
             <button v-for="item in categories" :key="item" type="button" :class="['category-tab', { active: category === item }]" @click="category = item">{{ item }}</button>
           </div>
+          <section class="template-contract-summary" aria-label="Selected template contract">
+            <div>
+              <span>{{ selectedTemplateContract.mode === 'flexible' ? 'Flexible hierarchy' : selectedTemplateContract.mode === 'guided' ? 'Guided hierarchy' : 'Fixed hierarchy' }}</span>
+              <strong>{{ selectedTemplate.name }}</strong>
+              <p>{{ selectedTemplateContract.structure }}</p>
+            </div>
+            <div class="template-contract-pills">
+              <span>{{ selectedTemplateContract.page }}</span>
+              <span v-if="templateSupportsField(selectedTemplate.id,'avatar')">Avatar</span>
+              <span v-if="templateHasTrait(selectedTemplate.id,'ats') || templateHasTrait(selectedTemplate.id,'ats-readable')">ATS-readable</span>
+              <span v-if="templateHasTrait(selectedTemplate.id,'portfolio')">Portfolio</span>
+            </div>
+          </section>
           <div class="template-grid">
             <button v-for="template in filteredTemplates" :key="template.id" type="button" :class="['template-card', { active: selectedId === template.id }]" @click="chooseTemplate(template)">
               <div class="template-thumb" :class="[`thumb-${template.variant}`, template.theme ? `thumb-theme-${template.theme}` : '']" :style="{ '--thumb-accent': template.accent }"><span class="thumb-sidebar"></span><span class="thumb-head"></span><span class="thumb-line line-a"></span><span class="thumb-line line-b"></span><span class="thumb-line line-c"></span></div>
@@ -112,9 +135,19 @@
                 <strong>{{ template.name }}</strong>
                 <span v-if="template.role" class="template-role">{{ template.role }}</span>
                 <span>{{ template.description }}</span>
+                <span class="template-capability-row">
+                  <small>{{ templateContract(template).page }}</small>
+                  <small>{{ templateContract(template).mode }}</small>
+                  <small v-if="templateSupportsField(template.id,'avatar')">avatar</small>
+                </span>
               </span>
               <span class="template-check" aria-hidden="true">✓</span>
             </button>
+            <div v-if="!filteredTemplates.length" class="template-browser-empty">
+              <strong>No template matches these filters</strong>
+              <span>Clear search or switch capability/category filters.</span>
+              <button type="button" @click="clearTemplateFilters">Clear filters</button>
+            </div>
           </div>
         </aside>
 
@@ -187,6 +220,7 @@ import { candidate as defaultCandidate, templates } from './data/cv'
 import { autoCompleteCv, candidateCompletionReport } from './data/auto-complete-cv'
 import { safeImageSource, sanitizeProfileMedia } from './security/safe-media'
 import { hasWorkspaceProfile, patchCanonicalWorkspace, readCanonicalWorkspace } from './data/workspace-store'
+import { getTemplateLayoutContract, templateHasTrait, templateSupportsField } from './data/template-layout-contracts'
 
 const STORAGE_KEY = 'cv-studio-profile-v1'
 const STUDIO_KEY = 'cv-studio-settings-v1'
@@ -230,6 +264,8 @@ export default {
       templates,
       selectedId: templates[0].id,
       category: 'All',
+      templateSearch: '',
+      templateFilter: 'all',
       accent: templates[0].accent,
       zoom: 0.85,
       appearance: { font: 'sans', density: 'balanced', radius: 'soft', projectLayout: 'cards', textScale: 1, headingScale: 1, sectionSpacing: 'balanced', avatarShape: 'circle', avatarSize: 'medium', avatarX: 50, avatarY: 50, avatarZoom: 1, avatarRotate: 0 },
@@ -270,8 +306,35 @@ export default {
   },
   computed: {
     categories() { return ['All'].concat(Array.from(new Set(this.templates.map((item) => item.category)))) },
-    filteredTemplates() { return this.category === 'All' ? this.templates : this.templates.filter((item) => item.category === this.category) },
+    templateFilters() {
+      return [
+        { id:'all', label:'All' },
+        { id:'ats', label:'ATS-ready' },
+        { id:'portfolio', label:'Portfolio' },
+        { id:'avatar', label:'Avatar' },
+        { id:'one-page', label:'1-page' },
+        { id:'flexible', label:'Flexible' },
+      ]
+    },
+    filteredTemplates() {
+      const query=String(this.templateSearch||'').trim().toLowerCase()
+      return this.templates.filter((template)=>{
+        const contract=getTemplateLayoutContract(template.id)
+        const categoryMatch=this.category==='All'||template.category===this.category
+        if(!categoryMatch)return false
+        const searchSource=[template.name,template.category,template.role,template.description,contract.audience,contract.structure,...contract.traits].join(' ').toLowerCase()
+        if(query&&!searchSource.includes(query))return false
+        if(this.templateFilter==='ats'&&!['ats','ats-readable'].some((trait)=>templateHasTrait(template.id,trait)))return false
+        if(this.templateFilter==='portfolio'&&!templateHasTrait(template.id,'portfolio'))return false
+        if(this.templateFilter==='avatar'&&!templateSupportsField(template.id,'avatar'))return false
+        if(this.templateFilter==='one-page'&&!String(contract.page||'').toLowerCase().includes('1 page preferred'))return false
+        if(this.templateFilter==='flexible'&&contract.mode!=='flexible')return false
+        return true
+      })
+    },
     selectedTemplate() { return this.templates.find((item) => item.id === this.selectedId) || this.templates[0] },
+    selectedTemplateContract() { return getTemplateLayoutContract(this.selectedTemplate.id) },
+    templateResultLabel() { return this.filteredTemplates.length+' of '+this.templates.length+' templates' },
     candidateInitials() {
       return String(this.candidate.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
     },
@@ -369,6 +432,10 @@ export default {
     window.clearTimeout(this.historyCoalesceTimer)
   },
   methods: {
+    templateContract(template) { return getTemplateLayoutContract(template?.id) },
+    templateSupportsField(templateId,fieldId) { return templateSupportsField(templateId,fieldId) },
+    templateHasTrait(templateId,trait) { return templateHasTrait(templateId,trait) },
+    clearTemplateFilters() { this.templateSearch=''; this.templateFilter='all'; this.category='All' },
     openEditor(request = 'profile') {
       const allowed = ['profile', 'impact', 'experience', 'projects', 'education', 'skills', 'design', 'layout']
       const tab = request && typeof request === 'object' ? request.tab : request
