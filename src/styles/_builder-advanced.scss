@@ -290,3 +290,24 @@
   .layout-contract-summary{grid-template-columns:1fr}
   .layout-contract-summary p{max-width:none;text-align:left}
 }
+
+/* VUE_CONTENT_HEALTH_V1 */
+.vue-content-health{margin:0 0 14px;padding:12px;border:1px solid var(--apple-separator,#e2e6ec);border-radius:14px;background:#f8fafc}
+.vue-content-health>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.vue-content-health>header span,.vue-content-health>header strong,.vue-content-health>header small{display:block}
+.vue-content-health>header span{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a93a3}
+.vue-content-health>header strong{margin-top:2px;font-size:14px}
+.vue-content-health>header small{margin-top:3px;font-size:11px;color:#737d8c}
+.vue-content-health>header button{padding:5px 8px;border:1px solid #d5dbe4;border-radius:8px;background:#fff;color:#596273;font-size:11px;font-weight:700}
+.vue-content-health-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}
+.vue-content-health-groups>span{min-width:0;padding:8px;border:1px solid #e1e5eb;border-radius:10px;background:#fff}
+.vue-content-health-groups strong,.vue-content-health-groups small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vue-content-health-groups strong{font-size:11px}.vue-content-health-groups small{margin-top:2px;font-size:10px;color:#8a93a3}
+.vue-content-health-list{display:grid;gap:7px;margin-top:8px}
+.vue-health-item{display:grid;grid-template-columns:7px minmax(0,1fr) auto;gap:9px;align-items:start;padding:10px;border:1px solid #e1e5eb;border-radius:11px;background:#fff}
+.vue-health-item>i{width:7px;height:7px;margin-top:5px;border-radius:50%;background:#9aa3b2}.vue-health-item.warning>i{background:#e11d48}.vue-health-item.review>i{background:#f59e0b}.vue-health-item.info>i{background:#2563eb}
+.vue-health-item>div span,.vue-health-item>div strong{display:block}.vue-health-item>div span{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8a93a3}.vue-health-item>div strong{margin-top:2px;font-size:12px}
+.vue-health-item p{margin:3px 0 0;color:#6b7483;font-size:11px;line-height:1.45}.vue-health-item>button{align-self:center;padding:6px 8px;border:1px solid #d5dbe4;border-radius:8px;background:#fff;font-size:10px;font-weight:700;color:#475467}
+.vue-health-item.warning>button{border-color:#f3bdc8;color:#b42318}.vue-health-clear{margin-top:8px;padding:12px;border:1px dashed #cdd4de;border-radius:10px;background:#fff;text-align:center}.vue-health-clear strong{font-size:12px}.vue-health-clear p{margin:3px 0 0;color:#737d8c;font-size:11px}
+.vue-content-health.collapsed{padding-bottom:10px}
+@media(max-width:720px){.vue-content-health-groups{grid-template-columns:1fr}.vue-health-item{grid-template-columns:7px minmax(0,1fr)}.vue-health-item>button{grid-column:2;width:100%}}

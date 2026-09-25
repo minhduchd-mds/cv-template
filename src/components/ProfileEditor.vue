@@ -34,6 +34,28 @@
         <div class="editor-body">
         <p v-if="imageError" class="editor-error" role="alert">{{ imageError }}</p>
 
+        <section v-if="!['design','layout'].includes(activeTab)" class="vue-content-health" :class="{ collapsed: !healthOpen }">
+          <header>
+            <div><span>Content intelligence</span><strong>Content Health</strong><small>{{ contentHealthMeta.clear }}/{{ contentHealthMeta.total }} checks clear · {{ contentHealthMeta.warnings }} action{{ contentHealthMeta.warnings === 1 ? '' : 's' }} needed</small></div>
+            <button type="button" :aria-expanded="String(healthOpen)" @click="healthOpen = !healthOpen">{{ healthOpen ? 'Hide' : 'Show' }}</button>
+          </header>
+          <template v-if="healthOpen">
+            <div class="vue-content-health-groups">
+              <span><strong>Readability</strong><small>{{ contentHealthFindings.filter((item) => item.group === 'Readability').length || 'Clear' }}</small></span>
+              <span><strong>Evidence</strong><small>{{ contentHealthFindings.filter((item) => item.group === 'Evidence').length || 'Clear' }}</small></span>
+              <span><strong>Template coverage</strong><small>{{ contentHealthFindings.filter((item) => item.group === 'Template coverage').length || 'Clear' }}</small></span>
+            </div>
+            <div v-if="contentHealthFindings.length" class="vue-content-health-list">
+              <article v-for="item in contentHealthFindings" :key="item.id" :class="['vue-health-item', item.level]">
+                <i aria-hidden="true"></i>
+                <div><span>{{ item.group }}</span><strong>{{ item.title }}</strong><p>{{ item.detail }}</p></div>
+                <button type="button" @click="handleHealthAction(item)">{{ healthActionLabel(item) }}</button>
+              </article>
+            </div>
+            <div v-else class="vue-health-clear"><strong>No content issues detected</strong><p>Current length, evidence and template coverage look clean.</p></div>
+          </template>
+        </section>
+
         <section v-if="activeTab === 'profile'" class="editor-section">
           <div class="editor-section-heading">
             <div><span>01</span><h3>Profile & contact</h3></div>
@@ -125,7 +147,7 @@
             <label class="editor-field"><span>Email</span><input :value="profile.email" type="email" @input="update('email', $event.target.value)" /></label>
             <label class="editor-field"><span>Phone</span><input :value="profile.phone" type="text" @input="update('phone', $event.target.value)" /></label>
             <label class="editor-field editor-field-wide"><span>Website / portfolio</span><input :value="profile.website" type="text" @input="update('website', $event.target.value)" /></label>
-            <label class="editor-field editor-field-wide"><span>Professional summary</span><textarea :value="profile.summary" rows="7" @input="update('summary', $event.target.value)"></textarea><small>{{ profile.summary.length }} characters</small></label>
+            <label class="editor-field editor-field-wide"><span>Professional summary</span><textarea data-profile-field="summary" :value="profile.summary" rows="7" @input="update('summary', $event.target.value)"></textarea><small>{{ profile.summary.length }} characters</small></label>
             <label class="editor-field editor-field-wide"><span>Personal quote / statement</span><textarea data-profile-field="quote" :value="profile.quote || ''" rows="3" @input="update('quote', $event.target.value)"></textarea><small>Optional — used by selected templates such as Revenue Driver.</small></label>
           </div>
         </section>
@@ -363,6 +385,7 @@
 
 <script>
 import { getTemplateLayoutContract, getTemplateSectionConfig, isTemplateSectionVisible, sameTemplateSectionGroup } from '../data/template-layout-contracts'
+import { analyzeContentHealth, contentHealthSummary } from '../data/content-health'
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 
@@ -389,6 +412,7 @@ export default {
       dragIndex: null,
       avatarDragging: false,
       avatarDragStart: null,
+      healthOpen: true,
       avatarShapes: [
         { id: 'circle', label: 'Circle' },
         { id: 'rounded', label: 'Rounded' },
@@ -412,6 +436,8 @@ export default {
     }
   },
   computed: {
+    contentHealthFindings() { return analyzeContentHealth(this.profile, this.template?.id) },
+    contentHealthMeta() { return contentHealthSummary(this.contentHealthFindings) },
     layoutContract() { return getTemplateLayoutContract(this.template?.id) },
     layoutModeLabel() { return this.layoutContract.mode === 'fixed' ? 'Fixed hierarchy' : this.layoutContract.mode === 'guided' ? 'Guided hierarchy' : 'Flexible hierarchy' },
     initials() {
@@ -494,6 +520,42 @@ export default {
     sectionReorderable(id) { return this.layoutContract.mode === 'flexible' && this.sectionSupport(id).supported !== false },
     sectionMeta(id) { const c=this.sectionSupport(id); if(c.supported===false)return 'Not used by this template'; return (c.group==='side'?'Side':'Main')+(c.placement?' · '+c.placement:'')+(c.limit?' · max '+c.limit:'') },
     canMoveSection(index,direction) { const s=this.profile.sections||[]; const a=s[index],b=s[index+direction]; return !!(a&&b&&this.sectionReorderable(a.id)&&this.sectionReorderable(b.id)&&sameTemplateSectionGroup(this.template?.id,a.id,b.id)) },
+    healthActionLabel(item) {
+      if(item.safeFix==='dedupe-skills')return 'Remove duplicates'
+      if(item.safeFix==='show-section')return 'Show section'
+      if(item.tab==='projects')return 'Open projects'
+      if(item.tab==='experience')return 'Open experience'
+      if(item.tab==='impact')return 'Open impact'
+      if(item.tab==='education')return 'Open education'
+      if(item.tab==='skills')return 'Open skills'
+      if(item.tab==='layout')return 'Open layout'
+      return 'Review'
+    },
+    handleHealthAction(item) {
+      if(item.safeFix==='dedupe-skills'){
+        const seen=new Set()
+        const value=(this.profile.skills||[]).filter((skill)=>{
+          const key=String(skill||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()
+          if(!key||seen.has(key))return false
+          seen.add(key)
+          return true
+        })
+        this.updateArray('skills',value)
+        return
+      }
+      if(item.safeFix==='show-section'&&item.sectionId){
+        this.toggleSection(item.sectionId,true)
+        return
+      }
+      if(item.tab)this.activeTab=item.tab
+      if(item.field){
+        this.$nextTick(()=>{
+          const target=this.$el?.querySelector?.('[data-profile-field="'+item.field+'"]')
+          target?.scrollIntoView?.({behavior:'smooth',block:'center'})
+          target?.focus?.({preventScroll:true})
+        })
+      }
+    },
     syncRequestedTab(value) {
       if (this.tabs.some((tab) => tab.id === value)) this.activeTab = value
     },
