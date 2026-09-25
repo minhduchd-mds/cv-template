@@ -2194,6 +2194,9 @@
   const BACKUP_FORMAT = 'cv-studio-backup'
   const BACKUP_SCHEMA = 1
   const BACKUP_KEYS = [
+    { key: 'cv-studio-workspace-v3', type: 'object' },
+    { key: 'cv-studio-profile-v1', type: 'object' },
+    { key: 'cv-studio-settings-v1', type: 'object' },
     { key: PROFILE_KEY, type: 'object' },
     { key: SETTINGS_KEY, type: 'object' },
     { key: 'cv-studio-ats-target-v2', type: 'object' },

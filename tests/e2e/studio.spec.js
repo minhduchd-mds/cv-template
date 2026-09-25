@@ -670,3 +670,16 @@ test('canonical workspace mirrors static Studio edits', async ({ page }) => {
   expect(workspace.profile.sections.find((item)=>item.id==='projects').enabled).toBe(false)
   expect(workspace.studio.selectedId).toBeTruthy()
 })
+
+
+test('Vue export opens PDF Preflight and Backup uses canonical workspace', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button',{name:'Export PDF'}).click()
+  await expect(page.getByRole('heading',{name:'PDF Preflight'})).toBeVisible()
+  await page.getByRole('button',{name:'Close PDF preflight'}).click()
+
+  await page.getByRole('button',{name:'Backup'}).click()
+  await expect(page.getByRole('heading',{name:'Backup & Recovery'})).toBeVisible()
+  const workspace=await page.evaluate(()=>JSON.parse(localStorage.getItem('cv-studio-workspace-v3')||'null'))
+  expect(workspace?.schemaVersion).toBe(3)
+})

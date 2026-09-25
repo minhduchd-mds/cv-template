@@ -15,8 +15,9 @@
         <button class="completion-button" type="button" :aria-label="`Complete missing CV fields · ${completionPercent}% complete`" @click="runAutoComplete">
           <span>Complete gaps</span><strong>{{ completionPercent }}%</strong>
         </button>
+        <button class="ghost-button" type="button" @click="backupOpen = true">Backup</button>
         <button class="editor-trigger primary-button" type="button" @click="openEditor('profile')">Edit CV</button>
-        <button class="ghost-button export-button" type="button" @click="printCv"><span>Export PDF</span><span aria-hidden="true">↗</span></button>
+        <button class="ghost-button export-button" type="button" @click="openExportPreflight"><span>Export PDF</span><span aria-hidden="true">↗</span></button>
       </div>
     </header>
 
@@ -151,6 +152,9 @@
       <div class="print-only print-document"><CvDocument :profile="candidate" :template="selectedTemplate" :accent="accent" :appearance="appearance" /></div>
     </main>
 
+    <WorkspaceBackupDialog :open="backupOpen" @close="backupOpen = false" />
+    <ExportPreflightDialog :open="exportPreflightOpen" :health="printHealth" @close="exportPreflightOpen = false" @print="printCv" />
+
     <ProfileEditor
       :open="editorOpen"
       :profile="candidate"
@@ -177,6 +181,8 @@
 <script>
 import CvDocument from './components/CvDocument.vue'
 import ProfileEditor from './components/ProfileEditor.vue'
+import WorkspaceBackupDialog from './components/WorkspaceBackupDialog.vue'
+import ExportPreflightDialog from './components/ExportPreflightDialog.vue'
 import { candidate as defaultCandidate, templates } from './data/cv'
 import { autoCompleteCv, candidateCompletionReport } from './data/auto-complete-cv'
 import { safeImageSource, sanitizeProfileMedia } from './security/safe-media'
@@ -217,7 +223,7 @@ const hydrateCandidate = (saved) => {
 
 export default {
   name: 'App',
-  components: { CvDocument, ProfileEditor },
+  components: { CvDocument, ProfileEditor, WorkspaceBackupDialog, ExportPreflightDialog },
   data() {
     return {
       candidate: sanitizeProfileMedia(cloneCandidate()),
@@ -257,6 +263,9 @@ export default {
       historyCoalesceTimer: null,
       historyRestoring: false,
       workspaceReady: false,
+      backupOpen: false,
+      exportPreflightOpen: false,
+      printHealth: { a4HeightPx:1123, measuredHeight:1123, requiredFit:1, appliedFit:1, onePagePossible:true, naturalPages:1, pressure:[] },
     }
   },
   computed: {
@@ -503,7 +512,7 @@ export default {
       if (key === 'e') this.openEditor('profile')
       else if (key === 'f') this.focusMode = !this.focusMode
       else if (key === 'n') this.cycleTemplate()
-      else if (key === 'p') { event.preventDefault(); this.printCv() }
+      else if (key === 'p') { event.preventDefault(); this.openExportPreflight() }
       else if (key === 'escape') { this.editorOpen = false; this.focusMode = false }
     },
     captureStudioState() {
@@ -663,22 +672,51 @@ export default {
       sheet.style.removeProperty('--print-fit')
       sheet.style.removeProperty('--print-width')
       sheet.style.removeProperty('--print-min-height')
+      delete sheet.dataset.printMode
     },
-    preparePrintFit() {
+    measurePrintHealth() {
+      const sheet=document.querySelector('.preview-stage .cv-sheet')
+      const a4HeightPx=1123
+      if(!sheet)return{a4HeightPx,measuredHeight:a4HeightPx,requiredFit:1,appliedFit:1,onePagePossible:true,naturalPages:1,pressure:[]}
+      const measuredHeight=Math.max(a4HeightPx,sheet.scrollHeight,sheet.offsetHeight)
+      const requiredFit=Math.min(1,a4HeightPx/measuredHeight)
+      const appliedFit=Math.max(.68,requiredFit)
+      const nodes=[...sheet.querySelectorAll('[data-section-id],section')]
+      const seen=new Set()
+      const pressure=nodes.filter((node)=>{if(!node||seen.has(node)||node.offsetHeight<=0)return false;seen.add(node);return true}).map((node)=>{
+        const heading=node.querySelector('h2,h3,.section-title,.ref-section-title')
+        return{label:String(heading?.textContent||node.dataset.sectionId||'Section').trim().replace(/\s+/g,' ').slice(0,64),height:Math.max(node.scrollHeight,node.offsetHeight)}
+      }).sort((a,b)=>b.height-a.height).slice(0,3)
+      return{a4HeightPx,measuredHeight,requiredFit,appliedFit,onePagePossible:requiredFit>=.68,naturalPages:Math.max(1,Math.ceil(measuredHeight/a4HeightPx)),pressure}
+    },
+    openExportPreflight() {
+      this.printHealth=this.measurePrintHealth()
+      this.exportPreflightOpen=true
+    },
+    preparePrintFit(mode='one') {
       const sheet = document.querySelector('.preview-stage .cv-sheet')
       if (!sheet) return 1
       this.resetPrintFit()
-      const a4HeightPx = 1123
-      const measuredHeight = Math.max(a4HeightPx, sheet.scrollHeight, sheet.offsetHeight)
-      const fit = Math.max(0.68, Math.min(1, a4HeightPx / measuredHeight))
+      if(mode==='multi'){
+        sheet.style.setProperty('--print-fit','1')
+        sheet.style.setProperty('--print-width','210mm')
+        sheet.style.setProperty('--print-min-height','297mm')
+        sheet.dataset.printFit='1.0000'
+        sheet.dataset.printMode='multi'
+        return 1
+      }
+      const health=this.measurePrintHealth()
+      const fit=health.appliedFit
       sheet.style.setProperty('--print-fit', fit.toFixed(4))
-      sheet.style.setProperty('--print-width', `${(210 / fit).toFixed(2)}mm`)
-      sheet.style.setProperty('--print-min-height', `${(297 / fit).toFixed(2)}mm`)
+      sheet.style.setProperty('--print-width', (210 / fit).toFixed(2)+'mm')
+      sheet.style.setProperty('--print-min-height', (297 / fit).toFixed(2)+'mm')
       sheet.dataset.printFit = fit.toFixed(4)
+      sheet.dataset.printMode='one'
       return fit
     },
-    printCv() {
-      this.preparePrintFit()
+    printCv(mode='one') {
+      this.exportPreflightOpen=false
+      this.preparePrintFit(mode)
       window.addEventListener('afterprint', () => this.resetPrintFit(), { once: true })
       window.print()
     },
