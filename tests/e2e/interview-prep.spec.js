@@ -33,8 +33,10 @@ test('opens role-aware Interview Prep from the selected CV', async ({ page }) =>
   await expect(page.getByRole('heading', { name: /Các câu hỏi phỏng vấn thường gặp/i })).toBeVisible()
   await expect(page.getByText('Soft Portfolio', { exact: true })).toBeVisible()
   await expect(page.getByText(/UI\/UX & Product Design/).first()).toBeVisible()
-  await expect(page.getByText(/Nielsen Norman Group/)).toBeVisible()
-  await expect(page.locator('.interview-question')).toHaveCount(11)
+  await expect(page.getByLabel('Nguồn dữ liệu')).toHaveValue('vietnam')
+  await expect(page.getByText(/Glints Vietnam/).first()).toBeVisible()
+  await expect(page.getByText(/TopCV/).first()).toBeVisible()
+  await expect(page.locator('.interview-question')).toHaveCount(20)
   expect(pageErrors).toEqual([])
 })
 
@@ -43,6 +45,7 @@ test('can change pack, stage and search interview questions', async ({ page }) =
 
   await page.getByLabel('Role pack').selectOption('technical')
   await page.getByLabel('Vòng phỏng vấn').selectOption('technical')
+  await page.getByLabel('Nguồn dữ liệu').selectOption('all')
   await page.getByPlaceholder('Tìm: stakeholder, metric, failure...').fill('debug')
 
   await expect(page.getByText(/debug lỗi không tái hiện được/i)).toBeVisible()
@@ -61,4 +64,16 @@ test('mobile Interview Prep has no horizontal page overflow', async ({ page }, t
 
   expect(overflow.page).toBeLessThanOrEqual(overflow.viewport + 1)
   await expect(page.getByRole('link', { name: 'Mở CV Studio' })).toBeHidden()
+})
+
+
+test('Vietnam dataset keeps source provenance visible on question cards', async ({ page }) => {
+  await page.goto('/#interview')
+
+  await page.getByPlaceholder('Tìm: stakeholder, metric, failure...').fill('quy trình thiết kế')
+  const question = page.locator('.interview-question').filter({ hasText: 'Quy trình thiết kế' }).first()
+  await expect(question).toBeVisible()
+  await question.locator('summary').click()
+  await expect(question.getByText(/Glints Vietnam/)).toBeVisible()
+  await expect(question.getByText(/ITviec/)).toBeVisible()
 })
