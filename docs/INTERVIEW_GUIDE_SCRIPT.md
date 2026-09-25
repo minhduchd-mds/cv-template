@@ -794,3 +794,30 @@ Do **not** add AI scoring in V1. First make the content reliable and easy to pra
 - Content works without login and can remain local-first.
 - Mobile layout remains usable.
 - The new link sits next to the primary CV Studio action without weakening the main builder CTA.
+
+
+---
+
+# 11. Internet research sources used by V1
+
+V1 now keeps an explicit source library in `src/data/interview-prep.js`. Sources are used to validate themes and preparation patterns; the product does not copy source answers verbatim.
+
+- **Microsoft Careers — Interview tips:** role-specific formats, thinking out loud, clarifying assumptions, STAR(R), portfolio/work samples where relevant.
+- **Amazon Jobs — Behavioral / Product / Data / Front-end / Marketing prep:** past-behavior evidence, role competencies, data where relevant, successes, failures and growth.
+- **Indeed Career Guide — Behavioral interview preparation:** STAR structure and preparing concrete workplace examples.
+- **Nielsen Norman Group — UX portfolio interviews:** portfolio as both hiring evidence and an interview conversation aid.
+- **Coursera — Product Manager interview questions:** product judgment, redesign, data, customers and preparation.
+- **HubSpot — Sales interview questions:** quota, prospecting, objections, technical acumen and situational selling.
+- **SHRM — Interview question competencies:** behavioral and situational questions mapped to job competencies and KSAs.
+- **Nature Careers — Science interview questions:** research and academic interview themes informed by research leaders.
+
+Implementation status as of 2026-09-25:
+
+- `#interview` route: implemented.
+- Landing-page Interview Prep entry point: implemented.
+- Current CV → role-pack mapping: implemented for all 20 templates.
+- Seniority, interview-stage and category filters: implemented.
+- Searchable question deck: implemented.
+- Why / Framework / Example / Follow-up / Avoid cards: implemented.
+- Internet source panel: implemented.
+- AI scoring: intentionally deferred.
