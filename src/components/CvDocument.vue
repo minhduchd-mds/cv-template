@@ -143,7 +143,7 @@
 </template>
 
 <script>
-import { getTemplateSectionConfig, isTemplateSectionVisible, sameTemplateSectionGroup } from '../data/template-layout-contracts'
+import { getTemplateLayoutContract, getTemplateSectionConfig, isTemplateSectionVisible, sameTemplateSectionGroup } from '../data/template-layout-contracts'
 import ExecutiveEdgeTemplate from './templates/ExecutiveEdgeTemplate.vue'
 import SoftPortfolioTemplate from './templates/SoftPortfolioTemplate.vue'
 import ProductOperatorTemplate from './templates/ProductOperatorTemplate.vue'
@@ -201,6 +201,10 @@ export default {
         transform: `scale(${zoom}) rotate(${rotate}deg)`,
       }
     },
+    printPolicyClass() {
+      const policy=getTemplateLayoutContract(this.template?.id).print?.multiPage||'preserve-flow'
+      return `print-${policy}`
+    },
     appearanceClasses() {
       const font = ['sans', 'serif', 'mono'].includes(this.appearance?.font) ? this.appearance.font : 'sans'
       const density = ['compact', 'balanced', 'spacious'].includes(this.appearance?.density) ? this.appearance.density : 'balanced'
@@ -221,6 +225,7 @@ export default {
         `cv-heading-${headingScale}`,
         `cv-avatar-${avatarShape}`,
         `cv-avatar-size-${avatarSize}`,
+        this.printPolicyClass,
       ]
     },
     monogram() {
@@ -229,17 +234,14 @@ export default {
   },
   methods: {
     editAttrs(tab, sectionId = null) {
-      if (!this.interactive) return {}
-      const attrs = {
-        'data-edit-section': tab,
-        tabindex: 0,
-        role: 'button',
-        'aria-label': `Edit ${tab} section`,
-      }
-      if (sectionId) {
-        attrs['data-section-id'] = sectionId
-        attrs.draggable = 'true'
-      }
+      const attrs = {}
+      if (sectionId) attrs['data-section-id'] = sectionId
+      if (!this.interactive) return attrs
+      attrs['data-edit-section'] = tab
+      attrs.tabindex = 0
+      attrs.role = 'button'
+      attrs['aria-label'] = `Edit ${tab} section`
+      if (sectionId) attrs.draggable = 'true'
       return attrs
     },
     handleEditRequest(event) {

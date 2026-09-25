@@ -34,6 +34,10 @@ export const referenceTemplateMixin = {
     initials() {
       return String(this.profile.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
     },
+    printPolicyClass() {
+      const policy=getTemplateLayoutContract(this.templateId).print?.multiPage||'preserve-flow'
+      return `print-${policy}`
+    },
     referenceAppearanceClasses() {
       const font = ['sans', 'serif', 'mono'].includes(this.appearance?.font) ? this.appearance.font : 'sans'
       const density = ['compact', 'balanced', 'spacious'].includes(this.appearance?.density) ? this.appearance.density : 'balanced'
@@ -54,6 +58,7 @@ export const referenceTemplateMixin = {
         `cv-heading-${headingScale}`,
         `cv-avatar-size-${size}`,
         `cv-avatar-${shape}`,
+        this.printPolicyClass,
       ]
     },
   },

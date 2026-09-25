@@ -3514,3 +3514,93 @@ button{cursor:pointer}
 .static-template-filters{display:flex;gap:5px;flex-wrap:wrap;margin:-3px 0 10px}.static-template-filters button{min-height:25px;padding:0 7px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#697386;font-size:7.5px;font-weight:800}.static-template-filters button.active{border-color:#111;background:#111;color:#fff}
 .static-template-contract{display:grid;gap:7px;margin:0 0 9px;padding:9px;border:1px solid var(--line);border-radius:11px;background:linear-gradient(145deg,#f8fafc,#fff)}.static-template-contract>div:first-child>span,.static-template-contract>div:first-child>strong{display:block}.static-template-contract>div:first-child>span{font-size:6.8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#98a2b3}.static-template-contract>div:first-child>strong{margin-top:2px;font-size:9px}.static-template-contract p{margin:3px 0 0;color:#747b86;font-size:7px;line-height:1.35}.static-template-contract>div:last-child{display:flex;gap:3px;flex-wrap:wrap}.static-template-contract small,.static-template-chips i{padding:3px 5px;border:1px solid #e1e5eb;border-radius:999px;background:#fff;color:#697386;font-size:6.5px;font-style:normal;font-weight:800;white-space:nowrap}
 .static-template-copy{min-width:0}.static-template-chips{display:flex!important;gap:3px;flex-wrap:wrap;margin-top:5px}.static-template-chips i{display:inline-flex!important;margin:0!important}.template-list-empty{display:grid;justify-items:center;gap:4px;padding:16px 8px;border:1px dashed #cdd4de;border-radius:11px;background:#fafbfc;text-align:center}.template-list-empty strong{font-size:8.5px}.template-list-empty span{color:var(--muted);font-size:7px}.template-list-empty button{margin-top:3px;padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:7px;font-weight:800}
+
+
+/* STATIC_PDF_FRAGMENTATION_V2 */
+@media print{
+  .paper[data-print-mode="multi"] :where(
+    [data-section-key="experience"],
+    [data-section-key="projects"],
+    .ref-cv section
+  ){
+    break-inside:auto!important;
+    page-break-inside:auto!important;
+  }
+
+  .paper[data-print-mode="multi"] :where(
+    .section-title,
+    .ref-cv section>h3,
+    .ref-section-title
+  ){
+    break-after:avoid-page;
+    page-break-after:avoid;
+  }
+
+  .paper[data-print-mode="multi"] :where(
+    .job,
+    .project,
+    .ref-experience article,
+    .ref-exec-experience article,
+    .ref-soft-experience article,
+    .ref-product-experience article,
+    .ref-code-experience article,
+    .ref-ats-experience article,
+    .ref-insight-experience article,
+    .ref-brand-experience article,
+    .ref-sales-experience article,
+    .ref-people-experience article,
+    .ref-next-experience article,
+    .ref-projects article,
+    .ref-education article,
+    .ref-certificates article
+  ){
+    break-inside:avoid-page!important;
+    page-break-inside:avoid!important;
+  }
+
+  .paper[data-print-mode="multi"] :where(
+    .cv-head,
+    .contact,
+    .ref-cv header,
+    .ref-contact,
+    .ref-soft-metrics,
+    .ref-product-metrics,
+    .ref-insight-metrics,
+    .ref-brand-metrics,
+    .ref-sales-metrics,
+    .ref-roadmap,
+    blockquote
+  ){
+    break-inside:avoid-page;
+    page-break-inside:avoid;
+  }
+
+  .paper[data-print-mode="multi"] li{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  .paper[data-print-mode="multi"].print-stack-safe :where(.cv-body,.ref-soft-body,.ref-ats-body,.ref-insight-grid-body,.ref-insight-bottom,.ref-sales-body,.ref-people-body,.ref-next-body){
+    display:block!important;
+  }
+
+  .paper[data-print-mode="multi"].print-stack-safe :where(.ref-product-operator,.ref-brand-motion){
+    display:flex!important;
+    flex-direction:column!important;
+  }
+
+  .paper[data-print-mode="multi"].print-stack-safe .ref-product-main,
+  .paper[data-print-mode="multi"].print-stack-safe .ref-brand-main{
+    order:1;
+  }
+  .paper[data-print-mode="multi"].print-stack-safe .ref-product-rail,
+  .paper[data-print-mode="multi"].print-stack-safe .ref-brand-rail{
+    order:2;
+    min-height:0!important;
+    margin-top:18px!important;
+  }
+
+  .paper[data-print-mode="multi"].print-stack-safe :where(.cv-side,.ref-soft-body>aside,.ref-ats-body>aside,.ref-insight-bottom>aside,.ref-sales-body>aside,.ref-people-body>aside,.ref-next-body>aside){
+    margin-top:18px!important;
+  }
+}

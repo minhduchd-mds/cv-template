@@ -9,6 +9,29 @@ export const DEFAULT_LAYOUT_SECTIONS = {
   languages: { supported: true, group: 'side', placement: 'Side content' },
 }
 
+export const TEMPLATE_PRINT_POLICIES = {
+  'executive-edge': { multiPage:'preserve-flow' },
+  'soft-portfolio-pro': { multiPage:'stack-safe' },
+  'product-operator': { multiPage:'stack-safe' },
+  'code-aware': { multiPage:'preserve-flow' },
+  'ats-precision': { multiPage:'stack-safe' },
+  'insight-grid': { multiPage:'stack-safe' },
+  'brand-motion': { multiPage:'stack-safe' },
+  'revenue-driver': { multiPage:'stack-safe' },
+  'people-first': { multiPage:'stack-safe' },
+  'next-start': { multiPage:'stack-safe' },
+  'modern-bento': { multiPage:'stack-safe' },
+  'executive-navy': { multiPage:'stack-safe' },
+  'ats-clean': { multiPage:'preserve-flow' },
+  'modern-mono': { multiPage:'preserve-flow' },
+  'young-creator-cards': { multiPage:'stack-safe' },
+  'strategy-brief': { multiPage:'stack-safe' },
+  'clinical-clean': { multiPage:'preserve-flow' },
+  'finance-ledger': { multiPage:'stack-safe' },
+  'studio-director': { multiPage:'stack-safe' },
+  'research-scholar': { multiPage:'preserve-flow' },
+}
+
 export const DEFAULT_TEMPLATE_FIELDS = {
   avatar: { supported: true, label: 'Avatar' },
   headline: { supported: false, label: 'Headline' },
@@ -217,6 +240,7 @@ export const getTemplateLayoutContract=(templateId)=>{
   return {
     ...contract,
     traits:Array.isArray(contract.traits)?[...contract.traits]:[],
+    print:{ multiPage:'preserve-flow', ...(TEMPLATE_PRINT_POLICIES[templateId]||{}), ...(contract.print||{}) },
     fields:{...DEFAULT_TEMPLATE_FIELDS,...(contract.fields||{})},
     sections:{...DEFAULT_LAYOUT_SECTIONS,...(contract.sections||{})},
   }

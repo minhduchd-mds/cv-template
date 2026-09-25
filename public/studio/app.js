@@ -27,6 +27,14 @@
     { id: 'research-scholar', name: 'Research Scholar', category: 'Academic', role: 'Research, Education & Academia', variant: 'ats', accent: '#7c2d12' },
   ]
 
+  /* STATIC_PRINT_POLICY_V1 */
+  const stackSafeTemplates = new Set([
+    'soft-portfolio-pro','product-operator','ats-precision','insight-grid','brand-motion',
+    'revenue-driver','people-first','next-start','modern-bento','executive-navy',
+    'young-creator-cards','strategy-brief','finance-ledger','studio-director'
+  ])
+  const templatePrintPolicyClass = (templateId) => stackSafeTemplates.has(templateId) ? 'print-stack-safe' : 'print-preserve-flow'
+
   const rolePresets = {
     recruiter: {
       templateId: 'ats-precision',
@@ -1075,7 +1083,7 @@
     const textScale = Number.isFinite(Number(settings.textScale)) ? Math.min(1.15, Math.max(.9, Number(settings.textScale))) : 1
     const headingScale = Number.isFinite(Number(settings.headingScale)) ? Math.min(1.2, Math.max(.9, Number(settings.headingScale))) : 1
     const sectionSpacing = ['compact', 'balanced', 'airy'].includes(settings.sectionSpacing) ? settings.sectionSpacing : 'balanced'
-    paper.className = `paper template-${layoutVariant} theme-${template.id} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'} spacing-${sectionSpacing} avatar-${avatarShape} avatar-size-${avatarSize}`
+    paper.className = `paper template-${layoutVariant} theme-${template.id} ${templatePrintPolicyClass(template.id)} font-${settings.font} density-${settings.density} radius-${settings.radius} projects-${settings.projectLayout || 'cards'} spacing-${sectionSpacing} avatar-${avatarShape} avatar-size-${avatarSize}`
     paper.style.setProperty('--accent', settings.accent)
     paper.style.setProperty('--zoom', String(settings.zoom))
     paper.style.setProperty('--text-scale', String(textScale))

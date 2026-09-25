@@ -103,3 +103,154 @@
     min-height: 297mm !important;
   }
 }
+
+
+/* PDF_FRAGMENTATION_V2
+   Long sections may fragment; semantic items remain intact. */
+@media print {
+  .cv-sheet[data-print-mode="multi"] :where(
+    section[data-section-id="experience"],
+    section[data-section-id="projects"],
+    section[data-section-id="education"],
+    section[data-section-id="certificates"],
+    .ref-section[data-section-id="experience"],
+    .ref-section[data-section-id="projects"]
+  ){
+    break-inside:auto !important;
+    page-break-inside:auto !important;
+  }
+
+  .cv-sheet[data-print-mode="multi"] :where(
+    section > h2,
+    section > h3,
+    .section-title,
+    .label-row,
+    .product-section-head,
+    .ref-section-title
+  ){
+    break-after:avoid-page;
+    page-break-after:avoid;
+  }
+
+  .cv-sheet[data-print-mode="multi"] :where(
+    .experience-item,
+    .product-projects article,
+    .ats-project-grid article,
+    .creative-projects article,
+    .executive-project,
+    .ref-experience article,
+    .ref-exec-experience article,
+    .ref-soft-experience article,
+    .ref-product-experience article,
+    .ref-code-experience article,
+    .ref-ats-experience article,
+    .ref-insight-experience article,
+    .ref-brand-experience article,
+    .ref-sales-experience article,
+    .ref-people-experience article,
+    .ref-next-experience article,
+    .ref-projects article,
+    .ref-education article,
+    .ref-certificates article,
+    section[data-section-id="education"] > article,
+    section[data-section-id="education"] > p,
+    section[data-section-id="certificates"] > article,
+    section[data-section-id="certificates"] > p,
+    .credential-list > p
+  ){
+    break-inside:avoid-page !important;
+    page-break-inside:avoid !important;
+  }
+
+  .cv-sheet[data-print-mode="multi"] :where(
+    header,
+    .contact-row,
+    .product-contact,
+    .creative-contact,
+    .executive-contact,
+    .ref-contact,
+    .highlight-strip,
+    .product-highlights,
+    .executive-impact-grid,
+    .ats-highlights,
+    .ref-soft-metrics,
+    .ref-product-metrics,
+    .ref-insight-metrics,
+    .ref-brand-metrics,
+    .ref-sales-metrics,
+    .ref-roadmap,
+    blockquote
+  ){
+    break-inside:avoid-page;
+    page-break-inside:avoid;
+  }
+
+  .cv-sheet[data-print-mode="multi"] li{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  /* Visual two-column templates reflow only for multi-page export.
+     One-page PDF keeps the designed composition unchanged. */
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.cv-product{
+    display:flex !important;
+    flex-direction:column !important;
+  }
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.cv-product .product-main{order:1}
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.cv-product .product-sidebar{order:2}
+
+  .cv-sheet[data-print-mode="multi"].print-stack-safe :where(.creative-layout,.executive-layout){
+    display:block !important;
+  }
+
+  .cv-sheet[data-print-mode="multi"].print-stack-safe :where(
+    .ref-soft-body,
+    .ref-ats-body,
+    .ref-insight-grid-body,
+    .ref-insight-bottom,
+    .ref-sales-body,
+    .ref-people-body,
+    .ref-next-body
+  ){
+    display:block !important;
+  }
+
+  .cv-sheet[data-print-mode="multi"].print-stack-safe:is(.ref-product-operator,.ref-brand-motion){
+    display:flex !important;
+    flex-direction:column !important;
+  }
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.ref-product-operator .ref-product-main,
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.ref-brand-motion .ref-brand-main{
+    order:1;
+  }
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.ref-product-operator .ref-product-rail,
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.ref-brand-motion .ref-brand-rail{
+    order:2;
+    min-height:0 !important;
+  }
+
+  .cv-sheet[data-print-mode="multi"].print-stack-safe :where(
+    .creative-aside,
+    .executive-layout > aside,
+    .ref-soft-body > aside,
+    .ref-ats-body > aside,
+    .ref-insight-bottom > aside,
+    .ref-sales-body > aside,
+    .ref-people-body > aside,
+    .ref-next-body > aside,
+    .ref-product-rail,
+    .ref-brand-rail
+  ){
+    margin-top:18px !important;
+    break-before:auto;
+  }
+
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.ref-people-first .ref-people-body > main,
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.ref-next-start .ref-next-body > main{
+    order:1;
+  }
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.ref-people-first .ref-people-body > aside,
+  .cv-sheet[data-print-mode="multi"].print-stack-safe.ref-next-start .ref-next-body > aside{
+    order:2;
+  }
+}
