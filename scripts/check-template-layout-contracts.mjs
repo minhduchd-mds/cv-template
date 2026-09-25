@@ -1,10 +1,14 @@
 import fs from 'node:fs'
-import { templates } from '../src/data/cv.js'
 import { TEMPLATE_LAYOUT_CONTRACTS, getTemplateLayoutContract } from '../src/data/template-layout-contracts.js'
 
 const fail=(message)=>{ console.error('✗ '+message); process.exitCode=1 }
+const cvSource=fs.readFileSync(new URL('../src/data/cv.js',import.meta.url),'utf8')
+const templateMatches=[...cvSource.matchAll(/\{\s*id:\s*'([^']+)'[\s\S]*?name:\s*'([^']+)'[\s\S]*?status:\s*'live'/g)]
+const templates=templateMatches.map((match)=>({id:match[1],name:match[2]}))
 const ids=templates.map((item)=>item.id)
 const contractIds=Object.keys(TEMPLATE_LAYOUT_CONTRACTS)
+
+if(ids.length!==20)fail('Expected 20 live templates, found '+ids.length)
 
 for(const id of ids){
   if(!TEMPLATE_LAYOUT_CONTRACTS[id])fail('Missing layout contract for '+id)
