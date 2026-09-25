@@ -714,3 +714,17 @@ test('Vue Template Browser V2 uses field contracts', async ({ page }) => {
   await expect(page.locator('.template-field-note').filter({hasText:'does not display an avatar'})).toBeVisible()
   await expect(page.locator('[data-profile-field="headline"]').locator('..')).toContainText('Not used by Executive Edge')
 })
+
+
+test('static Studio quick filters initialize without runtime errors', async ({ page }) => {
+  const runtimeErrors=[]
+  page.on('pageerror',(error)=>runtimeErrors.push(error.message))
+  await page.goto('/studio/')
+  await expect(page.locator('.template-card')).toHaveCount(20)
+  await page.locator('[data-static-template-filter="one-page"]').click()
+  await expect(page.locator('.template-card')).toHaveCount(1)
+  await expect(page.locator('.template-card')).toContainText('Next Start')
+  await page.locator('[data-static-template-filter="all"]').click()
+  await expect(page.locator('.template-card')).toHaveCount(20)
+  expect(runtimeErrors).toEqual([])
+})

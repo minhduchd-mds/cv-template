@@ -1814,6 +1814,7 @@
     paper.style.removeProperty('--print-width')
     paper.style.removeProperty('--print-min-height')
     delete paper.dataset.printMode
+    delete paper.dataset.printFit
   }
 
   const measurePrintHealth = () => {
@@ -1973,10 +1974,10 @@
     renderTemplates()
   })
 
-  $('[data-static-template-filter]').forEach((button)=>{
+  $$('[data-static-template-filter]').forEach((button)=>{
     button.addEventListener('click',()=>{
       templateQuickFilter=button.dataset.staticTemplateFilter||'all'
-      $('[data-static-template-filter]').forEach((item)=>item.classList.toggle('active',item===button))
+      $$('[data-static-template-filter]').forEach((item)=>item.classList.toggle('active',item===button))
       renderTemplates()
     })
   })
@@ -2138,7 +2139,7 @@
     const row=event.target.closest('[data-layout-section].draggable')
     if(!row||row.dataset.layoutGroup!==layoutMasterDrag.group||row.dataset.layoutSection===layoutMasterDrag.section)return
     event.preventDefault()
-    $('.layout-row-drop',$('#layoutMaster')).forEach((node)=>node.classList.remove('layout-row-drop'))
+    $$('.layout-row-drop',$('#layoutMaster')).forEach((node)=>node.classList.remove('layout-row-drop'))
     row.classList.add('layout-row-drop')
     if(event.dataTransfer)event.dataTransfer.dropEffect='move'
   })
@@ -2152,7 +2153,7 @@
   })
 
   $('#layoutMaster')?.addEventListener('dragend',()=>{
-    $('.layout-row-dragging,.layout-row-drop',$('#layoutMaster')).forEach((node)=>node.classList.remove('layout-row-dragging','layout-row-drop'))
+    $$('.layout-row-dragging,.layout-row-drop',$('#layoutMaster')).forEach((node)=>node.classList.remove('layout-row-dragging','layout-row-drop'))
     layoutMasterDrag=null
   })
 
