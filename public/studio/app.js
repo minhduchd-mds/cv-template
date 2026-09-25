@@ -395,10 +395,42 @@
       "'": '&#039;',
     }[char]))
 
-  let profile = restoreObject(PROFILE_KEY, demoProfile)
+  const workspaceStore = window.CVStudioWorkspace
+  const canonicalWorkspace = workspaceStore?.read?.() || null
+  const legacyProfileExists = Boolean(localStorage.getItem(PROFILE_KEY))
+  const legacySettingsExists = Boolean(localStorage.getItem(SETTINGS_KEY))
+  const legacyProfile = restoreObject(PROFILE_KEY, demoProfile)
+  const legacySettings = restoreObject(SETTINGS_KEY, defaultSettings)
+
+  const settingsFromWorkspace = (workspace, fallback) => {
+    if (!workspace) return fallback
+    const studio = workspace.studio || {}
+    const appearance = studio.appearance || {}
+    const next = {
+      ...fallback,
+      ...appearance,
+      templateId: typeof studio.selectedId === 'string' ? studio.selectedId : fallback.templateId,
+      accent: typeof studio.accent === 'string' ? studio.accent : fallback.accent,
+      zoom: [0.75, 0.85, 1].includes(studio.zoom) ? studio.zoom : fallback.zoom,
+    }
+    const supported = ['summary','experience','projects','skills','languages']
+    const sections = Array.isArray(workspace.profile?.sections) ? workspace.profile.sections : []
+    const ordered = sections.map((item) => item?.id).filter((id) => supported.includes(id))
+    if (ordered.length) next.sectionOrder = ordered
+    const visibility = {summary:'showSummary',experience:'showExperience',projects:'showProjects',skills:'showSkills',languages:'showLanguages'}
+    sections.forEach((item) => {
+      const key = visibility[item?.id]
+      if (key) next[key] = item.enabled !== false
+    })
+    return next
+  }
+
+  let profile = canonicalWorkspace?.profile && Object.keys(canonicalWorkspace.profile).length
+    ? { ...clone(demoProfile), ...clone(canonicalWorkspace.profile) }
+    : legacyProfile
   if (!String(profile.headline || '').trim()) profile.headline = demoProfile.headline
   if (!String(profile.quote || '').trim()) profile.quote = demoProfile.quote
-  let settings = restoreObject(SETTINGS_KEY, defaultSettings)
+  let settings = settingsFromWorkspace(canonicalWorkspace, legacySettings)
   let avatarDrag = null
   let sectionDrag = null
   let sectionDragJustEnded = false
@@ -413,6 +445,63 @@
   if (!Array.isArray(profile.languages)) profile.languages = clone(demoProfile.languages)
   if (!templates.some((item) => item.id === settings.templateId)) settings.templateId = defaultSettings.templateId
   if (!Array.isArray(settings.sectionOrder) || !settings.sectionOrder.length) settings.sectionOrder = clone(defaultSettings.sectionOrder)
+
+  const mergedCanonicalSections = () => {
+    const current = workspaceStore?.read?.()
+    const existing = Array.isArray(current?.profile?.sections) ? clone(current.profile.sections) : []
+    const staticIds = ['summary','experience','projects','skills','languages']
+    const label = {summary:'Profile',experience:'Experience',projects:'Projects',skills:'Skills',languages:'Languages'}
+    const enabled = {
+      summary:settings.showSummary !== false,
+      experience:settings.showExperience !== false,
+      projects:settings.showProjects !== false,
+      skills:settings.showSkills !== false,
+      languages:settings.showLanguages !== false,
+    }
+    const desired = settings.sectionOrder.filter((id) => staticIds.includes(id))
+    staticIds.forEach((id) => { if (!desired.includes(id)) desired.push(id) })
+    const byId = new Map(existing.map((item) => [item?.id,item]))
+    const desiredRows = desired.map((id) => ({ ...(byId.get(id)||{}), id, label:byId.get(id)?.label||label[id], enabled:enabled[id] }))
+    if (!existing.length) return desiredRows
+    let cursor = 0
+    const merged = existing.map((item) => staticIds.includes(item?.id) ? desiredRows[cursor++] : item)
+    while (cursor < desiredRows.length) merged.push(desiredRows[cursor++])
+    return merged
+  }
+
+  const syncCanonicalWorkspace = () => {
+    if (!workspaceStore?.patch) return
+    const current = workspaceStore.read?.()
+    const existingProfile = current?.profile && typeof current.profile === 'object' ? current.profile : {}
+    const existingStudio = current?.studio && typeof current.studio === 'object' ? current.studio : {}
+    workspaceStore.patch({
+      profile: { ...clone(existingProfile), ...clone(profile), sections: mergedCanonicalSections() },
+      studio: {
+        ...clone(existingStudio),
+        selectedId: settings.templateId,
+        accent: settings.accent,
+        zoom: settings.zoom,
+        appearance: {
+          ...(existingStudio.appearance || {}),
+          font:settings.font,
+          density:settings.density,
+          radius:settings.radius,
+          projectLayout:settings.projectLayout,
+          textScale:settings.textScale,
+          headingScale:settings.headingScale,
+          sectionSpacing:settings.sectionSpacing,
+          avatarShape:settings.avatarShape,
+          avatarSize:settings.avatarSize,
+          avatarX:settings.avatarX,
+          avatarY:settings.avatarY,
+          avatarZoom:settings.avatarZoom,
+          avatarRotate:settings.avatarRotate,
+        },
+      },
+    }, 'static')
+  }
+
+  if (!canonicalWorkspace && (legacyProfileExists || legacySettingsExists)) syncCanonicalWorkspace()
 
   const activeTemplate = () =>
     templates.find((item) => item.id === settings.templateId) || templates[0]
@@ -439,6 +528,7 @@
     try {
       localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+      syncCanonicalWorkspace()
     } catch (error) {
       console.warn('Unable to persist CV Studio fallback state.', error)
     }

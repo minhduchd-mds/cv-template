@@ -180,6 +180,7 @@ import ProfileEditor from './components/ProfileEditor.vue'
 import { candidate as defaultCandidate, templates } from './data/cv'
 import { autoCompleteCv, candidateCompletionReport } from './data/auto-complete-cv'
 import { safeImageSource, sanitizeProfileMedia } from './security/safe-media'
+import { hasWorkspaceProfile, patchCanonicalWorkspace, readCanonicalWorkspace } from './data/workspace-store'
 
 const STORAGE_KEY = 'cv-studio-profile-v1'
 const STUDIO_KEY = 'cv-studio-settings-v1'
@@ -255,6 +256,7 @@ export default {
       historyCoalesceActive: false,
       historyCoalesceTimer: null,
       historyRestoring: false,
+      workspaceReady: false,
     }
   },
   computed: {
@@ -317,7 +319,10 @@ export default {
     scoreLabel() { if (this.cvScore >= 90) return 'Excellent'; if (this.cvScore >= 80) return 'Strong'; if (this.cvScore >= 65) return 'Good base'; return 'Needs detail' },
   },
   watch: {
-    candidate: { deep: true, handler(value) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)) } catch (error) { console.warn('Unable to persist CV profile locally. Uploaded images may exceed browser storage.', error) } } },
+    candidate: { deep: true, handler(value) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)) } catch (error) { console.warn('Unable to persist CV profile locally. Uploaded images may exceed browser storage.', error) }
+      this.persistCanonicalWorkspace()
+    } },
     selectedId: 'persistStudioSettings',
     accent: 'persistStudioSettings',
     zoom: 'persistStudioSettings',
@@ -325,19 +330,29 @@ export default {
   },
   mounted() {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+      const workspace = readCanonicalWorkspace()
+      const legacySaved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+      const saved = hasWorkspaceProfile(workspace) ? workspace.profile : legacySaved
       const sampleVersion = localStorage.getItem(SAMPLE_VERSION_KEY)
       const shouldUpgradeLegacyDemo = isLegacyDemoProfile(saved) && sampleVersion !== SAMPLE_VERSION
       this.candidate = hydrateCandidate(shouldUpgradeLegacyDemo ? null : saved)
       localStorage.setItem(SAMPLE_VERSION_KEY, SAMPLE_VERSION)
-      const studioSettings = JSON.parse(localStorage.getItem(STUDIO_KEY) || '{}')
+
+      const legacyStudio = JSON.parse(localStorage.getItem(STUDIO_KEY) || '{}')
+      const studioSettings = workspace?.studio && Object.keys(workspace.studio).length ? workspace.studio : legacyStudio
       if (this.templates.some((item) => item.id === studioSettings.selectedId)) this.selectedId = studioSettings.selectedId
       if (typeof studioSettings.accent === 'string') this.accent = studioSettings.accent
       if ([0.75, 0.85, 1].includes(studioSettings.zoom)) this.zoom = studioSettings.zoom
       if (studioSettings.appearance && typeof studioSettings.appearance === 'object') {
         this.appearance = { ...this.appearance, ...studioSettings.appearance }
       }
-    } catch (error) { console.warn('Unable to restore saved CV Studio state.', error); this.candidate = sanitizeProfileMedia(cloneCandidate()) }
+      this.workspaceReady = true
+      if (workspace || legacySaved || Object.keys(legacyStudio).length) this.persistCanonicalWorkspace()
+    } catch (error) {
+      console.warn('Unable to restore saved CV Studio state.', error)
+      this.candidate = sanitizeProfileMedia(cloneCandidate())
+      this.workspaceReady = true
+    }
     window.addEventListener('keydown', this.handleShortcut)
   },
   beforeUnmount() {
@@ -556,6 +571,18 @@ export default {
       this.checkpointHistory('Change accent color', { coalesce: true })
       this.accent = value
     },
+    persistCanonicalWorkspace() {
+      if (!this.workspaceReady) return
+      patchCanonicalWorkspace({
+        profile: sanitizeProfileMedia(JSON.parse(JSON.stringify(this.candidate))),
+        studio: {
+          selectedId: this.selectedId,
+          accent: this.accent,
+          zoom: this.zoom,
+          appearance: JSON.parse(JSON.stringify(this.appearance)),
+        },
+      }, 'vue')
+    },
     persistStudioSettings() {
       try {
         localStorage.setItem(STUDIO_KEY, JSON.stringify({
@@ -567,6 +594,7 @@ export default {
       } catch (error) {
         console.warn('Unable to persist CV Studio settings.', error)
       }
+      this.persistCanonicalWorkspace()
     },
     updateAppearance({ key, value }) {
       if (!['font', 'density', 'radius', 'projectLayout', 'textScale', 'headingScale', 'sectionSpacing', 'avatarShape', 'avatarSize', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return

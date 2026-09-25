@@ -589,7 +589,7 @@
   let target = Object.assign({ role:'auto', industry:'general', seniority:'senior', jd:'' }, readJson(TARGET_KEY, {}))
 
   const saveTarget = () => {
-    try { localStorage.setItem(TARGET_KEY, JSON.stringify(target)) }
+    try { localStorage.setItem(TARGET_KEY, JSON.stringify(target)); window.CVStudioWorkspace?.patch?.({ats:{target}},'ats') }
     catch {}
   }
 
@@ -1834,6 +1834,8 @@
   }
   const writeJson=(key,value)=>{
     localStorage.setItem(key,JSON.stringify(value))
+    if(key===VERSIONS_KEY)window.CVStudioWorkspace?.patch?.({ats:{versions:value}},'ats')
+    if(typeof APPLICATIONS_KEY!=='undefined'&&key===APPLICATIONS_KEY)window.CVStudioWorkspace?.patch?.({ats:{applications:value}},'ats')
   }
   const deepClone=(value)=>JSON.parse(JSON.stringify(value))
   const normalize=(value)=>String(value==null?'':value).trim().replace(/\s+/g,' ')

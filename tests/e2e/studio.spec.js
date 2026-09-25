@@ -648,3 +648,25 @@ test('Layout Master respects per-template section contracts', async ({ page }) =
   await expect(page.locator('[data-layout-section="languages"] [data-layout-toggle]')).toHaveCount(1)
   expect(runtimeErrors).toEqual([])
 })
+
+
+test('canonical workspace mirrors static Studio edits', async ({ page }) => {
+  await page.goto('/studio/')
+  await page.locator('#toggleEditor').click()
+  await page.locator('#name').fill('Canonical QA')
+  await page.locator('#name').dispatchEvent('input')
+
+  await expect.poll(async () => page.evaluate(() => {
+    const workspace=JSON.parse(localStorage.getItem('cv-studio-workspace-v3')||'null')
+    return workspace?.profile?.name || ''
+  })).toBe('Canonical QA')
+
+  await page.getByRole('button',{name:'Layout'}).click()
+  await page.locator('[data-layout-section="projects"] [data-layout-toggle]').click()
+
+  const workspace=await page.evaluate(()=>JSON.parse(localStorage.getItem('cv-studio-workspace-v3')||'null'))
+  expect(workspace.format).toBe('cv-studio-workspace')
+  expect(workspace.schemaVersion).toBe(3)
+  expect(workspace.profile.sections.find((item)=>item.id==='projects').enabled).toBe(false)
+  expect(workspace.studio.selectedId).toBeTruthy()
+})
