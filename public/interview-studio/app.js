@@ -256,12 +256,22 @@ function deleteApplication(id){
   toast('Đã xóa application');render()
 }
 function startApplicationPractice(app=activeApplication()||state.applicationDraft){
-  const analysis=applicationAnalysis(app)
+  let contextApp=app
+  if(!contextApp?.id){
+    const d=state.applicationDraft
+    if(!String(d.company||'').trim()&&!String(d.role||'').trim()){toast('Cần ít nhất tên công ty hoặc vị trí');return}
+    const id='app-'+Date.now()
+    contextApp={id,company:String(d.company||'').trim(),role:String(d.role||'').trim(),status:d.status||'Interview',jd:String(d.jd||'').trim(),notes:String(d.notes||'').trim(),sourceUrl:String(d.sourceUrl||'').trim(),updatedAt:new Date().toISOString()}
+    persistApplications([contextApp,...applications()])
+    state.applicationId=id
+    editApplication(contextApp)
+  }
+  const analysis=applicationAnalysis(contextApp)
   if(!analysis)return
   state.stageId=analysis.recommendedStage||state.stageId
-  const selected=buildApplicationPracticeSet({application:app,claims:cvClaims(),stories:state.storyBank,questions:questionDeck(),limit:5})
+  const selected=buildApplicationPracticeSet({application:contextApp,claims:cvClaims(),stories:state.storyBank,questions:questionDeck(),limit:5})
   if(!selected.length){toast('Chưa đủ dữ liệu để tạo practice set');return}
-  if(app.id)state.applicationId=app.id
+  if(contextApp.id)state.applicationId=contextApp.id
   state.practice={questions:selected,index:0,drafts:{},startedAt:new Date().toISOString(),timerChoice:90,baseSize:selected.length,adaptiveInserted:0}
   selected.forEach(q=>state.practice.drafts[q.id]={answer:'',evidence:'',confidence:3,evaluation:null})
   state.activeModule='mock';startTimer();render()
