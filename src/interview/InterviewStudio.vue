@@ -103,9 +103,9 @@
               <small>{{ totalPracticedAnswers }} câu đã luyện</small>
             </article>
             <article>
-              <span>Evidence ready</span>
-              <b>{{ evidenceReadyCount }}</b>
-              <small>claim đã có ghi chú bảo vệ</small>
+              <span>Story bank</span>
+              <b>{{ storyBank.length }}</b>
+              <small>{{ storyEvidenceReadyCount }} story đã có evidence</small>
             </article>
           </div>
 
@@ -379,6 +379,55 @@
           </div>
         </section>
 
+        <section v-else-if="activeModule === 'stories'" class="is-view">
+          <div class="is-page-heading">
+            <div>
+              <span class="is-eyebrow">STORY BANK</span>
+              <h1>Lưu những câu chuyện nghề nghiệp <em>đủ mạnh để dùng lại.</em></h1>
+              <p>Story Bank giữ câu trả lời tốt, evidence, claim liên quan và practice signal. Mỗi story có thể luyện lại riêng với adaptive follow-up.</p>
+            </div>
+            <div class="is-heading-number">{{ storyBank.length }}</div>
+          </div>
+
+          <div class="is-story-stats">
+            <article><span>Stories</span><b>{{ storyBank.length }}</b><small>câu chuyện đã lưu</small></article>
+            <article><span>Evidence ready</span><b>{{ storyEvidenceReadyCount }}</b><small>có STAR/evidence anchor</small></article>
+            <article><span>Average signal</span><b>{{ storyAverageScore || '—' }}</b><small>practice signal trung bình</small></article>
+          </div>
+
+          <div v-if="storyBank.length" class="is-story-grid">
+            <article v-for="story in storyBank" :key="story.id" class="is-story-card">
+              <div class="is-story-card__top">
+                <div>
+                  <span>{{ story.categoryLabel }} · {{ story.contextLabel }}</span>
+                  <h2>{{ story.title }}</h2>
+                </div>
+                <b>{{ story.score || '—' }}</b>
+              </div>
+              <p class="is-story-card__question">{{ story.question }}</p>
+              <blockquote>{{ story.answer }}</blockquote>
+              <div v-if="story.evidence" class="is-story-evidence">
+                <span>EVIDENCE</span>
+                <p>{{ story.evidence }}</p>
+              </div>
+              <div v-if="story.claims?.length" class="is-story-claims">
+                <span v-for="claim in story.claims" :key="claim.id">{{ claim.label }}</span>
+              </div>
+              <div class="is-story-card__footer">
+                <small>Cập nhật {{ formatSessionDate(story.updatedAt || story.createdAt) }}</small>
+                <div>
+                  <button type="button" @click="startStoryPractice(story)">Luyện lại →</button>
+                  <button type="button" class="danger" @click="deleteStory(story.id)">Xóa</button>
+                </div>
+              </div>
+            </article>
+          </div>
+          <div v-else class="is-empty is-story-empty">
+            Chưa có story. Trong Mock Interview, đánh giá một câu trả lời rồi chọn “Lưu vào Story Bank”.
+            <button type="button" @click="activeModule = 'mock'">Bắt đầu luyện →</button>
+          </div>
+        </section>
+
         <section v-else-if="activeModule === 'mock'" class="is-view">
           <div class="is-page-heading">
             <div>
@@ -524,6 +573,15 @@
             </div>
 
             <div class="is-session-actions">
+              <button
+                v-if="currentDraft.evaluation && currentDraft.answer"
+                type="button"
+                class="is-button is-button--story"
+                :class="{ saved: currentStorySaved }"
+                @click="saveCurrentStory"
+              >
+                {{ currentStorySaved ? '✓ Đã lưu Story Bank' : '✦ Lưu vào Story Bank' }}
+              </button>
               <button type="button" class="is-button" @click="evaluateCurrent">Đánh giá câu này</button>
               <button type="button" class="is-button is-button--primary" @click="nextPractice">
                 {{ nextPracticeLabel }}
@@ -575,6 +633,32 @@
             </section>
           </div>
 
+          <section v-if="latestPracticePlan" class="is-panel is-practice-plan">
+            <div class="is-panel__heading is-panel__heading--split">
+              <div>
+                <span class="is-eyebrow">NEXT PRACTICE PLAN</span>
+                <h2>{{ latestPracticePlan.summary }}</h2>
+              </div>
+              <button type="button" class="is-button is-button--primary" @click="startPracticePlan(latestPracticePlan)">Luyện plan này →</button>
+            </div>
+            <div class="is-practice-plan__focus">
+              <article v-for="area in latestPracticePlan.focusAreas" :key="area.key">
+                <div><strong>{{ area.label }}</strong><b>{{ area.score }}</b></div>
+                <p>{{ area.objective }}</p>
+              </article>
+            </div>
+            <div class="is-practice-plan__questions">
+              <span class="is-eyebrow">RECOMMENDED QUESTIONS</span>
+              <ol>
+                <li v-for="item in latestPracticePlan.recommendedQuestions" :key="item.id">{{ item.question }}</li>
+              </ol>
+            </div>
+            <div v-if="latestPracticePlan.claims?.length" class="is-practice-plan__claims">
+              <span class="is-eyebrow">CLAIMS TO DEFEND</span>
+              <div><span v-for="claim in latestPracticePlan.claims" :key="claim.id">{{ claim.label }} · {{ claim.text }}</span></div>
+            </div>
+          </section>
+
           <section class="is-panel">
             <div class="is-panel__heading is-panel__heading--split">
               <div><span class="is-eyebrow">HISTORY</span><h2>Lịch sử luyện tập</h2></div>
@@ -616,15 +700,18 @@ import {
 import {
   aggregateInterviewReport,
   buildAdaptiveFollowUp,
+  buildNextPracticePlan,
   claimProbes,
   evaluateInterviewResponse,
   extractCvClaims,
   matchQuestionsToClaim,
   questionRelevanceScore,
+  relatedClaimsForAnswer,
 } from './interview-studio-engine'
 
 const SESSION_KEY = 'interview-studio-sessions-v2'
 const CLAIM_KEY = 'interview-studio-claim-evidence-v1'
+const STORY_KEY = 'interview-studio-story-bank-v1'
 
 export default {
   name: 'InterviewStudio',
@@ -641,6 +728,7 @@ export default {
         { id: 'overview', label: 'Overview', icon: '◇' },
         { id: 'questions', label: 'Question Bank', icon: '?' },
         { id: 'claims', label: 'Claim Defense', icon: '⌁', badge: 'CV' },
+        { id: 'stories', label: 'Story Bank', icon: '✦', badge: 'NEW' },
         { id: 'mock', label: 'Mock Interview', icon: '▶' },
         { id: 'reports', label: 'Reports', icon: '▥' },
       ],
@@ -656,6 +744,7 @@ export default {
       applicationId: '',
       selectedClaimId: '',
       claimEvidence: {},
+      storyBank: [],
       practiceActive: false,
       practiceQuestions: [],
       practiceIndex: 0,
@@ -849,6 +938,23 @@ export default {
     totalPracticedAnswers() {
       return this.practiceSessions.reduce((sum, session) => sum + Number(session.answered || 0), 0)
     },
+    storyEvidenceReadyCount() {
+      return this.storyBank.filter((story) => String(story.evidence || '').trim().length >= 12).length
+    },
+    storyAverageScore() {
+      if (!this.storyBank.length) return 0
+      return Math.round(this.storyBank.reduce((sum, story) => sum + Number(story.score || 0), 0) / this.storyBank.length)
+    },
+    latestPracticePlan() {
+      return this.latestReport?.report?.practicePlan || null
+    },
+    currentStorySaved() {
+      if (!this.practiceCurrent) return false
+      return this.storyBank.some((story) =>
+        story.questionId === this.practiceCurrent.id
+        && story.applicationId === (this.activeApplication?.id || '')
+      )
+    },
   },
   watch: {
     selectedTemplateId(nextId) {
@@ -866,6 +972,7 @@ export default {
     else this.rolePackId = templateInterviewPack[this.selectedTemplateId] || 'general'
     this.loadClaimEvidence()
     this.loadPracticeSessions()
+    this.loadStoryBank()
     this.selectedClaimId = this.cvClaims[0]?.id || ''
     this.speechSupported = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition)
   },
@@ -951,6 +1058,121 @@ export default {
         [this.selectedClaim.id]: { ...current, ready: !current.ready },
       }
       this.saveClaimEvidence()
+    },
+    loadStoryBank() {
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(STORY_KEY) || '[]')
+        this.storyBank = Array.isArray(parsed) ? parsed.slice(0, 60) : []
+      } catch {
+        this.storyBank = []
+      }
+    },
+    saveStoryBank() {
+      this.storyBank = this.storyBank.slice(0, 60)
+      try {
+        window.localStorage.setItem(STORY_KEY, JSON.stringify(this.storyBank))
+      } catch (error) {
+        console.warn('Unable to persist Interview Studio Story Bank.', error)
+      }
+    },
+    saveCurrentStory() {
+      if (!this.practiceCurrent || !this.currentDraft?.answer) return
+      if (!this.currentDraft.evaluation) this.evaluateCurrent()
+      const draft = this.practiceDrafts[this.practiceCurrent.id] || this.currentDraft
+      const relatedClaims = relatedClaimsForAnswer(draft.answer, this.cvClaims, 3)
+      const keyApplicationId = this.activeApplication?.id || ''
+      const existing = this.storyBank.find((story) =>
+        story.questionId === this.practiceCurrent.id
+        && story.applicationId === keyApplicationId
+      )
+      const now = new Date().toISOString()
+      const story = {
+        id: existing?.id || 'story-' + Date.now(),
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+        questionId: this.practiceCurrent.id,
+        question: this.practiceCurrent.question,
+        title: relatedClaims[0]?.label || this.categoryName(this.practiceCurrent.category),
+        category: this.practiceCurrent.category,
+        categoryLabel: this.categoryName(this.practiceCurrent.category),
+        answer: String(draft.answer || '').trim(),
+        evidence: String(draft.evidence || '').trim(),
+        score: Number(draft.evaluation?.overall || 0),
+        strengths: draft.evaluation?.strengths || [],
+        applicationId: keyApplicationId,
+        contextLabel: this.activeApplication
+          ? this.activeApplication.company + ' · ' + this.activeApplication.role
+          : this.activePack.label,
+        rolePackId: this.rolePackId,
+        stageId: this.stageId,
+        claims: relatedClaims.map((claim) => ({ id: claim.id, label: claim.label, text: claim.text })),
+      }
+      this.storyBank = existing
+        ? this.storyBank.map((item) => item.id === existing.id ? story : item)
+        : [story, ...this.storyBank]
+      this.saveStoryBank()
+    },
+    deleteStory(id) {
+      this.storyBank = this.storyBank.filter((story) => story.id !== id)
+      this.saveStoryBank()
+    },
+    startStoryPractice(story) {
+      const source = this.questionDeck.find((question) => question.id === story.questionId) || {
+        id: story.questionId,
+        question: story.question,
+        why: 'Kiểm tra liệu story này có chịu được câu hỏi đào sâu khi đổi context.',
+        framework: ['Kết luận', 'Ownership', 'Evidence', 'Trade-off', 'Learning'],
+        example: story.answer,
+        followUps: [],
+        avoid: [],
+        category: story.category || 'behavioral',
+      }
+      this.practiceBaseSize = 1
+      this.practiceSize = 1
+      this.adaptiveInsertedCount = 0
+      this.practiceQuestions = [source]
+      this.practiceDrafts = {
+        [source.id]: {
+          answer: story.answer || '',
+          evidence: story.evidence || '',
+          confidence: 4,
+          evaluation: null,
+        },
+      }
+      this.applicationId = story.applicationId || this.applicationId
+      this.practiceIndex = 0
+      this.practiceShowGuide = false
+      this.practiceStartedAt = new Date().toISOString()
+      this.practiceActive = true
+      this.activeModule = 'mock'
+      this.startQuestionTimer()
+    },
+    startPracticePlan(plan) {
+      const ids = Array.isArray(plan?.recommendedQuestionIds) ? plan.recommendedQuestionIds : []
+      const selected = ids
+        .map((id) => this.questionDeck.find((question) => question.id === id))
+        .filter(Boolean)
+        .slice(0, 5)
+      if (!selected.length) {
+        this.practiceSize = 5
+        this.startPractice()
+        this.activeModule = 'mock'
+        return
+      }
+      this.practiceBaseSize = selected.length
+      this.practiceSize = selected.length
+      this.adaptiveInsertedCount = 0
+      this.practiceQuestions = selected
+      this.practiceDrafts = Object.fromEntries(selected.map((item) => [
+        item.id,
+        { answer: '', evidence: '', confidence: 3, evaluation: null },
+      ]))
+      this.practiceIndex = 0
+      this.practiceShowGuide = false
+      this.practiceStartedAt = new Date().toISOString()
+      this.practiceActive = true
+      this.activeModule = 'mock'
+      this.startQuestionTimer()
     },
     loadPracticeSessions() {
       try {
@@ -1112,6 +1334,13 @@ export default {
         }
       })
       const report = aggregateInterviewReport(responses)
+      report.practicePlan = buildNextPracticePlan({
+        report,
+        responses,
+        questions: this.questionDeck,
+        claims: this.cvClaims,
+        application: this.activeApplication || {},
+      })
       const session = {
         id: 'interview-studio-' + Date.now(),
         createdAt: new Date().toISOString(),
@@ -2088,6 +2317,73 @@ export default {
   border-top: 1px solid var(--line);
 }
 
+.is-story-stats {
+  margin: 22px 0 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+
+  article { padding: 18px; border-right: 1px solid var(--line); }
+  article:last-child { border-right: 0; }
+  span, b, small { display: block; }
+  span { color: var(--muted); font-size: 9px; }
+  b { margin: 9px 0 4px; color: var(--accent); font-size: 27px; }
+  small { color: var(--faint); font-size: 8px; }
+}
+
+.is-story-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.is-story-card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(12,23,29,.68);
+}
+
+.is-story-card__top {
+  display: grid;
+  grid-template-columns: 1fr 44px;
+  gap: 14px;
+  align-items: start;
+
+  span { color: var(--muted); font-size: 8px; }
+  h2 { margin: 6px 0 0; font-size: 18px; letter-spacing: -.025em; }
+  > b { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: rgba(114,231,212,.08); color: var(--accent); font-size: 12px; }
+}
+
+.is-story-card__question { margin: 17px 0 10px; color: var(--accent-2); font-size: 10px; line-height: 1.5; }
+.is-story-card blockquote { margin: 0; color: var(--ink); font-size: 11px; line-height: 1.65; }
+.is-story-evidence { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--line); }
+.is-story-evidence span { color: var(--accent); font-size: 8px; font-weight: 750; letter-spacing: .08em; }
+.is-story-evidence p { margin: 7px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.is-story-claims { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 5px; }
+.is-story-claims span { padding: 4px 6px; border-radius: 6px; background: rgba(157,183,255,.08); color: var(--accent-2); font-size: 8px; }
+.is-story-card__footer { margin-top: 17px; padding-top: 13px; display: flex; justify-content: space-between; gap: 12px; align-items: center; border-top: 1px solid var(--line); }
+.is-story-card__footer small { color: var(--faint); font-size: 8px; }
+.is-story-card__footer > div { display: flex; gap: 9px; }
+.is-story-card__footer button { padding: 0; border: 0; background: transparent; color: var(--accent); font: inherit; font-size: 9px; cursor: pointer; }
+.is-story-card__footer button.danger { color: var(--danger); }
+.is-button--story.saved { border-color: rgba(114,231,212,.28); color: var(--accent); background: rgba(114,231,212,.06); }
+
+.is-practice-plan { margin-bottom: 18px; }
+.is-practice-plan__focus { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.is-practice-plan__focus article { padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: #09151b; }
+.is-practice-plan__focus article > div { display: flex; justify-content: space-between; gap: 10px; }
+.is-practice-plan__focus strong { font-size: 10px; }
+.is-practice-plan__focus b { color: var(--warning); font-size: 10px; }
+.is-practice-plan__focus p { margin: 8px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.is-practice-plan__questions,
+.is-practice-plan__claims { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.is-practice-plan__questions ol { margin: 10px 0 0; padding-left: 18px; color: var(--muted); }
+.is-practice-plan__questions li { margin: 7px 0; font-size: 9px; line-height: 1.45; }
+.is-practice-plan__claims > div { margin-top: 10px; display: grid; gap: 6px; }
+.is-practice-plan__claims > div span { padding: 8px 10px; border-radius: 8px; background: rgba(243,200,106,.045); color: var(--muted); font-size: 9px; line-height: 1.45; }
+
 .is-report-hero {
   margin: 24px 0 18px;
   padding: 24px;
@@ -2215,6 +2511,10 @@ export default {
   .is-live-session__meta { align-items: start; }
   .is-live-session > h2 { font-size: 30px; }
   .is-coach-grid { grid-template-columns: 1fr; }
+  .is-story-grid { grid-template-columns: 1fr; }
+  .is-story-stats { grid-template-columns: 1fr 1fr; }
+  .is-story-stats article:nth-child(2) { border-right: 0; }
+  .is-practice-plan__focus { grid-template-columns: 1fr; }
   .is-evaluation { grid-template-columns: 1fr; }
   .is-evaluation__score { padding-bottom: 14px; border-right: 0; border-bottom: 1px solid var(--line); }
   .is-session-actions { flex-direction: column; }
