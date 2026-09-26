@@ -157,6 +157,93 @@ const countWords = (value) => String(value || '').trim().split(/\s+/).filter(Boo
 const hasAny = (text, expressions) => expressions.some((expression) => expression.test(text))
 const clamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, Math.round(value)))
 
+export const interviewerModes = [
+  {
+    id: 'recruiter',
+    label: 'Recruiter',
+    shortLabel: 'HR',
+    description: 'Ưu tiên fit, clarity, motivation và khả năng giao tiếp ngắn gọn.',
+    bias: ['relevance', 'structure', 'delivery'],
+    opening: 'Tôi sẽ bắt đầu rộng, sau đó kiểm tra mức phù hợp và tính nhất quán trong câu trả lời.',
+  },
+  {
+    id: 'hiring-manager',
+    label: 'Hiring Manager',
+    shortLabel: 'HM',
+    description: 'Đào sâu ownership, impact, stakeholder và judgment trong công việc thật.',
+    bias: ['ownership', 'evidence', 'depth'],
+    opening: 'Tôi quan tâm anh/chị thực sự sở hữu phần nào, quyết định gì và tạo ra thay đổi gì.',
+  },
+  {
+    id: 'craft',
+    label: 'Craft / Technical',
+    shortLabel: 'TECH',
+    description: 'Tập trung reasoning, system thinking, implementation, quality bar và trade-off.',
+    bias: ['depth', 'evidence', 'credibility'],
+    opening: 'Tôi sẽ hỏi sâu vào cách anh/chị ra quyết định và kiểm chứng chất lượng.',
+  },
+  {
+    id: 'executive',
+    label: 'Executive / Final',
+    shortLabel: 'FINAL',
+    description: 'Tập trung judgment, leadership, conflict, risk và khả năng nhìn ở cấp hệ thống.',
+    bias: ['depth', 'ownership', 'relevance'],
+    opening: 'Tôi sẽ kiểm tra cách anh/chị ưu tiên, chịu trách nhiệm và ra quyết định khi thông tin chưa đủ.',
+  },
+  {
+    id: 'skeptical',
+    label: 'Skeptical Panel',
+    shortLabel: 'PANEL',
+    description: 'Chủ động challenge claim, metric và contribution để kiểm tra độ chắc của evidence.',
+    bias: ['credibility', 'evidence', 'ownership'],
+    opening: 'Tôi sẽ giả định mọi claim cần được chứng minh bằng evidence cụ thể trước khi chấp nhận.',
+  },
+]
+
+export const pressureLevels = [
+  {
+    id: 'supportive',
+    label: 'Supportive',
+    threshold: 70,
+    followUpBonus: 0,
+    description: 'Chỉ đào sâu khi có gap tương đối rõ.',
+  },
+  {
+    id: 'realistic',
+    label: 'Realistic',
+    threshold: 78,
+    followUpBonus: 0,
+    description: 'Mô phỏng nhịp phỏng vấn thực tế: đủ tốt vẫn có thể bị hỏi tiếp.',
+  },
+  {
+    id: 'pressure',
+    label: 'Pressure',
+    threshold: 86,
+    followUpBonus: 1,
+    description: 'Challenge mạnh hơn vào claim, số liệu và ownership.',
+  },
+]
+
+const interviewerConfig = (mode = 'hiring-manager', pressure = 'realistic') => ({
+  mode: interviewerModes.find((item) => item.id === mode) || interviewerModes[1],
+  pressure: pressureLevels.find((item) => item.id === pressure) || pressureLevels[1],
+})
+
+const interviewerQuestion = (question, mode, pressure, dimension) => {
+  if (!question) return question
+  if (mode === 'skeptical') {
+    if (dimension === 'credibility' || dimension === 'evidence') {
+      return `Tôi chưa bị thuyết phục. ${question}`
+    }
+    return `Hãy chứng minh rõ hơn: ${question}`
+  }
+  if (mode === 'executive') return `Ở góc nhìn người chịu trách nhiệm cuối cùng: ${question}`
+  if (mode === 'craft') return `Đi sâu vào reasoning và constraint: ${question}`
+  if (pressure === 'pressure') return `Tôi sẽ challenge điểm này: ${question}`
+  if (mode === 'recruiter') return `Trả lời ngắn gọn và cụ thể: ${question}`
+  return question
+}
+
 export const evaluateInterviewResponse = ({
   answer = '',
   evidence = '',
@@ -256,11 +343,17 @@ export const buildAdaptiveFollowUp = ({
   answer = '',
   claims = [],
   sequence = 1,
+  interviewerMode = 'hiring-manager',
+  pressureLevel = 'realistic',
 } = {}) => {
   if (question?.adaptive?.isFollowUp) return null
 
   const dimensions = evaluation?.dimensions || {}
-  const ranked = Object.entries(dimensions).sort((a, b) => Number(a[1] || 0) - Number(b[1] || 0))
+  const config = interviewerConfig(interviewerMode, pressureLevel)
+  const bias = new Set(config.mode.bias || [])
+  const ranked = Object.entries(dimensions)
+    .map(([key, value]) => [key, Number(value || 0), Number(value || 0) - (bias.has(key) ? 10 : 0)])
+    .sort((a, b) => a[2] - b[2])
   const unsupportedNumbers = evaluation?.unsupportedNumbers || []
   const relatedClaims = claims
     .map((item) => {
@@ -275,9 +368,10 @@ export const buildAdaptiveFollowUp = ({
   if (unsupportedNumbers.length) dimension = 'credibility'
 
   const score = Number(dimensions[dimension] || 0)
+  const threshold = Number(config.pressure.threshold || 78)
   const shouldFollow = unsupportedNumbers.length > 0
-    || Number(evaluation?.overall || 0) < 78
-    || score < 65
+    || Number(evaluation?.overall || 0) < threshold
+    || score < Math.max(62, threshold - 12)
 
   if (!shouldFollow) return null
 
@@ -339,8 +433,8 @@ export const buildAdaptiveFollowUp = ({
 
   const selected = payloads[dimension] || payloads.evidence
   return {
-    id: `adaptive-${question.id || 'question'}-${dimension}-${sequence}`,
-    question: selected.question,
+    id: `adaptive-${question.id || 'question'}-${interviewerMode}-${dimension}-${sequence}`,
+    question: interviewerQuestion(selected.question, interviewerMode, pressureLevel, dimension),
     why: selected.reason,
     framework: selected.framework,
     example: selected.example,
@@ -357,6 +451,10 @@ export const buildAdaptiveFollowUp = ({
       triggerScore: score,
       reason: selected.reason,
       relatedClaimId: relatedClaim?.id || '',
+      interviewerMode: config.mode.id,
+      interviewerLabel: config.mode.label,
+      pressureLevel: config.pressure.id,
+      pressureLabel: config.pressure.label,
     },
   }
 }
@@ -398,6 +496,8 @@ export const aggregateInterviewReport = (responses = []) => {
     adaptiveCount: adaptiveResponses.length,
     adaptiveDimensions,
     adaptiveReasons: unique(adaptiveResponses.map((item) => item.adaptive?.reason)).filter(Boolean).slice(0, 6),
+    interviewerModes: unique(adaptiveResponses.map((item) => item.adaptive?.interviewerLabel)).filter(Boolean),
+    pressureLevels: unique(adaptiveResponses.map((item) => item.adaptive?.pressureLabel)).filter(Boolean),
   }
 }
 
