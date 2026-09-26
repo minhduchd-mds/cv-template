@@ -220,6 +220,118 @@
           </section>
         </section>
 
+        <section v-else-if="activeModule === 'applications'" class="is-view">
+          <div class="is-page-heading">
+            <div>
+              <span class="is-eyebrow">APPLICATION LAB</span>
+              <h1>Mỗi job là một <em>workspace phỏng vấn riêng.</em></h1>
+              <p>Dán JD, giữ context tuyển dụng và xem Evidence Coverage giữa yêu cầu công việc với CV Claims, Story Bank và Question Bank.</p>
+            </div>
+            <div class="is-heading-number">{{ applications.length }}</div>
+          </div>
+
+          <div class="is-application-layout">
+            <aside class="is-application-list">
+              <div class="is-application-list__head">
+                <span class="is-eyebrow">APPLICATIONS</span>
+                <button type="button" @click="newApplication">＋ New</button>
+              </div>
+              <button
+                v-for="application in applications"
+                :key="application.id"
+                type="button"
+                :class="{ active: applicationDraft.id === application.id }"
+                @click="applicationId = application.id; editApplication(application)"
+              >
+                <span>
+                  <small>{{ application.status || 'Saved' }}</small>
+                  <strong>{{ application.company || 'Chưa có công ty' }}</strong>
+                  <p>{{ application.role || 'Chưa có vị trí' }}</p>
+                </span>
+                <b>→</b>
+              </button>
+              <div v-if="!applications.length" class="is-application-empty">Chưa có application. Tạo job đầu tiên ở bên phải.</div>
+            </aside>
+
+            <section class="is-application-editor">
+              <div class="is-application-editor__heading">
+                <div>
+                  <span class="is-eyebrow">{{ applicationDraft.id ? 'EDIT APPLICATION' : 'NEW APPLICATION' }}</span>
+                  <h2>{{ applicationDraft.company || 'Cơ hội tuyển dụng mới' }}</h2>
+                </div>
+                <div v-if="applicationDraftAnalysis" class="is-coverage-score">
+                  <b>{{ applicationDraftAnalysis.coverage }}</b>
+                  <span>evidence coverage</span>
+                </div>
+              </div>
+
+              <div class="is-application-form">
+                <label><span>Công ty</span><input v-model="applicationDraft.company" type="text" placeholder="Viettel Digital, FPT, Shopee..." /></label>
+                <label><span>Vị trí</span><input v-model="applicationDraft.role" type="text" placeholder="Senior Product Designer" /></label>
+                <label><span>Pipeline</span><select v-model="applicationDraft.status"><option v-for="status in applicationStatuses" :key="status" :value="status">{{ status }}</option></select></label>
+                <label><span>JD / nguồn</span><input v-model="applicationDraft.sourceUrl" type="url" placeholder="https://..." /></label>
+                <label class="wide"><span>Job Description</span><textarea v-model="applicationDraft.jd" rows="10" placeholder="Dán toàn bộ JD hoặc các yêu cầu chính. Interview Studio chỉ dùng local để tạo context luyện tập..."></textarea></label>
+                <label class="wide"><span>Ghi chú</span><textarea v-model="applicationDraft.notes" rows="4" placeholder="Hiring manager round, ngôn ngữ phỏng vấn, người giới thiệu, lưu ý về team..."></textarea></label>
+              </div>
+
+              <div class="is-application-actions">
+                <button v-if="applicationDraft.id" type="button" class="is-text-button danger" @click="deleteApplication(applicationDraft.id)">Xóa application</button>
+                <span></span>
+                <button type="button" class="is-button" @click="saveApplication">Lưu context</button>
+                <button type="button" class="is-button is-button--primary" :disabled="!applicationDraftAnalysis" @click="practiceApplication(applicationDraft)">Luyện job này →</button>
+              </div>
+
+              <template v-if="applicationDraftAnalysis">
+                <div class="is-coverage-summary">
+                  <div class="is-coverage-ring"><b>{{ applicationDraftAnalysis.coverage }}</b><span>/100</span></div>
+                  <div>
+                    <span class="is-eyebrow">EVIDENCE COVERAGE · KHÔNG PHẢI XÁC SUẤT ĐẬU</span>
+                    <h3>{{ applicationDraftAnalysis.summary }}</h3>
+                    <p>Stage đề xuất: {{ interviewStages.find((item) => item.id === applicationDraftAnalysis.recommendedStage)?.label || 'Hiring Manager' }}</p>
+                  </div>
+                </div>
+
+                <div class="is-coverage-grid">
+                  <section>
+                    <span class="is-eyebrow">MATCHED SIGNALS</span>
+                    <div class="is-signal-tags"><span v-for="signal in applicationDraftAnalysis.matchedSignals" :key="signal">{{ signal }}</span><small v-if="!applicationDraftAnalysis.matchedSignals.length">Chưa có signal đủ rõ.</small></div>
+                  </section>
+                  <section>
+                    <span class="is-eyebrow">EVIDENCE GAPS</span>
+                    <div class="is-signal-tags gaps"><span v-for="signal in applicationDraftAnalysis.gapSignals" :key="signal">{{ signal }}</span><small v-if="!applicationDraftAnalysis.gapSignals.length">Không phát hiện gap token đáng kể.</small></div>
+                  </section>
+                </div>
+
+                <div class="is-coverage-grid">
+                  <section>
+                    <span class="is-eyebrow">TOP CV EVIDENCE</span>
+                    <ol class="is-coverage-list">
+                      <li v-for="item in applicationDraftAnalysis.topClaims" :key="item.id"><strong>{{ item.label }}</strong><p>{{ item.text }}</p></li>
+                    </ol>
+                  </section>
+                  <section>
+                    <span class="is-eyebrow">TOP STORY EVIDENCE</span>
+                    <ol class="is-coverage-list">
+                      <li v-for="item in applicationDraftAnalysis.topStories" :key="item.id"><strong>{{ item.label }}</strong><p>{{ item.text }}</p></li>
+                      <li v-if="!applicationDraftAnalysis.topStories.length"><p>Chưa có Story Bank phù hợp với JD này.</p></li>
+                    </ol>
+                  </section>
+                </div>
+
+                <section class="is-application-questions">
+                  <span class="is-eyebrow">RECOMMENDED INTERVIEW QUESTIONS</span>
+                  <ol>
+                    <li v-for="item in applicationDraftAnalysis.recommendedQuestions.slice(0, 5)" :key="item.id">
+                      <span>{{ categoryName(item.category) }}</span>
+                      <strong>{{ item.question }}</strong>
+                    </li>
+                  </ol>
+                </section>
+              </template>
+            </section>
+          </div>
+        </section>
+
         <section v-else-if="activeModule === 'questions'" class="is-view">
           <div class="is-page-heading">
             <div>
@@ -686,7 +798,7 @@
 
 <script>
 import { templates } from '../data/cv'
-import { readCanonicalWorkspace } from '../data/workspace-store'
+import { patchCanonicalWorkspace, readCanonicalWorkspace } from '../data/workspace-store'
 import {
   coreQuestions,
   interviewPacks,
@@ -699,7 +811,9 @@ import {
 } from '../data/interview-prep'
 import {
   aggregateInterviewReport,
+  analyzeApplicationEvidence,
   buildAdaptiveFollowUp,
+  buildApplicationPracticeSet,
   buildNextPracticePlan,
   claimProbes,
   evaluateInterviewResponse,
@@ -726,6 +840,7 @@ export default {
       interviewSources,
       modules: [
         { id: 'overview', label: 'Overview', icon: '◇' },
+        { id: 'applications', label: 'Application Lab', icon: '◎', badge: 'JD' },
         { id: 'questions', label: 'Question Bank', icon: '?' },
         { id: 'claims', label: 'Claim Defense', icon: '⌁', badge: 'CV' },
         { id: 'stories', label: 'Story Bank', icon: '✦', badge: 'NEW' },
@@ -742,6 +857,8 @@ export default {
       categoryId: 'all',
       query: '',
       applicationId: '',
+      applicationDraft: { id: '', company: '', role: '', status: 'Interview', jd: '', notes: '', sourceUrl: '' },
+      applicationStatuses: ['Saved', 'Applied', 'Screening', 'Interview', 'Technical', 'Portfolio', 'Final', 'Offer', 'Closed'],
       selectedClaimId: '',
       claimEvidence: {},
       storyBank: [],
@@ -790,6 +907,16 @@ export default {
     activeApplication() {
       if (!this.applicationId) return null
       return this.applications.find((application) => application.id === this.applicationId) || null
+    },
+    applicationDraftAnalysis() {
+      const draft = this.applicationDraft || {}
+      if (![draft.company, draft.role, draft.jd].some((value) => String(value || '').trim())) return null
+      return analyzeApplicationEvidence({
+        application: draft,
+        claims: this.cvClaims,
+        stories: this.storyBank,
+        questions: this.questionDeck,
+      })
     },
     vietnamQuestions() {
       if (this.market === 'global') return []
@@ -964,6 +1091,20 @@ export default {
     selectedClaim(next) {
       if (next && !this.selectedClaimId) this.selectedClaimId = next.id
     },
+    applicationId(nextId) {
+      if (this.activeModule !== 'applications') return
+      const application = this.applications.find((item) => item.id === nextId)
+      if (application) this.editApplication(application)
+    },
+    activeModule(next) {
+      if (next === 'applications') {
+        const application = this.activeApplication || this.applications[0]
+        if (application) {
+          this.applicationId = application.id
+          this.editApplication(application)
+        } else this.newApplication()
+      }
+    },
   },
   mounted() {
     this.workspace = readCanonicalWorkspace()
@@ -1026,6 +1167,72 @@ export default {
     openFirstRiskClaim() {
       this.selectedClaimId = (this.highRiskClaims[0] || this.cvClaims[0])?.id || ''
       this.activeModule = 'claims'
+    },
+    newApplication() {
+      this.applicationId = ''
+      this.applicationDraft = { id: '', company: '', role: '', status: 'Interview', jd: '', notes: '', sourceUrl: '' }
+    },
+    editApplication(application) {
+      if (!application) return this.newApplication()
+      this.applicationDraft = {
+        id: application.id || '',
+        company: application.company || '',
+        role: application.role || '',
+        status: application.status || 'Interview',
+        jd: application.jd || '',
+        notes: application.notes || '',
+        sourceUrl: application.sourceUrl || application.url || '',
+      }
+    },
+    saveApplication() {
+      const draft = this.applicationDraft || {}
+      if (!String(draft.company || '').trim() && !String(draft.role || '').trim()) return
+      const id = draft.id || 'app-' + Date.now()
+      const nextApplication = {
+        id,
+        company: String(draft.company || '').trim(),
+        role: String(draft.role || '').trim(),
+        status: draft.status || 'Interview',
+        jd: String(draft.jd || '').trim(),
+        notes: String(draft.notes || '').trim(),
+        sourceUrl: String(draft.sourceUrl || '').trim(),
+        updatedAt: new Date().toISOString(),
+      }
+      const nextApplications = this.applications.some((item) => item.id === id)
+        ? this.applications.map((item) => item.id === id ? { ...item, ...nextApplication } : item)
+        : [nextApplication, ...this.applications]
+      this.workspace = patchCanonicalWorkspace({ ats: { applications: nextApplications } }, 'interview-studio') || this.workspace
+      this.applicationId = id
+      this.editApplication(nextApplication)
+    },
+    deleteApplication(id) {
+      const nextApplications = this.applications.filter((item) => item.id !== id)
+      this.workspace = patchCanonicalWorkspace({ ats: { applications: nextApplications } }, 'interview-studio') || this.workspace
+      if (this.applicationId === id) this.newApplication()
+    },
+    practiceApplication(application = this.activeApplication || this.applicationDraft) {
+      if (!application) return
+      if (application.id) this.applicationId = application.id
+      const analysis = analyzeApplicationEvidence({ application, claims: this.cvClaims, stories: this.storyBank, questions: this.questionDeck })
+      if (analysis?.recommendedStage) this.stageId = analysis.recommendedStage
+      const selected = buildApplicationPracticeSet({
+        application,
+        claims: this.cvClaims,
+        stories: this.storyBank,
+        questions: this.questionDeck,
+        limit: this.practiceSize,
+      })
+      if (!selected.length) return
+      this.practiceBaseSize = selected.length
+      this.adaptiveInsertedCount = 0
+      this.practiceQuestions = selected
+      this.practiceDrafts = Object.fromEntries(selected.map((item) => [item.id, { answer: '', evidence: '', confidence: 3, evaluation: null }]))
+      this.practiceIndex = 0
+      this.practiceShowGuide = false
+      this.practiceStartedAt = new Date().toISOString()
+      this.practiceActive = true
+      this.activeModule = 'mock'
+      this.startQuestionTimer()
     },
     jumpToQuestion(question) {
       this.query = question.question
@@ -2478,7 +2685,7 @@ export default {
   .is-stat-grid article:nth-child(2) { border-right: 0; }
   .is-overview-grid, .is-report-grid, .is-mock-start { grid-template-columns: 1fr; }
   .is-source-grid { grid-template-columns: repeat(2, 1fr); }
-  .is-claim-layout { grid-template-columns: 1fr; }
+  .is-claim-layout, .is-application-layout { grid-template-columns: 1fr; }
   .is-claim-list { max-height: 340px; grid-template-columns: repeat(2, 1fr); }
   .is-answer-grid { grid-template-columns: 1fr; }
 }
@@ -2493,7 +2700,10 @@ export default {
   .is-hero h1 { font-size: 44px; }
   .is-stat-grid { grid-template-columns: 1fr 1fr; }
   .is-stat-grid article { padding: 16px 10px; }
-  .is-context-grid, .is-mock-config { grid-template-columns: 1fr; }
+  .is-context-grid, .is-mock-config, .is-application-form, .is-coverage-grid { grid-template-columns: 1fr; }
+  .is-application-form label.wide { grid-column: auto; }
+  .is-application-actions { grid-template-columns: 1fr; }
+  .is-coverage-summary { grid-template-columns: 72px 1fr; }
   .is-mock-config > div { grid-column: auto; }
   .is-source-grid { grid-template-columns: 1fr; }
   .is-page-heading { min-height: 200px; align-items: start; }
@@ -2527,4 +2737,226 @@ export default {
 @media (prefers-reduced-motion: reduce) {
   .is-view, .is-question__plus { animation: none; transition: none; }
 }
+
+.is-application-layout {
+  padding-top: 22px;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.is-application-list {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.is-application-list__head {
+  padding: 0 2px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-size: 10px;
+    cursor: pointer;
+  }
+}
+
+.is-application-list > button {
+  min-height: 84px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 1fr 20px;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(12,23,29,.62);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &.active {
+    border-color: rgba(114,231,212,.35);
+    background: rgba(114,231,212,.055);
+  }
+
+  small, strong, p { display: block; }
+  small { color: var(--accent-2); font-size: 8px; text-transform: uppercase; }
+  strong { margin-top: 5px; font-size: 11px; }
+  p { margin: 3px 0 0; color: var(--muted); font-size: 9px; }
+  > b { color: var(--accent); }
+}
+
+.is-application-empty {
+  padding: 24px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 11px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.is-application-editor {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(12,23,29,.7);
+}
+
+.is-application-editor__heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+
+  h2 {
+    margin: 8px 0 0;
+    font-size: clamp(24px, 3vw, 38px);
+    letter-spacing: -.035em;
+  }
+}
+
+.is-coverage-score {
+  min-width: 88px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border: 1px solid rgba(114,231,212,.25);
+  border-radius: 50%;
+
+  b { color: var(--accent); font-size: 28px; letter-spacing: -.04em; }
+  span { color: var(--muted); font-size: 7px; }
+}
+
+.is-application-form {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+
+  label {
+    display: grid;
+    gap: 7px;
+
+    > span { color: var(--muted); font-size: 9px; font-weight: 650; }
+  }
+
+  label.wide { grid-column: 1 / -1; }
+
+  input, select, textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #09151b;
+    color: var(--ink);
+    font: inherit;
+  }
+
+  input, select { min-height: 40px; padding: 0 10px; font-size: 10px; }
+  textarea { padding: 12px; resize: vertical; font-size: 10px; line-height: 1.55; }
+}
+
+.is-application-actions {
+  margin-top: 14px;
+  padding-bottom: 22px;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+
+  .danger { color: var(--danger); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+}
+
+.is-coverage-summary {
+  padding: 24px 0;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 22px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+
+  h3 { margin: 7px 0 5px; font-size: 17px; line-height: 1.35; }
+  p { margin: 0; color: var(--muted); font-size: 9px; }
+}
+
+.is-coverage-ring {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border: 1px solid rgba(114,231,212,.22);
+  border-radius: 50%;
+  background: rgba(114,231,212,.035);
+
+  b { color: var(--accent); font-size: 31px; }
+  span { color: var(--muted); font-size: 8px; }
+}
+
+.is-coverage-grid {
+  padding: 20px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.is-signal-tags {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  span {
+    padding: 5px 7px;
+    border-radius: 6px;
+    background: rgba(114,231,212,.07);
+    color: var(--accent);
+    font-size: 8px;
+  }
+
+  &.gaps span {
+    background: rgba(243,200,106,.07);
+    color: var(--warning);
+  }
+
+  small { color: var(--muted); font-size: 9px; }
+}
+
+.is-coverage-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+
+  li { padding: 10px 0; border-top: 1px solid var(--line); }
+  strong { font-size: 9px; }
+  p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.45; }
+}
+
+.is-application-questions {
+  padding-top: 20px;
+
+  ol { margin: 10px 0 0; padding: 0; list-style: none; }
+  li {
+    padding: 11px 0;
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 10px;
+    border-top: 1px solid var(--line);
+  }
+  li span { color: var(--muted); font-size: 8px; }
+  li strong { font-size: 10px; line-height: 1.45; }
+}
+
+
 </style>
