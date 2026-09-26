@@ -197,6 +197,9 @@ test('Application Lab saves JD context, shows evidence coverage and starts a tar
   await expect(page.getByText(/EVIDENCE COVERAGE/)).toBeVisible()
   await expect(page.getByText(/MATCHED SIGNALS/)).toBeVisible()
   await expect(page.getByText(/EVIDENCE GAPS/)).toBeVisible()
+  await expect(page.getByText(/INTERVIEW STAGE MATRIX/)).toBeVisible()
+  await expect(page.getByText(/HR \/ Recruiter/)).toBeVisible()
+  await expect(page.getByText(/Hiring Manager/).first()).toBeVisible()
 
   await page.getByRole('button', { name: 'Lưu context' }).click()
 
