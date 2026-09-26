@@ -684,3 +684,89 @@ export const buildApplicationPracticeSet = ({
   })
   return selected.slice(0, limit)
 }
+
+
+export const buildInterviewStageMatrix = ({
+  application = {},
+  claims = [],
+  stories = [],
+  questions = [],
+} = {}) => {
+  const analysis = analyzeApplicationEvidence({ application, claims, stories, questions })
+  const stages = [
+    {
+      id: 'hr',
+      label: 'HR / Recruiter',
+      focus: ['motivation', 'fit', 'salary', 'timeline', 'communication'],
+      evidence: 'Positioning rõ, lý do chuyển việc tích cực, kỳ vọng và timeline nhất quán.',
+    },
+    {
+      id: 'hiring-manager',
+      label: 'Hiring Manager',
+      focus: ['ownership', 'impact', 'stakeholder', 'priority', 'decision'],
+      evidence: 'Project có ownership rõ, trade-off, outcome và cách phối hợp với stakeholder.',
+    },
+    {
+      id: 'technical',
+      label: 'Technical / Craft',
+      focus: ['system', 'implementation', 'debug', 'quality', 'architecture', 'tool'],
+      evidence: 'Decision kỹ thuật/craft, constraint, quality bar, cách kiểm chứng và regression control.',
+    },
+    {
+      id: 'portfolio',
+      label: 'Portfolio / Case',
+      focus: ['problem', 'user', 'research', 'design', 'metric', 'trade-off'],
+      evidence: 'Problem → evidence → decision → trade-off → result; phân biệt rõ contribution cá nhân.',
+    },
+    {
+      id: 'final',
+      label: 'Final / Leadership',
+      focus: ['leadership', 'failure', 'conflict', 'learning', 'strategy', 'culture'],
+      evidence: 'Judgment, reflection, cách dẫn dắt và cách ra quyết định khi thông tin chưa đủ.',
+    },
+  ]
+
+  const jdSet = new Set(applicationKeywords(application))
+  const claimText = claims.map((item) => normalizeInterviewText(item.text)).join(' ')
+  const storyText = stories.map((item) => normalizeInterviewText([item.answer, item.evidence].join(' '))).join(' ')
+
+  return stages.map((stage) => {
+    const relevantQuestions = questions
+      .filter((question) => {
+        const q = normalizeInterviewText([
+          question.question,
+          question.why,
+          ...(question.framework || []),
+        ].join(' '))
+        const stageFit = stage.focus.some((term) => q.includes(normalizeInterviewText(term)))
+        const jdFit = interviewTokens(q).some((token) => jdSet.has(token))
+        return stageFit || jdFit
+      })
+      .map((question) => ({
+        ...question,
+        score: questionRelevanceScore(question, application, claims)
+          + stage.focus.reduce((score, term) =>
+            score + (normalizeInterviewText(question.question).includes(normalizeInterviewText(term)) ? 2 : 0), 0),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+
+    const evidenceHits = stage.focus.filter((term) => {
+      const normalized = normalizeInterviewText(term)
+      return claimText.includes(normalized) || storyText.includes(normalized)
+    }).length
+
+    const jdHits = stage.focus.filter((term) => jdSet.has(normalizeInterviewText(term))).length
+    const preparedness = clamp(35 + evidenceHits * 10 + jdHits * 7 + Math.min(18, relevantQuestions.length * 4))
+
+    return {
+      id: stage.id,
+      label: stage.label,
+      focus: stage.focus,
+      evidence: stage.evidence,
+      preparedness,
+      questions: relevantQuestions,
+      recommended: analysis.recommendedStage === stage.id,
+    }
+  })
+}
