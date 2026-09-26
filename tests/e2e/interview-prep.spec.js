@@ -183,6 +183,32 @@ test('Story Bank saves a strong answer and can start focused practice', async ({
   await expect(page.getByPlaceholder(/Nói hoặc nhập đúng cách/)).toHaveValue(/31%/)
 })
 
+test('Application Lab saves JD context, shows evidence coverage and starts a targeted round', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  await page.getByRole('button', { name: /Application Lab/ }).click()
+
+  await expect(page.getByRole('heading', { name: /Mỗi job là một workspace phỏng vấn riêng/ })).toBeVisible()
+  await page.getByRole('button', { name: /New/ }).click()
+  await page.getByPlaceholder(/Viettel Digital, FPT, Shopee/).fill('FPT Software')
+  await page.getByPlaceholder(/Senior Product Designer/).fill('Lead Product Designer')
+  await page.getByPlaceholder(/Dán toàn bộ JD/).fill(
+    'Lead product design for complex enterprise workflows. Own design system governance, stakeholder management, user research, product metrics and collaboration with frontend engineering.'
+  )
+  await expect(page.getByText(/EVIDENCE COVERAGE/)).toBeVisible()
+  await expect(page.getByText(/MATCHED SIGNALS/)).toBeVisible()
+  await expect(page.getByText(/EVIDENCE GAPS/)).toBeVisible()
+
+  await page.getByRole('button', { name: 'Lưu context' }).click()
+
+  const saved = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('cv-studio-workspace-v3') || 'null')
+  )
+  expect(saved.ats.applications.some((item) => item.company === 'FPT Software' && item.role === 'Lead Product Designer')).toBeTruthy()
+
+  await page.getByRole('button', { name: /Luyện job này/ }).click()
+  await expect(page.getByText(/QUESTION 1/)).toBeVisible()
+})
+
 test('mobile Interview Studio has no horizontal page overflow', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes('mobile'), 'Mobile-only overflow check')
 
