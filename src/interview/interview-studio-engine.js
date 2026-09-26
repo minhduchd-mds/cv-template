@@ -384,6 +384,9 @@ export const aggregateInterviewReport = (responses = []) => {
   const ranked = Object.entries(dimensions).sort((a, b) => b[1] - a[1])
   const warnings = unique(scored.flatMap((item) => item.evaluation.warnings || [])).slice(0, 8)
 
+  const adaptiveResponses = responses.filter((item) => item?.adaptive?.isFollowUp)
+  const adaptiveDimensions = unique(adaptiveResponses.map((item) => item.adaptive?.triggerDimension))
+
   return {
     overall: clamp(scored.reduce((sum, item) => sum + Number(item.evaluation.overall || 0), 0) / scored.length),
     answered: scored.length,
@@ -392,6 +395,9 @@ export const aggregateInterviewReport = (responses = []) => {
     strongest: ranked.slice(0, 2).map(([key, score]) => ({ key, score })),
     weakest: ranked.slice(-2).reverse().map(([key, score]) => ({ key, score })),
     evidenceReady: responses.filter((item) => String(item?.evidence || '').trim().length >= 12).length,
+    adaptiveCount: adaptiveResponses.length,
+    adaptiveDimensions,
+    adaptiveReasons: unique(adaptiveResponses.map((item) => item.adaptive?.reason)).filter(Boolean).slice(0, 6),
   }
 }
 
