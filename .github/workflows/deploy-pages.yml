@@ -1,9 +1,11 @@
 name: Deploy Vite to GitHub Pages
 
-# Hosted Actions runners are currently unavailable for this repository.
-# Keep the compiled Vite deployment available on demand. Branch-source Pages
-# serves the self-contained static Studio fallback until runner access returns.
+# Build and publish the Vite app on every master push. The static branch-source
+# fallback remains available as a resilience path when hosted runners are unavailable.
 on:
+  push:
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
