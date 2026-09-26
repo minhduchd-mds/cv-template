@@ -10,7 +10,9 @@ import {
 } from '../../src/data/interview-prep.js'
 import {
   aggregateInterviewReport,
+  analyzeApplicationEvidence,
   buildAdaptiveFollowUp,
+  buildApplicationPracticeSet,
   buildNextPracticePlan,
   claimProbes,
   evaluateInterviewResponse,
@@ -26,6 +28,7 @@ const CLAIM_KEY='interview-studio-claim-evidence-v1'
 const STORY_KEY='interview-studio-story-bank-v1'
 const modules=[
   {id:'overview',label:'Overview',icon:'◇'},
+  {id:'applications',label:'Application Lab',icon:'◎',badge:'JD'},
   {id:'questions',label:'Question Bank',icon:'?'},
   {id:'claims',label:'Claim Defense',icon:'⌁',badge:'CV'},
   {id:'stories',label:'Story Bank',icon:'✦',badge:'NEW'},
@@ -45,7 +48,7 @@ const templates=[
 const readJson=(key,fallback)=>{
   try{const value=JSON.parse(localStorage.getItem(key)||'null');return value??fallback}catch{return fallback}
 }
-const workspace=readJson(WORKSPACE_KEY,{profile:{},studio:{},ats:{applications:[]}})
+let workspace=readJson(WORKSPACE_KEY,{profile:{},studio:{},ats:{target:{},versions:[],applications:[]}})
 const initialTemplate=workspace?.studio?.selectedId&&templates.some(t=>t.id===workspace.studio.selectedId)?workspace.studio.selectedId:'soft-portfolio-pro'
 const state={
   activeModule:'overview',
@@ -57,6 +60,8 @@ const state={
   categoryId:'all',
   query:'',
   applicationId:'',
+  applicationDraft:{id:'',company:'',role:'',status:'Interview',jd:'',notes:'',sourceUrl:''},
+  applicationStatuses:['Saved','Applied','Screening','Interview','Technical','Portfolio','Final','Offer','Closed'],
   selectedClaimId:'',
   claimEvidence:readJson(CLAIM_KEY,{}),
   storyBank:readJson(STORY_KEY,[]),
@@ -201,6 +206,108 @@ function renderOverview(){
   document.querySelector('#market-field').onchange=ev=>{state.market=ev.target.value;render()}
 }
 function bindGo(){root.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{state.activeModule=b.dataset.go;render()}))}
+
+function persistApplications(nextApplications){
+  workspace={
+    ...workspace,
+    format:workspace.format||'cv-studio-workspace',
+    schemaVersion:Number(workspace.schemaVersion||3),
+    updatedAt:new Date().toISOString(),
+    source:'interview-studio',
+    ats:{
+      target:workspace?.ats?.target||{},
+      versions:Array.isArray(workspace?.ats?.versions)?workspace.ats.versions:[],
+      applications:nextApplications,
+    },
+  }
+  localStorage.setItem(WORKSPACE_KEY,JSON.stringify(workspace))
+}
+function newApplication(){
+  state.applicationId=''
+  state.applicationDraft={id:'',company:'',role:'',status:'Interview',jd:'',notes:'',sourceUrl:''}
+}
+function editApplication(app){
+  if(!app)return newApplication()
+  state.applicationDraft={
+    id:app.id||'',
+    company:app.company||'',
+    role:app.role||'',
+    status:app.status||'Interview',
+    jd:app.jd||'',
+    notes:app.notes||'',
+    sourceUrl:app.sourceUrl||app.url||'',
+  }
+}
+function applicationAnalysis(app=state.applicationDraft){
+  if(![app?.company,app?.role,app?.jd].some(v=>String(v||'').trim()))return null
+  return analyzeApplicationEvidence({application:app,claims:cvClaims(),stories:state.storyBank,questions:questionDeck()})
+}
+function saveApplicationDraft(){
+  const d=state.applicationDraft
+  if(!String(d.company||'').trim()&&!String(d.role||'').trim()){toast('Cần ít nhất tên công ty hoặc vị trí');return}
+  const id=d.id||'app-'+Date.now()
+  const next={id,company:String(d.company||'').trim(),role:String(d.role||'').trim(),status:d.status||'Interview',jd:String(d.jd||'').trim(),notes:String(d.notes||'').trim(),sourceUrl:String(d.sourceUrl||'').trim(),updatedAt:new Date().toISOString()}
+  const nextApps=applications().some(a=>a.id===id)?applications().map(a=>a.id===id?{...a,...next}:a):[next,...applications()]
+  persistApplications(nextApps);state.applicationId=id;editApplication(next);toast('Đã lưu application');render()
+}
+function deleteApplication(id){
+  persistApplications(applications().filter(a=>a.id!==id))
+  if(state.applicationId===id)newApplication()
+  toast('Đã xóa application');render()
+}
+function startApplicationPractice(app=activeApplication()||state.applicationDraft){
+  const analysis=applicationAnalysis(app)
+  if(!analysis)return
+  state.stageId=analysis.recommendedStage||state.stageId
+  const selected=buildApplicationPracticeSet({application:app,claims:cvClaims(),stories:state.storyBank,questions:questionDeck(),limit:5})
+  if(!selected.length){toast('Chưa đủ dữ liệu để tạo practice set');return}
+  if(app.id)state.applicationId=app.id
+  state.practice={questions:selected,index:0,drafts:{},startedAt:new Date().toISOString(),timerChoice:90,baseSize:selected.length,adaptiveInserted:0}
+  selected.forEach(q=>state.practice.drafts[q.id]={answer:'',evidence:'',confidence:3,evaluation:null})
+  state.activeModule='mock';startTimer();render()
+}
+function renderApplications(){
+  if(!state.applicationDraft.id&&state.applicationId){
+    const app=activeApplication();if(app)editApplication(app)
+  }
+  if(!state.applicationDraft.id&&!state.applicationId&&applications().length){
+    state.applicationId=applications()[0].id;editApplication(applications()[0])
+  }
+  const analysis=applicationAnalysis()
+  root.innerHTML=pageHeading('APPLICATION LAB','Mỗi job là một <em>workspace phỏng vấn riêng.</em>','Dán JD, giữ context tuyển dụng và xem Evidence Coverage giữa yêu cầu công việc với CV Claims, Story Bank và Question Bank.',applications().length)+`
+    <div class="application-layout">
+      <aside class="application-list">
+        <div class="application-list-head"><span class="eyebrow">APPLICATIONS</span><button id="new-app">＋ New</button></div>
+        ${applications().map(a=>`<button data-app="${e(a.id)}" class="${state.applicationDraft.id===a.id?'active':''}"><span><small>${e(a.status||'Saved')}</small><strong>${e(a.company||'Chưa có công ty')}</strong><p>${e(a.role||'Chưa có vị trí')}</p></span><b>→</b></button>`).join('')}
+        ${applications().length?'':'<div class="empty">Chưa có application. Tạo job đầu tiên ở bên phải.</div>'}
+      </aside>
+      <section class="application-editor">
+        <div class="application-editor-head"><div><span class="eyebrow">${state.applicationDraft.id?'EDIT APPLICATION':'NEW APPLICATION'}</span><h2>${e(state.applicationDraft.company||'Cơ hội tuyển dụng mới')}</h2></div>${analysis?`<div class="coverage-score"><b>${analysis.coverage}</b><span>evidence coverage</span></div>`:''}</div>
+        <div class="application-form">
+          <label><span>Công ty</span><input id="app-company" value="${e(state.applicationDraft.company)}" placeholder="Viettel Digital, FPT, Shopee..." /></label>
+          <label><span>Vị trí</span><input id="app-role" value="${e(state.applicationDraft.role)}" placeholder="Senior Product Designer" /></label>
+          <label><span>Pipeline</span><select id="app-status">${state.applicationStatuses.map(s=>`<option ${s===state.applicationDraft.status?'selected':''}>${e(s)}</option>`).join('')}</select></label>
+          <label><span>JD / nguồn</span><input id="app-url" value="${e(state.applicationDraft.sourceUrl)}" placeholder="https://..." /></label>
+          <label class="wide"><span>Job Description</span><textarea id="app-jd" rows="10" placeholder="Dán JD hoặc yêu cầu chính...">${e(state.applicationDraft.jd)}</textarea></label>
+          <label class="wide"><span>Ghi chú</span><textarea id="app-notes" rows="4" placeholder="Hiring manager round, ngôn ngữ, team...">${e(state.applicationDraft.notes)}</textarea></label>
+        </div>
+        <div class="application-actions">${state.applicationDraft.id?'<button id="delete-app" class="text-btn danger">Xóa application</button>':'<span></span>'}<span></span><button id="save-app" class="secondary">Lưu context</button><button id="practice-app" class="primary" ${analysis?'':'disabled'}>Luyện job này →</button></div>
+        ${analysis?`
+          <div class="coverage-summary"><div class="coverage-ring"><b>${analysis.coverage}</b><span>/100</span></div><div><span class="eyebrow">EVIDENCE COVERAGE · KHÔNG PHẢI XÁC SUẤT ĐẬU</span><h3>${e(analysis.summary)}</h3><p>Stage đề xuất: ${e(interviewStages.find(s=>s.id===analysis.recommendedStage)?.label||'Hiring Manager')}</p></div></div>
+          <div class="coverage-grid"><section><span class="eyebrow">MATCHED SIGNALS</span><div class="signal-tags">${analysis.matchedSignals.map(s=>`<span>${e(s)}</span>`).join('')||'<small>Chưa có signal đủ rõ.</small>'}</div></section><section><span class="eyebrow">EVIDENCE GAPS</span><div class="signal-tags gaps">${analysis.gapSignals.map(s=>`<span>${e(s)}</span>`).join('')||'<small>Không phát hiện gap token đáng kể.</small>'}</div></section></div>
+          <div class="coverage-grid"><section><span class="eyebrow">TOP CV EVIDENCE</span><ol class="coverage-list">${analysis.topClaims.map(x=>`<li><strong>${e(x.label)}</strong><p>${e(x.text)}</p></li>`).join('')||'<li><p>Chưa có CV evidence phù hợp.</p></li>'}</ol></section><section><span class="eyebrow">TOP STORY EVIDENCE</span><ol class="coverage-list">${analysis.topStories.map(x=>`<li><strong>${e(x.label)}</strong><p>${e(x.text)}</p></li>`).join('')||'<li><p>Chưa có Story Bank phù hợp.</p></li>'}</ol></section></div>
+          <section class="application-questions"><span class="eyebrow">RECOMMENDED INTERVIEW QUESTIONS</span><ol>${analysis.recommendedQuestions.slice(0,5).map(x=>`<li><span>${e(categoryName(x.category))}</span><strong>${e(x.question)}</strong></li>`).join('')}</ol></section>`
+        :''}
+      </section>
+    </div>`
+  const bindField=(id,key)=>{const node=document.querySelector(id);if(!node)return;node.oninput=()=>{state.applicationDraft[key]=node.value};node.onchange=()=>{state.applicationDraft[key]=node.value;if(key==='jd'||key==='status')renderApplications()}}
+  bindField('#app-company','company');bindField('#app-role','role');bindField('#app-status','status');bindField('#app-url','sourceUrl');bindField('#app-jd','jd');bindField('#app-notes','notes')
+  document.querySelector('#new-app').onclick=()=>{newApplication();renderApplications()}
+  root.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>{state.applicationId=b.dataset.app;editApplication(applications().find(a=>a.id===state.applicationId));renderApplications();renderTop()})
+  document.querySelector('#save-app').onclick=saveApplicationDraft
+  const del=document.querySelector('#delete-app');if(del)del.onclick=()=>deleteApplication(state.applicationDraft.id)
+  const practice=document.querySelector('#practice-app');if(practice)practice.onclick=()=>startApplicationPractice(state.applicationDraft)
+}
 
 function renderQuestions(){
   const qs=filteredQuestions()
@@ -406,6 +513,7 @@ function renderView(){
   stopSpeech()
   if(state.activeModule!=='mock')stopTimer()
   if(state.activeModule==='overview')renderOverview()
+  else if(state.activeModule==='applications')renderApplications()
   else if(state.activeModule==='questions')renderQuestions()
   else if(state.activeModule==='claims')renderClaims()
   else if(state.activeModule==='stories')renderStories()
