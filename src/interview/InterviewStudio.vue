@@ -185,6 +185,22 @@
             </section>
           </div>
 
+          <section v-if="latestReport?.report?.adaptiveCount" class="is-panel is-adaptive-report">
+            <div class="is-panel__heading">
+              <div>
+                <span class="is-eyebrow">ADAPTIVE TRACE</span>
+                <h2>Vì sao Interviewer đã hỏi sâu</h2>
+              </div>
+            </div>
+            <div class="is-adaptive-report__stats">
+              <div><b>{{ latestReport.report.adaptiveCount }}</b><span>follow-up đã chèn</span></div>
+              <div><b>{{ latestReport.report.adaptiveDimensions.length }}</b><span>dimension bị đào sâu</span></div>
+            </div>
+            <ul class="is-warning-list">
+              <li v-for="reason in latestReport.report.adaptiveReasons" :key="reason">{{ reason }}</li>
+            </ul>
+          </section>
+
           <section class="is-panel">
             <div class="is-panel__heading is-panel__heading--split">
               <div>
@@ -424,13 +440,22 @@
           <section v-else-if="practiceCurrent" class="is-live-session">
             <div class="is-live-session__meta">
               <div>
-                <span>QUESTION {{ practiceIndex + 1 }} / {{ practiceQuestions.length }}</span>
+                <span>
+                  QUESTION {{ practiceIndex + 1 }} / {{ practiceQuestions.length }}
+                  <b v-if="practiceCurrent.adaptive?.isFollowUp" class="is-adaptive-badge">ADAPTIVE FOLLOW-UP</b>
+                </span>
                 <small>{{ categoryName(practiceCurrent.category) }} · {{ activeStageLabel }}</small>
               </div>
               <div class="is-timer" :class="{ warning: timerRemaining <= 20 }">
                 <b>{{ formattedTimer }}</b>
                 <span>{{ timerRunning ? 'đang chạy' : 'tạm dừng' }}</span>
               </div>
+            </div>
+
+            <div v-if="practiceCurrent.adaptive?.isFollowUp" class="is-adaptive-reason">
+              <span>WHY THIS FOLLOW-UP</span>
+              <p>{{ practiceCurrent.adaptive.reason }}</p>
+              <small>Trigger: {{ dimensionLabel(practiceCurrent.adaptive.triggerDimension) }} · {{ practiceCurrent.adaptive.triggerScore }}/100</small>
             </div>
 
             <h2>{{ practiceCurrent.question }}</h2>
@@ -501,7 +526,7 @@
             <div class="is-session-actions">
               <button type="button" class="is-button" @click="evaluateCurrent">Đánh giá câu này</button>
               <button type="button" class="is-button is-button--primary" @click="nextPractice">
-                {{ practiceIndex === practiceQuestions.length - 1 ? 'Hoàn tất & tạo report' : 'Câu tiếp theo →' }}
+                {{ nextPracticeLabel }}
               </button>
             </div>
           </section>
@@ -526,7 +551,7 @@
             <div>
               <strong>{{ latestReport.contextLabel }}</strong>
               <p>{{ formatSessionDate(latestReport.createdAt) }} · {{ latestReport.stageLabel }} · {{ latestReport.answered }}/{{ latestReport.total }} câu</p>
-              <span>{{ latestReport.report.evidenceReady }}/{{ latestReport.total }} câu có evidence note</span>
+              <span>{{ latestReport.report.evidenceReady }}/{{ latestReport.total }} câu có evidence note · {{ latestReport.report.adaptiveCount || 0 }} adaptive follow-up</span>
             </div>
           </section>
 
@@ -590,6 +615,7 @@ import {
 } from '../data/interview-prep'
 import {
   aggregateInterviewReport,
+  buildAdaptiveFollowUp,
   claimProbes,
   evaluateInterviewResponse,
   extractCvClaims,
@@ -638,6 +664,8 @@ export default {
       practiceStartedAt: '',
       practiceSessions: [],
       practiceSize: 5,
+      practiceBaseSize: 5,
+      adaptiveInsertedCount: 0,
       timerChoice: 90,
       timerRemaining: 90,
       timerId: null,
@@ -773,6 +801,18 @@ export default {
     },
     currentAnswerWords() {
       return String(this.currentDraft.answer || '').trim().split(/\s+/).filter(Boolean).length
+    },
+    adaptiveMaxFollowUps() {
+      return this.practiceBaseSize >= 8 ? 3 : 2
+    },
+    adaptiveFollowUpCount() {
+      return this.practiceQuestions.filter((item) => item?.adaptive?.isFollowUp).length
+    },
+    nextPracticeLabel() {
+      const mayAdapt = !this.practiceCurrent?.adaptive?.isFollowUp
+        && this.adaptiveInsertedCount < this.adaptiveMaxFollowUps
+      if (mayAdapt) return 'Phân tích & tiếp tục →'
+      return this.practiceIndex === this.practiceQuestions.length - 1 ? 'Hoàn tất & tạo report' : 'Câu tiếp theo →'
     },
     formattedTimer() {
       const minutes = Math.floor(this.timerRemaining / 60)
@@ -952,6 +992,8 @@ export default {
         if (!selected.some((item) => item.id === question.id)) selected.push(question)
       })
 
+      this.practiceBaseSize = this.practiceSize
+      this.adaptiveInsertedCount = 0
       this.practiceQuestions = selected.slice(0, this.practiceSize)
       this.practiceDrafts = Object.fromEntries(this.practiceQuestions.map((item) => [
         item.id,
@@ -1011,6 +1053,32 @@ export default {
     nextPractice() {
       if (!this.practiceCurrent) return
       if (!this.currentDraft.evaluation) this.evaluateCurrent()
+
+      const currentQuestion = this.practiceCurrent
+      const currentDraft = this.practiceDrafts[currentQuestion.id] || {}
+      const canAdapt = !currentQuestion?.adaptive?.isFollowUp
+        && this.adaptiveInsertedCount < this.adaptiveMaxFollowUps
+
+      if (canAdapt) {
+        const followUp = buildAdaptiveFollowUp({
+          question: currentQuestion,
+          evaluation: currentDraft.evaluation,
+          answer: currentDraft.answer,
+          claims: this.cvClaims,
+          sequence: this.adaptiveInsertedCount + 1,
+        })
+        if (followUp && !this.practiceQuestions.some((item) => item.id === followUp.id)) {
+          const nextQuestions = [...this.practiceQuestions]
+          nextQuestions.splice(this.practiceIndex + 1, 0, followUp)
+          this.practiceQuestions = nextQuestions
+          this.practiceDrafts = {
+            ...this.practiceDrafts,
+            [followUp.id]: { answer: '', evidence: '', confidence: 3, evaluation: null },
+          }
+          this.adaptiveInsertedCount += 1
+        }
+      }
+
       if (this.practiceIndex < this.practiceQuestions.length - 1) {
         this.stopDictation()
         this.practiceIndex += 1
@@ -1040,6 +1108,7 @@ export default {
           evidence: String(draft.evidence || '').trim(),
           confidence: Number(draft.confidence || 0),
           evaluation,
+          adaptive: item.adaptive || null,
         }
       })
       const report = aggregateInterviewReport(responses)
@@ -1057,6 +1126,8 @@ export default {
         stageLabel: this.activeStageLabel,
         market: this.market,
         total: responses.length,
+        baseQuestions: this.practiceBaseSize,
+        adaptiveFollowUps: responses.filter((item) => item.adaptive?.isFollowUp).length,
         answered: responses.filter((item) => item.answer || item.evidence).length,
         evidenceReady: responses.filter((item) => item.evidence.length >= 12).length,
         responses,
@@ -1884,6 +1955,40 @@ export default {
   span { color: var(--muted); font-size: 8px; }
 }
 .is-timer.warning b { color: var(--warning); }
+
+.is-adaptive-badge {
+  margin-left: 8px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(243,200,106,.1);
+  color: var(--warning);
+  font-size: 7px;
+  letter-spacing: .08em;
+}
+
+.is-adaptive-reason {
+  margin-top: 24px;
+  padding: 13px 15px;
+  border-left: 2px solid var(--warning);
+  background: rgba(243,200,106,.045);
+
+  span { color: var(--warning); font-size: 8px; font-weight: 780; letter-spacing: .1em; }
+  p { margin: 6px 0 3px; color: var(--ink); font-size: 10px; line-height: 1.5; }
+  small { color: var(--muted); font-size: 8px; }
+}
+
+.is-adaptive-report { margin-bottom: 18px; }
+.is-adaptive-report__stats {
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 180px));
+  gap: 8px;
+
+  div { padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #09151b; }
+  b, span { display: block; }
+  b { color: var(--accent); font-size: 22px; }
+  span { margin-top: 3px; color: var(--muted); font-size: 8px; }
+}
 
 .is-live-session__tools { margin-bottom: 17px; display: flex; flex-wrap: wrap; gap: 6px; }
 .is-live-session__tools button,
