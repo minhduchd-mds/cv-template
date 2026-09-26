@@ -143,6 +143,8 @@ test('mock interview adapts to weak answers and creates traceable report', async
   await expect(page.getByText(/LATEST PRACTICE SIGNAL/)).toBeVisible()
   await expect(page.getByText(/Viettel Digital · Senior Product Designer/)).toBeVisible()
   await expect(page.getByText(/ADAPTIVE TRACE/)).toBeVisible()
+  await expect(page.getByText(/BRANCH MEMORY/)).toBeVisible()
+  await expect(page.getByText(/Interviewer đã rẽ nhánh/)).toBeVisible()
   await expect(page.getByText(/NEXT PRACTICE PLAN/)).toBeVisible()
   await expect(page.getByRole('button', { name: /Luyện plan này/ })).toBeVisible()
 
@@ -158,6 +160,9 @@ test('mock interview adapts to weak answers and creates traceable report', async
   expect(sessions[0].report.interviewerModes).toContain('Skeptical Panel')
   expect(sessions[0].report.pressureLevels).toContain('Pressure')
   expect(sessions[0].report.adaptiveReasons.length).toBeGreaterThanOrEqual(1)
+  expect(sessions[0].report.adaptiveTrace.length).toBeGreaterThanOrEqual(1)
+  expect(sessions[0].report.adaptiveTrace[0].interviewerLabel).toBe('Skeptical Panel')
+  expect(sessions[0].report.adaptiveTrace[0].pressureLabel).toBe('Pressure')
   expect(sessions[0].report.overall).toBeGreaterThan(0)
 })
 
