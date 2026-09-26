@@ -562,3 +562,125 @@ export const questionRelevanceScore = (question, application = {}, claims = []) 
   const vietnamBonus = question.market === 'vietnam' ? 2 : 0
   return appScore + claimScore + vietnamBonus
 }
+
+
+export const analyzeApplicationEvidence = ({
+  application = {},
+  claims = [],
+  stories = [],
+  questions = [],
+} = {}) => {
+  const jdTokens = applicationKeywords(application)
+  const evidenceItems = [
+    ...claims.map((item) => ({
+      id: item.id,
+      type: 'claim',
+      label: item.label,
+      text: item.text,
+      score: 0,
+    })),
+    ...stories.map((item) => ({
+      id: item.id,
+      type: 'story',
+      label: item.title || item.categoryLabel || 'Story',
+      text: [item.question, item.answer, item.evidence].filter(Boolean).join(' '),
+      score: 0,
+    })),
+  ]
+
+  const evidenceTokenSet = new Set(evidenceItems.flatMap((item) => interviewTokens(item.text)))
+  const matchedSignals = jdTokens.filter((token) => evidenceTokenSet.has(token))
+  const gapSignals = jdTokens.filter((token) => !evidenceTokenSet.has(token))
+
+  const rankedEvidence = evidenceItems
+    .map((item) => {
+      const tokenSet = new Set(interviewTokens(item.text))
+      const overlap = jdTokens.reduce((score, token) => score + (tokenSet.has(token) ? 1 : 0), 0)
+      const numberBonus = /\b\d+(?:[.,]\d+)?%?\+?\b/.test(item.text) ? 1 : 0
+      return { ...item, score: overlap + numberBonus }
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+
+  const recommendedQuestions = [...questions]
+    .map((question) => ({
+      id: question.id,
+      question: question.question,
+      category: question.category,
+      score: questionRelevanceScore(question, application, claims),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .filter((item) => item.score > 0)
+    .slice(0, 8)
+
+  const denominator = Math.max(1, jdTokens.length)
+  const coverage = clamp((matchedSignals.length / denominator) * 100)
+
+  const status = normalizeInterviewText(application.status || '')
+  let recommendedStage = 'hiring-manager'
+  if (/screen|hr|phone|recruit/.test(status)) recommendedStage = 'hr'
+  else if (/technical|tech/.test(status)) recommendedStage = 'technical'
+  else if (/portfolio|case/.test(status)) recommendedStage = 'portfolio'
+  else if (/final|offer/.test(status)) recommendedStage = 'final'
+
+  const focusSignals = gapSignals.slice(0, 10)
+  const strengths = matchedSignals.slice(0, 10)
+  const topClaims = rankedEvidence.filter((item) => item.type === 'claim').slice(0, 5)
+  const topStories = rankedEvidence.filter((item) => item.type === 'story').slice(0, 4)
+
+  return {
+    coverage,
+    jdSignalCount: jdTokens.length,
+    matchedSignalCount: matchedSignals.length,
+    matchedSignals: strengths,
+    gapSignals: focusSignals,
+    topClaims,
+    topStories,
+    recommendedQuestions,
+    recommendedStage,
+    summary: jdTokens.length
+      ? `${matchedSignals.length}/${jdTokens.length} tín hiệu JD đã có evidence trong CV hoặc Story Bank.`
+      : 'Chưa có JD đủ chi tiết để tạo Evidence Coverage.',
+  }
+}
+
+export const buildApplicationPracticeSet = ({
+  application = {},
+  claims = [],
+  stories = [],
+  questions = [],
+  limit = 5,
+} = {}) => {
+  const analysis = analyzeApplicationEvidence({ application, claims, stories, questions })
+  const recommendedIds = new Set(analysis.recommendedQuestions.map((item) => item.id))
+  const ranked = [...questions]
+    .map((question) => {
+      let score = questionRelevanceScore(question, application, claims)
+      if (recommendedIds.has(question.id)) score += 5
+      const gapText = analysis.gapSignals.join(' ')
+      const gapTokens = new Set(interviewTokens(gapText))
+      const questionTokens = interviewTokens([
+        question.question,
+        question.why,
+        ...(question.framework || []),
+      ].join(' '))
+      score += questionTokens.reduce((sum, token) => sum + (gapTokens.has(token) ? 2 : 0), 0)
+      return { question, score }
+    })
+    .sort((a, b) => b.score - a.score)
+
+  const selected = []
+  const categories = new Set()
+  ranked.forEach(({ question }) => {
+    if (selected.length >= limit) return
+    if (!categories.has(question.category) || selected.length >= Math.ceil(limit / 2)) {
+      selected.push(question)
+      categories.add(question.category)
+    }
+  })
+  ranked.forEach(({ question }) => {
+    if (selected.length >= limit) return
+    if (!selected.some((item) => item.id === question.id)) selected.push(question)
+  })
+  return selected.slice(0, limit)
+}
