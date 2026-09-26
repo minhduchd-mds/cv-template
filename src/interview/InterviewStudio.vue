@@ -1128,7 +1128,6 @@ export default {
         category: story.category || 'behavioral',
       }
       this.practiceBaseSize = 1
-      this.practiceSize = 1
       this.adaptiveInsertedCount = 0
       this.practiceQuestions = [source]
       this.practiceDrafts = {
