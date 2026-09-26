@@ -607,6 +607,18 @@
                 </select>
               </label>
               <label>
+                <span>Interviewer mode</span>
+                <select v-model="interviewerMode">
+                  <option v-for="mode in interviewerModes" :key="mode.id" :value="mode.id">{{ mode.label }}</option>
+                </select>
+              </label>
+              <label>
+                <span>Pressure</span>
+                <select v-model="pressureLevel">
+                  <option v-for="level in pressureLevels" :key="level.id" :value="level.id">{{ level.label }}</option>
+                </select>
+              </label>
+              <label>
                 <span>Timer / câu</span>
                 <select v-model.number="timerChoice">
                   <option :value="60">60 giây</option>
@@ -628,6 +640,8 @@
               <div><b>{{ cvClaims.length }}</b><span>CV claims</span></div>
               <div><b>{{ activeApplication ? 'JD' : 'CV' }}</b><span>application context</span></div>
               <div><b>{{ activeStageLabel }}</b><span>interview stage</span></div>
+              <div><b>{{ activeInterviewer.shortLabel }}</b><span>{{ activeInterviewer.label }}</span></div>
+              <div><b>{{ activePressure.label }}</b><span>adaptive pressure</span></div>
               <div><b>{{ marketLabel }}</b><span>question sources</span></div>
               <button type="button" class="is-button is-button--primary" @click="startPractice">Bắt đầu session →</button>
             </div>
@@ -640,7 +654,7 @@
                   QUESTION {{ practiceIndex + 1 }} / {{ practiceQuestions.length }}
                   <b v-if="practiceCurrent.adaptive?.isFollowUp" class="is-adaptive-badge">ADAPTIVE FOLLOW-UP</b>
                 </span>
-                <small>{{ categoryName(practiceCurrent.category) }} · {{ activeStageLabel }}</small>
+                <small>{{ categoryName(practiceCurrent.category) }} · {{ activeStageLabel }} · {{ activeInterviewer.label }} · {{ activePressure.label }}</small>
               </div>
               <div class="is-timer" :class="{ warning: timerRemaining <= 20 }">
                 <b>{{ formattedTimer }}</b>
@@ -651,7 +665,11 @@
             <div v-if="practiceCurrent.adaptive?.isFollowUp" class="is-adaptive-reason">
               <span>WHY THIS FOLLOW-UP</span>
               <p>{{ practiceCurrent.adaptive.reason }}</p>
-              <small>Trigger: {{ dimensionLabel(practiceCurrent.adaptive.triggerDimension) }} · {{ practiceCurrent.adaptive.triggerScore }}/100</small>
+              <small>
+                Trigger: {{ dimensionLabel(practiceCurrent.adaptive.triggerDimension) }} · {{ practiceCurrent.adaptive.triggerScore }}/100
+                · {{ practiceCurrent.adaptive.interviewerLabel || activeInterviewer.label }}
+                · {{ practiceCurrent.adaptive.pressureLabel || activePressure.label }}
+              </small>
             </div>
 
             <h2>{{ practiceCurrent.question }}</h2>
@@ -755,7 +773,11 @@
             </div>
             <div>
               <strong>{{ latestReport.contextLabel }}</strong>
-              <p>{{ formatSessionDate(latestReport.createdAt) }} · {{ latestReport.stageLabel }} · {{ latestReport.answered }}/{{ latestReport.total }} câu</p>
+              <p>
+                {{ formatSessionDate(latestReport.createdAt) }} · {{ latestReport.stageLabel }}
+                · {{ latestReport.interviewerLabel || 'Interviewer' }} · {{ latestReport.pressureLabel || 'Realistic' }}
+                · {{ latestReport.answered }}/{{ latestReport.total }} câu
+              </p>
               <span>{{ latestReport.report.evidenceReady }}/{{ latestReport.total }} câu có evidence note · {{ latestReport.report.adaptiveCount || 0 }} adaptive follow-up</span>
             </div>
           </section>
@@ -852,6 +874,8 @@ import {
   buildInterviewStageMatrix,
   buildNextPracticePlan,
   claimProbes,
+  interviewerModes,
+  pressureLevels,
   evaluateInterviewResponse,
   extractCvClaims,
   matchQuestionsToClaim,
@@ -874,6 +898,8 @@ export default {
       questionCategories,
       seniorityLevels,
       interviewSources,
+      interviewerModes,
+      pressureLevels,
       modules: [
         { id: 'overview', label: 'Overview', icon: '◇' },
         { id: 'applications', label: 'Application Lab', icon: '◎', badge: 'JD' },
@@ -908,6 +934,8 @@ export default {
       practiceSize: 5,
       practiceBaseSize: 5,
       adaptiveInsertedCount: 0,
+      interviewerMode: 'hiring-manager',
+      pressureLevel: 'realistic',
       timerChoice: 90,
       timerRemaining: 90,
       timerId: null,
@@ -1063,8 +1091,15 @@ export default {
     currentAnswerWords() {
       return String(this.currentDraft.answer || '').trim().split(/\s+/).filter(Boolean).length
     },
+    activeInterviewer() {
+      return this.interviewerModes.find((item) => item.id === this.interviewerMode) || this.interviewerModes[1]
+    },
+    activePressure() {
+      return this.pressureLevels.find((item) => item.id === this.pressureLevel) || this.pressureLevels[1]
+    },
     adaptiveMaxFollowUps() {
-      return this.practiceBaseSize >= 8 ? 3 : 2
+      const base = this.practiceBaseSize >= 8 ? 3 : 2
+      return base + Number(this.activePressure?.followUpBonus || 0)
     },
     adaptiveFollowUpCount() {
       return this.practiceQuestions.filter((item) => item?.adaptive?.isFollowUp).length
@@ -1140,6 +1175,16 @@ export default {
       if (this.activeModule !== 'applications') return
       const application = this.applications.find((item) => item.id === nextId)
       if (application) this.editApplication(application)
+    },
+    stageId(next) {
+      const map = {
+        hr: 'recruiter',
+        'hiring-manager': 'hiring-manager',
+        technical: 'craft',
+        portfolio: 'craft',
+        final: 'executive',
+      }
+      if (map[next]) this.interviewerMode = map[next]
     },
     activeModule(next) {
       if (next === 'applications') {
@@ -1542,6 +1587,8 @@ export default {
           answer: currentDraft.answer,
           claims: this.cvClaims,
           sequence: this.adaptiveInsertedCount + 1,
+          interviewerMode: this.interviewerMode,
+          pressureLevel: this.pressureLevel,
         })
         if (followUp && !this.practiceQuestions.some((item) => item.id === followUp.id)) {
           const nextQuestions = [...this.practiceQuestions]
@@ -1608,6 +1655,10 @@ export default {
         stageId: this.stageId,
         stageLabel: this.activeStageLabel,
         market: this.market,
+        interviewerMode: this.interviewerMode,
+        interviewerLabel: this.activeInterviewer?.label || this.interviewerMode,
+        pressureLevel: this.pressureLevel,
+        pressureLabel: this.activePressure?.label || this.pressureLevel,
         total: responses.length,
         baseQuestions: this.practiceBaseSize,
         adaptiveFollowUps: responses.filter((item) => item.adaptive?.isFollowUp).length,
