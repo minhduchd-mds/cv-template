@@ -1204,6 +1204,7 @@ export default {
       this.workspace = patchCanonicalWorkspace({ ats: { applications: nextApplications } }, 'interview-studio') || this.workspace
       this.applicationId = id
       this.editApplication(nextApplication)
+      return nextApplication
     },
     deleteApplication(id) {
       const nextApplications = this.applications.filter((item) => item.id !== id)
@@ -1212,11 +1213,13 @@ export default {
     },
     practiceApplication(application = this.activeApplication || this.applicationDraft) {
       if (!application) return
-      if (application.id) this.applicationId = application.id
-      const analysis = analyzeApplicationEvidence({ application, claims: this.cvClaims, stories: this.storyBank, questions: this.questionDeck })
+      let contextApplication = application
+      if (!application.id) contextApplication = this.saveApplication() || application
+      if (contextApplication.id) this.applicationId = contextApplication.id
+      const analysis = analyzeApplicationEvidence({ application: contextApplication, claims: this.cvClaims, stories: this.storyBank, questions: this.questionDeck })
       if (analysis?.recommendedStage) this.stageId = analysis.recommendedStage
       const selected = buildApplicationPracticeSet({
-        application,
+        application: contextApplication,
         claims: this.cvClaims,
         stories: this.storyBank,
         questions: this.questionDeck,
