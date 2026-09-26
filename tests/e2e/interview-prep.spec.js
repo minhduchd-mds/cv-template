@@ -98,7 +98,7 @@ test('claim defense extracts measurable CV claims and persists evidence', async 
   expect(Object.values(stored).some((item) => item.ready)).toBeTruthy()
 })
 
-test('mock interview uses application context and creates report', async ({ page }) => {
+test('mock interview adapts to weak answers and creates traceable report', async ({ page }) => {
   await page.goto('/#interview-studio')
   await page.getByRole('button', { name: /Mock Interview/ }).click()
 
@@ -107,7 +107,20 @@ test('mock interview uses application context and creates report', async ({ page
   await page.getByLabel('Số câu').selectOption('5')
   await page.getByRole('button', { name: /Bắt đầu session/ }).click()
 
-  for (let index = 0; index < 5; index += 1) {
+  // Deliberately weak first answer: the interviewer should inject a real follow-up.
+  await page.getByPlaceholder(/Nói hoặc nhập đúng cách/).fill('Team tôi làm dự án này và kết quả khá tốt.')
+  await page.getByPlaceholder(/Project · ownership/).fill('')
+  await page.getByRole('button', { name: /Đánh giá câu này/ }).click()
+  await expect(page.getByText('practice signal')).toBeVisible()
+  await page.getByRole('button', { name: /Phân tích & tiếp tục/ }).click()
+
+  await expect(page.getByText('ADAPTIVE FOLLOW-UP')).toBeVisible()
+  await expect(page.getByText('WHY THIS FOLLOW-UP')).toBeVisible()
+
+  // Finish the adaptive follow-up and the remaining base/adaptive questions.
+  for (let turn = 0; turn < 8; turn += 1) {
+    if (await page.getByText(/LATEST PRACTICE SIGNAL/).isVisible().catch(() => false)) break
+
     await page.getByPlaceholder(/Nói hoặc nhập đúng cách/).fill(
       'Tôi trực tiếp sở hữu phần thiết kế. Bối cảnh là workflow phức tạp. Tôi chọn phương án dựa trên usability test, chấp nhận trade-off về thời gian và kết quả cải thiện 31%. Nếu làm lại tôi sẽ validate sớm hơn.'
     )
@@ -116,17 +129,23 @@ test('mock interview uses application context and creates report', async ({ page
     )
     await page.getByRole('button', { name: /Đánh giá câu này/ }).click()
     await expect(page.getByText('practice signal')).toBeVisible()
-    await page.getByRole('button', { name: index === 4 ? /Hoàn tất & tạo report/ : /Câu tiếp theo/ }).click()
+
+    const next = page.locator('.is-session-actions .is-button--primary')
+    await next.click()
   }
 
   await expect(page.getByText(/LATEST PRACTICE SIGNAL/)).toBeVisible()
   await expect(page.getByText(/Viettel Digital · Senior Product Designer/)).toBeVisible()
+  await expect(page.getByText(/ADAPTIVE TRACE/)).toBeVisible()
 
   const sessions = await page.evaluate(() =>
     JSON.parse(window.localStorage.getItem('interview-studio-sessions-v2') || '[]')
   )
   expect(sessions).toHaveLength(1)
   expect(sessions[0].applicationId).toBe('app-vn-1')
+  expect(sessions[0].adaptiveFollowUps).toBeGreaterThanOrEqual(1)
+  expect(sessions[0].report.adaptiveCount).toBeGreaterThanOrEqual(1)
+  expect(sessions[0].report.adaptiveReasons.length).toBeGreaterThanOrEqual(1)
   expect(sessions[0].report.overall).toBeGreaterThan(0)
 })
 
