@@ -401,6 +401,142 @@ export const aggregateInterviewReport = (responses = []) => {
   }
 }
 
+export const relatedClaimsForAnswer = (answer = '', claims = [], limit = 3) => {
+  const answerTokens = new Set(interviewTokens(answer))
+  return claims
+    .map((item) => {
+      const tokens = interviewTokens(item.text)
+      const overlap = tokens.reduce((score, token) => score + (answerTokens.has(token) ? 1 : 0), 0)
+      const evidenceBonus = item.numbers?.some((number) => String(answer).includes(number)) ? 3 : 0
+      return { item, score: overlap + evidenceBonus }
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((entry) => entry.item)
+}
+
+export const buildNextPracticePlan = ({
+  report = {},
+  responses = [],
+  questions = [],
+  claims = [],
+  application = {},
+} = {}) => {
+  const dimensions = report?.dimensions || {}
+  const rankedWeak = Object.entries(dimensions)
+    .sort((a, b) => Number(a[1] || 0) - Number(b[1] || 0))
+    .slice(0, 3)
+
+  const playbook = {
+    evidence: {
+      label: 'Evidence defense',
+      objective: 'Mỗi câu trả lời phải có baseline, nguồn đo, contribution và result có thể bảo vệ.',
+      search: ['metric', 'result', 'impact', 'evidence', 'kết quả', 'đo'],
+    },
+    ownership: {
+      label: 'Ownership clarity',
+      objective: 'Phân biệt rõ phần anh/chị trực tiếp sở hữu với phần thuộc team, stakeholder hoặc hệ thống.',
+      search: ['role', 'ownership', 'stakeholder', 'team', 'directly', 'vai trò'],
+    },
+    depth: {
+      label: 'Trade-off & judgment',
+      objective: 'Thêm constraint, option, trade-off và learning để chịu được câu hỏi đào sâu.',
+      search: ['trade-off', 'decision', 'constraint', 'failure', 'challenge', 'quyết định'],
+    },
+    relevance: {
+      label: 'Answer focus',
+      objective: 'Đưa kết luận lên sớm, chọn một evidence mạnh và dừng đúng lúc.',
+      search: ['why', 'tell me', 'fit', 'summary', 'giới thiệu', 'phù hợp'],
+    },
+    structure: {
+      label: 'Answer structure',
+      objective: 'Luyện Bối cảnh → Vai trò → Decision/Action → Result → Learning.',
+      search: ['behavioral', 'project', 'failure', 'case', 'dự án'],
+    },
+    credibility: {
+      label: 'Credibility check',
+      objective: 'Loại bỏ số liệu không xác minh được và nối claim với CV/artifact thật.',
+      search: ['metric', 'result', 'impact', 'achievement', 'thành tích'],
+    },
+    delivery: {
+      label: '60–90 second delivery',
+      objective: 'Giữ một thông điệp chính, một ví dụ, một result và kết thúc trong 60–90 giây.',
+      search: ['introduce', 'project', 'summary', 'experience', 'kinh nghiệm'],
+    },
+  }
+
+  const weakKeys = rankedWeak.map(([key]) => key)
+  const applicationTokenSet = new Set(applicationKeywords(application))
+  const usedIds = new Set(responses.map((item) => item.questionId).filter(Boolean))
+  const candidates = questions
+    .filter((question) => !question?.adaptive?.isFollowUp)
+    .map((question) => {
+      const text = normalizeInterviewText([
+        question.question,
+        question.why,
+        ...(question.framework || []),
+        ...(question.followUps || []),
+      ].join(' '))
+      let score = questionRelevanceScore(question, application, claims)
+      weakKeys.forEach((key, index) => {
+        const terms = playbook[key]?.search || []
+        if (terms.some((term) => text.includes(normalizeInterviewText(term)))) score += 8 - index * 2
+      })
+      interviewTokens(text).forEach((token) => {
+        if (applicationTokenSet.has(token)) score += 1
+      })
+      if (usedIds.has(question.id)) score -= 8
+      return { question, score }
+    })
+    .sort((a, b) => b.score - a.score)
+
+  const recommendedQuestions = []
+  for (const entry of candidates) {
+    if (recommendedQuestions.length >= 5) break
+    if (!recommendedQuestions.some((item) => item.id === entry.question.id)) recommendedQuestions.push(entry.question)
+  }
+
+  const claimPriority = claims
+    .map((item) => ({
+      item,
+      score:
+        (item.numbers?.length ? 3 : 0)
+        + (item.leadershipSignal ? 2 : 0)
+        + (item.outcomeSignal ? 2 : 0)
+        + (relatedClaimsForAnswer(responses.map((response) => response.answer).join(' '), [item], 1).length ? 2 : 0),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((entry) => entry.item)
+
+  const focusAreas = rankedWeak.map(([key, score]) => ({
+    key,
+    score: Number(score || 0),
+    label: playbook[key]?.label || key,
+    objective: playbook[key]?.objective || 'Luyện lại dimension này với evidence cụ thể hơn.',
+  }))
+
+  return {
+    focusAreas,
+    recommendedQuestionIds: recommendedQuestions.map((item) => item.id),
+    recommendedQuestions: recommendedQuestions.map((item) => ({
+      id: item.id,
+      question: item.question,
+      category: item.category,
+    })),
+    claimIds: claimPriority.map((item) => item.id),
+    claims: claimPriority.map((item) => ({
+      id: item.id,
+      text: item.text,
+      label: item.label,
+    })),
+    summary: focusAreas.length
+      ? `Ưu tiên ${focusAreas.map((item) => item.label).join(' → ')} trong vòng luyện tiếp theo.`
+      : 'Chưa có đủ dữ liệu để tạo practice plan.',
+  }
+}
+
 export const applicationKeywords = (application = {}) =>
   unique(interviewTokens([
     application.role,
