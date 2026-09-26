@@ -45,6 +45,7 @@ test.beforeEach(async ({ page }) => {
     window.localStorage.setItem('cv-studio-workspace-v3', JSON.stringify(value))
     window.localStorage.removeItem('interview-studio-sessions-v2')
     window.localStorage.removeItem('interview-studio-claim-evidence-v1')
+    window.localStorage.removeItem('interview-studio-story-bank-v1')
   }, workspace)
 })
 
@@ -137,6 +138,8 @@ test('mock interview adapts to weak answers and creates traceable report', async
   await expect(page.getByText(/LATEST PRACTICE SIGNAL/)).toBeVisible()
   await expect(page.getByText(/Viettel Digital · Senior Product Designer/)).toBeVisible()
   await expect(page.getByText(/ADAPTIVE TRACE/)).toBeVisible()
+  await expect(page.getByText(/NEXT PRACTICE PLAN/)).toBeVisible()
+  await expect(page.getByRole('button', { name: /Luyện plan này/ })).toBeVisible()
 
   const sessions = await page.evaluate(() =>
     JSON.parse(window.localStorage.getItem('interview-studio-sessions-v2') || '[]')
@@ -147,6 +150,37 @@ test('mock interview adapts to weak answers and creates traceable report', async
   expect(sessions[0].report.adaptiveCount).toBeGreaterThanOrEqual(1)
   expect(sessions[0].report.adaptiveReasons.length).toBeGreaterThanOrEqual(1)
   expect(sessions[0].report.overall).toBeGreaterThan(0)
+})
+
+test('Story Bank saves a strong answer and can start focused practice', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  await page.getByRole('button', { name: /Mock Interview/ }).click()
+  await page.getByLabel('Application').selectOption('app-vn-1')
+  await page.getByRole('button', { name: /Bắt đầu session/ }).click()
+
+  await page.getByPlaceholder(/Nói hoặc nhập đúng cách/).fill(
+    'Bối cảnh là một workflow nhiều bước. Tôi trực tiếp sở hữu flow và interaction, dùng usability test làm evidence, chọn phương án đơn giản hơn dù phải giảm một số tuỳ chọn, và kết quả task completion cải thiện 31%. Nếu làm lại tôi sẽ validate sớm hơn.'
+  )
+  await page.getByPlaceholder(/Project · ownership/).fill(
+    'Atlas · ownership flow · usability baseline · trade-off giảm option · result 31% · learning validate sớm'
+  )
+  await page.getByRole('button', { name: /Đánh giá câu này/ }).click()
+  await page.getByRole('button', { name: /Lưu vào Story Bank/ }).click()
+  await expect(page.getByRole('button', { name: /Đã lưu Story Bank/ })).toBeVisible()
+
+  const stored = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('interview-studio-story-bank-v1') || '[]')
+  )
+  expect(stored).toHaveLength(1)
+  expect(stored[0].answer).toContain('31%')
+  expect(stored[0].evidence).toContain('ownership')
+
+  await page.getByRole('button', { name: /Story Bank/ }).click()
+  await expect(page.getByRole('heading', { name: /Lưu những câu chuyện nghề nghiệp/ })).toBeVisible()
+  await expect(page.getByText(/31%/).first()).toBeVisible()
+  await page.getByRole('button', { name: /Luyện lại/ }).click()
+  await expect(page.getByText(/QUESTION 1/)).toBeVisible()
+  await expect(page.getByPlaceholder(/Nói hoặc nhập đúng cách/)).toHaveValue(/31%/)
 })
 
 test('mobile Interview Studio has no horizontal page overflow', async ({ page }, testInfo) => {
