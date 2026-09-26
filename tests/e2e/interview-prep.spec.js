@@ -104,6 +104,8 @@ test('mock interview adapts to weak answers and creates traceable report', async
   await page.getByRole('button', { name: /Mock Interview/ }).click()
 
   await page.getByLabel('Application').selectOption('app-vn-1')
+  await page.getByLabel('Interviewer mode').selectOption('skeptical')
+  await page.getByLabel('Pressure').selectOption('pressure')
   await page.getByLabel('Timer / câu').selectOption('60')
   await page.getByLabel('Số câu').selectOption('5')
   await page.getByRole('button', { name: /Bắt đầu session/ }).click()
@@ -117,6 +119,9 @@ test('mock interview adapts to weak answers and creates traceable report', async
 
   await expect(page.getByText('ADAPTIVE FOLLOW-UP')).toBeVisible()
   await expect(page.getByText('WHY THIS FOLLOW-UP')).toBeVisible()
+  await expect(page.getByText(/Skeptical Panel/)).toBeVisible()
+  await expect(page.getByText(/Pressure/)).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Tôi chưa bị thuyết phục|Hãy chứng minh rõ hơn|challenge/i })).toBeVisible()
 
   // Finish the adaptive follow-up and the remaining base/adaptive questions.
   for (let turn = 0; turn < 8; turn += 1) {
@@ -146,8 +151,12 @@ test('mock interview adapts to weak answers and creates traceable report', async
   )
   expect(sessions).toHaveLength(1)
   expect(sessions[0].applicationId).toBe('app-vn-1')
+  expect(sessions[0].interviewerMode).toBe('skeptical')
+  expect(sessions[0].pressureLevel).toBe('pressure')
   expect(sessions[0].adaptiveFollowUps).toBeGreaterThanOrEqual(1)
   expect(sessions[0].report.adaptiveCount).toBeGreaterThanOrEqual(1)
+  expect(sessions[0].report.interviewerModes).toContain('Skeptical Panel')
+  expect(sessions[0].report.pressureLevels).toContain('Pressure')
   expect(sessions[0].report.adaptiveReasons.length).toBeGreaterThanOrEqual(1)
   expect(sessions[0].report.overall).toBeGreaterThan(0)
 })
