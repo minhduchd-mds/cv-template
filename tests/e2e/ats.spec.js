@@ -343,3 +343,27 @@ test('ATS application stage jump records inferred milestones for funnel integrit
   expect(history.some((entry)=>entry.status==='Applied'&&entry.inferred===true)).toBeTruthy()
   expect(history.some((entry)=>entry.status==='Interview'&&entry.inferred===false)).toBeTruthy()
 })
+
+
+test('ATS analytics keyword matching uses exact tokens for single words', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('cv-studio-ats-applications-v1',JSON.stringify([
+      {
+        id:'kw-exact',company:'Gamma',role:'Platform Designer',status:'Applied',
+        source:{versionName:'Exact-token CV'},scores:{readiness:90,targetFit:79,jdMatch:70},
+        jd:'Senior role requiring Java and stakeholder management.',
+        profile:{role:'Platform Designer',skills:['JavaScript'],summary:'JavaScript platform designer',experience:[],projects:[]},
+        stageHistory:[{status:'Applied',at:'2026-09-25T08:00:00.000Z',inferred:false}]
+      }
+    ]))
+  })
+  await page.goto('/studio/')
+  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/Applications/}).click()
+  await page.getByRole('button',{name:'Analytics'}).click()
+  await expect(page.locator('#atsAnalyticsKeywords')).toContainText('java')
+  await expect(page.locator('#atsAnalyticsKeywords')).toContainText('stakeholder management')
+  await expect(page.locator('#atsAnalyticsKeywords')).not.toContainText('requiring')
+  await expect(page.locator('#atsAnalyticsKeywords')).not.toContainText('senior')
+  await expect(page.locator('#atsAnalyticsKeywords')).not.toContainText('management.')
+})
