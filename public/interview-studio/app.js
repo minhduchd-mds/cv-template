@@ -13,6 +13,7 @@ import {
   analyzeApplicationEvidence,
   buildAdaptiveFollowUp,
   buildApplicationPracticeSet,
+  buildInterviewStageMatrix,
   buildNextPracticePlan,
   claimProbes,
   evaluateInterviewResponse,
@@ -242,6 +243,10 @@ function applicationAnalysis(app=state.applicationDraft){
   if(![app?.company,app?.role,app?.jd].some(v=>String(v||'').trim()))return null
   return analyzeApplicationEvidence({application:app,claims:cvClaims(),stories:state.storyBank,questions:questionDeck()})
 }
+function applicationStageMatrix(app=state.applicationDraft){
+  if(!applicationAnalysis(app))return []
+  return buildInterviewStageMatrix({application:app,claims:cvClaims(),stories:state.storyBank,questions:questionDeck()})
+}
 function saveApplicationDraft(){
   const d=state.applicationDraft
   if(!String(d.company||'').trim()&&!String(d.role||'').trim()){toast('Cần ít nhất tên công ty hoặc vị trí');return}
@@ -306,6 +311,7 @@ function renderApplications(){
           <div class="coverage-summary"><div class="coverage-ring"><b>${analysis.coverage}</b><span>/100</span></div><div><span class="eyebrow">EVIDENCE COVERAGE · KHÔNG PHẢI XÁC SUẤT ĐẬU</span><h3>${e(analysis.summary)}</h3><p>Stage đề xuất: ${e(interviewStages.find(s=>s.id===analysis.recommendedStage)?.label||'Hiring Manager')}</p></div></div>
           <div class="coverage-grid"><section><span class="eyebrow">MATCHED SIGNALS</span><div class="signal-tags">${analysis.matchedSignals.map(s=>`<span>${e(s)}</span>`).join('')||'<small>Chưa có signal đủ rõ.</small>'}</div></section><section><span class="eyebrow">EVIDENCE GAPS</span><div class="signal-tags gaps">${analysis.gapSignals.map(s=>`<span>${e(s)}</span>`).join('')||'<small>Không phát hiện gap token đáng kể.</small>'}</div></section></div>
           <div class="coverage-grid"><section><span class="eyebrow">TOP CV EVIDENCE</span><ol class="coverage-list">${analysis.topClaims.map(x=>`<li><strong>${e(x.label)}</strong><p>${e(x.text)}</p></li>`).join('')||'<li><p>Chưa có CV evidence phù hợp.</p></li>'}</ol></section><section><span class="eyebrow">TOP STORY EVIDENCE</span><ol class="coverage-list">${analysis.topStories.map(x=>`<li><strong>${e(x.label)}</strong><p>${e(x.text)}</p></li>`).join('')||'<li><p>Chưa có Story Bank phù hợp.</p></li>'}</ol></section></div>
+          <section class="stage-matrix"><div class="stage-matrix-head"><div><span class="eyebrow">INTERVIEW STAGE MATRIX</span><h3>Mỗi vòng kiểm tra một loại evidence khác nhau</h3></div><small>Preparedness = tín hiệu chuẩn bị nội bộ</small></div><div class="stage-matrix-grid">${applicationStageMatrix().map(stage=>`<article class="${stage.recommended?'recommended':''}"><div class="stage-card-top"><div>${stage.recommended?'<span>RECOMMENDED NEXT</span>':''}<strong>${e(stage.label)}</strong></div><b>${stage.preparedness}</b></div><p>${e(stage.evidence)}</p><div class="stage-focus">${stage.focus.map(term=>`<span>${e(term)}</span>`).join('')}</div><ol>${stage.questions.map(q=>`<li>${e(q.question)}</li>`).join('')}</ol><button data-stage-practice="${e(stage.id)}">Luyện vòng này →</button></article>`).join('')}</div></section>
           <section class="application-questions"><span class="eyebrow">RECOMMENDED INTERVIEW QUESTIONS</span><ol>${analysis.recommendedQuestions.slice(0,5).map(x=>`<li><span>${e(categoryName(x.category))}</span><strong>${e(x.question)}</strong></li>`).join('')}</ol></section>`
         :''}
       </section>
@@ -317,6 +323,10 @@ function renderApplications(){
   document.querySelector('#save-app').onclick=saveApplicationDraft
   const del=document.querySelector('#delete-app');if(del)del.onclick=()=>deleteApplication(state.applicationDraft.id)
   const practice=document.querySelector('#practice-app');if(practice)practice.onclick=()=>startApplicationPractice(state.applicationDraft)
+  root.querySelectorAll('[data-stage-practice]').forEach(button=>button.onclick=()=>{
+    state.stageId=button.dataset.stagePractice
+    startApplicationPractice(state.applicationDraft)
+  })
 }
 
 function renderQuestions(){
