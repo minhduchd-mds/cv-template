@@ -498,6 +498,17 @@ export const aggregateInterviewReport = (responses = []) => {
     adaptiveReasons: unique(adaptiveResponses.map((item) => item.adaptive?.reason)).filter(Boolean).slice(0, 6),
     interviewerModes: unique(adaptiveResponses.map((item) => item.adaptive?.interviewerLabel)).filter(Boolean),
     pressureLevels: unique(adaptiveResponses.map((item) => item.adaptive?.pressureLabel)).filter(Boolean),
+    adaptiveTrace: adaptiveResponses.map((item, index) => ({
+      index: index + 1,
+      questionId: item.questionId,
+      question: item.question,
+      parentQuestionId: item.adaptive?.parentQuestionId || '',
+      triggerDimension: item.adaptive?.triggerDimension || '',
+      triggerScore: Number(item.adaptive?.triggerScore || 0),
+      interviewerLabel: item.adaptive?.interviewerLabel || '',
+      pressureLabel: item.adaptive?.pressureLabel || '',
+      reason: item.adaptive?.reason || '',
+    })),
   }
 }
 
