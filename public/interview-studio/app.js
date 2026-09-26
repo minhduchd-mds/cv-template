@@ -16,6 +16,8 @@ import {
   buildInterviewStageMatrix,
   buildNextPracticePlan,
   claimProbes,
+  interviewerModes,
+  pressureLevels,
   evaluateInterviewResponse,
   extractCvClaims,
   matchQuestionsToClaim,
@@ -63,6 +65,8 @@ const state={
   applicationId:'',
   applicationDraft:{id:'',company:'',role:'',status:'Interview',jd:'',notes:'',sourceUrl:''},
   applicationStatuses:['Saved','Applied','Screening','Interview','Technical','Portfolio','Final','Offer','Closed'],
+  interviewerMode:'hiring-manager',
+  pressureLevel:'realistic',
   selectedClaimId:'',
   claimEvidence:readJson(CLAIM_KEY,{}),
   storyBank:readJson(STORY_KEY,[]),
@@ -85,6 +89,9 @@ const e=(value='')=>String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;
 const list=(items=[],tag='li')=>items.map(item=>`<${tag}>${e(item)}</${tag}>`).join('')
 const activePack=()=>interviewPacks.find(p=>p.id===state.rolePackId)||interviewPacks.find(p=>p.id==='general')||interviewPacks[0]
 const activeStage=()=>interviewStages.find(s=>s.id===state.stageId)||interviewStages[0]
+const activeInterviewer=()=>interviewerModes.find(item=>item.id===state.interviewerMode)||interviewerModes[1]
+const activePressure=()=>pressureLevels.find(item=>item.id===state.pressureLevel)||pressureLevels[1]
+const interviewerForStage=stage=>({hr:'recruiter','hiring-manager':'hiring-manager',technical:'craft',portfolio:'craft',final:'executive'})[stage]||'hiring-manager'
 const applications=()=>Array.isArray(workspace?.ats?.applications)?workspace.ats.applications:[]
 const activeApplication=()=>applications().find(a=>a.id===state.applicationId)||null
 const cvClaims=()=>extractCvClaims(workspace?.profile||{})
@@ -274,6 +281,7 @@ function startApplicationPractice(app=activeApplication()||state.applicationDraf
   const analysis=applicationAnalysis(contextApp)
   if(!analysis)return
   state.stageId=analysis.recommendedStage||state.stageId
+  state.interviewerMode=interviewerForStage(state.stageId)
   const selected=buildApplicationPracticeSet({application:contextApp,claims:cvClaims(),stories:state.storyBank,questions:questionDeck(),limit:5})
   if(!selected.length){toast('Chưa đủ dữ liệu để tạo practice set');return}
   if(contextApp.id)state.applicationId=contextApp.id
@@ -442,7 +450,7 @@ function evaluateCurrent(){
 function nextMock(){
   if(!currentDraft()?.evaluation)evaluateCurrent()
   const q=currentQuestion(),draft=currentDraft()
-  const maxAdaptive=state.practice.baseSize>=8?3:2
+  const maxAdaptive=(state.practice.baseSize>=8?3:2)+Number(activePressure()?.followUpBonus||0)
   if(!q?.adaptive?.isFollowUp&&state.practice.adaptiveInserted<maxAdaptive){
     const followUp=buildAdaptiveFollowUp({
       question:q,
@@ -450,6 +458,8 @@ function nextMock(){
       answer:draft.answer,
       claims:cvClaims(),
       sequence:state.practice.adaptiveInserted+1,
+      interviewerMode:state.interviewerMode,
+      pressureLevel:state.pressureLevel,
     })
     if(followUp&&!state.practice.questions.some(item=>item.id===followUp.id)){
       state.practice.questions.splice(state.practice.index+1,0,followUp)
@@ -465,7 +475,7 @@ function finishMock(){
   const responses=state.practice.questions.map(q=>{const d=state.practice.drafts[q.id];if(!d.evaluation)d.evaluation=evaluateInterviewResponse({answer:d.answer,evidence:d.evidence,confidence:d.confidence,question:q,claims:cvClaims(),elapsedSeconds:state.practice.timerChoice});return{questionId:q.id,question:q.question,answer:d.answer.trim(),evidence:d.evidence.trim(),confidence:d.confidence,evaluation:d.evaluation,adaptive:q.adaptive||null}})
   const report=aggregateInterviewReport(responses),app=activeApplication()
   report.practicePlan=buildNextPracticePlan({report,responses,questions:questionDeck(),claims:cvClaims(),application:app||{}})
-  state.sessions=[{id:'interview-studio-'+Date.now(),createdAt:new Date().toISOString(),startedAt:state.practice.startedAt,applicationId:app?.id||'',contextLabel:app?`${app.company} · ${app.role}`:`${activePack().label} · CV`,stageLabel:activeStage().label,total:responses.length,baseQuestions:state.practice.baseSize,adaptiveFollowUps:responses.filter(r=>r.adaptive?.isFollowUp).length,answered:responses.filter(r=>r.answer||r.evidence).length,responses,report},...state.sessions]
+  state.sessions=[{id:'interview-studio-'+Date.now(),createdAt:new Date().toISOString(),startedAt:state.practice.startedAt,applicationId:app?.id||'',contextLabel:app?`${app.company} · ${app.role}`:`${activePack().label} · CV`,stageLabel:activeStage().label,interviewerMode:state.interviewerMode,interviewerLabel:activeInterviewer().label,pressureLevel:state.pressureLevel,pressureLabel:activePressure().label,total:responses.length,baseQuestions:state.practice.baseSize,adaptiveFollowUps:responses.filter(r=>r.adaptive?.isFollowUp).length,answered:responses.filter(r=>r.answer||r.evidence).length,responses,report},...state.sessions]
   saveSessions();state.practice=null;state.activeModule='reports';render();toast('Đã tạo Interview Report')
 }
 function stopSpeech(){if(state.speech){try{state.speech.stop()}catch{}}state.speech=null;state.speechRecording=false}
@@ -488,24 +498,28 @@ function renderMock(){
       <section class="mock-start"><div class="mock-config"><h2>Tạo một vòng luyện có context</h2>
       <label class="field"><span>Application</span><select id="mock-app"><option value="">CV hiện tại · không gắn job</option>${applications().map(a=>`<option value="${e(a.id)}" ${a.id===state.applicationId?'selected':''}>${e(a.company)} · ${e(a.role)}</option>`).join('')}</select></label>
       <label class="field"><span>Vòng phỏng vấn</span><select id="mock-stage">${options(interviewStages,x=>x.id,x=>x.label,state.stageId)}</select></label>
+      <label class="field"><span>Interviewer mode</span><select id="mock-interviewer">${options(interviewerModes,x=>x.id,x=>x.label,state.interviewerMode)}</select></label>
+      <label class="field"><span>Pressure</span><select id="mock-pressure">${options(pressureLevels,x=>x.id,x=>x.label,state.pressureLevel)}</select></label>
       <label class="field"><span>Timer / câu</span><select id="mock-timer"><option value="60">60 giây</option><option value="90" selected>90 giây</option><option value="120">120 giây</option></select></label>
       <label class="field"><span>Số câu</span><select id="mock-size"><option value="5">5 câu · Quick round</option><option value="8">8 câu · Full round</option></select></label>
-      </div><div class="mock-preview"><span class="eyebrow">WHAT THE ENGINE USES</span><div><b>${cvClaims().length}</b><span>CV claims</span></div><div><b>${activeApplication()?'JD':'CV'}</b><span>application context</span></div><div><b>${e(activeStage().label)}</b><span>interview stage</span></div><div><b>${e(marketLabel())}</b><span>question sources</span></div><button id="start-mock" class="primary">Bắt đầu session →</button></div></section>`
+      </div><div class="mock-preview"><span class="eyebrow">WHAT THE ENGINE USES</span><div><b>${cvClaims().length}</b><span>CV claims</span></div><div><b>${activeApplication()?'JD':'CV'}</b><span>application context</span></div><div><b>${e(activeStage().label)}</b><span>interview stage</span></div><div><b>${e(activeInterviewer().shortLabel)}</b><span>${e(activeInterviewer().label)}</span></div><div><b>${e(activePressure().label)}</b><span>adaptive pressure</span></div><div><b>${e(marketLabel())}</b><span>question sources</span></div><button id="start-mock" class="primary">Bắt đầu session →</button></div></section>`
     document.querySelector('#mock-app').onchange=ev=>{state.applicationId=ev.target.value;renderTop()}
-    document.querySelector('#mock-stage').onchange=ev=>{state.stageId=ev.target.value}
+    document.querySelector('#mock-stage').onchange=ev=>{state.stageId=ev.target.value;state.interviewerMode=interviewerForStage(state.stageId);renderMock()}
+    document.querySelector('#mock-interviewer').onchange=ev=>{state.interviewerMode=ev.target.value;renderMock()}
+    document.querySelector('#mock-pressure').onchange=ev=>{state.pressureLevel=ev.target.value;renderMock()}
     document.querySelector('#start-mock').onclick=()=>startMock(Number(document.querySelector('#mock-size').value),Number(document.querySelector('#mock-timer').value))
     return
   }
   const q=currentQuestion(),draft=currentDraft(),evaluation=draft.evaluation
   root.innerHTML=pageHeading('MOCK INTERVIEW','Trả lời như vòng thật. <em>Coach chỉ xuất hiện sau.</em>','Đánh giá là practice signal, không phải dự đoán tuyển dụng.',`${state.practice.index+1}/${state.practice.questions.length}`)+`
-    <section class="live"><div class="live-meta"><div><span>QUESTION ${state.practice.index+1} / ${state.practice.questions.length}${q.adaptive?.isFollowUp?' <b class="adaptive-badge">ADAPTIVE FOLLOW-UP</b>':''}</span><small>${e(categoryName(q.category))} · ${e(activeStage().label)}</small></div><div class="timer ${state.timerRemaining<=20?'warning':''}"><b id="timer-value">${formatTimer()}</b><span>${state.timerRunning?'đang chạy':'tạm dừng'}</span></div></div>
-    ${q.adaptive?.isFollowUp?`<div class="adaptive-reason"><span>WHY THIS FOLLOW-UP</span><p>${e(q.adaptive.reason)}</p><small>Trigger: ${e(dimensionLabel(q.adaptive.triggerDimension))} · ${q.adaptive.triggerScore}/100</small></div>`:''}
+    <section class="live"><div class="live-meta"><div><span>QUESTION ${state.practice.index+1} / ${state.practice.questions.length}${q.adaptive?.isFollowUp?' <b class="adaptive-badge">ADAPTIVE FOLLOW-UP</b>':''}</span><small>${e(categoryName(q.category))} · ${e(activeStage().label)} · ${e(activeInterviewer().label)} · ${e(activePressure().label)}</small></div><div class="timer ${state.timerRemaining<=20?'warning':''}"><b id="timer-value">${formatTimer()}</b><span>${state.timerRunning?'đang chạy':'tạm dừng'}</span></div></div>
+    ${q.adaptive?.isFollowUp?`<div class="adaptive-reason"><span>WHY THIS FOLLOW-UP</span><p>${e(q.adaptive.reason)}</p><small>Trigger: ${e(dimensionLabel(q.adaptive.triggerDimension))} · ${q.adaptive.triggerScore}/100 · ${e(q.adaptive.interviewerLabel||activeInterviewer().label)} · ${e(q.adaptive.pressureLabel||activePressure().label)}</small></div>`:''}
     <h2>${e(q.question)}</h2><div class="tools"><button id="speak-q">🔊 Đọc câu hỏi</button><button id="speech-q" class="${state.speechRecording?'recording':''}">${state.speechRecording?'■ Dừng ghi âm':'🎙 Trả lời bằng giọng nói'}</button><button id="pause-timer">${state.timerRunning?'Ⅱ Tạm dừng timer':'▶ Tiếp tục timer'}</button></div>
     <div class="answer-grid"><label><span>Câu trả lời của anh</span><textarea id="mock-answer" rows="9" placeholder="Nói hoặc nhập đúng cách anh sẽ trả lời trong buổi phỏng vấn thật...">${e(draft.answer)}</textarea><small id="word-count">${draft.answer.trim().split(/\s+/).filter(Boolean).length} từ</small></label><label><span>Evidence / STAR anchors</span><textarea id="mock-evidence" rows="6" placeholder="Project · ownership · baseline · decision · trade-off · result · learning">${e(draft.evidence)}</textarea><small>Evidence riêng giúp engine không nhầm câu dài với câu có bằng chứng.</small></label></div>
     <label class="confidence"><span>Mức tự tin</span><input id="mock-confidence" type="range" min="1" max="5" value="${draft.confidence}"><b id="confidence-value">${draft.confidence}/5</b></label>
     ${evaluation?`<div class="evaluation"><div class="eval-score"><b>${evaluation.overall}</b><span>practice signal</span></div><div class="metric-bars">${Object.entries(evaluation.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div>${evaluation.warnings.length?`<ul class="warnings">${list(evaluation.warnings)}</ul>`:''}</div>`:''}
     <button id="coach-toggle" class="coach-toggle">Mở Answer Coach</button><div id="coach" class="coach-grid hidden"><section><span>Recruiter intent</span><p>${e(q.why)}</p></section><section><span>Framework</span><ol>${list(q.framework)}</ol></section><section><span>Reference answer</span><p>“${e(q.example)}”</p></section><section><span>Adaptive follow-up</span><ul>${list([...(evaluation?.dimensions?.evidence<65?['Evidence cụ thể nào chứng minh kết quả này? Baseline và nguồn đo là gì?']:[]),...(evaluation?.dimensions?.ownership<65?['Phần nào anh trực tiếp sở hữu, phần nào thuộc team?']:[]),...(q.followUps||[])].slice(0,4))}</ul></section></div>
-    <div class="session-actions">${evaluation&&draft.answer?'<button id="save-story" class="secondary">'+(state.storyBank.some(story=>story.questionId===q.id&&story.applicationId===(activeApplication()?.id||''))?'✓ Đã lưu Story Bank':'✦ Lưu vào Story Bank')+'</button>':''}<button id="eval-q" class="secondary">Đánh giá câu này</button><button id="next-q" class="primary">${!q.adaptive?.isFollowUp&&state.practice.adaptiveInserted<(state.practice.baseSize>=8?3:2)?'Phân tích & tiếp tục →':state.practice.index===state.practice.questions.length-1?'Hoàn tất & tạo report':'Câu tiếp theo →'}</button></div></section>`
+    <div class="session-actions">${evaluation&&draft.answer?'<button id="save-story" class="secondary">'+(state.storyBank.some(story=>story.questionId===q.id&&story.applicationId===(activeApplication()?.id||''))?'✓ Đã lưu Story Bank':'✦ Lưu vào Story Bank')+'</button>':''}<button id="eval-q" class="secondary">Đánh giá câu này</button><button id="next-q" class="primary">${!q.adaptive?.isFollowUp&&state.practice.adaptiveInserted<((state.practice.baseSize>=8?3:2)+Number(activePressure()?.followUpBonus||0))?'Phân tích & tiếp tục →':state.practice.index===state.practice.questions.length-1?'Hoàn tất & tạo report':'Câu tiếp theo →'}</button></div></section>`
   const answer=document.querySelector('#mock-answer'),evd=document.querySelector('#mock-evidence'),conf=document.querySelector('#mock-confidence')
   answer.oninput=()=>{draft.answer=answer.value;document.querySelector('#word-count').textContent=answer.value.trim().split(/\s+/).filter(Boolean).length+' từ'}
   evd.oninput=()=>{draft.evidence=evd.value}
@@ -522,7 +536,7 @@ function renderMock(){
 function renderReports(){
   const latest=latestReport()
   root.innerHTML=pageHeading('INTERVIEW REPORTS','Đo tiến bộ bằng <em>evidence và hành vi quan sát được.</em>','Không chấm cảm xúc hay dự đoán tuyển dụng. Report tập trung relevance, structure, evidence, ownership, depth, credibility và delivery.',state.sessions.length)+
-  (latest?`<section class="report-hero"><div class="report-score"><span>LATEST PRACTICE SIGNAL</span><b>${latest.report.overall}</b><small>/100</small></div><div><strong>${e(latest.contextLabel)}</strong><p>${e(formatDate(latest.createdAt))} · ${e(latest.stageLabel)} · ${latest.answered}/${latest.total} câu</p><span class="chip">${latest.report.evidenceReady}/${latest.total} câu có evidence note · ${latest.report.adaptiveCount||0} adaptive follow-up</span></div></section><div class="grid2"><section class="panel"><span class="eyebrow">DIMENSIONS</span><h2>Điểm cần cải thiện</h2><div class="metric-bars">${Object.entries(latest.report.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div></section><section class="panel"><span class="eyebrow">EVIDENCE GAPS</span><h2>Việc cần sửa trước lần luyện sau</h2><ul class="warnings">${list(latest.report.warnings.length?latest.report.warnings:['Chưa phát hiện cảnh báo lớn trong session gần nhất.'])}</ul></section></div>${latest.report.adaptiveCount?`<section class="panel adaptive-report"><span class="eyebrow">ADAPTIVE TRACE</span><h2>Vì sao Interviewer đã hỏi sâu</h2><div class="adaptive-stats"><div><b>${latest.report.adaptiveCount}</b><span>follow-up đã chèn</span></div><div><b>${latest.report.adaptiveDimensions.length}</b><span>dimension bị đào sâu</span></div></div><ul class="warnings">${list(latest.report.adaptiveReasons)}</ul></section>`:''}`:'')+
+  (latest?`<section class="report-hero"><div class="report-score"><span>LATEST PRACTICE SIGNAL</span><b>${latest.report.overall}</b><small>/100</small></div><div><strong>${e(latest.contextLabel)}</strong><p>${e(formatDate(latest.createdAt))} · ${e(latest.stageLabel)} · ${e(latest.interviewerLabel||'Interviewer')} · ${e(latest.pressureLabel||'Realistic')} · ${latest.answered}/${latest.total} câu</p><span class="chip">${latest.report.evidenceReady}/${latest.total} câu có evidence note · ${latest.report.adaptiveCount||0} adaptive follow-up</span></div></section><div class="grid2"><section class="panel"><span class="eyebrow">DIMENSIONS</span><h2>Điểm cần cải thiện</h2><div class="metric-bars">${Object.entries(latest.report.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div></section><section class="panel"><span class="eyebrow">EVIDENCE GAPS</span><h2>Việc cần sửa trước lần luyện sau</h2><ul class="warnings">${list(latest.report.warnings.length?latest.report.warnings:['Chưa phát hiện cảnh báo lớn trong session gần nhất.'])}</ul></section></div>${latest.report.adaptiveCount?`<section class="panel adaptive-report"><span class="eyebrow">ADAPTIVE TRACE</span><h2>Vì sao Interviewer đã hỏi sâu</h2><div class="adaptive-stats"><div><b>${latest.report.adaptiveCount}</b><span>follow-up đã chèn</span></div><div><b>${latest.report.adaptiveDimensions.length}</b><span>dimension bị đào sâu</span></div></div><ul class="warnings">${list(latest.report.adaptiveReasons)}</ul></section>`:''}`:'')+
   (latest?.report?.practicePlan?practicePlanHtml(latest.report.practicePlan):'')+`<section class="panel"><span class="eyebrow">HISTORY</span><h2>Lịch sử luyện tập</h2>${state.sessions.length?`<div class="history">${state.sessions.map(s=>`<article><div><strong>${e(s.contextLabel)}</strong><small>${e(formatDate(s.createdAt))}</small></div><span>${e(s.stageLabel||'')}</span><span>${s.answered||0}/${s.total||0} answered</span><span>${s.report?.evidenceReady||s.evidenceReady||0} evidence</span><b>${s.report?.overall||'—'}</b></article>`).join('')}</div><button id="clear-history" class="text-btn">Xóa lịch sử local</button>`:`<div class="empty">Chưa có report.<button class="text-btn" data-go="mock">Bắt đầu luyện →</button></div>`}</section>`
   bindGo()
   const plan=document.querySelector('#practice-plan');if(plan&&latest?.report?.practicePlan)plan.onclick=()=>startPracticePlan(latest.report.practicePlan)
