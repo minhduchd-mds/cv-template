@@ -318,6 +318,41 @@
                   </section>
                 </div>
 
+                <section class="is-stage-matrix">
+                  <div class="is-panel__heading is-panel__heading--split">
+                    <div>
+                      <span class="is-eyebrow">INTERVIEW STAGE MATRIX</span>
+                      <h3>Mỗi vòng kiểm tra một loại evidence khác nhau</h3>
+                    </div>
+                    <small>Preparedness = tín hiệu chuẩn bị nội bộ</small>
+                  </div>
+                  <div class="is-stage-matrix__grid">
+                    <article
+                      v-for="stage in applicationStageMatrix"
+                      :key="stage.id"
+                      :class="{ recommended: stage.recommended }"
+                    >
+                      <div class="is-stage-matrix__top">
+                        <div>
+                          <span v-if="stage.recommended">RECOMMENDED NEXT</span>
+                          <strong>{{ stage.label }}</strong>
+                        </div>
+                        <b>{{ stage.preparedness }}</b>
+                      </div>
+                      <p>{{ stage.evidence }}</p>
+                      <div class="is-stage-matrix__focus">
+                        <span v-for="term in stage.focus" :key="term">{{ term }}</span>
+                      </div>
+                      <ol>
+                        <li v-for="question in stage.questions" :key="question.id">{{ question.question }}</li>
+                      </ol>
+                      <button type="button" @click="stageId = stage.id; practiceApplication(applicationDraft)">
+                        Luyện vòng này →
+                      </button>
+                    </article>
+                  </div>
+                </section>
+
                 <section class="is-application-questions">
                   <span class="is-eyebrow">RECOMMENDED INTERVIEW QUESTIONS</span>
                   <ol>
@@ -814,6 +849,7 @@ import {
   analyzeApplicationEvidence,
   buildAdaptiveFollowUp,
   buildApplicationPracticeSet,
+  buildInterviewStageMatrix,
   buildNextPracticePlan,
   claimProbes,
   evaluateInterviewResponse,
@@ -913,6 +949,15 @@ export default {
       if (![draft.company, draft.role, draft.jd].some((value) => String(value || '').trim())) return null
       return analyzeApplicationEvidence({
         application: draft,
+        claims: this.cvClaims,
+        stories: this.storyBank,
+        questions: this.questionDeck,
+      })
+    },
+    applicationStageMatrix() {
+      if (!this.applicationDraftAnalysis) return []
+      return buildInterviewStageMatrix({
+        application: this.applicationDraft,
         claims: this.cvClaims,
         stories: this.storyBank,
         questions: this.questionDeck,
@@ -2660,6 +2705,7 @@ export default {
 @media (max-width: 1180px) {
   .is-shell { grid-template-columns: 190px minmax(0, 1fr); }
   .is-source-grid { grid-template-columns: repeat(3, 1fr); }
+  .is-stage-matrix__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .is-claim-layout { grid-template-columns: 300px minmax(0, 1fr); }
 }
 
@@ -2689,6 +2735,7 @@ export default {
   .is-overview-grid, .is-report-grid, .is-mock-start { grid-template-columns: 1fr; }
   .is-source-grid { grid-template-columns: repeat(2, 1fr); }
   .is-claim-layout, .is-application-layout { grid-template-columns: 1fr; }
+  .is-stage-matrix__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .is-claim-list { max-height: 340px; grid-template-columns: repeat(2, 1fr); }
   .is-answer-grid { grid-template-columns: 1fr; }
 }
@@ -2705,6 +2752,7 @@ export default {
   .is-stat-grid article { padding: 16px 10px; }
   .is-context-grid, .is-mock-config, .is-application-form, .is-coverage-grid { grid-template-columns: 1fr; }
   .is-application-form label.wide { grid-column: auto; }
+  .is-stage-matrix__grid { grid-template-columns: 1fr; }
   .is-application-actions { grid-template-columns: 1fr; }
   .is-coverage-summary { grid-template-columns: 72px 1fr; }
   .is-mock-config > div { grid-column: auto; }
@@ -2944,6 +2992,101 @@ export default {
   li { padding: 10px 0; border-top: 1px solid var(--line); }
   strong { font-size: 9px; }
   p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.45; }
+}
+
+
+.is-stage-matrix {
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+
+  h3 {
+    margin: 7px 0 0;
+    font-size: 16px;
+    letter-spacing: -.02em;
+  }
+
+  .is-panel__heading > small {
+    color: var(--muted);
+    font-size: 8px;
+  }
+}
+
+.is-stage-matrix__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.is-stage-matrix__grid article {
+  min-width: 0;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #09151b;
+
+  &.recommended {
+    border-color: rgba(114,231,212,.35);
+    background: rgba(114,231,212,.045);
+  }
+
+  > p {
+    min-height: 58px;
+    margin: 10px 0;
+    color: var(--muted);
+    font-size: 8px;
+    line-height: 1.5;
+  }
+
+  > ol {
+    margin: 12px 0;
+    padding-left: 14px;
+    color: var(--muted);
+    font-size: 8px;
+    line-height: 1.45;
+  }
+
+  > ol li + li { margin-top: 5px; }
+
+  > button {
+    margin-top: auto;
+    padding: 9px 0 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-size: 8px;
+    text-align: left;
+    cursor: pointer;
+  }
+}
+
+.is-stage-matrix__top {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 8px;
+
+  span, strong { display: block; }
+  span { margin-bottom: 4px; color: var(--accent); font-size: 6px; font-weight: 780; letter-spacing: .08em; }
+  strong { font-size: 9px; line-height: 1.35; }
+  > b { color: var(--accent-2); font-size: 18px; letter-spacing: -.03em; }
+}
+
+.is-stage-matrix__focus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+
+  span {
+    padding: 3px 5px;
+    border-radius: 5px;
+    background: rgba(255,255,255,.04);
+    color: var(--faint);
+    font-size: 7px;
+  }
 }
 
 .is-application-questions {
