@@ -802,6 +802,30 @@
             </section>
           </div>
 
+          <section v-if="latestReport?.report?.adaptiveTrace?.length" class="is-panel is-branch-trace">
+            <div class="is-panel__heading is-panel__heading--split">
+              <div>
+                <span class="is-eyebrow">BRANCH MEMORY</span>
+                <h2>Interviewer đã rẽ nhánh ở đâu và vì sao</h2>
+              </div>
+              <small>{{ latestReport.report.adaptiveTrace.length }} branch</small>
+            </div>
+            <div class="is-branch-trace__list">
+              <article v-for="item in latestReport.report.adaptiveTrace" :key="item.questionId">
+                <div class="is-branch-trace__index">{{ String(item.index).padStart(2, '0') }}</div>
+                <div>
+                  <span>{{ item.interviewerLabel || latestReport.interviewerLabel }} · {{ item.pressureLabel || latestReport.pressureLabel }}</span>
+                  <strong>{{ item.question }}</strong>
+                  <p>{{ item.reason }}</p>
+                </div>
+                <div class="is-branch-trace__trigger">
+                  <span>{{ dimensionLabel(item.triggerDimension) }}</span>
+                  <b>{{ item.triggerScore }}</b>
+                </div>
+              </article>
+            </div>
+          </section>
+
           <section v-if="latestPracticePlan" class="is-panel is-practice-plan">
             <div class="is-panel__heading is-panel__heading--split">
               <div>
@@ -2715,6 +2739,68 @@ export default {
   small { color: var(--muted); font-size: 9px; }
 }
 
+.is-branch-trace__list {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.is-branch-trace__list article {
+  padding: 15px 0;
+  display: grid;
+  grid-template-columns: 34px 1fr 92px;
+  gap: 14px;
+  align-items: start;
+  border-bottom: 1px solid var(--line);
+}
+
+.is-branch-trace__index {
+  color: var(--accent);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.is-branch-trace__list article > div:nth-child(2) > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.is-branch-trace__list article strong {
+  display: block;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.is-branch-trace__list article p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.is-branch-trace__trigger {
+  text-align: right;
+}
+
+.is-branch-trace__trigger span,
+.is-branch-trace__trigger b {
+  display: block;
+}
+
+.is-branch-trace__trigger span {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.is-branch-trace__trigger b {
+  margin-top: 4px;
+  color: var(--warning);
+  font-size: 18px;
+}
+
 .is-warning-list { margin: 0; padding: 0; list-style: none; }
 .is-warning-list li { padding: 11px 0 11px 20px; position: relative; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; line-height: 1.5; }
 .is-warning-list li::before { content: "!"; position: absolute; left: 0; color: var(--warning); font-weight: 800; }
@@ -2830,6 +2916,9 @@ export default {
   .is-evaluation__score { padding-bottom: 14px; border-right: 0; border-bottom: 1px solid var(--line); }
   .is-session-actions { flex-direction: column; }
   .is-session-actions button { width: 100%; }
+  .is-branch-trace__list article { grid-template-columns: 26px 1fr; }
+  .is-branch-trace__trigger { grid-column: 2; display: flex; gap: 8px; align-items: baseline; text-align: left; }
+  .is-branch-trace__trigger span, .is-branch-trace__trigger b { display: inline; }
   .is-history-table article { grid-template-columns: 1fr auto; }
   .is-history-table article > span { display: none; }
   .is-report-hero { grid-template-columns: 1fr; }
