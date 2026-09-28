@@ -225,7 +225,7 @@ function render(){
   renderNav();renderTop();renderView()
 }
 function pageHeading(kicker,title,description,count){
-  return `<div class="page-heading"><div><span class="eyebrow">${e(kicker)}</span><h1>${title}</h1><p>${e(description)}</p></div><div class="heading-number">${e(count)}</div></div>`
+  return `<div class="page-heading"><div><span class="eyebrow">${e(kicker)}</span><h1>${title}</h1>${description?`<p>${e(description)}</p>`:''}</div><div class="heading-number">${e(count)}</div></div>`
 }
 function renderOverview(){
   const claims=cvClaims(),ready=evidenceReadyCount()
@@ -237,34 +237,33 @@ function renderOverview(){
   const sourced=deck.filter(q=>Array.isArray(q.sourceIds)&&q.sourceIds.length).length
   const practiced=state.sessions.reduce((sum,s)=>sum+Number(s.answered||0),0)
   root.innerHTML=`
-    <section class="hero">
-      <div><span class="eyebrow">INTERVIEW STUDIO · VIETNAM-FIRST</span><h1>Biến CV thành <em>lợi thế trong phòng phỏng vấn.</em></h1><p>Interview Studio đọc CV, JD và lịch sử luyện tập để chuẩn bị câu hỏi, bảo vệ từng claim bằng evidence và giúp anh luyện cách trả lời trước vòng thật.</p><div class="hero-actions"><button class="primary" data-go="mock">Bắt đầu mock interview</button><button class="secondary" data-go="claims">Kiểm tra CV claims</button></div></div>
-      <article class="readiness"><div class="score-row"><span>PRACTICE READINESS</span><b>${readiness()}</b></div><strong>${e(readinessLabel())}</strong><p>${e(readinessDetail())}</p><div class="bar"><span style="width:${readiness()}%"></span></div><small>Chỉ phản ánh độ sẵn sàng của bộ luyện + tiến độ luyện cá nhân, không dự đoán kết quả tuyển dụng.</small></article>
+    <section class="hero compact-hero">
+      <div><span class="eyebrow">INTERVIEW STUDIO</span><h1>Luyện phỏng vấn theo <em>CV thật.</em></h1><div class="hero-actions"><button class="primary" data-start-quick="5">Luyện 5 câu</button><button class="secondary" data-go="claims">CV Claims</button></div></div>
+      <article class="readiness compact-readiness"><div class="score-row"><span>READINESS</span><b>${readiness()}</b></div><strong>${e(readinessLabel())}</strong><div class="bar"><span style="width:${readiness()}%"></span></div></article>
     </section>
-    <section class="stats">
-      <article><span>Question bank</span><b>${deck.length}</b><small>${templateSpecific} theo CV · ${industrySpecific} theo ngành · ${sourced} có nguồn</small></article>
-      <article><span>CV claims</span><b>${claims.length}</b><small>${highRiskClaims().length} claim cần chuẩn bị kỹ</small></article>
-      <article><span>Practice sessions</span><b>${state.sessions.length}</b><small>${practiced} câu đã luyện</small></article>
-      <article><span>Story bank</span><b>${state.storyBank.length}</b><small>${state.storyBank.filter(s=>String(s.evidence||'').trim().length>=12).length} story có evidence</small></article>
+    <section class="stats compact-stats">
+      <article><span>Questions</span><b>${deck.length}</b></article>
+      <article><span>CV type</span><b>${templateSpecific}</b></article>
+      <article><span>Industry</span><b>${industrySpecific}</b></article>
+      <article><span>Sources</span><b>${sourced}</b></article>
+      <article><span>Sessions</span><b>${state.sessions.length}</b></article>
+      <article><span>Stories</span><b>${state.storyBank.length}</b></article>
     </section>
-    <div class="grid2">
-      <section class="panel"><span class="eyebrow">INTERVIEW CONTEXT</span><h2>Chuẩn bị theo cơ hội đang ứng tuyển</h2><div class="fields">
+    <div class="grid2 compact-grid">
+      <section class="panel context-panel"><div class="panel-title"><span class="eyebrow">CONTEXT</span><h2>Thiết lập luyện</h2></div><div class="fields">
         <label class="field"><span>Mẫu CV</span><select id="template-field">${options(templates,x=>x.id,x=>x.name,state.selectedTemplateId)}</select></label>
-        <label class="field"><span>Role pack</span><select id="pack-field">${options(interviewPacks,x=>x.id,x=>x.label,state.rolePackId)}</select></label>
+        <label class="field"><span>Role</span><select id="pack-field">${options(interviewPacks,x=>x.id,x=>x.label,state.rolePackId)}</select></label>
         <label class="field"><span>Ngành</span><select id="industry-field">${options(industryOptions(),x=>x.id,x=>x.label,state.industryId)}</select></label>
-        <label class="field"><span>Seniority</span><select id="seniority-field">${seniorityLevels.map(x=>`<option ${x===state.seniority?'selected':''}>${e(x)}</option>`).join('')}</select></label>
-        <label class="field"><span>Vòng phỏng vấn</span><select id="stage-field">${options(interviewStages,x=>x.id,x=>x.label,state.stageId)}</select></label>
-        <label class="field"><span>Nguồn dữ liệu</span><select id="market-field"><option value="vietnam" ${state.market==='vietnam'?'selected':''}>Việt Nam · ưu tiên</option><option value="all" ${state.market==='all'?'selected':''}>Việt Nam + Quốc tế</option><option value="global" ${state.market==='global'?'selected':''}>Quốc tế</option></select></label>
-      </div><div class="signal"><span>CV + INDUSTRY SIGNAL</span><strong>${e(activePack().signal)}</strong><p>Ngành ${e(activeIndustry().label)} · constraint: ${e(activeIndustry().constraints.slice(0,3).join(' · '))}</p><p>Khả năng bị đào sâu: ${e(activePack().probe)}</p></div></section>
-      <section class="panel"><span class="eyebrow">NEXT ACTION</span><h2>3 việc nên làm trước vòng phỏng vấn</h2><ol class="actions">
-        <li><b>01</b><div><strong>Bảo vệ claim mạnh nhất</strong><p>Baseline, contribution, trade-off và cách đo cho claim có số liệu.</p></div><button data-go="claims">Mở →</button></li>
-        <li><b>02</b><div><strong>Luyện 5 câu theo JD</strong><p>Question engine ưu tiên CV, role pack, vòng phỏng vấn và application context.</p></div><button data-go="mock">Luyện →</button></li>
-        <li><b>03</b><div><strong>Xem evidence gaps</strong><p>Report chỉ ra câu dài dòng, thiếu ownership hoặc số liệu chưa có trong CV.</p></div><button data-go="reports">Xem →</button></li>
-      </ol></section>
+        <label class="field"><span>Level</span><select id="seniority-field">${seniorityLevels.map(x=>`<option ${x===state.seniority?'selected':''}>${e(x)}</option>`).join('')}</select></label>
+        <label class="field"><span>Vòng</span><select id="stage-field">${options(interviewStages,x=>x.id,x=>x.label,state.stageId)}</select></label>
+        <label class="field"><span>Nguồn</span><select id="market-field"><option value="vietnam" ${state.market==='vietnam'?'selected':''}>Việt Nam</option><option value="all" ${state.market==='all'?'selected':''}>VN + Global</option><option value="global" ${state.market==='global'?'selected':''}>Global</option></select></label>
+      </div></section>
+      <section class="panel quick-panel"><span class="eyebrow">QUICK PRACTICE</span><div class="quick-context"><strong>${e(activeIndustry().label)}</strong><span>${e(activeStage().label)}</span><span>${e(state.seniority)}</span></div><div class="quick-actions"><button class="primary" data-start-quick="5">5 câu</button><button class="secondary" data-start-quick="8">8 câu</button></div><div class="quick-links"><button data-go="questions">Question Bank</button><button data-go="claims">Claims</button><button data-go="reports">Reports</button></div></section>
     </div>
-    <section class="panel"><span class="eyebrow">SOURCE LAYER · ${e(marketLabel())}</span><h2>Nguồn luyện tập có provenance, chia theo thị trường và role</h2><div class="sources">${activeSources().map(s=>`<a href="${e(s.url)}" target="_blank" rel="noreferrer noopener"><span>${s.region==='vietnam'?'VN':'GL'}</span><strong>${e(s.name)}</strong><small>${e(s.label)}</small><p>${e(s.note)}</p></a>`).join('')}</div></section>
+    <section class="panel source-panel"><div class="panel-title inline"><span class="eyebrow">SOURCES · ${e(marketLabel())}</span><b>${activeSources().length}</b></div><div class="sources compact-sources">${activeSources().map(s=>`<a href="${e(s.url)}" target="_blank" rel="noreferrer noopener"><span>${s.region==='vietnam'?'VN':'GL'}</span><strong>${e(s.name)}</strong><small>${e(s.label)}</small></a>`).join('')}</div></section>
   `
   bindGo()
+  root.querySelectorAll('[data-start-quick]').forEach(button=>button.onclick=()=>{state.activeModule='mock';startMock(Number(button.dataset.startQuick||5),90)})
   document.querySelector('#template-field').onchange=ev=>{state.selectedTemplateId=ev.target.value;state.rolePackId=templateInterviewPack[state.selectedTemplateId]||'general';render()}
   document.querySelector('#pack-field').onchange=ev=>{state.rolePackId=ev.target.value;render()}
   document.querySelector('#industry-field').onchange=ev=>{state.industryId=ev.target.value;try{localStorage.setItem(PREF_KEY,JSON.stringify({industryId:state.industryId}))}catch{};render()}
@@ -356,7 +355,7 @@ function renderApplications(){
     state.applicationId=applications()[0].id;editApplication(applications()[0])
   }
   const analysis=applicationAnalysis()
-  root.innerHTML=pageHeading('APPLICATION LAB','Mỗi job là một <em>workspace phỏng vấn riêng.</em>','Dán JD, giữ context tuyển dụng và xem Evidence Coverage giữa yêu cầu công việc với CV Claims, Story Bank và Question Bank.',applications().length)+`
+  root.innerHTML=pageHeading('APPLICATION LAB','Ứng tuyển <em>theo từng job.</em>','',applications().length)+`
     <div class="application-layout">
       <aside class="application-list">
         <div class="application-list-head"><span class="eyebrow">APPLICATIONS</span><button id="new-app">＋ New</button></div>
@@ -375,10 +374,10 @@ function renderApplications(){
         </div>
         <div class="application-actions">${state.applicationDraft.id?'<button id="delete-app" class="text-btn danger">Xóa application</button>':'<span></span>'}<span></span><button id="save-app" class="secondary">Lưu context</button><button id="practice-app" class="primary" ${analysis?'':'disabled'}>Luyện job này →</button></div>
         ${analysis?`
-          <div class="coverage-summary"><div class="coverage-ring"><b>${analysis.coverage}</b><span>/100</span></div><div><span class="eyebrow">EVIDENCE COVERAGE · KHÔNG PHẢI XÁC SUẤT ĐẬU</span><h3>${e(analysis.summary)}</h3><p>Stage đề xuất: ${e(interviewStages.find(s=>s.id===analysis.recommendedStage)?.label||'Hiring Manager')}</p></div></div>
+          <div class="coverage-summary"><div class="coverage-ring"><b>${analysis.coverage}</b><span>/100</span></div><div><span class="eyebrow">EVIDENCE COVERAGE</span><h3>${e(analysis.summary)}</h3><span class="chip">${e(interviewStages.find(s=>s.id===analysis.recommendedStage)?.label||'Hiring Manager')}</span></div></div>
           <div class="coverage-grid"><section><span class="eyebrow">MATCHED SIGNALS</span><div class="signal-tags">${analysis.matchedSignals.map(s=>`<span>${e(s)}</span>`).join('')||'<small>Chưa có signal đủ rõ.</small>'}</div></section><section><span class="eyebrow">EVIDENCE GAPS</span><div class="signal-tags gaps">${analysis.gapSignals.map(s=>`<span>${e(s)}</span>`).join('')||'<small>Không phát hiện gap token đáng kể.</small>'}</div></section></div>
           <div class="coverage-grid"><section><span class="eyebrow">TOP CV EVIDENCE</span><ol class="coverage-list">${analysis.topClaims.map(x=>`<li><strong>${e(x.label)}</strong><p>${e(x.text)}</p></li>`).join('')||'<li><p>Chưa có CV evidence phù hợp.</p></li>'}</ol></section><section><span class="eyebrow">TOP STORY EVIDENCE</span><ol class="coverage-list">${analysis.topStories.map(x=>`<li><strong>${e(x.label)}</strong><p>${e(x.text)}</p></li>`).join('')||'<li><p>Chưa có Story Bank phù hợp.</p></li>'}</ol></section></div>
-          <section class="stage-matrix"><div class="stage-matrix-head"><div><span class="eyebrow">INTERVIEW STAGE MATRIX</span><h3>Mỗi vòng kiểm tra một loại evidence khác nhau</h3></div><small>Preparedness = tín hiệu chuẩn bị nội bộ</small></div><div class="stage-matrix-grid">${applicationStageMatrix().map(stage=>`<article class="${stage.recommended?'recommended':''}"><div class="stage-card-top"><div>${stage.recommended?'<span>RECOMMENDED NEXT</span>':''}<strong>${e(stage.label)}</strong></div><b>${stage.preparedness}</b></div><p>${e(stage.evidence)}</p><div class="stage-focus">${stage.focus.map(term=>`<span>${e(term)}</span>`).join('')}</div><ol>${stage.questions.map(q=>`<li>${e(q.question)}</li>`).join('')}</ol><button data-stage-practice="${e(stage.id)}">Luyện vòng này →</button></article>`).join('')}</div></section>
+          <section class="stage-matrix"><div class="stage-matrix-head"><div><span class="eyebrow">INTERVIEW STAGES</span></div></div><div class="stage-matrix-grid">${applicationStageMatrix().map(stage=>`<article class="${stage.recommended?'recommended':''}"><div class="stage-card-top"><div>${stage.recommended?'<span>RECOMMENDED NEXT</span>':''}<strong>${e(stage.label)}</strong></div><b>${stage.preparedness}</b></div><p>${e(stage.evidence)}</p><div class="stage-focus">${stage.focus.map(term=>`<span>${e(term)}</span>`).join('')}</div><ol>${stage.questions.map(q=>`<li>${e(q.question)}</li>`).join('')}</ol><button data-stage-practice="${e(stage.id)}">Luyện vòng này →</button></article>`).join('')}</div></section>
           <section class="application-questions"><span class="eyebrow">RECOMMENDED INTERVIEW QUESTIONS</span><ol>${analysis.recommendedQuestions.slice(0,5).map(x=>`<li><span>${e(categoryName(x.category))}</span><strong>${e(x.question)}</strong></li>`).join('')}</ol></section>`
         :''}
       </section>
@@ -398,7 +397,7 @@ function renderApplications(){
 
 function renderQuestions(){
   const qs=filteredQuestions()
-  root.innerHTML=pageHeading('QUESTION BANK','Câu hỏi theo <em>role, CV, JD và vòng tuyển dụng.</em>','Mỗi câu có recruiter intent, framework, follow-up, red flags và provenance khi có.',qs.length)+`
+  root.innerHTML=pageHeading('QUESTION BANK','Câu hỏi <em>phù hợp context.</em>','',qs.length)+`
     <section class="filterbar">
       <label><span>Tìm câu hỏi</span><input id="q-search" type="search" value="${e(state.query)}" placeholder="stakeholder, design system, failure, metric..." /></label>
       <label><span>Nhóm</span><select id="q-category">${options(questionCategories,x=>x.id,x=>x.label,state.categoryId)}</select></label>
@@ -418,7 +417,7 @@ function renderClaims(){
   const claims=cvClaims()
   if(!state.selectedClaimId||!claims.some(c=>c.id===state.selectedClaimId))state.selectedClaimId=claims[0]?.id||''
   const selected=claims.find(c=>c.id===state.selectedClaimId)
-  root.innerHTML=pageHeading('CLAIM DEFENSE','Mọi claim trong CV đều phải <em>chịu được câu hỏi đào sâu.</em>','Hệ thống trích xuất statement quan trọng, phát hiện số liệu/ownership và tạo recruiter probes để chuẩn bị evidence.',claims.length)+`
+  root.innerHTML=pageHeading('CLAIM DEFENSE','Bảo vệ <em>CV claims.</em>','',claims.length)+`
   <div class="claim-layout">
     <aside class="claim-list">${claims.map(c=>`<button data-claim="${c.id}" class="${c.id===state.selectedClaimId?'active':''}"><span><small>${e(c.source)} · ${e(c.label)}</small><strong>${e(c.text)}</strong></span><b class="risk ${claimRisk(c)>=70?'high':''}">${claimRisk(c)}</b></button>`).join('')}</aside>
     ${selected?`<section class="claim-detail">
@@ -441,7 +440,7 @@ function renderClaims(){
 function renderStories(){
   const stories=Array.isArray(state.storyBank)?state.storyBank:[]
   const avg=stories.length?Math.round(stories.reduce((sum,s)=>sum+Number(s.score||0),0)/stories.length):0
-  root.innerHTML=pageHeading('STORY BANK','Lưu những câu chuyện nghề nghiệp <em>đủ mạnh để dùng lại.</em>','Story Bank giữ câu trả lời tốt, evidence, claim liên quan và practice signal.',stories.length)
+  root.innerHTML=pageHeading('STORY BANK','Câu chuyện <em>đã lưu.</em>','',stories.length)
   const stats=document.createElement('section');stats.className='stats story-stats'
   stats.innerHTML='<article><span>Stories</span><b>'+stories.length+'</b><small>câu chuyện đã lưu</small></article><article><span>Evidence ready</span><b>'+stories.filter(s=>String(s.evidence||'').trim().length>=12).length+'</b><small>có STAR/evidence anchor</small></article><article><span>Average signal</span><b>'+(avg||'—')+'</b><small>practice signal trung bình</small></article>'
   root.appendChild(stats)
@@ -553,15 +552,15 @@ function speakQuestion(){if(!window.speechSynthesis||!currentQuestion())return;w
 
 function renderMock(){
   if(!state.practice){
-    root.innerHTML=pageHeading('MOCK INTERVIEW','Trả lời như vòng thật. <em>Coach chỉ xuất hiện sau.</em>','Question engine ưu tiên JD, CV claims và vòng phỏng vấn. Có timer, speech input và evidence check.', '5Q')+`
-      <section class="mock-start"><div class="mock-config"><h2>Tạo một vòng luyện có context</h2>
+    root.innerHTML=pageHeading('MOCK INTERVIEW','Luyện như <em>vòng thật.</em>','', '5Q')+`
+      <section class="mock-start"><div class="mock-config"><h2>Thiết lập phiên luyện</h2>
       <label class="field"><span>Application</span><select id="mock-app"><option value="">CV hiện tại · không gắn job</option>${applications().map(a=>`<option value="${e(a.id)}" ${a.id===state.applicationId?'selected':''}>${e(a.company)} · ${e(a.role)}</option>`).join('')}</select></label>
       <label class="field"><span>Vòng phỏng vấn</span><select id="mock-stage">${options(interviewStages,x=>x.id,x=>x.label,state.stageId)}</select></label>
       <label class="field"><span>Interviewer mode</span><select id="mock-interviewer">${options(interviewerModes,x=>x.id,x=>x.label,state.interviewerMode)}</select></label>
       <label class="field"><span>Pressure</span><select id="mock-pressure">${options(pressureLevels,x=>x.id,x=>x.label,state.pressureLevel)}</select></label>
       <label class="field"><span>Timer / câu</span><select id="mock-timer"><option value="60">60 giây</option><option value="90" selected>90 giây</option><option value="120">120 giây</option></select></label>
       <label class="field"><span>Số câu</span><select id="mock-size"><option value="5">5 câu · Quick round</option><option value="8">8 câu · Full round</option></select></label>
-      </div><div class="mock-preview"><span class="eyebrow">WHAT THE ENGINE USES</span><div><b>${cvClaims().length}</b><span>CV claims</span></div><div><b>${activeApplication()?'JD':'CV'}</b><span>application context</span></div><div><b>${e(activeStage().label)}</b><span>interview stage</span></div><div><b>${e(activeInterviewer().shortLabel)}</b><span>${e(activeInterviewer().label)}</span></div><div><b>${e(activePressure().label)}</b><span>adaptive pressure</span></div><div><b>${e(marketLabel())}</b><span>question sources</span></div><button id="start-mock" class="primary">Bắt đầu session →</button></div></section>`
+      </div><div class="mock-preview"><span class="eyebrow">SESSION</span><div><b>${cvClaims().length}</b><span>CV claims</span></div><div><b>${activeApplication()?'JD':'CV'}</b><span>application context</span></div><div><b>${e(activeStage().label)}</b><span>interview stage</span></div><div><b>${e(activeInterviewer().shortLabel)}</b><span>${e(activeInterviewer().label)}</span></div><div><b>${e(activePressure().label)}</b><span>adaptive pressure</span></div><div><b>${e(marketLabel())}</b><span>question sources</span></div><button id="start-mock" class="primary">Bắt đầu session →</button></div></section>`
     document.querySelector('#mock-app').onchange=ev=>{state.applicationId=ev.target.value;renderTop()}
     document.querySelector('#mock-stage').onchange=ev=>{state.stageId=ev.target.value;state.interviewerMode=interviewerForStage(state.stageId);renderMock()}
     document.querySelector('#mock-interviewer').onchange=ev=>{state.interviewerMode=ev.target.value;renderMock()}
@@ -570,11 +569,11 @@ function renderMock(){
     return
   }
   const q=currentQuestion(),draft=currentDraft(),evaluation=draft.evaluation
-  root.innerHTML=pageHeading('MOCK INTERVIEW','Trả lời như vòng thật. <em>Coach chỉ xuất hiện sau.</em>','Đánh giá là practice signal, không phải dự đoán tuyển dụng.',`${state.practice.index+1}/${state.practice.questions.length}`)+`
+  root.innerHTML=pageHeading('MOCK INTERVIEW','Luyện như <em>vòng thật.</em>','',`${state.practice.index+1}/${state.practice.questions.length}`)+`
     <section class="live"><div class="live-meta"><div><span>QUESTION ${state.practice.index+1} / ${state.practice.questions.length}${q.adaptive?.isFollowUp?' <b class="adaptive-badge">ADAPTIVE FOLLOW-UP</b>':''}</span><small>${e(categoryName(q.category))} · ${e(activeStage().label)} · ${e(activeInterviewer().label)} · ${e(activePressure().label)}</small></div><div class="timer ${state.timerRemaining<=20?'warning':''}"><b id="timer-value">${formatTimer()}</b><span>${state.timerRunning?'đang chạy':'tạm dừng'}</span></div></div>
     ${q.adaptive?.isFollowUp?`<div class="adaptive-reason"><span>WHY THIS FOLLOW-UP</span><p>${e(q.adaptive.reason)}</p><small>Trigger: ${e(dimensionLabel(q.adaptive.triggerDimension))} · ${q.adaptive.triggerScore}/100 · ${e(q.adaptive.interviewerLabel||activeInterviewer().label)} · ${e(q.adaptive.pressureLabel||activePressure().label)}</small></div>`:''}
     <h2>${e(q.question)}</h2><div class="tools"><button id="speak-q">🔊 Đọc câu hỏi</button><button id="speech-q" class="${state.speechRecording?'recording':''}">${state.speechRecording?'■ Dừng ghi âm':'🎙 Trả lời bằng giọng nói'}</button><button id="pause-timer">${state.timerRunning?'Ⅱ Tạm dừng timer':'▶ Tiếp tục timer'}</button></div>
-    <div class="answer-grid"><label><span>Câu trả lời của anh</span><textarea id="mock-answer" rows="9" placeholder="Nói hoặc nhập đúng cách anh sẽ trả lời trong buổi phỏng vấn thật...">${e(draft.answer)}</textarea><small id="word-count">${draft.answer.trim().split(/\s+/).filter(Boolean).length} từ</small></label><label><span>Evidence / STAR anchors</span><textarea id="mock-evidence" rows="6" placeholder="Project · ownership · baseline · decision · trade-off · result · learning">${e(draft.evidence)}</textarea><small>Evidence riêng giúp engine không nhầm câu dài với câu có bằng chứng.</small></label></div>
+    <div class="answer-grid"><label><span>Câu trả lời của anh</span><textarea id="mock-answer" rows="9" placeholder="Nói hoặc nhập đúng cách anh sẽ trả lời trong buổi phỏng vấn thật...">${e(draft.answer)}</textarea><small id="word-count">${draft.answer.trim().split(/\s+/).filter(Boolean).length} từ</small></label><label><span>Evidence / STAR anchors</span><textarea id="mock-evidence" rows="6" placeholder="Project · ownership · baseline · decision · trade-off · result · learning">${e(draft.evidence)}</textarea></label></div>
     <label class="confidence"><span>Mức tự tin</span><input id="mock-confidence" type="range" min="1" max="5" value="${draft.confidence}"><b id="confidence-value">${draft.confidence}/5</b></label>
     ${evaluation?`<div class="evaluation"><div class="eval-score"><b>${evaluation.overall}</b><span>practice signal</span></div><div class="metric-bars">${Object.entries(evaluation.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div>${evaluation.warnings.length?`<ul class="warnings">${list(evaluation.warnings)}</ul>`:''}</div>`:''}
     <button id="coach-toggle" class="coach-toggle">Mở Answer Coach</button><div id="coach" class="coach-grid hidden"><section><span>Recruiter intent</span><p>${e(q.why)}</p></section><section><span>Framework</span><ol>${list(q.framework)}</ol></section><section><span>Reference answer</span><p>“${e(q.example)}”</p></section><section><span>Adaptive follow-up</span><ul>${list([...(evaluation?.dimensions?.evidence<65?['Evidence cụ thể nào chứng minh kết quả này? Baseline và nguồn đo là gì?']:[]),...(evaluation?.dimensions?.ownership<65?['Phần nào anh trực tiếp sở hữu, phần nào thuộc team?']:[]),...(q.followUps||[])].slice(0,4))}</ul></section></div>
@@ -594,9 +593,9 @@ function renderMock(){
 
 function renderReports(){
   const latest=latestReport()
-  root.innerHTML=pageHeading('INTERVIEW REPORTS','Đo tiến bộ bằng <em>evidence và hành vi quan sát được.</em>','Không chấm cảm xúc hay dự đoán tuyển dụng. Report tập trung relevance, structure, evidence, ownership, depth, credibility và delivery.',state.sessions.length)+
-  (latest?`<section class="report-hero"><div class="report-score"><span>LATEST PRACTICE SIGNAL</span><b>${latest.report.overall}</b><small>/100</small></div><div><strong>${e(latest.contextLabel)}</strong><p>${e(formatDate(latest.createdAt))} · ${e(latest.stageLabel)} · ${e(latest.interviewerLabel||'Interviewer')} · ${e(latest.pressureLabel||'Realistic')} · ${latest.answered}/${latest.total} câu</p><span class="chip">${latest.report.evidenceReady}/${latest.total} câu có evidence note · ${latest.report.adaptiveCount||0} adaptive follow-up</span></div></section><div class="grid2"><section class="panel"><span class="eyebrow">DIMENSIONS</span><h2>Điểm cần cải thiện</h2><div class="metric-bars">${Object.entries(latest.report.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div></section><section class="panel"><span class="eyebrow">EVIDENCE GAPS</span><h2>Việc cần sửa trước lần luyện sau</h2><ul class="warnings">${list(latest.report.warnings.length?latest.report.warnings:['Chưa phát hiện cảnh báo lớn trong session gần nhất.'])}</ul></section></div>${latest.report.adaptiveCount?`<section class="panel adaptive-report"><span class="eyebrow">ADAPTIVE TRACE</span><h2>Vì sao Interviewer đã hỏi sâu</h2><div class="adaptive-stats"><div><b>${latest.report.adaptiveCount}</b><span>follow-up đã chèn</span></div><div><b>${latest.report.adaptiveDimensions.length}</b><span>dimension bị đào sâu</span></div></div><ul class="warnings">${list(latest.report.adaptiveReasons)}</ul></section>`:''}`:'')+
-  (latest?.report?.adaptiveTrace?.length?`<section class="panel branch-trace"><span class="eyebrow">BRANCH MEMORY</span><h2>Interviewer đã rẽ nhánh ở đâu và vì sao</h2><div class="branch-trace-list">${latest.report.adaptiveTrace.map(item=>`<article><div class="branch-index">${String(item.index).padStart(2,'0')}</div><div><span>${e(item.interviewerLabel||latest.interviewerLabel||'Interviewer')} · ${e(item.pressureLabel||latest.pressureLabel||'Realistic')}</span><strong>${e(item.question)}</strong><p>${e(item.reason)}</p></div><div class="branch-trigger"><span>${e(dimensionLabel(item.triggerDimension))}</span><b>${item.triggerScore}</b></div></article>`).join('')}</div></section>`:'')+
+  root.innerHTML=pageHeading('INTERVIEW REPORTS','Kết quả <em>luyện tập.</em>','',state.sessions.length)+
+  (latest?`<section class="report-hero"><div class="report-score"><span>LATEST PRACTICE SIGNAL</span><b>${latest.report.overall}</b><small>/100</small></div><div><strong>${e(latest.contextLabel)}</strong><p>${e(formatDate(latest.createdAt))} · ${e(latest.stageLabel)} · ${e(latest.interviewerLabel||'Interviewer')} · ${e(latest.pressureLabel||'Realistic')} · ${latest.answered}/${latest.total} câu</p><span class="chip">${latest.report.evidenceReady}/${latest.total} câu có evidence note · ${latest.report.adaptiveCount||0} adaptive follow-up</span></div></section><div class="grid2"><section class="panel"><span class="eyebrow">DIMENSIONS</span><h2>Dimensions</h2><div class="metric-bars">${Object.entries(latest.report.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div></section><section class="panel"><span class="eyebrow">EVIDENCE GAPS</span><h2>Evidence gaps</h2><ul class="warnings">${list(latest.report.warnings.length?latest.report.warnings:['Chưa phát hiện cảnh báo lớn trong session gần nhất.'])}</ul></section></div>${latest.report.adaptiveCount?`<section class="panel adaptive-report"><span class="eyebrow">ADAPTIVE TRACE</span><h2>Adaptive trace</h2><div class="adaptive-stats"><div><b>${latest.report.adaptiveCount}</b><span>follow-up đã chèn</span></div><div><b>${latest.report.adaptiveDimensions.length}</b><span>dimension bị đào sâu</span></div></div><ul class="warnings">${list(latest.report.adaptiveReasons)}</ul></section>`:''}`:'')+
+  (latest?.report?.adaptiveTrace?.length?`<section class="panel branch-trace"><span class="eyebrow">BRANCH MEMORY</span><h2>Branch trace</h2><div class="branch-trace-list">${latest.report.adaptiveTrace.map(item=>`<article><div class="branch-index">${String(item.index).padStart(2,'0')}</div><div><span>${e(item.interviewerLabel||latest.interviewerLabel||'Interviewer')} · ${e(item.pressureLabel||latest.pressureLabel||'Realistic')}</span><strong>${e(item.question)}</strong><p>${e(item.reason)}</p></div><div class="branch-trigger"><span>${e(dimensionLabel(item.triggerDimension))}</span><b>${item.triggerScore}</b></div></article>`).join('')}</div></section>`:'')+
   (latest?.report?.practicePlan?practicePlanHtml(latest.report.practicePlan):'')+`<section class="panel"><span class="eyebrow">HISTORY</span><h2>Lịch sử luyện tập</h2>${state.sessions.length?`<div class="history">${state.sessions.map(s=>`<article><div><strong>${e(s.contextLabel)}</strong><small>${e(formatDate(s.createdAt))}</small></div><span>${e(s.stageLabel||'')}</span><span>${s.answered||0}/${s.total||0} answered</span><span>${s.report?.evidenceReady||s.evidenceReady||0} evidence</span><b>${s.report?.overall||'—'}</b></article>`).join('')}</div><button id="clear-history" class="text-btn">Xóa lịch sử local</button>`:`<div class="empty">Chưa có report.<button class="text-btn" data-go="mock">Bắt đầu luyện →</button></div>`}</section>`
   bindGo()
   const plan=document.querySelector('#practice-plan');if(plan&&latest?.report?.practicePlan)plan.onclick=()=>startPracticePlan(latest.report.practicePlan)
