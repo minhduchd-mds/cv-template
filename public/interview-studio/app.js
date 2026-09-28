@@ -124,6 +124,16 @@ const stageWeight=item=>{
   }
   return maps[state.stageId]?.[item.category]||9
 }
+const practiceContextBonus=q=>{
+  let score=0
+  if(q.templateId===state.selectedTemplateId)score+=22
+  if(q.industryId===resolvedIndustryId())score+=20
+  if(q.pack===state.rolePackId)score+=12
+  if(q.market===state.market)score+=4
+  if(q.category==='challenge'&&state.stageId==='hiring-manager')score+=6
+  if(q.category==='case'&&(state.stageId==='technical'||state.stageId==='portfolio'))score+=6
+  return score
+}
 const questionDeck=()=>{
   const vietnam=state.market==='global'?[]:vietnamQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
   const global=state.market==='vietnam'?[]:globalQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
@@ -228,14 +238,10 @@ function pageHeading(kicker,title,description,count){
   return `<div class="page-heading"><div><span class="eyebrow">${e(kicker)}</span><h1>${title}</h1>${description?`<p>${e(description)}</p>`:''}</div><div class="heading-number">${e(count)}</div></div>`
 }
 function renderOverview(){
-  const claims=cvClaims(),ready=evidenceReadyCount()
   const deck=questionDeck()
-  const vn=deck.filter(q=>q.market==='vietnam').length
-  const global=deck.filter(q=>q.market==='global').length
   const templateSpecific=deck.filter(q=>q.templateId===state.selectedTemplateId).length
   const industrySpecific=deck.filter(q=>q.industryId===resolvedIndustryId()).length
   const sourced=deck.filter(q=>Array.isArray(q.sourceIds)&&q.sourceIds.length).length
-  const practiced=state.sessions.reduce((sum,s)=>sum+Number(s.answered||0),0)
   root.innerHTML=`
     <section class="hero compact-hero">
       <div><span class="eyebrow">INTERVIEW STUDIO</span><h1>Luyện phỏng vấn theo <em>CV thật.</em></h1><div class="hero-actions"><button class="primary" data-start-quick="5">Luyện 5 câu</button><button class="secondary" data-go="claims">CV Claims</button></div></div>
@@ -340,7 +346,7 @@ function startApplicationPractice(app=activeApplication()||state.applicationDraf
   if(!analysis)return
   state.stageId=analysis.recommendedStage||state.stageId
   state.interviewerMode=interviewerForStage(state.stageId)
-  const selected=buildApplicationPracticeSet({application:contextApp,claims:cvClaims(),stories:state.storyBank,questions:questionDeck(),limit:5})
+  const selected=buildApplicationPracticeSet({application:contextApp,claims:cvClaims(),stories:state.storyBank,questions:[...questionDeck()].sort((a,b)=>practiceContextBonus(b)-practiceContextBonus(a)),limit:5})
   if(!selected.length){toast('Chưa đủ dữ liệu để tạo practice set');return}
   if(contextApp.id)state.applicationId=contextApp.id
   state.practice={questions:selected,index:0,drafts:{},startedAt:new Date().toISOString(),timerChoice:90,baseSize:selected.length,adaptiveInserted:0}
@@ -491,7 +497,7 @@ function startTimer(){stopTimer();state.timerRemaining=state.practice?.timerChoi
 const formatTimer=()=>`${String(Math.floor(state.timerRemaining/60)).padStart(2,'0')}:${String(state.timerRemaining%60).padStart(2,'0')}`
 function startMock(size,timerChoice){
   const app=activeApplication()||{}
-  const ranked=questionDeck().map(q=>({q,score:questionRelevanceScore(q,app,cvClaims())+(8-stageWeight(q))})).sort((a,b)=>b.score-a.score)
+  const ranked=questionDeck().map(q=>({q,score:questionRelevanceScore(q,app,cvClaims())+(8-stageWeight(q))+practiceContextBonus(q)})).sort((a,b)=>b.score-a.score)
   const selected=[],cats=new Set()
   ranked.forEach(({q})=>{if(selected.length>=size)return;if(!cats.has(q.category)||selected.length>=Math.ceil(size/2)){selected.push(q);cats.add(q.category)}})
   ranked.forEach(({q})=>{if(selected.length<size&&!selected.some(x=>x.id===q.id))selected.push(q)})
