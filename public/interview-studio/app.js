@@ -57,7 +57,7 @@ const templates=[
 const readJson=(key,fallback)=>{
   try{const value=JSON.parse(localStorage.getItem(key)||'null');return value??fallback}catch{return fallback}
 }
-const preferences=readJson(PREF_KEY,{industryId:'auto'})
+const preferences=readJson(PREF_KEY,{industryId:'auto',seniority:'Senior',market:'vietnam'})
 let workspace=readJson(WORKSPACE_KEY,{profile:{},studio:{},ats:{target:{},versions:[],applications:[]}})
 const initialTemplate=workspace?.studio?.selectedId&&templates.some(t=>t.id===workspace.studio.selectedId)?workspace.studio.selectedId:'soft-portfolio-pro'
 const state={
@@ -65,9 +65,9 @@ const state={
   selectedTemplateId:initialTemplate,
   rolePackId:templateInterviewPack[initialTemplate]||'general',
   industryId:preferences.industryId||'auto',
-  seniority:'Senior',
+  seniority:preferences.seniority||'Senior',
   stageId:'hiring-manager',
-  market:'vietnam',
+  market:preferences.market||'vietnam',
   categoryId:'all',
   query:'',
   applicationId:'',
@@ -124,8 +124,19 @@ const stageWeight=item=>{
   }
   return maps[state.stageId]?.[item.category]||9
 }
+const seniorityQuestionBonus=q=>{
+  const category=q.category||'role'
+  const maps={
+    Entry:{core:14,behavioral:12,role:8,case:3,challenge:0,askback:4},
+    Mid:{role:12,behavioral:9,case:9,core:7,challenge:4,askback:3},
+    Senior:{case:14,challenge:13,role:11,behavioral:7,core:4,askback:3},
+    Lead:{challenge:16,case:14,behavioral:11,role:9,core:2,askback:4},
+    Director:{challenge:18,behavioral:14,case:13,role:8,core:1,askback:5},
+  }
+  return maps[state.seniority]?.[category]||0
+}
 const practiceContextBonus=q=>{
-  let score=0
+  let score=seniorityQuestionBonus(q)
   if(q.templateId===state.selectedTemplateId)score+=22
   if(q.industryId===resolvedIndustryId())score+=20
   if(q.pack===state.rolePackId)score+=12
@@ -272,10 +283,11 @@ function renderOverview(){
   root.querySelectorAll('[data-start-quick]').forEach(button=>button.onclick=()=>{state.activeModule='mock';startMock(Number(button.dataset.startQuick||5),90)})
   document.querySelector('#template-field').onchange=ev=>{state.selectedTemplateId=ev.target.value;state.rolePackId=templateInterviewPack[state.selectedTemplateId]||'general';render()}
   document.querySelector('#pack-field').onchange=ev=>{state.rolePackId=ev.target.value;render()}
-  document.querySelector('#industry-field').onchange=ev=>{state.industryId=ev.target.value;try{localStorage.setItem(PREF_KEY,JSON.stringify({industryId:state.industryId}))}catch{};render()}
-  document.querySelector('#seniority-field').onchange=ev=>{state.seniority=ev.target.value;render()}
+  const savePracticePrefs=()=>{try{localStorage.setItem(PREF_KEY,JSON.stringify({industryId:state.industryId,seniority:state.seniority,market:state.market}))}catch{}}
+  document.querySelector('#industry-field').onchange=ev=>{state.industryId=ev.target.value;savePracticePrefs();render()}
+  document.querySelector('#seniority-field').onchange=ev=>{state.seniority=ev.target.value;savePracticePrefs();render()}
   document.querySelector('#stage-field').onchange=ev=>{state.stageId=ev.target.value;render()}
-  document.querySelector('#market-field').onchange=ev=>{state.market=ev.target.value;render()}
+  document.querySelector('#market-field').onchange=ev=>{state.market=ev.target.value;savePracticePrefs();render()}
 }
 function bindGo(){root.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{state.activeModule=b.dataset.go;render()}))}
 
