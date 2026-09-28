@@ -645,6 +645,141 @@ export const templatePracticeProfiles = {
   },
 }
 
+
+export const industryPracticeProfiles = {
+  'technology-software': {
+    label: 'Software / IT',
+    context: 'sản phẩm số, nền tảng, delivery liên tục và technical reliability',
+    constraints: ['performance', 'security', 'maintainability', 'release risk'],
+    metrics: ['adoption', 'task success', 'latency', 'error rate', 'availability'],
+    stakeholders: ['Product', 'Engineering', 'Security', 'Operations'],
+    scenario: 'release mới làm một nhóm người dùng gặp lỗi nhưng monitoring tổng thể vẫn xanh',
+    evidence: 'telemetry, logs, experiment/result, user impact và regression guard',
+  },
+  telecom: {
+    label: 'Telecom',
+    context: 'dịch vụ quy mô lớn, network/service reliability, vận hành nhiều lớp và trải nghiệm khách hàng',
+    constraints: ['availability', 'legacy integration', 'security', 'large-scale operations'],
+    metrics: ['service availability', 'failure rate', 'resolution time', 'conversion', 'customer complaints'],
+    stakeholders: ['Business', 'Network/IT', 'Operations', 'Customer Care', 'Security'],
+    scenario: 'một thay đổi trải nghiệm giúp conversion tăng nhưng làm tăng ticket hỗ trợ ở một phân khúc',
+    evidence: 'segment data, operational signal, service impact, rollout plan và rollback criteria',
+  },
+  'banking-finance': {
+    label: 'Banking / Finance',
+    context: 'giao dịch tài chính, kiểm soát, tuân thủ và độ tin cậy cao',
+    constraints: ['compliance', 'auditability', 'security', 'data accuracy'],
+    metrics: ['conversion', 'fraud/error rate', 'reconciliation accuracy', 'processing time', 'complaints'],
+    stakeholders: ['Business', 'Risk', 'Compliance', 'Operations', 'Technology'],
+    scenario: 'một flow mới giúp hoàn thành nhanh hơn nhưng tăng rủi ro kiểm soát hoặc khả năng hiểu sai',
+    evidence: 'control design, audit trail, baseline, risk assessment và measurable outcome',
+  },
+  'ecommerce-retail': {
+    label: 'E-commerce / Retail',
+    context: 'funnel mua hàng, merchandising, logistics và hành vi khách hàng đa kênh',
+    constraints: ['margin', 'inventory', 'delivery', 'seasonality'],
+    metrics: ['conversion', 'AOV', 'repeat rate', 'cart abandonment', 'return rate'],
+    stakeholders: ['Product', 'Commercial', 'Marketing', 'Operations', 'Customer Service'],
+    scenario: 'conversion tăng sau promotion nhưng margin và return rate xấu đi',
+    evidence: 'funnel data, cohort/segment, unit economics, customer feedback và guardrail metrics',
+  },
+  education: {
+    label: 'Education / EdTech',
+    context: 'learning outcomes, engagement, accessibility và nhiều nhóm người dùng khác nhau',
+    constraints: ['learning quality', 'accessibility', 'teacher workflow', 'privacy'],
+    metrics: ['completion', 'engagement', 'assessment result', 'retention', 'teacher/admin effort'],
+    stakeholders: ['Learners', 'Teachers', 'Academic/Admin', 'Product', 'Parents/Organizations'],
+    scenario: 'engagement tăng nhưng completion và learning outcome không cải thiện',
+    evidence: 'learning signal, cohort comparison, qualitative feedback, accessibility check và behavior data',
+  },
+  healthcare: {
+    label: 'Healthcare',
+    context: 'an toàn người dùng, workflow chuyên môn, protocol và dữ liệu nhạy cảm',
+    constraints: ['safety', 'clinical protocol', 'privacy', 'scope of practice'],
+    metrics: ['error/incident rate', 'time to action', 'adherence', 'satisfaction', 'handoff quality'],
+    stakeholders: ['Clinical staff', 'Patients', 'Operations', 'Compliance', 'Technology'],
+    scenario: 'workflow mới giảm thao tác nhưng có nguy cơ làm mất một safety checkpoint',
+    evidence: 'protocol mapping, risk assessment, incident/near-miss signal, usability evidence và escalation path',
+  },
+  manufacturing: {
+    label: 'Manufacturing',
+    context: 'quy trình vật lý, chất lượng, throughput, downtime và an toàn vận hành',
+    constraints: ['safety', 'downtime', 'quality tolerance', 'equipment constraints'],
+    metrics: ['throughput', 'defect rate', 'OEE', 'downtime', 'cycle time'],
+    stakeholders: ['Operations', 'Quality', 'Engineering', 'Maintenance', 'Supply Chain'],
+    scenario: 'giải pháp tăng throughput nhưng defect rate bắt đầu tăng ở ca vận hành cụ thể',
+    evidence: 'process baseline, root cause, control plan, shift/segment data và quality guardrail',
+  },
+  'energy-utilities': {
+    label: 'Energy / Utilities',
+    context: 'hạ tầng thiết yếu, reliability, field operations và quản trị rủi ro',
+    constraints: ['safety', 'reliability', 'regulation', 'asset lifecycle'],
+    metrics: ['uptime', 'incident rate', 'response time', 'loss/efficiency', 'maintenance cost'],
+    stakeholders: ['Operations', 'Engineering', 'Safety', 'Regulatory', 'Field teams'],
+    scenario: 'một tối ưu chi phí vận hành có thể làm tăng maintenance risk dài hạn',
+    evidence: 'asset data, failure modes, risk model, cost impact và monitoring threshold',
+  },
+  'public-sector': {
+    label: 'Public Sector / Enterprise Government',
+    context: 'quy trình nghiệp vụ lớn, nhiều cấp phê duyệt, accessibility và tính minh bạch',
+    constraints: ['policy', 'auditability', 'legacy process', 'accessibility'],
+    metrics: ['processing time', 'error rate', 'completion', 'case backlog', 'user support demand'],
+    stakeholders: ['Business owner', 'Policy/Legal', 'Operations', 'IT', 'End users'],
+    scenario: 'rút gọn quy trình giúp người dùng thao tác nhanh hơn nhưng bỏ qua một bước kiểm soát nghiệp vụ',
+    evidence: 'process map, policy constraint, before/after time, error data và audit trail',
+  },
+  'professional-services': {
+    label: 'Professional Services / Consulting',
+    context: 'client outcome, structured problem solving, stakeholder trust và delivery theo deadline',
+    constraints: ['ambiguous scope', 'client expectation', 'time pressure', 'incomplete data'],
+    metrics: ['client outcome', 'adoption', 'delivery quality', 'time saved', 'recommendation impact'],
+    stakeholders: ['Client sponsor', 'Working team', 'Subject experts', 'Leadership'],
+    scenario: 'client muốn recommendation ngay trong khi dữ liệu chính còn thiếu và các stakeholder không thống nhất',
+    evidence: 'hypothesis, source quality, sensitivity, decision rationale và client action',
+  },
+  'media-marketing': {
+    label: 'Media / Marketing',
+    context: 'audience attention, brand signal, campaign performance và channel mix',
+    constraints: ['budget', 'attribution', 'brand consistency', 'content velocity'],
+    metrics: ['reach', 'engagement', 'conversion', 'CAC', 'brand lift'],
+    stakeholders: ['Brand', 'Performance', 'Creative', 'Sales', 'Agency/Partners'],
+    scenario: 'creative tạo engagement cao nhưng conversion và brand consistency cùng giảm',
+    evidence: 'channel/funnel data, experiment, attribution caveat, brand review và next hypothesis',
+  },
+  'startup-saas': {
+    label: 'Startup / SaaS',
+    context: 'tốc độ học, product-market fit, retention và nguồn lực hạn chế',
+    constraints: ['runway', 'small team', 'uncertain demand', 'technical debt'],
+    metrics: ['activation', 'retention', 'MRR/ARR', 'churn', 'time-to-value'],
+    stakeholders: ['Founders', 'Product', 'Engineering', 'Sales/CS', 'Customers'],
+    scenario: 'một enterprise prospect yêu cầu feature lớn nhưng chưa chắc phù hợp product strategy',
+    evidence: 'customer signal, revenue potential, opportunity cost, retention impact và reversible experiment',
+  },
+}
+
+export const templateDefaultIndustry = {
+  'executive-edge': 'professional-services',
+  'soft-portfolio-pro': 'technology-software',
+  'product-operator': 'startup-saas',
+  'code-aware': 'technology-software',
+  'ats-precision': 'technology-software',
+  'insight-grid': 'technology-software',
+  'brand-motion': 'media-marketing',
+  'revenue-driver': 'ecommerce-retail',
+  'people-first': 'technology-software',
+  'next-start': 'technology-software',
+  'modern-bento': 'technology-software',
+  'executive-navy': 'professional-services',
+  'ats-clean': 'technology-software',
+  'modern-mono': 'technology-software',
+  'young-creator-cards': 'media-marketing',
+  'strategy-brief': 'professional-services',
+  'clinical-clean': 'healthcare',
+  'finance-ledger': 'banking-finance',
+  'studio-director': 'media-marketing',
+  'research-scholar': 'education',
+}
+
 const q = (id, question, why, framework, example, followUps, avoid, category = 'role') => ({
   id,
   question,
@@ -671,6 +806,63 @@ const gq = (id, pack, sourceIds, question, why, framework, example, followUps, a
   market: 'global',
   provenance: 'curated-source',
 })
+
+const industryQuestion = (id, pack, industryId, profile, question, why, framework, example, followUps, avoid, category = 'role') => ({
+  ...q(id, question, why, framework, example, followUps, avoid, category),
+  pack,
+  industryId,
+  market: 'industry',
+  provenance: 'industry-generated',
+  sourceIds: [],
+  industry: profile.label,
+})
+
+export const buildIndustryPracticeQuestions = (industryId = 'technology-software', pack = 'general') => {
+  const profile = industryPracticeProfiles[industryId] || industryPracticeProfiles['technology-software']
+  const prefix = 'industry-' + industryId + '-' + pack
+  return [
+    industryQuestion(
+      prefix + '-context',
+      pack,
+      industryId,
+      profile,
+      `Trong ngành ${profile.label}, khi đánh giá một giải pháp anh/chị sẽ ưu tiên metric và constraint nào trước?`,
+      'Kiểm tra khả năng đặt kỹ năng chuyên môn vào đúng business/operating context của ngành.',
+      ['Business/user outcome', '2–3 metrics chính', 'Critical constraints', 'Guardrail', 'Decision threshold'],
+      `Tôi bắt đầu từ outcome, sau đó chọn metric phù hợp như ${profile.metrics.slice(0,3).join(', ')}. Constraint không thể bỏ qua gồm ${profile.constraints.slice(0,3).join(', ')}; vì vậy tôi luôn có guardrail trước khi scale.`,
+      ['Metric nào dễ bị tối ưu lệch?', 'Constraint nào là non-negotiable?', 'Khi nào bạn dừng hoặc rollback?'],
+      ['Dùng một metric cho mọi tình huống', 'Bỏ qua constraint ngành vì muốn ship nhanh'],
+      'role',
+    ),
+    industryQuestion(
+      prefix + '-scenario',
+      pack,
+      industryId,
+      profile,
+      `Tình huống ngành ${profile.label}: ${profile.scenario}. Anh/chị xử lý thế nào?`,
+      'Scenario ép ứng viên cân bằng outcome với constraint đặc thù ngành thay vì trả lời theo framework chung.',
+      ['Xác nhận signal', 'Segment/root cause', 'Risk', 'Options', 'Decision owner', 'Guardrail', 'Follow-up'],
+      'Tôi xác nhận signal và segment trước, làm rõ risk đặc thù ngành, so các option theo impact/reversibility rồi chốt owner, guardrail và checkpoint để không biến một cải thiện cục bộ thành regression hệ thống.',
+      ['Stakeholder nào phải tham gia?', 'Nếu dữ liệu chưa đủ thì quyết thế nào?', 'Signal nào khiến bạn đổi hướng?'],
+      ['Đổi toàn bộ solution ngay', 'Chỉ tối ưu metric thuận lợi', 'Không nói ai quyết định cuối'],
+      'case',
+    ),
+    industryQuestion(
+      prefix + '-stakeholder',
+      pack,
+      industryId,
+      profile,
+      `Trong ngành ${profile.label}, anh/chị align ${profile.stakeholders.slice(0,4).join(', ')} khi họ có mục tiêu xung đột thế nào?`,
+      'Kiểm tra stakeholder judgment và khả năng dùng evidence để tạo quyết định trong môi trường nhiều constraint.',
+      ['Shared outcome', 'Constraint mỗi bên', 'Decision rights', 'Evidence', 'Trade-off', 'Escalation'],
+      `Tôi đưa các bên về shared outcome, làm rõ constraint của từng nhóm, thống nhất decision owner và loại evidence cần có. Tôi dùng ${profile.evidence} để giảm tranh luận theo opinion.`,
+      ['Ai có quyền override?', 'Nếu compliance/risk phản đối thì sao?', 'Bạn ghi lại trade-off thế nào?'],
+      ['Cố làm tất cả stakeholder hài lòng', 'Dùng title thay decision rule'],
+      'behavioral',
+    ),
+  ]
+}
+
 
 const templateQuestion = (id, pack, templateId, profile, question, why, framework, example, followUps, avoid, category = 'role') => ({
   ...q(id, question, why, framework, example, followUps, avoid, category),
