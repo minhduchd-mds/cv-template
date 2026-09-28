@@ -10,7 +10,7 @@
     "dev": "vite",
     "serve": "vite",
     "security:lint": "node scripts/security-lint.mjs",
-    "prebuild": "npm run data:check && npm run static:check",
+    "prebuild": "npm run data:sync && npm run static:check",
     "build": "vite build",
     "verify:bundle": "node scripts/check-bundle-budget.mjs",
     "test:e2e": "playwright test",
