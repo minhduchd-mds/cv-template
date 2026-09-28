@@ -1,12 +1,15 @@
 import {
+  buildIndustryPracticeQuestions,
   buildTemplatePracticeQuestions,
   coreQuestions,
   globalQuestionBank,
+  industryPracticeProfiles,
   interviewPacks,
   interviewSources,
   interviewStages,
   questionCategories,
   seniorityLevels,
+  templateDefaultIndustry,
   templateInterviewPack,
   vietnamQuestionBank,
 } from '../../src/data/interview-prep.js'
@@ -31,6 +34,7 @@ const WORKSPACE_KEY='cv-studio-workspace-v3'
 const SESSION_KEY='interview-studio-sessions-v2'
 const CLAIM_KEY='interview-studio-claim-evidence-v1'
 const STORY_KEY='interview-studio-story-bank-v1'
+const PREF_KEY='interview-studio-preferences-v1'
 const modules=[
   {id:'overview',label:'Overview',icon:'◇'},
   {id:'applications',label:'Application Lab',icon:'◎',badge:'JD'},
@@ -53,12 +57,14 @@ const templates=[
 const readJson=(key,fallback)=>{
   try{const value=JSON.parse(localStorage.getItem(key)||'null');return value??fallback}catch{return fallback}
 }
+const preferences=readJson(PREF_KEY,{industryId:'auto'})
 let workspace=readJson(WORKSPACE_KEY,{profile:{},studio:{},ats:{target:{},versions:[],applications:[]}})
 const initialTemplate=workspace?.studio?.selectedId&&templates.some(t=>t.id===workspace.studio.selectedId)?workspace.studio.selectedId:'soft-portfolio-pro'
 const state={
   activeModule:'overview',
   selectedTemplateId:initialTemplate,
   rolePackId:templateInterviewPack[initialTemplate]||'general',
+  industryId:preferences.industryId||'auto',
   seniority:'Senior',
   stageId:'hiring-manager',
   market:'vietnam',
@@ -90,6 +96,12 @@ const profileContext=document.querySelector('#profile-context')
 const e=(value='')=>String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]))
 const list=(items=[],tag='li')=>items.map(item=>`<${tag}>${e(item)}</${tag}>`).join('')
 const activePack=()=>interviewPacks.find(p=>p.id===state.rolePackId)||interviewPacks.find(p=>p.id==='general')||interviewPacks[0]
+const resolvedIndustryId=()=>state.industryId==='auto'?(templateDefaultIndustry[state.selectedTemplateId]||'technology-software'):state.industryId
+const activeIndustry=()=>industryPracticeProfiles[resolvedIndustryId()]||industryPracticeProfiles['technology-software']
+const industryOptions=()=>[
+  {id:'auto',label:'Auto · '+(industryPracticeProfiles[templateDefaultIndustry[state.selectedTemplateId]]?.label||'Software / IT')},
+  ...Object.entries(industryPracticeProfiles).map(([id,profile])=>({id,label:profile.label})),
+]
 const activeStage=()=>interviewStages.find(s=>s.id===state.stageId)||interviewStages[0]
 const activeInterviewer=()=>interviewerModes.find(item=>item.id===state.interviewerMode)||interviewerModes[1]
 const activePressure=()=>pressureLevels.find(item=>item.id===state.pressureLevel)||pressureLevels[1]
@@ -116,8 +128,9 @@ const questionDeck=()=>{
   const vietnam=state.market==='global'?[]:vietnamQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
   const global=state.market==='vietnam'?[]:globalQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
   const templateQuestions=buildTemplatePracticeQuestions(state.selectedTemplateId)
+  const industryQuestions=buildIndustryPracticeQuestions(resolvedIndustryId(),state.rolePackId)
   const seen=new Set()
-  return [...templateQuestions,...coreQuestions,...activePack().questions,...vietnam,...global]
+  return [...templateQuestions,...industryQuestions,...coreQuestions,...activePack().questions,...vietnam,...global]
     .filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true})
     .sort((a,b)=>stageWeight(a)-stageWeight(b))
 }
@@ -146,11 +159,13 @@ const practiceDataCoverage=()=>{
   const sourced=deck.filter(item=>Array.isArray(item.sourceIds)&&item.sourceIds.length).length
   const categories=new Set(deck.map(item=>item.category).filter(Boolean)).size
   const templateSpecific=deck.filter(item=>item.templateId===state.selectedTemplateId).length
-  const volumeScore=Math.min(30,Math.round(deck.length/24*30))
-  const sourceScore=Math.min(30,Math.round(sourced/12*30))
-  const categoryScore=Math.min(20,categories*4)
-  const templateScore=Math.min(20,templateSpecific*7)
-  return Math.min(100,volumeScore+sourceScore+categoryScore+templateScore)
+  const industrySpecific=deck.filter(item=>item.industryId===resolvedIndustryId()).length
+  const volumeScore=Math.min(25,Math.round(deck.length/24*25))
+  const sourceScore=Math.min(25,Math.round(sourced/12*25))
+  const categoryScore=Math.min(15,categories*3)
+  const templateScore=Math.min(15,templateSpecific*5)
+  const industryScore=Math.min(20,industrySpecific*7)
+  return Math.min(100,volumeScore+sourceScore+categoryScore+templateScore+industryScore)
 }
 const evidenceCoverage=()=>{
   const claims=cvClaims()
@@ -174,10 +189,11 @@ const readinessLabel=()=>{
 const readinessDetail=()=>{
   const deck=questionDeck()
   const templateSpecific=deck.filter(item=>item.templateId===state.selectedTemplateId).length
+  const industrySpecific=deck.filter(item=>item.industryId===resolvedIndustryId()).length
   const sourced=deck.filter(item=>Array.isArray(item.sourceIds)&&item.sourceIds.length).length
   const latest=latestReport()
-  if(!latest)return `${deck.length} câu đang hoạt động · ${templateSpecific} câu riêng theo loại CV · ${sourced} câu có nguồn tham chiếu.`
-  return `Độ phủ dữ liệu ${practiceDataCoverage()}% · evidence CV ${evidenceCoverage()}% · đã có ${state.sessions.length} phiên luyện.`
+  if(!latest)return `${deck.length} câu đang hoạt động · ${templateSpecific} theo CV · ${industrySpecific} theo ngành ${activeIndustry().label} · ${sourced} có nguồn.`
+  return `Độ phủ dữ liệu ${practiceDataCoverage()}% · evidence CV ${evidenceCoverage()}% · ngành ${activeIndustry().label} · ${state.sessions.length} phiên luyện.`
 }
 const saveClaims=()=>localStorage.setItem(CLAIM_KEY,JSON.stringify(state.claimEvidence))
 const saveSessions=()=>{state.sessions=state.sessions.slice(0,30);localStorage.setItem(SESSION_KEY,JSON.stringify(state.sessions))}
@@ -201,7 +217,7 @@ function renderTop(){
   applicationSelect.innerHTML=`<option value="">CV hiện tại · không gắn job</option>`+applications().map(a=>`<option value="${e(a.id)}" ${a.id===state.applicationId?'selected':''}>${e(a.company)} · ${e(a.role)}</option>`).join('')
   applicationSelect.onchange=()=>{state.applicationId=applicationSelect.value;renderTop();if(state.activeModule==='overview'||state.activeModule==='mock')renderView()}
   const template=templates.find(t=>t.id===state.selectedTemplateId)
-  profileContext.innerHTML=`<span class="eyebrow">ACTIVE PROFILE</span><strong>${e(template?.name||state.selectedTemplateId)}</strong><p>${e(activePack().label)}</p><div class="chips"><span>${e(state.seniority)}</span><span>${e(marketLabel())}</span></div>`
+  profileContext.innerHTML=`<span class="eyebrow">ACTIVE PROFILE</span><strong>${e(template?.name||state.selectedTemplateId)}</strong><p>${e(activePack().label)}</p><div class="chips"><span>${e(activeIndustry().label)}</span><span>${e(state.seniority)}</span><span>${e(marketLabel())}</span></div>`
 }
 document.querySelector('#quick-practice').addEventListener('click',()=>{state.activeModule='mock';render()})
 
@@ -217,6 +233,7 @@ function renderOverview(){
   const vn=deck.filter(q=>q.market==='vietnam').length
   const global=deck.filter(q=>q.market==='global').length
   const templateSpecific=deck.filter(q=>q.templateId===state.selectedTemplateId).length
+  const industrySpecific=deck.filter(q=>q.industryId===resolvedIndustryId()).length
   const sourced=deck.filter(q=>Array.isArray(q.sourceIds)&&q.sourceIds.length).length
   const practiced=state.sessions.reduce((sum,s)=>sum+Number(s.answered||0),0)
   root.innerHTML=`
@@ -225,7 +242,7 @@ function renderOverview(){
       <article class="readiness"><div class="score-row"><span>PRACTICE READINESS</span><b>${readiness()}</b></div><strong>${e(readinessLabel())}</strong><p>${e(readinessDetail())}</p><div class="bar"><span style="width:${readiness()}%"></span></div><small>Chỉ phản ánh độ sẵn sàng của bộ luyện + tiến độ luyện cá nhân, không dự đoán kết quả tuyển dụng.</small></article>
     </section>
     <section class="stats">
-      <article><span>Question bank</span><b>${deck.length}</b><small>${templateSpecific} theo CV · ${sourced} có nguồn · VN ${vn} / GL ${global}</small></article>
+      <article><span>Question bank</span><b>${deck.length}</b><small>${templateSpecific} theo CV · ${industrySpecific} theo ngành · ${sourced} có nguồn</small></article>
       <article><span>CV claims</span><b>${claims.length}</b><small>${highRiskClaims().length} claim cần chuẩn bị kỹ</small></article>
       <article><span>Practice sessions</span><b>${state.sessions.length}</b><small>${practiced} câu đã luyện</small></article>
       <article><span>Story bank</span><b>${state.storyBank.length}</b><small>${state.storyBank.filter(s=>String(s.evidence||'').trim().length>=12).length} story có evidence</small></article>
@@ -234,10 +251,11 @@ function renderOverview(){
       <section class="panel"><span class="eyebrow">INTERVIEW CONTEXT</span><h2>Chuẩn bị theo cơ hội đang ứng tuyển</h2><div class="fields">
         <label class="field"><span>Mẫu CV</span><select id="template-field">${options(templates,x=>x.id,x=>x.name,state.selectedTemplateId)}</select></label>
         <label class="field"><span>Role pack</span><select id="pack-field">${options(interviewPacks,x=>x.id,x=>x.label,state.rolePackId)}</select></label>
+        <label class="field"><span>Ngành</span><select id="industry-field">${options(industryOptions(),x=>x.id,x=>x.label,state.industryId)}</select></label>
         <label class="field"><span>Seniority</span><select id="seniority-field">${seniorityLevels.map(x=>`<option ${x===state.seniority?'selected':''}>${e(x)}</option>`).join('')}</select></label>
         <label class="field"><span>Vòng phỏng vấn</span><select id="stage-field">${options(interviewStages,x=>x.id,x=>x.label,state.stageId)}</select></label>
         <label class="field"><span>Nguồn dữ liệu</span><select id="market-field"><option value="vietnam" ${state.market==='vietnam'?'selected':''}>Việt Nam · ưu tiên</option><option value="all" ${state.market==='all'?'selected':''}>Việt Nam + Quốc tế</option><option value="global" ${state.market==='global'?'selected':''}>Quốc tế</option></select></label>
-      </div><div class="signal"><span>CV SIGNAL</span><strong>${e(activePack().signal)}</strong><p>Khả năng bị đào sâu: ${e(activePack().probe)}</p></div></section>
+      </div><div class="signal"><span>CV + INDUSTRY SIGNAL</span><strong>${e(activePack().signal)}</strong><p>Ngành ${e(activeIndustry().label)} · constraint: ${e(activeIndustry().constraints.slice(0,3).join(' · '))}</p><p>Khả năng bị đào sâu: ${e(activePack().probe)}</p></div></section>
       <section class="panel"><span class="eyebrow">NEXT ACTION</span><h2>3 việc nên làm trước vòng phỏng vấn</h2><ol class="actions">
         <li><b>01</b><div><strong>Bảo vệ claim mạnh nhất</strong><p>Baseline, contribution, trade-off và cách đo cho claim có số liệu.</p></div><button data-go="claims">Mở →</button></li>
         <li><b>02</b><div><strong>Luyện 5 câu theo JD</strong><p>Question engine ưu tiên CV, role pack, vòng phỏng vấn và application context.</p></div><button data-go="mock">Luyện →</button></li>
@@ -249,6 +267,7 @@ function renderOverview(){
   bindGo()
   document.querySelector('#template-field').onchange=ev=>{state.selectedTemplateId=ev.target.value;state.rolePackId=templateInterviewPack[state.selectedTemplateId]||'general';render()}
   document.querySelector('#pack-field').onchange=ev=>{state.rolePackId=ev.target.value;render()}
+  document.querySelector('#industry-field').onchange=ev=>{state.industryId=ev.target.value;try{localStorage.setItem(PREF_KEY,JSON.stringify({industryId:state.industryId}))}catch{};render()}
   document.querySelector('#seniority-field').onchange=ev=>{state.seniority=ev.target.value;render()}
   document.querySelector('#stage-field').onchange=ev=>{state.stageId=ev.target.value;render()}
   document.querySelector('#market-field').onchange=ev=>{state.market=ev.target.value;render()}
@@ -386,7 +405,7 @@ function renderQuestions(){
       <label><span>Dữ liệu</span><select id="q-market"><option value="vietnam" ${state.market==='vietnam'?'selected':''}>Việt Nam</option><option value="all" ${state.market==='all'?'selected':''}>VN + Quốc tế</option><option value="global" ${state.market==='global'?'selected':''}>Quốc tế</option></select></label>
     </section>
     <div class="questions">${qs.map((q,i)=>`
-      <details class="question" ${i===0?'open':''}><summary><span class="qnum">${String(i+1).padStart(2,'0')}</span><div><small>${e(categoryName(q.category))}${q.market==='vietnam'?' <b>SOURCE VN</b>':q.market==='global'?' <b>SOURCE GL</b>':q.provenance==='template-generated'?' <b>CV TYPE</b>':''}</small><strong>${e(q.question)}</strong></div><span class="plus">+</span></summary>
+      <details class="question" ${i===0?'open':''}><summary><span class="qnum">${String(i+1).padStart(2,'0')}</span><div><small>${e(categoryName(q.category))}${q.market==='vietnam'?' <b>SOURCE VN</b>':q.market==='global'?' <b>SOURCE GL</b>':q.provenance==='template-generated'?' <b>CV TYPE</b>':q.provenance==='industry-generated'?' <b>INDUSTRY</b>':''}</small><strong>${e(q.question)}</strong></div><span class="plus">+</span></summary>
       <div class="qbody"><section><span>Recruiter intent</span><p>${e(q.why)}</p></section><section><span>Answer framework</span><ol>${list(q.framework)}</ol></section><section class="wide"><span>Ví dụ tham khảo</span><p>“${e(q.example)}”</p></section><section><span>Follow-up</span><ul>${list(q.followUps)}</ul></section><section><span>Red flags</span><ul>${list(q.avoid)}</ul></section>
       ${questionSources(q).length?`<section class="wide"><span>Provenance</span><div class="source-links">${questionSources(q).map(s=>`<a href="${e(s.url)}" target="_blank" rel="noreferrer noopener">${e(s.name)} · ${e(s.label)} ↗</a>`).join('')}</div></section>`:''}</div></details>`).join('')}</div>`
   let timer
