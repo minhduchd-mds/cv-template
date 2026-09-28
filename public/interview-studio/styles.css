@@ -96,3 +96,40 @@
   .page-heading{min-height:145px;padding-bottom:22px}
   .quick-context strong{font-size:20px}
 }
+
+
+/* Prevent context controls from overflowing narrow grid tracks */
+.context-panel,
+.context-panel .fields,
+.context-panel .field{
+  min-width:0;
+}
+.context-panel .field select,
+.context-panel .field input,
+.context-panel .field textarea{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
+.context-panel .field select{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.context-panel .panel-title{
+  min-width:0;
+}
+.context-panel .panel-title h2{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+@media(max-width:1366px){
+  .compact-grid{grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr)}
+  .context-panel{padding:22px}
+  .context-panel .fields{gap:10px}
+}
+@media(max-width:1180px){
+  .compact-grid{grid-template-columns:1fr}
+}
