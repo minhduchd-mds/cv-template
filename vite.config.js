@@ -7,15 +7,12 @@ export default defineConfig({
   build: {
     target: 'es2020',
     sourcemap: false,
-    cssCodeSplit: false,
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         entryFileNames: 'assets/app.js',
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: (assetInfo) => {
-          if (assetInfo.name?.endsWith('.css')) return 'assets/app.css'
-          return 'assets/[name]-[hash][extname]'
-        },
+        assetFileNames: 'assets/[name]-[hash][extname]',
       },
     },
   },
