@@ -1,4 +1,5 @@
 import {
+  buildTemplatePracticeQuestions,
   coreQuestions,
   globalQuestionBank,
   interviewPacks,
@@ -114,8 +115,9 @@ const stageWeight=item=>{
 const questionDeck=()=>{
   const vietnam=state.market==='global'?[]:vietnamQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
   const global=state.market==='vietnam'?[]:globalQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
+  const templateQuestions=buildTemplatePracticeQuestions(state.selectedTemplateId)
   const seen=new Set()
-  return [...coreQuestions,...activePack().questions,...vietnam,...global]
+  return [...templateQuestions,...coreQuestions,...activePack().questions,...vietnam,...global]
     .filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true})
     .sort((a,b)=>stageWeight(a)-stageWeight(b))
 }
@@ -139,14 +141,43 @@ const activeSources=()=>{
 const questionSources=item=>(item?.sourceIds||[]).map(id=>interviewSources.find(s=>s.id===id)).filter(Boolean)
 const evidenceReadyCount=()=>cvClaims().filter(item=>state.claimEvidence[item.id]?.ready).length
 const latestReport=()=>state.sessions.find(session=>session.report)||null
+const practiceDataCoverage=()=>{
+  const deck=questionDeck()
+  const sourced=deck.filter(item=>Array.isArray(item.sourceIds)&&item.sourceIds.length).length
+  const categories=new Set(deck.map(item=>item.category).filter(Boolean)).size
+  const templateSpecific=deck.filter(item=>item.templateId===state.selectedTemplateId).length
+  const volumeScore=Math.min(30,Math.round(deck.length/24*30))
+  const sourceScore=Math.min(30,Math.round(sourced/12*30))
+  const categoryScore=Math.min(20,categories*4)
+  const templateScore=Math.min(20,templateSpecific*7)
+  return Math.min(100,volumeScore+sourceScore+categoryScore+templateScore)
+}
+const evidenceCoverage=()=>{
+  const claims=cvClaims()
+  return claims.length?Math.round(evidenceReadyCount()/claims.length*100):0
+}
 const readiness=()=>{
   const latest=latestReport()
-  if(!latest){const claims=cvClaims();const base=claims.length?Math.round(evidenceReadyCount()/claims.length*45):0;return Math.min(55,20+base)}
-  return Math.round(latest.report.overall*.78+Math.min(22,evidenceReadyCount()*2))
+  const data=practiceDataCoverage()
+  const evidence=evidenceCoverage()
+  if(!latest)return Math.round(data*.68+evidence*.32)
+  return Math.round(data*.22+Number(latest.report.overall||0)*.58+evidence*.20)
 }
 const readinessLabel=()=>{
   const score=readiness()
-  return score>=82?'Sẵn sàng luyện vòng sâu':score>=68?'Nền tốt · còn evidence gaps':score>=50?'Cần củng cố câu chuyện':'Chưa có đủ dữ liệu luyện tập'
+  const data=practiceDataCoverage()
+  const latest=latestReport()
+  if(!latest&&data>=75)return 'Bộ luyện theo CV đã sẵn sàng · chưa có lịch sử luyện'
+  if(!latest)return data>=55?'Bộ luyện đã có nền · cần thêm evidence CV':'Đang xây bộ luyện theo CV'
+  return score>=82?'Sẵn sàng luyện vòng sâu':score>=68?'Nền tốt · còn evidence gaps':score>=50?'Cần củng cố câu chuyện':'Cần luyện thêm để có tín hiệu ổn định'
+}
+const readinessDetail=()=>{
+  const deck=questionDeck()
+  const templateSpecific=deck.filter(item=>item.templateId===state.selectedTemplateId).length
+  const sourced=deck.filter(item=>Array.isArray(item.sourceIds)&&item.sourceIds.length).length
+  const latest=latestReport()
+  if(!latest)return `${deck.length} câu đang hoạt động · ${templateSpecific} câu riêng theo loại CV · ${sourced} câu có nguồn tham chiếu.`
+  return `Độ phủ dữ liệu ${practiceDataCoverage()}% · evidence CV ${evidenceCoverage()}% · đã có ${state.sessions.length} phiên luyện.`
 }
 const saveClaims=()=>localStorage.setItem(CLAIM_KEY,JSON.stringify(state.claimEvidence))
 const saveSessions=()=>{state.sessions=state.sessions.slice(0,30);localStorage.setItem(SESSION_KEY,JSON.stringify(state.sessions))}
@@ -185,15 +216,16 @@ function renderOverview(){
   const deck=questionDeck()
   const vn=deck.filter(q=>q.market==='vietnam').length
   const global=deck.filter(q=>q.market==='global').length
+  const templateSpecific=deck.filter(q=>q.templateId===state.selectedTemplateId).length
   const sourced=deck.filter(q=>Array.isArray(q.sourceIds)&&q.sourceIds.length).length
   const practiced=state.sessions.reduce((sum,s)=>sum+Number(s.answered||0),0)
   root.innerHTML=`
     <section class="hero">
       <div><span class="eyebrow">INTERVIEW STUDIO · VIETNAM-FIRST</span><h1>Biến CV thành <em>lợi thế trong phòng phỏng vấn.</em></h1><p>Interview Studio đọc CV, JD và lịch sử luyện tập để chuẩn bị câu hỏi, bảo vệ từng claim bằng evidence và giúp anh luyện cách trả lời trước vòng thật.</p><div class="hero-actions"><button class="primary" data-go="mock">Bắt đầu mock interview</button><button class="secondary" data-go="claims">Kiểm tra CV claims</button></div></div>
-      <article class="readiness"><div class="score-row"><span>READINESS SIGNAL</span><b>${readiness()}</b></div><strong>${e(readinessLabel())}</strong><p>Đây là tín hiệu luyện tập nội bộ, không phải dự đoán kết quả tuyển dụng.</p><div class="bar"><span style="width:${readiness()}%"></span></div></article>
+      <article class="readiness"><div class="score-row"><span>PRACTICE READINESS</span><b>${readiness()}</b></div><strong>${e(readinessLabel())}</strong><p>${e(readinessDetail())}</p><div class="bar"><span style="width:${readiness()}%"></span></div><small>Chỉ phản ánh độ sẵn sàng của bộ luyện + tiến độ luyện cá nhân, không dự đoán kết quả tuyển dụng.</small></article>
     </section>
     <section class="stats">
-      <article><span>Question bank</span><b>${deck.length}</b><small>${sourced} câu có nguồn · VN ${vn} / GL ${global}</small></article>
+      <article><span>Question bank</span><b>${deck.length}</b><small>${templateSpecific} theo CV · ${sourced} có nguồn · VN ${vn} / GL ${global}</small></article>
       <article><span>CV claims</span><b>${claims.length}</b><small>${highRiskClaims().length} claim cần chuẩn bị kỹ</small></article>
       <article><span>Practice sessions</span><b>${state.sessions.length}</b><small>${practiced} câu đã luyện</small></article>
       <article><span>Story bank</span><b>${state.storyBank.length}</b><small>${state.storyBank.filter(s=>String(s.evidence||'').trim().length>=12).length} story có evidence</small></article>
@@ -354,7 +386,7 @@ function renderQuestions(){
       <label><span>Dữ liệu</span><select id="q-market"><option value="vietnam" ${state.market==='vietnam'?'selected':''}>Việt Nam</option><option value="all" ${state.market==='all'?'selected':''}>VN + Quốc tế</option><option value="global" ${state.market==='global'?'selected':''}>Quốc tế</option></select></label>
     </section>
     <div class="questions">${qs.map((q,i)=>`
-      <details class="question" ${i===0?'open':''}><summary><span class="qnum">${String(i+1).padStart(2,'0')}</span><div><small>${e(categoryName(q.category))}${q.market==='vietnam'?' <b>SOURCE VN</b>':''}</small><strong>${e(q.question)}</strong></div><span class="plus">+</span></summary>
+      <details class="question" ${i===0?'open':''}><summary><span class="qnum">${String(i+1).padStart(2,'0')}</span><div><small>${e(categoryName(q.category))}${q.market==='vietnam'?' <b>SOURCE VN</b>':q.market==='global'?' <b>SOURCE GL</b>':q.provenance==='template-generated'?' <b>CV TYPE</b>':''}</small><strong>${e(q.question)}</strong></div><span class="plus">+</span></summary>
       <div class="qbody"><section><span>Recruiter intent</span><p>${e(q.why)}</p></section><section><span>Answer framework</span><ol>${list(q.framework)}</ol></section><section class="wide"><span>Ví dụ tham khảo</span><p>“${e(q.example)}”</p></section><section><span>Follow-up</span><ul>${list(q.followUps)}</ul></section><section><span>Red flags</span><ul>${list(q.avoid)}</ul></section>
       ${questionSources(q).length?`<section class="wide"><span>Provenance</span><div class="source-links">${questionSources(q).map(s=>`<a href="${e(s.url)}" target="_blank" rel="noreferrer noopener">${e(s.name)} · ${e(s.label)} ↗</a>`).join('')}</div></section>`:''}</div></details>`).join('')}</div>`
   let timer
