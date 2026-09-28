@@ -18,10 +18,12 @@
 </template>
 
 <script>
-import StudioView from './App.vue'
+import { defineAsyncComponent } from 'vue'
 import MarketingLanding from './landing/MarketingLanding.vue'
-import ConceptExperience from './concepts/ConceptExperience.vue'
-import InterviewStudio from './interview/InterviewStudio.vue'
+
+const StudioView = defineAsyncComponent(() => import('./App.vue'))
+const ConceptExperience = defineAsyncComponent(() => import('./concepts/ConceptExperience.vue'))
+const InterviewStudio = defineAsyncComponent(() => import('./interview/InterviewStudio.vue'))
 
 const IDS = ['apple', 'bento', 'engineer', 'case-study', 'executive']
 const STUDIO_INTERNAL_HASHES = new Set(['#top', '#templates'])
