@@ -1,5 +1,6 @@
 import {
   coreQuestions,
+  globalQuestionBank,
   interviewPacks,
   interviewSources,
   interviewStages,
@@ -111,9 +112,12 @@ const stageWeight=item=>{
   return maps[state.stageId]?.[item.category]||9
 }
 const questionDeck=()=>{
-  const local=state.market==='global'?[]:vietnamQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
+  const vietnam=state.market==='global'?[]:vietnamQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
+  const global=state.market==='vietnam'?[]:globalQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
   const seen=new Set()
-  return [...coreQuestions,...activePack().questions,...local].filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true}).sort((a,b)=>stageWeight(a)-stageWeight(b))
+  return [...coreQuestions,...activePack().questions,...vietnam,...global]
+    .filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true})
+    .sort((a,b)=>stageWeight(a)-stageWeight(b))
 }
 const filteredQuestions=()=>questionDeck().filter(item=>{
   if(state.categoryId!=='all'&&item.category!==state.categoryId)return false
@@ -130,7 +134,7 @@ const activeSources=()=>{
     if(state.market==='global'&&region==='vietnam')return false
     if(seen.has(source.id))return false
     seen.add(source.id);return true
-  }).slice(0,10)
+  }).slice(0,14)
 }
 const questionSources=item=>(item?.sourceIds||[]).map(id=>interviewSources.find(s=>s.id===id)).filter(Boolean)
 const evidenceReadyCount=()=>cvClaims().filter(item=>state.claimEvidence[item.id]?.ready).length
@@ -177,7 +181,11 @@ function pageHeading(kicker,title,description,count){
   return `<div class="page-heading"><div><span class="eyebrow">${e(kicker)}</span><h1>${title}</h1><p>${e(description)}</p></div><div class="heading-number">${e(count)}</div></div>`
 }
 function renderOverview(){
-  const claims=cvClaims(),ready=evidenceReadyCount(),vn=questionDeck().filter(q=>q.market==='vietnam').length
+  const claims=cvClaims(),ready=evidenceReadyCount()
+  const deck=questionDeck()
+  const vn=deck.filter(q=>q.market==='vietnam').length
+  const global=deck.filter(q=>q.market==='global').length
+  const sourced=deck.filter(q=>Array.isArray(q.sourceIds)&&q.sourceIds.length).length
   const practiced=state.sessions.reduce((sum,s)=>sum+Number(s.answered||0),0)
   root.innerHTML=`
     <section class="hero">
@@ -185,7 +193,7 @@ function renderOverview(){
       <article class="readiness"><div class="score-row"><span>READINESS SIGNAL</span><b>${readiness()}</b></div><strong>${e(readinessLabel())}</strong><p>Đây là tín hiệu luyện tập nội bộ, không phải dự đoán kết quả tuyển dụng.</p><div class="bar"><span style="width:${readiness()}%"></span></div></article>
     </section>
     <section class="stats">
-      <article><span>Question bank</span><b>${questionDeck().length}</b><small>${vn} câu có nguồn Việt Nam</small></article>
+      <article><span>Question bank</span><b>${deck.length}</b><small>${sourced} câu có nguồn · VN ${vn} / GL ${global}</small></article>
       <article><span>CV claims</span><b>${claims.length}</b><small>${highRiskClaims().length} claim cần chuẩn bị kỹ</small></article>
       <article><span>Practice sessions</span><b>${state.sessions.length}</b><small>${practiced} câu đã luyện</small></article>
       <article><span>Story bank</span><b>${state.storyBank.length}</b><small>${state.storyBank.filter(s=>String(s.evidence||'').trim().length>=12).length} story có evidence</small></article>
@@ -204,7 +212,7 @@ function renderOverview(){
         <li><b>03</b><div><strong>Xem evidence gaps</strong><p>Report chỉ ra câu dài dòng, thiếu ownership hoặc số liệu chưa có trong CV.</p></div><button data-go="reports">Xem →</button></li>
       </ol></section>
     </div>
-    <section class="panel"><span class="eyebrow">SOURCE LAYER · ${e(marketLabel())}</span><h2>Dữ liệu có provenance, không phải câu hỏi sinh ngẫu nhiên</h2><div class="sources">${activeSources().map(s=>`<a href="${e(s.url)}" target="_blank" rel="noreferrer noopener"><span>${s.region==='vietnam'?'VN':'GL'}</span><strong>${e(s.name)}</strong><small>${e(s.label)}</small><p>${e(s.note)}</p></a>`).join('')}</div></section>
+    <section class="panel"><span class="eyebrow">SOURCE LAYER · ${e(marketLabel())}</span><h2>Nguồn luyện tập có provenance, chia theo thị trường và role</h2><div class="sources">${activeSources().map(s=>`<a href="${e(s.url)}" target="_blank" rel="noreferrer noopener"><span>${s.region==='vietnam'?'VN':'GL'}</span><strong>${e(s.name)}</strong><small>${e(s.label)}</small><p>${e(s.note)}</p></a>`).join('')}</div></section>
   `
   bindGo()
   document.querySelector('#template-field').onchange=ev=>{state.selectedTemplateId=ev.target.value;state.rolePackId=templateInterviewPack[state.selectedTemplateId]||'general';render()}
