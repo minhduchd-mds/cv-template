@@ -484,10 +484,12 @@
   const boot = () => {
     injectUi()
     bind()
+    const shouldOpenFromNav = new URLSearchParams(window.location.search).get('open') === 'ats'
     setTimeout(() => {
       const report = buildReport()
       const badge = $('#atsScoreBadge')
       if (badge) badge.textContent = report.overall
+      if (shouldOpenFromNav) setOpen(true)
     }, 80)
   }
 
