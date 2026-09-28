@@ -502,6 +502,149 @@ export const templateInterviewPack = {
   'research-scholar': 'academic',
 }
 
+export const templatePracticeProfiles = {
+  'executive-edge': {
+    industry: 'Executive / Leadership',
+    focus: 'operating model, transformation và team performance',
+    risk: 'title lớn nhưng chưa chứng minh decision ownership và tác động bền vững',
+    scenario: 'một business unit underperforming nhưng dữ liệu nguyên nhân chưa đầy đủ',
+    evidence: 'business outcome, cadence, people/process change và capability để lại',
+  },
+  'soft-portfolio-pro': {
+    industry: 'UI/UX & Product Design',
+    focus: 'problem framing, research evidence, design decision và product impact',
+    risk: 'portfolio đẹp nhưng thiếu ownership, trade-off và số liệu sau khi ship',
+    scenario: 'research signal mâu thuẫn với yêu cầu stakeholder và deadline đang sát',
+    evidence: 'problem, role cá nhân, research/data, decision, trade-off và result',
+  },
+  'product-operator': {
+    industry: 'Product Management / Product Ops',
+    focus: 'prioritization, product judgment, roadmap và outcome',
+    risk: 'kể output/feature nhiều hơn customer hoặc business outcome',
+    scenario: 'mọi stakeholder đều gọi request của họ là ưu tiên số một',
+    evidence: 'user/business problem, metric, decision rights, trade-off và outcome',
+  },
+  'code-aware': {
+    industry: 'Design Engineer / Frontend',
+    focus: 'design intent, component architecture, accessibility và implementation quality',
+    risk: 'nói được cả design và code nhưng thiếu depth ở system boundary và regression safety',
+    scenario: 'pixel-perfect xung đột performance, accessibility hoặc component constraints',
+    evidence: 'component API, states, responsive matrix, a11y, performance và tests',
+  },
+  'ats-precision': {
+    industry: 'Software / Technical',
+    focus: 'execution clarity, debugging, architecture và reliability',
+    risk: 'liệt kê công nghệ nhiều nhưng chưa chứng minh root cause và technical judgment',
+    scenario: 'production có lỗi khó tái hiện trong khi release mới vừa triển khai',
+    evidence: 'symptom, hypothesis, observability, root cause, fix và regression guard',
+  },
+  'insight-grid': {
+    industry: 'Data / BI / Analytics',
+    focus: 'data trust, metric definition, segmentation và decision support',
+    risk: 'dashboard nhiều nhưng chưa chứng minh data quality và quyết định được thay đổi',
+    scenario: 'KPI giảm mạnh nhưng dashboard và source system cho số khác nhau',
+    evidence: 'definition, pipeline, quality checks, segmentation, confidence và recommendation',
+  },
+  'brand-motion': {
+    industry: 'Marketing / Communications',
+    focus: 'campaign strategy, audience insight, channel role và measurement',
+    risk: 'creative nổi bật nhưng thiếu business objective, attribution và learning loop',
+    scenario: 'engagement tăng mạnh nhưng conversion và revenue đi xuống',
+    evidence: 'objective, audience, proposition, channel, funnel metric, guardrail và learning',
+  },
+  'revenue-driver': {
+    industry: 'Sales / Business Development',
+    focus: 'pipeline, qualification, negotiation, quota và commercial judgment',
+    risk: 'claim doanh số lớn nhưng chưa tách team contribution và cá nhân ownership',
+    scenario: 'deal lớn bị stalled vì economic buyer chưa cam kết và competitor giảm giá',
+    evidence: 'target, pipeline, deal ownership, objections, give/get, close result và lesson',
+  },
+  'people-first': {
+    industry: 'HR / People / Talent',
+    focus: 'hiring quality, stakeholder calibration, employee experience và policy judgment',
+    risk: 'nói nhiều về process nhưng ít evidence về quality-of-hire hoặc behavior change',
+    scenario: 'hiring manager liên tục từ chối candidate vì tiêu chí thay đổi sau mỗi vòng',
+    evidence: 'role calibration, sourcing signal, funnel metric, quality signal và stakeholder decision',
+  },
+  'next-start': {
+    industry: 'Graduate / Entry Level',
+    focus: 'learning velocity, project ownership và transferable skills',
+    risk: 'thiếu kinh nghiệm thực tế nên câu trả lời dễ thành lý thuyết hoặc liệt kê khóa học',
+    scenario: 'được giao việc mới chưa từng làm nhưng deadline ngắn và support hạn chế',
+    evidence: 'project/internship, learning method, feedback loop, contribution và result',
+  },
+  'modern-bento': {
+    industry: 'UI/UX & Product Design',
+    focus: 'case-study storytelling, visual hierarchy và measurable product impact',
+    risk: 'layout hiện đại nhưng story bị chia nhỏ thành card mà thiếu logic xuyên suốt',
+    scenario: 'phải rút một case study dài thành câu chuyện 5 phút cho hiring manager',
+    evidence: 'problem, evidence, key decision, artifact, trade-off, impact và learning',
+  },
+  'executive-navy': {
+    industry: 'Executive / Leadership',
+    focus: 'strategy, operating cadence, accountability và leadership leverage',
+    risk: 'profile executive nhưng thiếu ví dụ quyết định khó và cách tạo năng lực cho team',
+    scenario: 'cần cắt 20% chi phí mà vẫn giữ customer outcome và năng lực cốt lõi',
+    evidence: 'business context, options, decision, risk control, result và capability',
+  },
+  'ats-clean': {
+    industry: 'General Professional',
+    focus: 'clarity, transferable achievement, collaboration và role fit',
+    risk: 'CV sạch và ATS-friendly nhưng câu chuyện cá nhân quá chung chung',
+    scenario: 'nhà tuyển dụng hỏi tại sao nên chọn bạn thay vì ứng viên có kinh nghiệm tương đương',
+    evidence: 'role need, relevant proof, personal ownership, working style và first contribution',
+  },
+  'modern-mono': {
+    industry: 'Design Engineer / Frontend',
+    focus: 'system thinking, maintainable UI, performance và quality engineering',
+    risk: 'portfolio code-driven nhưng chưa chứng minh component decisions và browser edge cases',
+    scenario: 'một component dùng rộng bắt đầu có prop explosion và regression ở nhiều breakpoint',
+    evidence: 'invariants, variants, API, states, responsive, tests và migration plan',
+  },
+  'young-creator-cards': {
+    industry: 'Creative / Portfolio',
+    focus: 'concept rationale, craft, feedback và brand constraints',
+    risk: 'portfolio nhiều visual nhưng chưa chứng minh insight và lý do loại direction',
+    scenario: 'client thích phương án yếu hơn về objective nhưng mạnh hơn về taste cá nhân',
+    evidence: 'brief, insight, alternatives, selection criteria, craft decision và outcome',
+  },
+  'strategy-brief': {
+    industry: 'Consulting / Strategy',
+    focus: 'structured problem solving, synthesis và influence',
+    risk: 'framework tốt nhưng thiếu recommendation rõ và operational follow-through',
+    scenario: 'leadership cần quyết định trong 48 giờ nhưng dữ liệu còn thiếu và mâu thuẫn',
+    evidence: 'decision, issue tree, hypothesis, data, sensitivity, recommendation và action',
+  },
+  'clinical-clean': {
+    industry: 'Healthcare / Clinical',
+    focus: 'safety, protocol, escalation và patient communication',
+    risk: 'câu trả lời chuyên môn nhưng chưa thể hiện risk control và scope boundaries',
+    scenario: 'bệnh nhân có dấu hiệu xấu nhanh trong khi nhiều ưu tiên khác đang cạnh tranh',
+    evidence: 'risk, protocol, action, escalation, handoff/documentation và outcome',
+  },
+  'finance-ledger': {
+    industry: 'Finance / Banking / Accounting',
+    focus: 'analytical rigor, controls, model validation và business judgment',
+    risk: 'nói nhiều về model/tool nhưng thiếu materiality, control và decision impact',
+    scenario: 'forecast lệch mạnh so với actual và management cần quyết định ngân sách ngay',
+    evidence: 'source, assumptions, reconciliation, sensitivity, control, recommendation và impact',
+  },
+  'studio-director': {
+    industry: 'Creative Director / Brand Leadership',
+    focus: 'creative direction, quality bar, critique và team leverage',
+    risk: 'leader vẫn tự làm quá nhiều và chưa chứng minh cách nâng chất lượng của cả team',
+    scenario: 'team đưa ba direction không đạt quality bar trước một deadline quan trọng',
+    evidence: 'brief quality, principles, critique, delegation, decision và team learning',
+  },
+  'research-scholar': {
+    industry: 'Research / Academic',
+    focus: 'methodological rigor, uncertainty, contribution và research communication',
+    risk: 'claim nghiên cứu nghe mạnh hơn mức evidence thực sự cho phép',
+    scenario: 'kết quả trái hypothesis ban đầu nhưng analysis vẫn hợp lệ',
+    evidence: 'research question, method, validity, limitation, result, interpretation và next study',
+  },
+}
+
 const q = (id, question, why, framework, example, followUps, avoid, category = 'role') => ({
   id,
   question,
@@ -528,6 +671,63 @@ const gq = (id, pack, sourceIds, question, why, framework, example, followUps, a
   market: 'global',
   provenance: 'curated-source',
 })
+
+const templateQuestion = (id, pack, templateId, profile, question, why, framework, example, followUps, avoid, category = 'role') => ({
+  ...q(id, question, why, framework, example, followUps, avoid, category),
+  pack,
+  templateId,
+  market: 'template',
+  provenance: 'template-generated',
+  sourceIds: [],
+  industry: profile.industry,
+})
+
+export const buildTemplatePracticeQuestions = (templateId = 'ats-clean') => {
+  const profile = templatePracticeProfiles[templateId] || templatePracticeProfiles['ats-clean']
+  const pack = templateInterviewPack[templateId] || 'general'
+  const prefix = 'tpl-' + templateId
+  return [
+    templateQuestion(
+      prefix + '-proof',
+      pack,
+      templateId,
+      profile,
+      `Trong ${profile.industry}, hãy chọn một claim mạnh nhất trong CV và chứng minh nó thể hiện ${profile.focus}.`,
+      'Câu hỏi được tạo từ loại CV đang chọn để ép ứng viên biến headline/achievement thành evidence có thể kiểm chứng.',
+      ['Chọn 1 claim', 'Nêu context', 'Phần trực tiếp sở hữu', 'Evidence', 'Trade-off', 'Result', 'Boundary'],
+      `Tôi chọn claim [X]. Bối cảnh là [Y]. Phần tôi trực tiếp sở hữu là [scope]. Evidence chính là [artifact/metric], trade-off là [Z] và giới hạn của claim này là [boundary].`,
+      ['Nếu bỏ bạn khỏi dự án thì điều gì khác?', 'Evidence nào nằm ngoài lời kể của bạn?', 'Phần nào do team sở hữu?'],
+      ['Đọc lại nguyên câu trong CV', 'Nhận toàn bộ kết quả của team', 'Nêu số không có nguồn'],
+      'challenge',
+    ),
+    templateQuestion(
+      prefix + '-scenario',
+      pack,
+      templateId,
+      profile,
+      `Tình huống: ${profile.scenario}. Bạn sẽ xử lý như thế nào?`,
+      'Scenario được sinh theo ngành của template để kiểm tra judgment thay vì khả năng học thuộc câu trả lời.',
+      ['Làm rõ mục tiêu', 'Xác định risk/constraint', 'Các option', 'Decision criteria', 'Action', 'Signal theo dõi', 'Escalation'],
+      'Tôi sẽ làm rõ outcome và constraint trước, tách phần cần quyết ngay khỏi phần có thể đảo ngược, so các option theo impact/risk rồi chốt action có owner và signal để review.',
+      ['Điều gì khiến bạn đổi quyết định?', 'Ai cần được kéo vào sớm?', 'Nếu deadline giảm một nửa thì sao?'],
+      ['Nhảy thẳng vào solution', 'Giả định mọi constraint đều có thể bỏ', 'Không nói cách kiểm chứng'],
+      'case',
+    ),
+    templateQuestion(
+      prefix + '-defense',
+      pack,
+      templateId,
+      profile,
+      `Nhà tuyển dụng nghi ngờ CV của bạn vì ${profile.risk}. Bạn sẽ bảo vệ bằng bằng chứng nào?`,
+      'Câu hỏi defense bám trực tiếp risk thường gặp của loại CV, giúp chuẩn bị cho vòng hiring manager hoặc panel.',
+      ['Thừa nhận phần dễ bị hiểu nhầm', 'Chọn evidence liên quan', 'Nguồn/baseline', 'Ownership', 'Counter-evidence', 'Learning'],
+      `Tôi hiểu vì sao claim này có thể bị nghi ngờ. Tôi sẽ không bảo vệ bằng mô tả chung mà đưa [${profile.evidence}] và nói rõ phần nào tôi trực tiếp sở hữu, phần nào thuộc team hoặc context.`,
+      ['Nếu không có số liệu thì sao?', 'Artifact nào bạn có thể mở ngay?', 'Bạn sẽ sửa câu nào trong CV để giảm hiểu nhầm?'],
+      ['Phòng thủ cảm xúc', 'Dùng title thay evidence', 'Nói “cứ tin tôi”'],
+      'challenge',
+    ),
+  ]
+}
 
 export const globalQuestionBank = [
   gq(
