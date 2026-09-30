@@ -88,19 +88,38 @@
       // GitHub Pages can temporarily publish the branch source when hosted Actions
       // runners are unavailable. In that mode the raw Vue SFC entry cannot mount
       // in a browser, so fall back to the self-contained static Directions app.
-      // A normal Vite build mounts #app quickly and this guard becomes a no-op.
-      window.__cvStudioFallbackTimer = window.setTimeout(function () {
-        var app = document.getElementById('app')
-        if (app && app.childElementCount === 0) {
+      // src/main.js clears the timer right after mount, so slow networks are
+      // never redirected once the real app starts.
+      (function () {
+        var redirected = false
+        function fallbackIfEmpty() {
+          var app = document.getElementById('app')
+          if (redirected || !app || app.childElementCount !== 0) return
+          redirected = true
           var hash = window.location.hash
           var target = (hash === '#interview' || hash === '#interview-studio')
             ? './public/interview-studio/?v=20260926-is3'
             : hash === '#studio'
-              ? './public/studio/?v=20260924-revenuefix-v6'
+              ? './public/studio/?v=20260927-iife-fix-v1'
               : './public/directions/'
           window.location.replace(target)
         }
-      }, 1800)
+        // Only same-origin script failures count; extension or image errors must
+        // not redirect a page that is still downloading.
+        function onBootError(event) {
+          if (!window.__cvStudioFallbackTimer) return
+          var target = event.target
+          var origin = window.location.origin
+          var isScriptLoadError = target && target.tagName === 'SCRIPT' &&
+            String(target.src).indexOf(origin) === 0
+          var isOwnScriptError = typeof event.filename === 'string' &&
+            event.filename.indexOf(origin) === 0
+          if (!isScriptLoadError && !isOwnScriptError) return
+          window.setTimeout(fallbackIfEmpty, 300)
+        }
+        window.addEventListener('error', onBootError, true)
+        window.__cvStudioFallbackTimer = window.setTimeout(fallbackIfEmpty, 6000)
+      })()
     </script>
   </head>
   <body>

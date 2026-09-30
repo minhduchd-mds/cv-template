@@ -701,14 +701,14 @@ test('static Template Browser V2 filters by contract capabilities', async ({ pag
 
 
 test('Vue Template Browser V2 uses field contracts', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/#studio')
   await page.getByRole('button',{name:'1-page'}).click()
   await expect(page.locator('.template-card')).toHaveCount(1)
   await expect(page.locator('.template-card')).toContainText('Next Start')
-  await page.locator('.template-quick-filters button').filter({hasText:'All'}).click()
+  await page.locator('.template-quick-filters button').filter({hasText:'All needs'}).click()
   await page.locator('.template-quick-filters button').filter({hasText:'Avatar'}).click()
   await expect(page.locator('.template-card').filter({hasText:'Executive Edge'})).toHaveCount(0)
-  await page.locator('.template-quick-filters button').filter({hasText:'All'}).click()
+  await page.locator('.template-quick-filters button').filter({hasText:'All needs'}).click()
   await page.locator('.template-card').filter({hasText:'Executive Edge'}).click()
   await page.getByRole('button',{name:'Edit CV'}).click()
   await expect(page.locator('.template-field-note').filter({hasText:'does not display an avatar'})).toBeVisible()
@@ -731,8 +731,9 @@ test('static Studio quick filters initialize without runtime errors', async ({ p
 
 
 test('page break guides visualize natural A4 boundaries', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/#studio')
   await page.locator('.preview-stage .cv-sheet').evaluate((node)=>{node.style.paddingBottom='1400px'})
+  await page.getByRole('button',{name:'View options'}).click()
   await page.getByRole('button',{name:'Page guides'}).click()
   await expect(page.locator('.page-guide-line')).toHaveCount(2)
   await expect(page.locator('.page-guide-control')).toContainText('3 pages')
@@ -752,11 +753,13 @@ test('static page break guides render without entering print output', async ({ p
 
 
 test('page break intelligence focuses risky blocks', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/#studio')
+  await page.getByRole('button',{name:'Designer · Soft Portfolio'}).click()
   await page.locator('.preview-stage .cv-sheet').evaluate((sheet)=>{
     const item=sheet.querySelector('.experience-item, .ref-experience article, .ref-soft-experience article')
     if(item)item.style.marginTop='1030px'
   })
+  await page.getByRole('button',{name:'View options'}).click()
   await page.getByRole('button',{name:'Page guides'}).click()
   const risk=page.locator('.page-guide-risk-list button').first()
   await expect(risk).toBeVisible()

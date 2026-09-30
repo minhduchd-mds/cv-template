@@ -39,27 +39,27 @@
           <h2>Profile</h2><p>{{ profile.summary }}</p>
         </section>
         <section v-if="visible('highlights')" class="ats-highlight-section" :style="sectionStyle('highlights')" v-bind="editAttrs('impact', 'highlights')">
-          <h2>Impact</h2><div class="ats-highlights"><div v-for="item in profile.highlights" :key="item.label"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div></div>
+          <h2>Impact</h2><div class="ats-highlights"><div v-for="item in profile.highlights" :key="item.id || item.label"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div></div>
         </section>
         <section v-if="visible('experience')" :style="sectionStyle('experience')" v-bind="editAttrs('experience', 'experience')">
           <h2>Experience</h2>
-          <div v-for="job in profile.experience" :key="`${job.role}-${job.company}`" class="experience-item ats-experience">
+          <div v-for="job in profile.experience" :key="job.id || `${job.role}-${job.company}`" class="experience-item ats-experience">
             <div class="experience-head"><strong>{{ job.role }} · {{ job.company }}</strong><span>{{ job.period }}</span></div>
-            <ul><li v-for="bullet in job.bullets" :key="bullet">{{ bullet }}</li></ul>
+            <ul><li v-for="(bullet, bulletIndex) in job.bullets" :key="bulletIndex">{{ bullet }}</li></ul>
           </div>
         </section>
         <section v-if="visible('projects')" :style="sectionStyle('projects')" v-bind="editAttrs('projects', 'projects')">
           <h2>Selected work</h2>
           <div class="ats-project-grid">
-            <article v-for="project in profile.projects" :key="project.name">
+            <article v-for="project in profile.projects" :key="project.id || project.name">
               <div v-if="project.image" class="cv-project-cover ats-cover" :style="imageStyle(project.image)"></div>
               <strong>{{ project.name }}</strong><span>{{ project.type }} · {{ project.impact }}</span><p>{{ project.description }}</p>
             </article>
           </div>
         </section>
         <section v-if="visible('skills')" :style="sectionStyle('skills')" v-bind="editAttrs('skills', 'skills')"><h2>Core skills</h2><p class="inline-list">{{ profile.skills.join(' · ') }}</p></section>
-        <section v-if="visible('education')" :style="sectionStyle('education')" v-bind="editAttrs('education', 'education')"><h2>Education</h2><p v-for="item in profile.education" :key="`${item.title}-${item.place}`"><strong>{{ item.title }}</strong><br />{{ item.place }} · {{ item.period }}</p></section>
-        <section v-if="visible('certificates')" :style="sectionStyle('certificates')" v-bind="editAttrs('education', 'certificates')"><h2>Certificates</h2><div class="credential-list"><p v-for="item in profile.certificates" :key="`${item.title}-${item.issuer}`"><strong>{{ item.title }}</strong><br />{{ item.issuer }} · {{ item.period }}</p></div></section>
+        <section v-if="visible('education')" :style="sectionStyle('education')" v-bind="editAttrs('education', 'education')"><h2>Education</h2><p v-for="item in profile.education" :key="item.id || `${item.title}-${item.place}`"><strong>{{ item.title }}</strong><br />{{ item.place }} · {{ item.period }}</p></section>
+        <section v-if="visible('certificates')" :style="sectionStyle('certificates')" v-bind="editAttrs('education', 'certificates')"><h2>Certificates</h2><div class="credential-list"><p v-for="item in profile.certificates" :key="item.id || `${item.title}-${item.issuer}`"><strong>{{ item.title }}</strong><br />{{ item.issuer }} · {{ item.period }}</p></div></section>
         <section v-if="visible('languages')" :style="sectionStyle('languages')" v-bind="editAttrs('skills', 'languages')"><h2>Languages</h2><p class="inline-list">{{ profile.languages.join(' · ') }}</p></section>
       </div>
     </template>
@@ -77,25 +77,25 @@
       </header>
       <div class="creative-intro section-flow">
         <p v-if="visible('summary')" :style="sectionStyle('summary')" v-bind="editAttrs('profile', 'summary')">{{ profile.summary }}</p>
-        <div v-if="visible('highlights')" class="highlight-strip" :style="sectionStyle('highlights')" v-bind="editAttrs('impact', 'highlights')"><div v-for="item in profile.highlights" :key="item.label"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div></div>
+        <div v-if="visible('highlights')" class="highlight-strip" :style="sectionStyle('highlights')" v-bind="editAttrs('impact', 'highlights')"><div v-for="item in profile.highlights" :key="item.id || item.label"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div></div>
       </div>
       <div class="creative-layout">
         <main class="section-flow">
           <section v-if="visible('experience')" :style="sectionStyle('experience')" v-bind="editAttrs('experience', 'experience')"><div class="label-row"><span>02</span><h2>Experience</h2></div>
-            <article v-for="job in profile.experience" :key="`${job.role}-${job.company}`" class="experience-item creative-job">
+            <article v-for="job in profile.experience" :key="job.id || `${job.role}-${job.company}`" class="experience-item creative-job">
               <div class="experience-head"><div><strong>{{ job.role }}</strong><span>{{ job.company }}</span></div><span>{{ job.period }}</span></div>
-              <ul><li v-for="bullet in job.bullets" :key="bullet">{{ bullet }}</li></ul>
+              <ul><li v-for="(bullet, bulletIndex) in job.bullets" :key="bulletIndex">{{ bullet }}</li></ul>
             </article>
           </section>
           <section v-if="visible('projects')" :style="sectionStyle('projects')" v-bind="editAttrs('projects', 'projects')"><div class="label-row"><span>03</span><h2>Selected projects</h2></div>
-            <div class="creative-projects"><article v-for="project in profile.projects" :key="project.name"><div v-if="project.image" class="cv-project-cover creative-cover" :style="imageStyle(project.image)"></div><span>{{ project.type }}</span><h3>{{ project.name }}</h3><strong>{{ project.impact }}</strong><p>{{ project.description }}</p></article></div>
+            <div class="creative-projects"><article v-for="project in profile.projects" :key="project.id || project.name"><div v-if="project.image" class="cv-project-cover creative-cover" :style="imageStyle(project.image)"></div><span>{{ project.type }}</span><h3>{{ project.name }}</h3><strong>{{ project.impact }}</strong><p>{{ project.description }}</p></article></div>
           </section>
         </main>
         <aside class="creative-aside section-flow">
-          <div v-if="visible('skills')" :style="sectionStyle('skills')" v-bind="editAttrs('skills', 'skills')"><span class="aside-label">Capabilities</span><ul class="skill-list"><li v-for="skill in profile.skills" :key="skill">{{ skill }}</li></ul></div>
-          <div v-if="visible('education')" :style="sectionStyle('education')" v-bind="editAttrs('education', 'education')"><span class="aside-label">Education</span><article v-for="item in profile.education" :key="`${item.title}-${item.place}`"><strong>{{ item.title }}</strong><span>{{ item.place }}</span><small>{{ item.period }}</small></article></div>
-          <div v-if="visible('certificates')" :style="sectionStyle('certificates')" v-bind="editAttrs('education', 'certificates')"><span class="aside-label">Certificates</span><article v-for="item in profile.certificates" :key="`${item.title}-${item.issuer}`"><strong>{{ item.title }}</strong><span>{{ item.issuer }}</span><small>{{ item.period }}</small></article></div>
-          <div v-if="visible('languages')" :style="sectionStyle('languages')" v-bind="editAttrs('skills', 'languages')"><span class="aside-label">Languages</span><p v-for="language in profile.languages" :key="language">{{ language }}</p></div>
+          <div v-if="visible('skills')" :style="sectionStyle('skills')" v-bind="editAttrs('skills', 'skills')"><span class="aside-label">Capabilities</span><ul class="skill-list"><li v-for="(skill, skillIndex) in profile.skills" :key="skillIndex">{{ skill }}</li></ul></div>
+          <div v-if="visible('education')" :style="sectionStyle('education')" v-bind="editAttrs('education', 'education')"><span class="aside-label">Education</span><article v-for="item in profile.education" :key="item.id || `${item.title}-${item.place}`"><strong>{{ item.title }}</strong><span>{{ item.place }}</span><small>{{ item.period }}</small></article></div>
+          <div v-if="visible('certificates')" :style="sectionStyle('certificates')" v-bind="editAttrs('education', 'certificates')"><span class="aside-label">Certificates</span><article v-for="item in profile.certificates" :key="item.id || `${item.title}-${item.issuer}`"><strong>{{ item.title }}</strong><span>{{ item.issuer }}</span><small>{{ item.period }}</small></article></div>
+          <div v-if="visible('languages')" :style="sectionStyle('languages')" v-bind="editAttrs('skills', 'languages')"><span class="aside-label">Languages</span><p v-for="(language, languageIndex) in profile.languages" :key="languageIndex">{{ language }}</p></div>
         </aside>
       </div>
     </template>
@@ -109,15 +109,15 @@
       <div class="executive-layout">
         <main class="section-flow">
           <section v-if="visible('summary')" class="executive-summary" :style="sectionStyle('summary')" v-bind="editAttrs('profile', 'summary')"><span>Profile</span><p>{{ profile.summary }}</p></section>
-          <section v-if="visible('highlights')" :style="sectionStyle('highlights')" v-bind="editAttrs('impact', 'highlights')"><h2>Selected impact</h2><div class="executive-impact-grid"><div v-for="item in profile.highlights" :key="item.label"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div></div></section>
-          <section v-if="visible('experience')" :style="sectionStyle('experience')" v-bind="editAttrs('experience', 'experience')"><h2>Professional experience</h2><article v-for="job in profile.experience" :key="`${job.role}-${job.company}`" class="experience-item executive-job"><div class="experience-head"><div><strong>{{ job.role }}</strong><span>{{ job.company }} · {{ job.location }}</span></div><span>{{ job.period }}</span></div><ul><li v-for="bullet in job.bullets" :key="bullet">{{ bullet }}</li></ul></article></section>
-          <section v-if="visible('projects')" :style="sectionStyle('projects')" v-bind="editAttrs('projects', 'projects')"><h2>Selected work</h2><article v-for="project in profile.projects" :key="project.name" class="executive-project"><div v-if="project.image" class="cv-project-cover executive-cover" :style="imageStyle(project.image)"></div><div><strong>{{ project.name }}</strong><span>{{ project.type }}</span></div><p>{{ project.description }}</p></article></section>
+          <section v-if="visible('highlights')" :style="sectionStyle('highlights')" v-bind="editAttrs('impact', 'highlights')"><h2>Selected impact</h2><div class="executive-impact-grid"><div v-for="item in profile.highlights" :key="item.id || item.label"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div></div></section>
+          <section v-if="visible('experience')" :style="sectionStyle('experience')" v-bind="editAttrs('experience', 'experience')"><h2>Professional experience</h2><article v-for="job in profile.experience" :key="job.id || `${job.role}-${job.company}`" class="experience-item executive-job"><div class="experience-head"><div><strong>{{ job.role }}</strong><span>{{ job.company }} · {{ job.location }}</span></div><span>{{ job.period }}</span></div><ul><li v-for="(bullet, bulletIndex) in job.bullets" :key="bulletIndex">{{ bullet }}</li></ul></article></section>
+          <section v-if="visible('projects')" :style="sectionStyle('projects')" v-bind="editAttrs('projects', 'projects')"><h2>Selected work</h2><article v-for="project in profile.projects" :key="project.id || project.name" class="executive-project"><div v-if="project.image" class="cv-project-cover executive-cover" :style="imageStyle(project.image)"></div><div><strong>{{ project.name }}</strong><span>{{ project.type }}</span></div><p>{{ project.description }}</p></article></section>
         </main>
         <aside class="section-flow">
-          <section v-if="visible('skills')" :style="sectionStyle('skills')" v-bind="editAttrs('skills', 'skills')"><h2>Expertise</h2><ul class="executive-skills"><li v-for="skill in profile.skills" :key="skill">{{ skill }}</li></ul></section>
-          <section v-if="visible('education')" :style="sectionStyle('education')" v-bind="editAttrs('education', 'education')"><h2>Education</h2><article v-for="item in profile.education" :key="`${item.title}-${item.place}`"><strong>{{ item.title }}</strong><span>{{ item.place }}</span><small>{{ item.period }}</small></article></section>
-          <section v-if="visible('certificates')" :style="sectionStyle('certificates')" v-bind="editAttrs('education', 'certificates')"><h2>Certificates</h2><article v-for="item in profile.certificates" :key="`${item.title}-${item.issuer}`"><strong>{{ item.title }}</strong><span>{{ item.issuer }}</span><small>{{ item.period }}</small></article></section>
-          <section v-if="visible('languages')" :style="sectionStyle('languages')" v-bind="editAttrs('skills', 'languages')"><h2>Languages</h2><p v-for="language in profile.languages" :key="language">{{ language }}</p></section>
+          <section v-if="visible('skills')" :style="sectionStyle('skills')" v-bind="editAttrs('skills', 'skills')"><h2>Expertise</h2><ul class="executive-skills"><li v-for="(skill, skillIndex) in profile.skills" :key="skillIndex">{{ skill }}</li></ul></section>
+          <section v-if="visible('education')" :style="sectionStyle('education')" v-bind="editAttrs('education', 'education')"><h2>Education</h2><article v-for="item in profile.education" :key="item.id || `${item.title}-${item.place}`"><strong>{{ item.title }}</strong><span>{{ item.place }}</span><small>{{ item.period }}</small></article></section>
+          <section v-if="visible('certificates')" :style="sectionStyle('certificates')" v-bind="editAttrs('education', 'certificates')"><h2>Certificates</h2><article v-for="item in profile.certificates" :key="item.id || `${item.title}-${item.issuer}`"><strong>{{ item.title }}</strong><span>{{ item.issuer }}</span><small>{{ item.period }}</small></article></section>
+          <section v-if="visible('languages')" :style="sectionStyle('languages')" v-bind="editAttrs('skills', 'languages')"><h2>Languages</h2><p v-for="(language, languageIndex) in profile.languages" :key="languageIndex">{{ language }}</p></section>
         </aside>
       </div>
     </template>
@@ -128,15 +128,15 @@
         <div v-bind="editAttrs('profile')"><p class="cv-kicker">Senior profile</p><h1>{{ profile.name }}</h1><h3>{{ profile.role }}</h3></div>
         <p v-if="visible('summary')" class="product-summary" :style="sectionStyle('summary')" v-bind="editAttrs('profile', 'summary')">{{ profile.summary }}</p>
         <div class="product-contact" v-bind="editAttrs('profile')"><span>{{ profile.location }}</span><span>{{ profile.email }}</span><span>{{ profile.phone }}</span><span>{{ profile.website }}</span></div>
-        <section v-if="visible('skills')" :style="sectionStyle('skills')" v-bind="editAttrs('skills', 'skills')"><span class="aside-label">Core stack</span><ul class="product-skills"><li v-for="skill in profile.skills" :key="skill">{{ skill }}</li></ul></section>
-        <section v-if="visible('education')" :style="sectionStyle('education')" v-bind="editAttrs('education', 'education')"><span class="aside-label">Education</span><article v-for="item in profile.education" :key="`${item.title}-${item.place}`"><strong>{{ item.title }}</strong><span>{{ item.place }}</span><small>{{ item.period }}</small></article></section>
-        <section v-if="visible('certificates')" :style="sectionStyle('certificates')" v-bind="editAttrs('education', 'certificates')"><span class="aside-label">Certificates</span><article v-for="item in profile.certificates" :key="`${item.title}-${item.issuer}`"><strong>{{ item.title }}</strong><span>{{ item.issuer }}</span><small>{{ item.period }}</small></article></section>
-        <section v-if="visible('languages')" :style="sectionStyle('languages')" v-bind="editAttrs('skills', 'languages')"><span class="aside-label">Languages</span><p v-for="language in profile.languages" :key="language">{{ language }}</p></section>
+        <section v-if="visible('skills')" :style="sectionStyle('skills')" v-bind="editAttrs('skills', 'skills')"><span class="aside-label">Core stack</span><ul class="product-skills"><li v-for="(skill, skillIndex) in profile.skills" :key="skillIndex">{{ skill }}</li></ul></section>
+        <section v-if="visible('education')" :style="sectionStyle('education')" v-bind="editAttrs('education', 'education')"><span class="aside-label">Education</span><article v-for="item in profile.education" :key="item.id || `${item.title}-${item.place}`"><strong>{{ item.title }}</strong><span>{{ item.place }}</span><small>{{ item.period }}</small></article></section>
+        <section v-if="visible('certificates')" :style="sectionStyle('certificates')" v-bind="editAttrs('education', 'certificates')"><span class="aside-label">Certificates</span><article v-for="item in profile.certificates" :key="item.id || `${item.title}-${item.issuer}`"><strong>{{ item.title }}</strong><span>{{ item.issuer }}</span><small>{{ item.period }}</small></article></section>
+        <section v-if="visible('languages')" :style="sectionStyle('languages')" v-bind="editAttrs('skills', 'languages')"><span class="aside-label">Languages</span><p v-for="(language, languageIndex) in profile.languages" :key="languageIndex">{{ language }}</p></section>
       </aside>
       <main class="product-main section-flow">
-        <div v-if="visible('highlights')" class="product-topline" :style="sectionStyle('highlights')" v-bind="editAttrs('impact', 'highlights')"><span>Selected impact</span><div class="product-highlights"><div v-for="item in profile.highlights" :key="item.label"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div></div></div>
-        <section v-if="visible('experience')" :style="sectionStyle('experience')" v-bind="editAttrs('experience', 'experience')"><div class="product-section-head"><span>01</span><h2>Experience</h2></div><article v-for="job in profile.experience" :key="`${job.role}-${job.company}`" class="experience-item product-job"><div class="experience-head"><div><strong>{{ job.role }}</strong><span>{{ job.company }}</span></div><span>{{ job.period }}</span></div><ul><li v-for="bullet in job.bullets" :key="bullet">{{ bullet }}</li></ul></article></section>
-        <section v-if="visible('projects')" :style="sectionStyle('projects')" v-bind="editAttrs('projects', 'projects')"><div class="product-section-head"><span>02</span><h2>Selected work</h2></div><div class="product-projects"><article v-for="project in profile.projects" :key="project.name"><div v-if="project.image" class="cv-project-cover product-cover" :style="imageStyle(project.image)"></div><div><span>{{ project.type }}</span><strong>{{ project.name }}</strong></div><p>{{ project.description }}</p><small>{{ project.impact }}</small></article></div></section>
+        <div v-if="visible('highlights')" class="product-topline" :style="sectionStyle('highlights')" v-bind="editAttrs('impact', 'highlights')"><span>Selected impact</span><div class="product-highlights"><div v-for="item in profile.highlights" :key="item.id || item.label"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></div></div></div>
+        <section v-if="visible('experience')" :style="sectionStyle('experience')" v-bind="editAttrs('experience', 'experience')"><div class="product-section-head"><span>01</span><h2>Experience</h2></div><article v-for="job in profile.experience" :key="job.id || `${job.role}-${job.company}`" class="experience-item product-job"><div class="experience-head"><div><strong>{{ job.role }}</strong><span>{{ job.company }}</span></div><span>{{ job.period }}</span></div><ul><li v-for="(bullet, bulletIndex) in job.bullets" :key="bulletIndex">{{ bullet }}</li></ul></article></section>
+        <section v-if="visible('projects')" :style="sectionStyle('projects')" v-bind="editAttrs('projects', 'projects')"><div class="product-section-head"><span>02</span><h2>Selected work</h2></div><div class="product-projects"><article v-for="project in profile.projects" :key="project.id || project.name"><div v-if="project.image" class="cv-project-cover product-cover" :style="imageStyle(project.image)"></div><div><span>{{ project.type }}</span><strong>{{ project.name }}</strong></div><p>{{ project.description }}</p><small>{{ project.impact }}</small></article></div></section>
       </main>
     </template>
   </article>

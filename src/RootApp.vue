@@ -3,8 +3,12 @@
     <InterviewStudio v-if="isInterviewRoute" @back="goLanding" />
     <ConceptExperience v-else-if="isConceptRoute" :concept-id="conceptId" @back="goStudio" />
     <template v-else-if="isStudioRoute">
-      <StudioView />
-      <nav class="studio-route-dock" aria-label="Studio routes">
+      <StudioView @editor-open="onStudioEditorOpen" />
+      <nav
+        v-if="!studioEditorOpen"
+        class="studio-route-dock"
+        aria-label="Studio routes"
+      >
         <a class="studio-home-launch" href="./" aria-label="Back to CV Studio landing page" @click.prevent="goLanding">← Home</a>
         <a class="concept-launch" href="#concept-apple" aria-label="Open five full-screen CV web concepts">
           <span class="concept-launch-dot"></span>
@@ -91,7 +95,7 @@ export default {
   components: { StudioView, MarketingLanding, ConceptExperience, InterviewStudio },
   data() {
     const routeHash = window.location.hash
-    return { routeHash, routeMode: initialMode(routeHash) }
+    return { routeHash, routeMode: initialMode(routeHash), studioEditorOpen: false }
   },
   computed: {
     isInterviewRoute() {
@@ -106,6 +110,11 @@ export default {
     conceptId() {
       const id = this.routeHash.replace('#concept-', '')
       return IDS.includes(id) ? id : 'apple'
+    },
+  },
+  watch: {
+    isStudioRoute(value) {
+      if (!value) this.studioEditorOpen = false
     },
   },
   mounted() {
@@ -130,6 +139,22 @@ export default {
       this.updateMeta()
       if (previousMode !== this.routeMode && (previousMode !== 'landing' || this.routeMode !== 'landing')) {
         window.scrollTo({ top: 0, behavior: 'instant' })
+      }
+    },
+    onStudioEditorOpen(open) {
+      const next = Boolean(open)
+      if (next && this.$el) {
+        const dock = this.$el.querySelector('.studio-route-dock')
+        if (dock && dock.contains(document.activeElement) && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur()
+        }
+      }
+      this.studioEditorOpen = next
+      if (next) {
+        this.$nextTick(() => {
+          const close = this.$el && this.$el.querySelector('.editor-close')
+          if (close && typeof close.focus === 'function') close.focus()
+        })
       }
     },
     goStudio() {

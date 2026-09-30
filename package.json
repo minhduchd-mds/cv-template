@@ -18,6 +18,7 @@
     "lighthouse:assert": "node scripts/assert-lighthouse.mjs",
     "verify": "npm run layout:check && npm run security:lint && npm run build && npm run verify:bundle",
     "preview": "vite preview",
+    "test:perf": "playwright test tests/e2e/studio-perf.spec.js --project=desktop-chromium --project=tablet-chromium --project=mobile-chromium",
     "test:templates": "playwright test tests/e2e/template-layout-audit.spec.js --project=desktop-chromium --project=tablet-chromium --project=mobile-chromium",
     "layout:check": "node scripts/check-template-layout-contracts.mjs",
     "test:pdf-fidelity": "playwright test tests/e2e/pdf-fidelity.spec.js --project=desktop-chromium",

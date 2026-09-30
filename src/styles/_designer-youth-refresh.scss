@@ -138,7 +138,7 @@
   display: -webkit-box;
   overflow: hidden;
   color: var(--apple-label);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.25;
   text-overflow: ellipsis;
   -webkit-box-orient: vertical;
@@ -151,7 +151,7 @@
   overflow: hidden;
   margin-top: 2px;
   color: var(--apple-secondary);
-  font-size: 8px;
+  font-size: 11px;
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -359,14 +359,14 @@
 }
 
 .template-info > strong {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.3;
 }
 
-.template-info > span:last-child {
+.template-description {
   display: -webkit-box;
   overflow: hidden;
-  line-height: 1.45;
+  line-height: 1.4;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }

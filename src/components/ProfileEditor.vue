@@ -71,7 +71,7 @@
               @pointerup="endAvatarDrag"
               @pointercancel="endAvatarDrag"
             >
-              <img v-if="profile.avatar" :src="profile.avatar" alt="" :style="avatarImageStyle" />
+              <img v-if="profile.avatar" :src="profile.avatar" :alt="avatarAlt" :style="avatarImageStyle" />
               <span v-else>{{ initials }}</span>
             </div>
             <div>
@@ -159,7 +159,7 @@
             <p>Use concrete numbers. Bento, Executive and Product templates surface these prominently.</p>
           </div>
           <div class="builder-list">
-            <article v-for="(item, index) in profile.highlights" :key="`highlight-${index}`" class="builder-card builder-card-compact">
+            <article v-for="(item, index) in profile.highlights" :key="item.id || `highlight-${index}`" class="builder-card builder-card-compact">
               <div class="builder-card-top"><strong>Metric {{ index + 1 }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('highlights', index, -1)">↑</button><button type="button" :disabled="index === profile.highlights.length - 1" @click="move('highlights', index, 1)">↓</button><button type="button" class="danger" @click="remove('highlights', index)">×</button></div></div>
               <div class="editor-grid"><label class="editor-field"><span>Value</span><input :value="item.value" type="text" placeholder="40%" @input="updateItem('highlights', index, 'value', $event.target.value)" /></label><label class="editor-field"><span>Label</span><input :value="item.label" type="text" placeholder="Faster handoff" @input="updateItem('highlights', index, 'label', $event.target.value)" /></label></div>
             </article>
@@ -173,7 +173,7 @@
             <p>Keep each role focused on scope, responsibility and measurable outcomes.</p>
           </div>
           <div class="builder-list">
-            <article v-for="(job, index) in profile.experience" :key="`experience-${index}`" class="builder-card">
+            <article v-for="(job, index) in profile.experience" :key="job.id || `experience-${index}`" class="builder-card">
               <div class="builder-card-top"><strong>{{ job.role || `Experience ${index + 1}` }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('experience', index, -1)">↑</button><button type="button" :disabled="index === profile.experience.length - 1" @click="move('experience', index, 1)">↓</button><button type="button" class="danger" @click="remove('experience', index)">×</button></div></div>
               <div class="editor-grid">
                 <label class="editor-field editor-field-wide"><span>Role</span><input :value="job.role" type="text" @input="updateItem('experience', index, 'role', $event.target.value)" /></label>
@@ -194,7 +194,7 @@
           </div>
 
           <div class="builder-list">
-            <article v-for="(project, index) in profile.projects" :key="`project-${index}`" class="builder-card">
+            <article v-for="(project, index) in profile.projects" :key="project.id || `project-${index}`" class="builder-card">
               <div class="builder-card-top"><strong>{{ project.name || `Project ${index + 1}` }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('projects', index, -1)">↑</button><button type="button" :disabled="index === profile.projects.length - 1" @click="move('projects', index, 1)">↓</button><button type="button" class="danger" @click="remove('projects', index)">×</button></div></div>
               <div class="project-cover-preview" :class="{ empty: !project.image }" :style="imageStyle(project.image)"><span v-if="!project.image">Project cover</span></div>
               <small v-if="!fieldSupported('projectImages')" class="template-field-note project-cover-note">Cover stays saved, but {{ template?.name }} does not render project images.</small>
@@ -222,7 +222,7 @@
 
           <div class="builder-subheading"><strong>Education</strong><button class="builder-add-inline" type="button" @click="$emit('add-item', { section: 'education' })">+ Add</button></div>
           <div class="builder-list">
-            <article v-for="(item, index) in profile.education" :key="`education-${index}`" class="builder-card builder-card-compact">
+            <article v-for="(item, index) in profile.education" :key="item.id || `education-${index}`" class="builder-card builder-card-compact">
               <div class="builder-card-top"><strong>{{ item.title || `Education ${index + 1}` }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('education', index, -1)">↑</button><button type="button" :disabled="index === profile.education.length - 1" @click="move('education', index, 1)">↓</button><button type="button" class="danger" @click="remove('education', index)">×</button></div></div>
               <div class="editor-grid"><label class="editor-field editor-field-wide"><span>Program / degree</span><input :value="item.title" type="text" @input="updateItem('education', index, 'title', $event.target.value)" /></label><label class="editor-field"><span>School / institution</span><input :value="item.place" type="text" @input="updateItem('education', index, 'place', $event.target.value)" /></label><label class="editor-field"><span>Period</span><input :value="item.period" type="text" @input="updateItem('education', index, 'period', $event.target.value)" /></label></div>
             </article>
@@ -230,7 +230,7 @@
 
           <div class="builder-subheading certificates-heading"><strong>Certificates</strong><button class="builder-add-inline" type="button" @click="$emit('add-item', { section: 'certificates' })">+ Add</button></div>
           <div class="builder-list">
-            <article v-for="(item, index) in profile.certificates" :key="`certificate-${index}`" class="builder-card builder-card-compact">
+            <article v-for="(item, index) in profile.certificates" :key="item.id || `certificate-${index}`" class="builder-card builder-card-compact">
               <div class="builder-card-top"><strong>{{ item.title || `Certificate ${index + 1}` }}</strong><div class="builder-actions"><button type="button" :disabled="index === 0" @click="move('certificates', index, -1)">↑</button><button type="button" :disabled="index === profile.certificates.length - 1" @click="move('certificates', index, 1)">↓</button><button type="button" class="danger" @click="remove('certificates', index)">×</button></div></div>
               <div class="editor-grid"><label class="editor-field editor-field-wide"><span>Certificate</span><input :value="item.title" type="text" @input="updateItem('certificates', index, 'title', $event.target.value)" /></label><label class="editor-field"><span>Issuer</span><input :value="item.issuer" type="text" @input="updateItem('certificates', index, 'issuer', $event.target.value)" /></label><label class="editor-field"><span>Year / period</span><input :value="item.period" type="text" @input="updateItem('certificates', index, 'period', $event.target.value)" /></label><label class="editor-field editor-field-wide"><span>Credential URL</span><input :value="item.url || ''" type="url" @input="updateItem('certificates', index, 'url', $event.target.value)" /></label></div>
             </article>
@@ -243,7 +243,7 @@
             <p>Use concise keywords for recruiter scanning and ATS matching.</p>
           </div>
           <label class="editor-field editor-field-wide"><span>Skills · one per line or comma separated</span><textarea :value="profile.skills.join('\n')" rows="10" @input="updateArray('skills', tokenList($event.target.value))"></textarea><small>{{ profile.skills.length }} skills</small></label>
-          <div class="skill-preview"><span v-for="skill in profile.skills" :key="skill">{{ skill }}</span></div>
+          <div class="skill-preview"><span v-for="(skill, skillIndex) in profile.skills" :key="skillIndex">{{ skill }}</span></div>
           <label class="editor-field editor-field-wide editor-language-field"><span>Languages · one per line</span><textarea :value="profile.languages.join('\n')" rows="5" @input="updateArray('languages', lines($event.target.value))"></textarea></label>
         </section>
 
@@ -444,6 +444,10 @@ export default {
     layoutModeLabel() { return this.layoutContract.mode === 'fixed' ? 'Fixed hierarchy' : this.layoutContract.mode === 'guided' ? 'Guided hierarchy' : 'Flexible hierarchy' },
     initials() {
       return String(this.profile.name || 'CV').split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase()
+    },
+    avatarAlt() {
+      const name = String(this.profile.name || '').trim()
+      return name ? `${name} profile photo` : 'Profile photo'
     },
     avatarShape() {
       return ['circle', 'rounded', 'square'].includes(this.appearance.avatarShape) ? this.appearance.avatarShape : 'circle'

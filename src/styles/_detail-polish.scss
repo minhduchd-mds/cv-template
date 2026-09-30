@@ -84,19 +84,31 @@
   }
 }
 
-/* Sidebar title should read as one deliberate headline, not accidental three-line wrapping. */
+/* Sidebar title stays one headline; supporting copy sits under it, not beside it. */
 .template-panel .section-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: baseline;
+
+  > div {
+    display: contents;
+  }
+
   h2 {
-    max-width: 11ch;
-    font-size: clamp(25px, 2vw, 31px);
-    line-height: .98;
+    max-width: none;
+    font-size: clamp(22px, 2vw, 28px);
+    line-height: 1.15;
+    letter-spacing: -.02em;
     text-wrap: balance;
   }
 
   p {
-    max-width: 29ch;
-    font-size: 11.5px;
-    line-height: 1.55;
+    grid-column: 2;
+    max-width: 42ch;
+    font-size: 13px;
+    line-height: 1.5;
+    letter-spacing: 0;
     text-wrap: pretty;
   }
 }
@@ -113,7 +125,7 @@
 }
 
 .studio-home-launch {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 620;
 }
 
@@ -144,14 +156,14 @@
 
   strong {
     color: var(--apple-label);
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.2;
   }
 
   small {
     color: var(--apple-secondary);
-    font-size: 9.5px;
-    line-height: 1.2;
+    font-size: 11px;
+    line-height: 1.25;
   }
 
   > b {
@@ -200,10 +212,11 @@
   }
 
   .cycle-control,
-  .focus-control {
+  .focus-control,
+  .preview-view-toggle {
     min-height: 38px;
     padding-inline: 9px;
-    font-size: 10.5px;
+    font-size: 12px;
   }
 
   .quality-score {
@@ -358,9 +371,63 @@
 }
 
 
+.preview-view-menu {
+  position: relative;
+}
+
+.preview-view-toggle {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--apple-separator);
+  border-radius: var(--apple-radius-control);
+  color: var(--apple-label);
+  background: var(--apple-fill);
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.preview-view-toggle.active {
+  border-color: color-mix(in srgb, var(--apple-blue) 40%, var(--apple-separator));
+  color: var(--apple-blue);
+  background: #fff;
+}
+
+.preview-view-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  min-width: 176px;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--apple-separator);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--apple-shadow-2);
+}
+
+.preview-view-panel .focus-control,
+.preview-view-panel .page-guide-control {
+  width: 100%;
+  min-height: 40px;
+  justify-content: flex-start;
+  padding-inline: 10px;
+  font-size: 12px;
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-view-toggle,
+  .preview-view-panel .focus-control,
+  .preview-view-panel .page-guide-control {
+    transition: none;
+  }
+}
+
 /* PAGE_BREAK_VISUALIZATION_V1 */
 .preview-zoom{position:relative}
-.page-guide-control{min-height:34px;padding:0 10px;border:1px solid var(--apple-separator,#d7dce5);border-radius:10px;background:#fff;color:#667085;font-size:10px;font-weight:650}
+.page-guide-control{min-height:40px;padding:0 10px;border:1px solid var(--apple-separator,#d7dce5);border-radius:10px;background:#fff;color:#667085;font-size:12px;font-weight:650}
 .page-guide-control.active{border-color:#f59e0b;background:#fff8e8;color:#92400e}
 .page-guide-layer{position:absolute;left:0;top:0;width:100%;pointer-events:none;z-index:40}
 .page-guide-page-label{position:absolute;right:8px;z-index:2;padding:4px 7px;border-radius:999px;background:rgba(17,24,39,.78);color:#fff;font-size:9px;font-weight:700;box-shadow:0 2px 8px rgba(15,23,42,.15)}
@@ -370,7 +437,7 @@
 .page-guide-line.risk{border-top-color:#e11d48}
 .page-guide-line.risk::before{background:linear-gradient(180deg,transparent,rgba(225,29,72,.08),transparent)}
 .page-guide-line.risk>span{background:#fff1f3;color:#be123c}
-@media(max-width:640px){.page-guide-control{min-height:38px;padding-inline:8px;font-size:9px}.page-guide-line>span,.page-guide-page-label{right:4px}}
+@media(max-width:640px){.page-guide-control{min-height:40px;padding-inline:10px;font-size:12px}.page-guide-line>span,.page-guide-page-label{right:4px}}
 @media print{.page-guide-layer,.page-guide-control{display:none!important}}
 
 

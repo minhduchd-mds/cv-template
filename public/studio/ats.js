@@ -495,7 +495,7 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot)
   else boot()
-})()
+})();
 
 
 /* ATS_PRO_V2_FIXED */
@@ -873,7 +873,7 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot)
   else boot()
-})()
+})();
 
 /* ATS_PDF_VERIFY_V1_FIXED */
 (() => {
@@ -1242,7 +1242,7 @@
   const boot=()=>inject()
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot)
   else boot()
-})()
+})();
 
 
 /* ATS_VISUAL_HEATMAP_V1 */
@@ -1463,7 +1463,7 @@
   const boot=()=>inject()
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot)
   else boot()
-})()
+})();
 
 
 /* ATS_AUTO_FIX_V1 */
@@ -1817,7 +1817,7 @@
   const boot=()=>inject()
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot)
   else boot()
-})()
+})();
 
 
 /* ATS_VERSION_COMPARE_V1 */
@@ -2112,7 +2112,7 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
   else inject()
-})()
+})();
 
 
 /* ATS_APPLICATION_WORKSPACE_V1 */
@@ -2565,7 +2565,7 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
   else inject()
-})()
+})();
 
 
 /* ATS_APPLICATION_ANALYTICS_V1 */
@@ -2797,7 +2797,7 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
   else inject()
-})()
+})();
 
 
 /* ATS_UX_V3 */
@@ -3090,7 +3090,7 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
   else inject()
-})()
+})();
 
 
 /* ATS_APPLICATION_ANALYTICS_V2 */
@@ -3142,7 +3142,7 @@
     tab.addEventListener('click',()=>setTimeout(render,0));window.addEventListener('ats-applications-changed',()=>setTimeout(render,0));window.addEventListener('storage',(event)=>{if(event.key===APPLICATIONS_KEY)setTimeout(render,0)});render()
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject);else inject()
-})()
+})();
 
 
 /* ATS_APPLICATION_TIMELINE_V1 */
@@ -3261,4 +3261,4 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject)
   else inject()
-})()
+})();

@@ -16,7 +16,7 @@
 .profile-editor {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 90;
   pointer-events: none;
   visibility: hidden;
 
@@ -419,7 +419,8 @@
   border-radius: 10px;
   padding: 9px 13px;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 560;
 }
 
 .editor-reset {

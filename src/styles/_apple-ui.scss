@@ -132,7 +132,7 @@ a,
 
 .topbar-actions { gap: 6px; }
 
-:where(.ghost-button, .primary-button, .editor-trigger, .auto-complete-button, .cycle-control, .focus-control, .category-tab, .concept-actions a, .repo-link) {
+:where(.ghost-button, .primary-button, .editor-trigger, .auto-complete-button, .cycle-control, .focus-control, .preview-view-toggle, .category-tab, .concept-actions a, .repo-link) {
   min-height: 40px;
   border-radius: var(--apple-radius-control);
   font-weight: 590;
@@ -149,7 +149,8 @@ a,
 .ghost-button,
 .editor-trigger,
 .cycle-control,
-.focus-control {
+.focus-control,
+.preview-view-toggle {
   border: 1px solid transparent;
   color: var(--apple-label);
   background: var(--apple-fill);
@@ -159,7 +160,8 @@ a,
 .ghost-button:hover,
 .editor-trigger:hover,
 .cycle-control:hover,
-.focus-control:hover {
+.focus-control:hover,
+.preview-view-toggle:hover {
   background: var(--apple-fill-strong);
 }
 
@@ -182,7 +184,8 @@ a,
 .editor-trigger:active,
 .ghost-button:active,
 .cycle-control:active,
-.focus-control:active {
+.focus-control:active,
+.preview-view-toggle:active {
   transform: scale(.975);
 }
 
@@ -289,7 +292,7 @@ a,
   color: var(--apple-label);
   font-size: clamp(26px, 2.2vw, 34px);
   font-weight: 680;
-  letter-spacing: -.035em;
+  letter-spacing: -.02em;
 }
 
 .section-index {
@@ -347,7 +350,7 @@ a,
 .template-thumb { border-radius: 9px; }
 .template-kicker { color: var(--apple-tertiary); letter-spacing: .08em; }
 .template-info strong { color: var(--apple-label); font-weight: 650; }
-.template-info > span:last-child { color: var(--apple-secondary); }
+.template-description { color: var(--apple-secondary); }
 
 .template-check {
   color: transparent;

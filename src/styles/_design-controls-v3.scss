@@ -171,7 +171,7 @@
 .cv-heading-115 { --heading-scale: 1.15; }
 .cv-heading-120 { --heading-scale: 1.2; }
 
-.cv-sheet {
+:where(.cv-sheet) {
   --text-scale: 1;
   --heading-scale: 1;
 }

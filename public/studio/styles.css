@@ -226,6 +226,29 @@ button{cursor:pointer}
   cursor:not-allowed
 }
 
+.topbar-actions > *{flex:0 0 auto}
+@media(max-width:1320px){
+  .studio .editor{z-index:75}
+}
+@media(max-width:760px){
+  .topbar{flex-wrap:wrap;row-gap:8px}
+  .topbar-actions{
+    flex:1 1 100%;
+    min-width:0;
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    scrollbar-width:none;
+    padding-bottom:2px
+  }
+  .topbar-actions::-webkit-scrollbar{display:none}
+  .studio .editor{
+    top:auto;
+    bottom:0;
+    max-height:calc(100dvh - 124px);
+    padding-bottom:max(18px,env(safe-area-inset-bottom))
+  }
+}
+
 
 /* Static fallback direct section reordering */
 .cv-main{

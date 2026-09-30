@@ -4,74 +4,6 @@
  * This layer intentionally uses whitespace before containers and avoids card-everywhere UI.
  */
 
-:root {
-  --text-measure-display: 21ch;
-  --text-measure-body: 64ch;
-  --text-measure-compact: 52ch;
-  --text-frame-pad-sm: 16px;
-  --text-frame-pad-md: 24px;
-  --text-frame-pad-lg: 32px;
-  --text-frame-gap: 12px;
-}
-
-/* Reusable primitives for future sections/components. */
-.text-frame {
-  min-width: 0;
-  max-width: var(--text-measure-body);
-
-  &__kicker {
-    margin: 0 0 10px;
-    color: var(--apple-secondary);
-    font-size: 12px;
-    font-weight: 650;
-    line-height: 1.25;
-    letter-spacing: .07em;
-    text-transform: uppercase;
-  }
-
-  &__display {
-    max-width: var(--text-measure-display);
-    margin: 0;
-    color: var(--apple-label);
-    font-size: clamp(34px, 4vw, 64px);
-    font-weight: 700;
-    line-height: .98;
-    letter-spacing: -.045em;
-    text-wrap: balance;
-  }
-
-  &__body {
-    max-width: var(--text-measure-body);
-    margin: 18px 0 0;
-    color: var(--apple-secondary);
-    font-size: 15px;
-    line-height: 1.68;
-    text-wrap: pretty;
-  }
-
-  &--rail {
-    position: relative;
-    padding-left: var(--text-frame-pad-md);
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 4px auto 4px 0;
-      width: 2px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, var(--apple-blue), rgba(0,113,227,.08));
-    }
-  }
-
-  &--surface {
-    padding: var(--text-frame-pad-md);
-    border: 1px solid var(--apple-separator);
-    border-radius: 18px;
-    background: rgba(255,255,255,.7);
-    box-shadow: 0 1px 0 rgba(255,255,255,.75), 0 8px 24px rgba(0,0,0,.035);
-  }
-}
-
 /* Landing hero: title is the visual anchor, body copy is a calm supporting rail. */
 .landing-hero__copy {
   h1 {
@@ -404,11 +336,6 @@
 }
 
 @media (max-width: 620px) {
-  :root {
-    --text-frame-pad-md: 20px;
-    --text-frame-pad-lg: 24px;
-  }
-
   .landing-hero__copy {
     h1 { max-width: 11.5ch; }
 
@@ -441,8 +368,7 @@
 }
 
 @media (prefers-contrast: more) {
-  .landing-section__heading > p,
-  .text-frame--surface {
+  .landing-section__heading > p {
     border-color: rgba(60,60,67,.35);
     background: #fff;
   }
@@ -454,7 +380,6 @@
 }
 
 @media print {
-  .text-frame,
   .landing-section__heading > p,
   .editor-section-heading p {
     box-shadow: none !important;

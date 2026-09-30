@@ -32,8 +32,10 @@ const visualCard=make('button','card')
 visualCard.type='button'
 visualCard.dataset.id='visual-hero'
 visualCard.dataset.index='10'
-const visualArt=make('div','art art-visual')
-for(let index=0;index<4;index+=1) visualArt.append(make('span'))
+const visualArt=make('div','art art-photo')
+const visualImage=make('img')
+Object.assign(visualImage,{src:'./assets/worlds/visual-hero.webp?v=20260930-inner-1',alt:'',width:720,height:379,loading:'lazy',decoding:'async'})
+visualArt.append(visualImage)
 const visualFooter=make('footer','','visual scan ')
 visualFooter.append(make('b','','↗'))
 visualCard.append(
@@ -139,7 +141,7 @@ if(stage&&!reduceMotion){
 }
 
 const style=document.createElement('style')
-style.textContent='.card[data-complete="true"]::after{content:"FULL WORLD";position:absolute;left:14px;top:14px;z-index:4;font-size:7px;letter-spacing:.14em;padding:6px 8px;border-radius:999px;background:#f1eee6;color:#111216;font-weight:800}.art-visual{display:grid;grid-template-columns:1.2fr .8fr;grid-template-rows:1fr 1fr;gap:4px;padding:4px}.art-visual span{display:block;border-radius:8px;background:linear-gradient(145deg,#8b7cff,#272a36)}.art-visual span:first-child{grid-row:1/3;background:radial-gradient(circle at 45% 30%,#f1c9ad 0 16%,#3b315f 17% 38%,#15171d 39%)}.art-visual span:nth-child(2){background:linear-gradient(135deg,#6ff0cf,#162b2a)}.art-visual span:nth-child(3){background:linear-gradient(135deg,#ffb06a,#302017)}.lab[data-direction="visual-hero"] .stage{background:linear-gradient(145deg,#0c0d11,#1d1e27)}.lab[data-direction="visual-hero"] .visual>*{opacity:0}.lab[data-direction="visual-hero"] .visual::before{content:"";position:absolute;inset:3%;border-radius:24px;background:linear-gradient(90deg,#8b7cff 0 48%,transparent 48% 50%,#6ff0cf 50% 73%,transparent 73% 75%,#ffb06a 75%);opacity:.78;box-shadow:0 0 70px #8b7cff22}.lab[data-direction="visual-hero"] .visual::after{content:"VISUAL / CAREER / COVER";position:absolute;left:8%;bottom:10%;font-size:clamp(28px,5vw,70px);font-weight:900;letter-spacing:-.07em;max-width:70%;line-height:.82}'
+style.textContent='.card[data-complete="true"]::after{content:"FULL WORLD";position:absolute;right:22px;top:22px;box-shadow:0 2px 8px #11121622;z-index:4;font-size:7px;letter-spacing:.14em;padding:6px 8px;border-radius:999px;background:#f1eee6;color:#111216;font-weight:800}.lab[data-direction="visual-hero"] .stage{background:linear-gradient(145deg,#0c0d11,#1d1e27)}.lab[data-direction="visual-hero"] .visual>*{opacity:0}.lab[data-direction="visual-hero"] .visual::before{content:"";position:absolute;inset:3%;border-radius:24px;background:linear-gradient(90deg,#8b7cff 0 48%,transparent 48% 50%,#6ff0cf 50% 73%,transparent 73% 75%,#ffb06a 75%);opacity:.78;box-shadow:0 0 70px #8b7cff22}.lab[data-direction="visual-hero"] .visual::after{content:"VISUAL / CAREER / COVER";position:absolute;left:8%;bottom:10%;font-size:clamp(28px,5vw,70px);font-weight:900;letter-spacing:-.07em;max-width:70%;line-height:.82}'
 document.head.append(style)
 
 

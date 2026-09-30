@@ -8,3 +8,5 @@ import './styles/main.scss'
 sanitizeStoredProfile()
 migrateStoredProfile()
 createApp(RootApp).mount('#app')
+window.clearTimeout(window.__cvStudioFallbackTimer)
+window.__cvStudioFallbackTimer = 0

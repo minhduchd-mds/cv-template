@@ -1,7 +1,7 @@
 <template>
   <div class="studio-shell" :class="{ 'focus-mode': focusMode }">
     <header class="topbar studio-only">
-      <a class="brand" href="#top" aria-label="CV Studio home">
+      <a class="brand" href="#templates" aria-label="CV Studio home">
         <span class="brand-mark">CV</span>
         <span><strong>CV Studio</strong><small>Resume system for product & tech</small></span>
       </a>
@@ -32,19 +32,18 @@
       </div>
       <button type="button" aria-label="Dismiss Auto-complete status" @click="autoCompleteResult = null">×</button>
     </div>
+    <div v-else-if="storageNotice" class="auto-complete-toast storage-notice-toast studio-only" role="alert">
+      <div>
+        <strong>{{ storageNotice.tone === 'paused' ? 'Auto-save paused' : 'Some saved data could not be read' }}</strong>
+        <span v-if="storageNotice.tone === 'paused'">Saved CV data could not be read or preserved safely, so nothing will be overwritten. Open Backup to export your work before continuing.</span>
+        <span v-else>The unreadable data was kept untouched in browser storage, and the Studio loaded everything it could.</span>
+        <small v-if="storageNotice.keys.length">Preserved as {{ storageNotice.keys.join(', ') }}</small>
+      </div>
+      <button type="button" aria-label="Dismiss storage notice" @click="storageNotice = null">×</button>
+    </div>
 
-    <main id="top">
-      <section class="hero studio-only">
-        <div class="hero-copy">
-          <div class="eyebrow"><span></span> CV system · 2026 edition</div>
-          <h1>One profile.<br /><em>Multiple CV directions.</em></h1>
-          <p>A modern, code-aware resume studio built for Senior UI/UX, Product Design and technology roles. Pick a template, edit your profile, tune the accent and export an A4-ready CV.</p>
-          <div class="hero-meta"><div><strong>{{ templates.length }}</strong><span>starter templates</span></div><div><strong>A4</strong><span>print-ready layout</span></div><div><strong>360°</strong><span>sample profile data</span></div></div>
-        </div>
-        <div class="hero-orbit" aria-hidden="true"><div class="orbit-card orbit-card-a"><span>01</span><b>ATS Precision</b></div><div class="orbit-card orbit-card-b"><span>02</span><b>Soft Portfolio</b></div><div class="orbit-card orbit-card-c"><span>03</span><b>Executive Edge</b></div><div class="hero-badge">A4<br /><small>PDF</small></div></div>
-      </section>
-
-      <section id="templates" class="workspace studio-only">
+    <main id="templates">
+      <section class="workspace studio-only workspace-builder">
         <aside class="template-panel">
           <div class="section-heading"><div><span class="section-index">01</span><h2>Choose a direction</h2></div><p>Each template uses the same structured profile data, so content stays consistent.</p></div>
           <div class="role-avatar-panel">
@@ -56,7 +55,7 @@
               @pointerup="endAvatarDrag"
               @pointercancel="endAvatarDrag"
             >
-              <img v-if="candidate.avatar" :src="candidate.avatar" alt="" :style="avatarImageStyle" />
+              <img v-if="candidate.avatar" :src="candidate.avatar" :alt="avatarAlt" :style="avatarImageStyle" />
               <span v-else>{{ candidateInitials }}</span>
             </div>
             <div class="role-avatar-copy">
@@ -87,9 +86,9 @@
             </div>
           </div>
           <div class="role-presets" aria-label="Role presets">
-            <button v-for="preset in rolePresets" :key="preset.id" type="button" @click="applyRolePreset(preset)">
+            <button v-for="preset in rolePresets" :key="preset.id" type="button" :aria-label="`Apply ${preset.label} preset`" @click="applyRolePreset(preset)">
               <span class="role-preset-avatar" :class="[{ empty: !candidate.avatar }, avatarShapeClass]">
-                <img v-if="candidate.avatar" :src="candidate.avatar" alt="" :style="avatarImageStyle" />
+                <img v-if="candidate.avatar" :src="candidate.avatar" :alt="avatarAlt" :style="avatarImageStyle" />
                 <span v-else>{{ candidateInitials }}</span>
               </span>
               <span class="role-preset-copy">
@@ -103,13 +102,21 @@
               <span>Find template</span>
               <input v-model="templateSearch" type="search" placeholder="Role, industry, ATS, portfolio…" autocomplete="off" />
             </label>
-            <div class="template-quick-filters" role="group" aria-label="Template capabilities">
-              <button v-for="filter in templateFilters" :key="filter.id" type="button" :class="{ active: templateFilter === filter.id }" :aria-pressed="templateFilter === filter.id" @click="templateFilter = filter.id">{{ filter.label }}</button>
+            <div class="template-filter-stack">
+              <div class="template-filter-row">
+                <span class="template-filter-label" id="filter-need-label">Need</span>
+                <div class="template-quick-filters" role="group" aria-labelledby="filter-need-label">
+                  <button v-for="filter in templateFilters" :key="filter.id" type="button" :class="{ active: templateFilter === filter.id }" :aria-pressed="templateFilter === filter.id" @click="templateFilter = filter.id">{{ filter.label }}</button>
+                </div>
+              </div>
+              <div class="template-filter-row">
+                <span class="template-filter-label" id="filter-role-label">Role</span>
+                <div class="category-tabs" role="tablist" aria-labelledby="filter-role-label">
+                  <button v-for="item in categories" :key="item" type="button" :class="['category-tab', { active: category === item }]" :aria-selected="category === item" @click="category = item">{{ item === 'All' ? 'All roles' : item }}</button>
+                </div>
+              </div>
             </div>
             <div class="template-browser-count">{{ templateResultLabel }}</div>
-          </div>
-          <div class="category-tabs" role="tablist" aria-label="CV template categories">
-            <button v-for="item in categories" :key="item" type="button" :class="['category-tab', { active: category === item }]" @click="category = item">{{ item }}</button>
           </div>
           <section class="template-contract-summary" aria-label="Selected template contract">
             <div>
@@ -125,8 +132,8 @@
             </div>
           </section>
           <div class="template-grid">
-            <button v-for="template in filteredTemplates" :key="template.id" type="button" :class="['template-card', { active: selectedId === template.id }]" @click="chooseTemplate(template)">
-              <div class="template-thumb" :class="[`thumb-${template.variant}`, template.theme ? `thumb-theme-${template.theme}` : '']" :style="{ '--thumb-accent': template.accent }"><span class="thumb-sidebar"></span><span class="thumb-head"></span><span class="thumb-line line-a"></span><span class="thumb-line line-b"></span><span class="thumb-line line-c"></span></div>
+            <button v-for="template in filteredTemplates" :key="template.id" type="button" :class="['template-card', { active: selectedId === template.id }]" :aria-label="`${template.category} · ${template.name}`" @click="chooseTemplate(template)">
+              <div class="template-thumb" :class="[`thumb-${template.variant}`, template.theme ? `thumb-theme-${template.theme}` : '']" :style="{ '--thumb-accent': template.accent }" aria-hidden="true"><span class="thumb-sidebar"></span><span class="thumb-head"></span><span class="thumb-line line-a"></span><span class="thumb-line line-b"></span><span class="thumb-line line-c"></span></div>
               <span class="template-info">
                 <span class="template-meta-row">
                   <span class="template-kicker">{{ template.category }}</span>
@@ -134,7 +141,7 @@
                 </span>
                 <strong>{{ template.name }}</strong>
                 <span v-if="template.role" class="template-role">{{ template.role }}</span>
-                <span>{{ template.description }}</span>
+                <span class="template-description">{{ template.description }}</span>
                 <span class="template-capability-row">
                   <small>{{ templateContract(template).page }}</small>
                   <small>{{ templateContract(template).mode }}</small>
@@ -154,14 +161,28 @@
         <div class="preview-panel">
           <div class="preview-toolbar preview-toolbar-v3">
             <div class="preview-title"><span class="section-index">02</span><div><strong>Live preview</strong><small>{{ selectedTemplate.name }} · A4</small></div></div>
-            <div class="preview-status"><span>A4</span><span>Auto-saved</span></div>
+            <div class="preview-status"><span>A4</span><span>{{ autosavePaused ? 'Auto-save paused' : 'Auto-saved' }}</span></div>
             <div class="preview-actions">
               <div class="quality-score" :style="{ '--score-angle': `${cvScore * 3.6}deg` }" :title="`CV quality score: ${cvScore}/100 · ${scoreLabel}`" aria-live="polite"><span class="score-ring"><span>{{ cvScore }}</span></span><span><strong>CV score</strong><small>{{ scoreLabel }}</small></span></div>
               <button class="cycle-control" type="button" title="Next template (N)" @click="cycleTemplate">Next style ↻</button>
-              <button class="focus-control" :class="{ active: focusMode }" type="button" :aria-pressed="focusMode" title="Toggle focus preview (F)" @click="focusMode = !focusMode">{{ focusMode ? 'Exit focus' : 'Focus' }}</button>
-              <button class="page-guide-control" :class="{ active: pageGuidesOpen }" type="button" :aria-pressed="pageGuidesOpen" title="Show A4 page boundaries" @click="togglePageGuides">{{ pageGuidesOpen ? pageGuideSummaryLabel : 'Page guides' }}</button>
               <label class="zoom-control toolbar-control"><span>Zoom</span><select :value="zoom" aria-label="CV preview zoom" @change="setZoom(Number($event.target.value))"><option :value="0.75">75%</option><option :value="0.85">85%</option><option :value="1">100%</option></select></label>
               <label class="color-control toolbar-control accent-toolbar"><span>Accent</span><input :value="accent" type="color" aria-label="Change CV accent color" @input="updateAccent($event.target.value)" /></label>
+              <div class="preview-view-menu" @focusout="handlePreviewMenuFocusOut">
+                <button
+                  id="preview-view-toggle"
+                  class="preview-view-toggle"
+                  type="button"
+                  :class="{ active: previewMenuOpen || focusMode || pageGuidesOpen }"
+                  :aria-expanded="previewMenuOpen"
+                  aria-controls="preview-view-panel"
+                  aria-label="View options"
+                  @click="previewMenuOpen = !previewMenuOpen"
+                >View</button>
+                <div v-show="previewMenuOpen" id="preview-view-panel" class="preview-view-panel" role="region" aria-labelledby="preview-view-toggle">
+                  <button class="focus-control" :class="{ active: focusMode }" type="button" aria-label="Focus" :aria-pressed="focusMode" title="Toggle focus preview (F)" @click="focusMode = !focusMode">{{ focusMode ? 'Exit focus' : 'Focus' }}</button>
+                  <button class="page-guide-control" :class="{ active: pageGuidesOpen }" type="button" aria-label="Page guides" :aria-pressed="pageGuidesOpen" title="Show A4 page boundaries" @click="togglePageGuides">{{ pageGuidesOpen ? pageGuideSummaryLabel : 'Page guides' }}</button>
+                </div>
+              </div>
             </div>
           </div>
           <section v-if="pageGuidesOpen" class="page-guide-inspector studio-only" aria-label="Page break intelligence">
@@ -205,11 +226,6 @@
         </div>
       </section>
 
-      <section class="principles studio-only">
-        <div class="section-heading compact"><div><span class="section-index">03</span><h2>Built as a design system</h2></div></div>
-        <div class="principle-grid"><article><span>DATA</span><h3>Content separated from layout</h3><p>Edit one profile and every template updates consistently.</p></article><article><span>UX</span><h3>Readable before decorative</h3><p>Clear hierarchy, restrained density and strong recruiter scanning patterns.</p></article><article><span>CODE</span><h3>Template variants, not duplicated pages</h3><p>Shared renderer and reusable tokens keep future CV styles easy to maintain.</p></article><article><span>OUTPUT</span><h3>A4 and browser PDF ready</h3><p>Print rules remove the studio UI and preserve the selected CV document.</p></article></div>
-      </section>
-
       <footer class="site-footer studio-only"><span>CV Studio · Vue 3.5.42 · Vite 8.3.0</span><span>Editable · Responsive · Motion-aware · Print ready</span></footer>
       <div class="print-only print-document"><CvDocument :profile="candidate" :template="selectedTemplate" :accent="accent" :appearance="appearance" /></div>
     </main>
@@ -248,14 +264,21 @@ import ExportPreflightDialog from './components/ExportPreflightDialog.vue'
 import { candidate as defaultCandidate, templates } from './data/cv'
 import { autoCompleteCv, candidateCompletionReport } from './data/auto-complete-cv'
 import { safeImageSource, sanitizeProfileMedia } from './security/safe-media'
-import { hasWorkspaceProfile, patchCanonicalWorkspace, readCanonicalWorkspace } from './data/workspace-store'
+import { hasWorkspaceProfile, patchCanonicalWorkspace, readCanonicalWorkspace, WORKSPACE_KEY } from './data/workspace-store'
 import { getTemplateLayoutContract, templateHasTrait, templateSupportsField } from './data/template-layout-contracts'
+import { createItemId, ensureItemIds, fillMissingWithEmpty } from './data/profile-schema'
 
 const STORAGE_KEY = 'cv-studio-profile-v1'
 const STUDIO_KEY = 'cv-studio-settings-v1'
 const SAMPLE_VERSION_KEY = 'cv-studio-sample-version'
 const SAMPLE_VERSION = '360-v1'
-const cloneCandidate = () => JSON.parse(JSON.stringify(defaultCandidate))
+const LEGACY_DEMO_BACKUP_KEY = 'cv-studio-profile-legacy-demo-backup'
+const PERSIST_DELAY_MS = 400
+const cloneCandidate = () => {
+  const sample = JSON.parse(JSON.stringify(defaultCandidate))
+  ensureItemIds(sample)
+  return sample
+}
 const ITEM_FACTORIES = {
   highlights: () => ({ value: '10+', label: 'Meaningful outcome' }),
   experience: () => ({ role: 'Role title', company: 'Company', period: '2026 — Present', location: '', bullets: ['Describe your scope and measurable impact.'] }),
@@ -272,17 +295,24 @@ const isLegacyDemoProfile = (saved) => (
 )
 
 const hydrateCandidate = (saved) => {
-  const base = cloneCandidate()
-  if (!saved || typeof saved !== 'object') return sanitizeProfileMedia(base)
-  const hydrated = { ...base, ...saved }
-  if (!Array.isArray(saved.sections) || !saved.sections.length) hydrated.sections = base.sections
-  if (!Array.isArray(saved.certificates)) hydrated.certificates = base.certificates
-  if (!Array.isArray(saved.education)) hydrated.education = base.education
-  if (!Array.isArray(saved.projects)) hydrated.projects = base.projects
+  if (!saved || typeof saved !== 'object') return sanitizeProfileMedia(cloneCandidate())
+  const hydrated = fillMissingWithEmpty(JSON.parse(JSON.stringify(saved)), defaultCandidate)
   hydrated.projects = hydrated.projects.map((project) => ({ image: '', ...project }))
   if (typeof hydrated.avatar !== 'string') hydrated.avatar = ''
+  ensureItemIds(hydrated)
   return sanitizeProfileMedia(hydrated)
 }
+
+const readStorage = (key) => {
+  try { return { raw: localStorage.getItem(key), readable: true } } catch { return { raw: null, readable: false } }
+}
+
+const parseStored = (raw) => {
+  if (raw == null) return { value: null, ok: true }
+  try { return { value: JSON.parse(raw), ok: true } } catch { return { value: null, ok: false } }
+}
+
+const isRecord = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 
 export default {
   name: 'App',
@@ -308,6 +338,7 @@ export default {
         { id: 'lead', label: 'Leadership', note: 'Outcome led', templateId: 'executive-edge', accent: '#B58A3A', appearance: { font: 'serif', density: 'spacious', radius: 'soft', projectLayout: 'list', textScale: 1, headingScale: 1.05, sectionSpacing: 'airy' } },
       ],
       focusMode: false,
+      previewMenuOpen: false,
       autoCompleteResult: null,
       avatarError: '',
       avatarShapes: [
@@ -328,6 +359,10 @@ export default {
       historyCoalesceTimer: null,
       historyRestoring: false,
       workspaceReady: false,
+      persistTimer: null,
+      persistPending: false,
+      storageNotice: null,
+      autosavePaused: false,
       backupOpen: false,
       exportPreflightOpen: false,
       printHealth: { a4HeightPx:1123, measuredHeight:1123, requiredFit:1, appliedFit:1, onePagePossible:true, naturalPages:1, pressure:[] },
@@ -341,7 +376,7 @@ export default {
     categories() { return ['All'].concat(Array.from(new Set(this.templates.map((item) => item.category)))) },
     templateFilters() {
       return [
-        { id:'all', label:'All' },
+        { id:'all', label:'All needs' },
         { id:'ats', label:'ATS-ready' },
         { id:'portfolio', label:'Portfolio' },
         { id:'avatar', label:'Avatar' },
@@ -398,6 +433,10 @@ export default {
         transform: `scale(${this.avatarZoom}) rotate(${this.avatarRotate}deg)`,
       }
     },
+    avatarAlt() {
+      const name = String(this.candidate.name || '').trim()
+      return name ? `${name} profile photo` : 'Profile photo'
+    },
     canUndo() { return this.undoStack.length > 0 },
     canRedo() { return this.redoStack.length > 0 },
     undoTitle() { return this.canUndo ? `Undo · ${this.undoStack[this.undoStack.length - 1].label}` : 'Nothing to undo' },
@@ -429,51 +468,153 @@ export default {
     },
   },
   watch: {
-    candidate: { deep: true, handler(value) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(value)) } catch (error) { console.warn('Unable to persist CV profile locally. Uploaded images may exceed browser storage.', error) }
-      this.persistCanonicalWorkspace()
+    candidate: { deep: true, handler() {
+      this.schedulePersist()
       this.schedulePageGuides()
     } },
-    selectedId: 'persistStudioSettings',
-    accent: 'persistStudioSettings',
-    zoom: 'persistStudioSettings',
-    appearance: { deep: true, handler: 'persistStudioSettings' },
+    selectedId: 'handleStudioSettingsChange',
+    accent: 'handleStudioSettingsChange',
+    zoom: 'handleStudioSettingsChange',
+    appearance: { deep: true, handler: 'handleStudioSettingsChange' },
+    editorOpen: {
+      immediate: true,
+      handler(value) {
+        this.$emit('editor-open', Boolean(value))
+      },
+    },
   },
   mounted() {
-    try {
-      const workspace = readCanonicalWorkspace()
-      const legacySaved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-      const saved = hasWorkspaceProfile(workspace) ? workspace.profile : legacySaved
-      const sampleVersion = localStorage.getItem(SAMPLE_VERSION_KEY)
-      const shouldUpgradeLegacyDemo = isLegacyDemoProfile(saved) && sampleVersion !== SAMPLE_VERSION
-      this.candidate = hydrateCandidate(shouldUpgradeLegacyDemo ? null : saved)
-      localStorage.setItem(SAMPLE_VERSION_KEY, SAMPLE_VERSION)
+    this.restoreWorkspace()
+    window.addEventListener('keydown', this.handleShortcut)
+    window.addEventListener('resize', this.schedulePageGuides)
+    window.addEventListener('pagehide', this.flushPersist)
+    document.addEventListener('visibilitychange', this.handleVisibilityChange)
+    document.addEventListener('pointerdown', this.handlePreviewMenuPointer, true)
+  },
+  beforeUnmount() {
+    this.flushPersist()
+    window.removeEventListener('keydown', this.handleShortcut)
+    window.removeEventListener('resize', this.schedulePageGuides)
+    window.removeEventListener('pagehide', this.flushPersist)
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+    document.removeEventListener('pointerdown', this.handlePreviewMenuPointer, true)
+    window.clearTimeout(this.historyCoalesceTimer)
+    window.clearTimeout(this.pageGuideTimer)
+    window.clearTimeout(this.persistTimer)
+  },
+  methods: {
+    /**
+     * Each storage key is read and parsed on its own. Unreadable data is copied to a
+     * `-corrupt-<timestamp>` key before anything can overwrite it; if that copy fails,
+     * auto-save stays paused for the session instead of replacing the user's data.
+     */
+    restoreWorkspace() {
+      let safeToPersist = true
+      const preservedKeys = []
+      const preserve = (key, raw) => {
+        const backupKey = `${key}-corrupt-${Date.now()}`
+        try {
+          localStorage.setItem(backupKey, raw)
+          preservedKeys.push(backupKey)
+        } catch (error) {
+          console.warn(`Unable to preserve unreadable ${key}; auto-save paused.`, error)
+          safeToPersist = false
+        }
+      }
+      const readJson = (key) => {
+        const { raw, readable } = readStorage(key)
+        if (!readable) {
+          safeToPersist = false
+          return null
+        }
+        const parsed = parseStored(raw)
+        if (!parsed.ok) preserve(key, raw)
+        return parsed.value
+      }
 
-      const legacyStudio = JSON.parse(localStorage.getItem(STUDIO_KEY) || '{}')
-      const studioSettings = workspace?.studio && Object.keys(workspace.studio).length ? workspace.studio : legacyStudio
+      const workspaceRaw = readStorage(WORKSPACE_KEY)
+      if (!workspaceRaw.readable) safeToPersist = false
+      const workspace = readCanonicalWorkspace()
+      if (workspaceRaw.raw != null && !workspace) preserve(WORKSPACE_KEY, workspaceRaw.raw)
+
+      const legacyProfile = readJson(STORAGE_KEY)
+      const legacyStudio = readJson(STUDIO_KEY)
+      const saved = hasWorkspaceProfile(workspace) ? workspace.profile : (isRecord(legacyProfile) ? legacyProfile : null)
+
+      const sampleVersion = readStorage(SAMPLE_VERSION_KEY).raw
+      const shouldUpgradeLegacyDemo = isLegacyDemoProfile(saved) && sampleVersion !== SAMPLE_VERSION
+      if (shouldUpgradeLegacyDemo) {
+        try { localStorage.setItem(LEGACY_DEMO_BACKUP_KEY, JSON.stringify(saved)) } catch (error) {
+          console.warn('Unable to back up the legacy demo profile; keeping it.', error)
+        }
+      }
+      const keepLegacyDemo = shouldUpgradeLegacyDemo && readStorage(LEGACY_DEMO_BACKUP_KEY).raw == null
+
+      try {
+        this.candidate = hydrateCandidate(shouldUpgradeLegacyDemo && !keepLegacyDemo ? null : saved)
+      } catch (error) {
+        console.warn('Unable to restore saved CV profile; auto-save paused.', error)
+        this.candidate = sanitizeProfileMedia(cloneCandidate())
+        safeToPersist = false
+      }
+      try { localStorage.setItem(SAMPLE_VERSION_KEY, SAMPLE_VERSION) } catch { /* version marker is optional */ }
+
+      const studioSettings = isRecord(workspace?.studio) && Object.keys(workspace.studio).length
+        ? workspace.studio
+        : (isRecord(legacyStudio) ? legacyStudio : {})
       if (this.templates.some((item) => item.id === studioSettings.selectedId)) this.selectedId = studioSettings.selectedId
       if (typeof studioSettings.accent === 'string') this.accent = studioSettings.accent
       if ([0.75, 0.85, 1].includes(studioSettings.zoom)) this.zoom = studioSettings.zoom
-      if (studioSettings.appearance && typeof studioSettings.appearance === 'object') {
-        this.appearance = { ...this.appearance, ...studioSettings.appearance }
+      if (isRecord(studioSettings.appearance)) this.appearance = { ...this.appearance, ...studioSettings.appearance }
+
+      if (!safeToPersist) {
+        this.storageNotice = { tone: 'paused', keys: preservedKeys }
+      } else if (preservedKeys.length) {
+        this.storageNotice = { tone: 'preserved', keys: preservedKeys }
       }
-      this.workspaceReady = true
-      if (workspace || legacySaved || Object.keys(legacyStudio).length) this.persistCanonicalWorkspace()
-    } catch (error) {
-      console.warn('Unable to restore saved CV Studio state.', error)
-      this.candidate = sanitizeProfileMedia(cloneCandidate())
-      this.workspaceReady = true
-    }
-    window.addEventListener('keydown', this.handleShortcut)
-    window.addEventListener('resize', this.schedulePageGuides)
-  },
-  beforeUnmount() {
-    window.removeEventListener('keydown', this.handleShortcut)
-    window.removeEventListener('resize', this.schedulePageGuides)
-    window.clearTimeout(this.historyCoalesceTimer)
-    window.clearTimeout(this.pageGuideTimer)
-  },
-  methods: {
+      this.workspaceReady = safeToPersist
+      this.autosavePaused = !safeToPersist
+      if (safeToPersist && (workspace || saved || Object.keys(studioSettings).length)) {
+        this.persistPending = true
+        this.flushPersist()
+      }
+    },
+    schedulePersist() {
+      this.persistPending = true
+      window.clearTimeout(this.persistTimer)
+      this.persistTimer = window.setTimeout(this.flushPersist, PERSIST_DELAY_MS)
+    },
+    flushPersist() {
+      window.clearTimeout(this.persistTimer)
+      this.persistTimer = null
+      if (!this.workspaceReady || !this.persistPending) return
+      this.persistPending = false
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.candidate)) } catch (error) {
+        console.warn('Unable to persist CV profile locally. Uploaded images may exceed browser storage.', error)
+      }
+      try {
+        localStorage.setItem(STUDIO_KEY, JSON.stringify({
+          selectedId: this.selectedId,
+          accent: this.accent,
+          zoom: this.zoom,
+          appearance: this.appearance,
+        }))
+      } catch (error) {
+        console.warn('Unable to persist CV Studio settings.', error)
+      }
+      this.persistCanonicalWorkspace()
+    },
+    // Discrete actions save right away; only keystroke streams are debounced.
+    persistAfterUpdate() {
+      this.$nextTick(this.flushPersist)
+    },
+    handleVisibilityChange() {
+      if (document.visibilityState === 'hidden') this.flushPersist()
+    },
+    handleStudioSettingsChange() {
+      this.schedulePersist()
+      this.schedulePageGuides()
+    },
     templateContract(template) { return getTemplateLayoutContract(template?.id) },
     templateSupportsField(templateId,fieldId) { return templateSupportsField(templateId,fieldId) },
     templateHasTrait(templateId,trait) { return templateHasTrait(templateId,trait) },
@@ -481,6 +622,25 @@ export default {
     togglePageGuides() {
       this.pageGuidesOpen=!this.pageGuidesOpen
       if(this.pageGuidesOpen)this.schedulePageGuides(true)
+    },
+    handlePreviewMenuPointer(event) {
+      if (!this.previewMenuOpen) return
+      const menu = this.$el?.querySelector?.('.preview-view-menu')
+      if (menu && !menu.contains(event.target)) this.previewMenuOpen = false
+    },
+    handlePreviewMenuFocusOut(event) {
+      if (!this.previewMenuOpen) return
+      const menu = event.currentTarget
+      const next = event.relatedTarget
+      if (!next || !menu.contains(next)) this.previewMenuOpen = false
+    },
+    closePreviewMenu() {
+      if (!this.previewMenuOpen) return
+      const menu = this.$el?.querySelector?.('.preview-view-menu')
+      const active = document.activeElement
+      const restore = Boolean(menu && active && menu.contains(active))
+      this.previewMenuOpen = false
+      if (restore) this.$nextTick(() => this.$el?.querySelector?.('.preview-view-toggle')?.focus())
     },
     schedulePageGuides(immediate=false) {
       if(!this.pageGuidesOpen)return
@@ -561,6 +721,7 @@ export default {
       const field = request && typeof request === 'object' ? request.field : ''
       this.editorTab = allowed.includes(tab) ? tab : 'profile'
       this.editorField = typeof field === 'string' ? field : ''
+      this.previewMenuOpen = false
       this.editorOpen = true
     },
     async uploadQuickAvatar(event) {
@@ -675,8 +836,10 @@ export default {
     runAutoComplete() {
       this.checkpointHistory('Auto-complete CV')
       const result = autoCompleteCv(this.candidate, cloneCandidate())
+      ensureItemIds(result.profile)
       this.candidate = sanitizeProfileMedia(result.profile)
       this.autoCompleteResult = result.summary
+      this.persistAfterUpdate()
       if (result.summary.changedFields) this.openEditor('profile')
     },
     handleShortcut(event) {
@@ -694,12 +857,20 @@ export default {
         this.redo()
         return
       }
+      if (key === 'escape' && this.previewMenuOpen) {
+        event.preventDefault()
+        this.closePreviewMenu()
+        return
+      }
       if (isTyping || event.metaKey || event.ctrlKey || event.altKey) return
       if (key === 'e') this.openEditor('profile')
       else if (key === 'f') this.focusMode = !this.focusMode
       else if (key === 'n') this.cycleTemplate()
       else if (key === 'p') { event.preventDefault(); this.openExportPreflight() }
-      else if (key === 'escape') { this.editorOpen = false; this.focusMode = false }
+      else if (key === 'escape') {
+        this.editorOpen = false
+        this.focusMode = false
+      }
     },
     captureStudioState() {
       return {
@@ -747,6 +918,7 @@ export default {
       this.redoStack.push({ label: entry.label, state: this.captureStudioState() })
       if (this.redoStack.length > 30) this.redoStack.shift()
       this.restoreStudioState(entry.state)
+      this.persistAfterUpdate()
     },
     redo() {
       if (!this.redoStack.length) return
@@ -755,6 +927,7 @@ export default {
       this.undoStack.push({ label: entry.label, state: this.captureStudioState() })
       if (this.undoStack.length > 30) this.undoStack.shift()
       this.restoreStudioState(entry.state)
+      this.persistAfterUpdate()
     },
     setZoom(value) {
       if (![0.75, 0.85, 1].includes(value) || value === this.zoom) return
@@ -777,20 +950,6 @@ export default {
           appearance: JSON.parse(JSON.stringify(this.appearance)),
         },
       }, 'vue')
-    },
-    persistStudioSettings() {
-      try {
-        localStorage.setItem(STUDIO_KEY, JSON.stringify({
-          selectedId: this.selectedId,
-          accent: this.accent,
-          zoom: this.zoom,
-          appearance: this.appearance,
-        }))
-      } catch (error) {
-        console.warn('Unable to persist CV Studio settings.', error)
-      }
-      this.persistCanonicalWorkspace()
-      this.schedulePageGuides()
     },
     updateAppearance({ key, value }) {
       if (!['font', 'density', 'radius', 'projectLayout', 'textScale', 'headingScale', 'sectionSpacing', 'avatarShape', 'avatarSize', 'avatarX', 'avatarY', 'avatarZoom', 'avatarRotate'].includes(key)) return
@@ -817,7 +976,7 @@ export default {
       const factory = ITEM_FACTORIES[section]
       if (!factory || !Array.isArray(this.candidate[section])) return
       this.checkpointHistory(`Add ${section} item`)
-      this.candidate[section].push(factory())
+      this.candidate[section].push({ ...factory(), id: createItemId(section) })
     },
     removeProfileItem({ section, index }) {
       if (!Array.isArray(this.candidate[section])) return

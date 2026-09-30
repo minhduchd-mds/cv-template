@@ -44,7 +44,7 @@
 .template-role {
   overflow: hidden;
   color: #667085;
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -60,14 +60,14 @@
 .template-badge {
   display: inline-flex;
   align-items: center;
-  min-height: 18px;
-  padding: 3px 6px;
+  min-height: 20px;
+  padding: 3px 7px;
   border-radius: 999px;
   color: #344054;
   background: #eef1f5;
-  font-size: 7px;
-  font-weight: 800;
-  letter-spacing: .04em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .02em;
 }
 
 /* 01 — Executive Edge */
