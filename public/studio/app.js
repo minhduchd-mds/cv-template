@@ -1,5 +1,7 @@
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
+
 
   const PROFILE_KEY = 'cv-studio-static-v2'
   const SETTINGS_KEY = 'cv-studio-static-settings-v2'
@@ -672,7 +674,7 @@
       contract.traits.includes('ats')||contract.traits.includes('ats-readable')?'ATS-readable':'',
       contract.traits.includes('portfolio')?'Portfolio':'',
     ].filter(Boolean)
-    host.innerHTML=
+    safeDom(host).html =
       '<div><span>'+escapeHtml(hierarchy)+'</span><strong>'+escapeHtml(template.name)+'</strong><p>'+escapeHtml(contract.structure||template.role||'Template structure')+'</p></div>'+
       '<div>'+pills.map((item)=>'<small>'+escapeHtml(item)+'</small>').join('')+'</div>'
   }
@@ -687,11 +689,11 @@
     })
     const countLabel = $('#templateCountLabel')
     if (countLabel) countLabel.textContent = visibleTemplates.length+' of '+templates.length+' templates · 4 role presets'
-    list.innerHTML = ''
+    safeDom(list).html = ''
     renderStaticTemplateContract()
 
     if (!visibleTemplates.length) {
-      list.innerHTML = '<div class="template-list-empty"><strong>No template matches these filters.</strong><span>Clear search or change capability filter.</span><button type="button" id="clearStaticTemplateFilters">Clear filters</button></div>'
+      safeDom(list).html = '<div class="template-list-empty"><strong>No template matches these filters.</strong><span>Clear search or change capability filter.</span><button type="button" id="clearStaticTemplateFilters">Clear filters</button></div>'
       $('#clearStaticTemplateFilters')?.addEventListener('click',()=>{
         const search=$('#templateSearch'); if(search)search.value=''
         templateQuickFilter='all'
@@ -707,7 +709,7 @@
       button.type = 'button'
       button.className = 'template-card'+(template.id === settings.templateId ? ' active' : '')
       button.setAttribute('aria-pressed', template.id === settings.templateId ? 'true' : 'false')
-      button.innerHTML =
+      safeDom(button).html =
         '<span class="template-thumb thumb-'+template.id+'" style="--thumb-accent:'+template.accent+'"><i></i><i></i><i></i></span>'+
         '<span class="static-template-copy"><strong>'+escapeHtml(template.name)+'</strong><small>'+escapeHtml(template.role || template.category)+'</small>'+
         '<span class="static-template-chips"><i>'+escapeHtml(contract.page||'1–2 pages')+'</i><i>'+escapeHtml(contract.mode||'flexible')+'</i>'+(contract.fields.avatar!==false?'<i>avatar</i>':'')+'</span></span>'
@@ -1092,7 +1094,7 @@
 
     const dedicatedRenderer = referenceRenderers[template.id]
     if (dedicatedRenderer) {
-      paper.innerHTML = dedicatedRenderer()
+      safeDom(paper).html = dedicatedRenderer()
       $('#activeTemplateLabel').textContent = `${template.name} · A4`
       return
     }
@@ -1126,7 +1128,7 @@
       </section>
     ` : ''
 
-    paper.innerHTML = `
+    safeDom(paper).html = `
       <header class="cv-head" data-edit-pane="content" data-edit-focus="#name">
         <div class="cv-head-main">
           <div>
@@ -1162,12 +1164,12 @@
 
   const renderExperienceEditor = () => {
     const host = $('#experienceEditor')
-    host.innerHTML = ''
+    safeDom(host).html = ''
 
     profile.experience.forEach((job, index) => {
       const card = document.createElement('article')
       card.className = 'editor-card'
-      card.innerHTML = `
+      safeDom(card).html = `
         <div class="editor-card-head">
           <strong>Experience ${index + 1}</strong>
           <button type="button" data-remove>Remove</button>
@@ -1205,12 +1207,12 @@
 
   const renderProjectsEditor = () => {
     const host = $('#projectEditor')
-    host.innerHTML = ''
+    safeDom(host).html = ''
 
     profile.projects.forEach((project, index) => {
       const card = document.createElement('article')
       card.className = 'editor-card'
-      card.innerHTML = `
+      safeDom(card).html = `
         <div class="editor-card-head">
           <strong>Project ${index + 1}</strong>
           <button type="button" data-remove>Remove</button>
@@ -1310,7 +1312,7 @@
     const zoom = Number.isFinite(Number(settings.avatarZoom)) ? Math.min(2.5, Math.max(1, Number(settings.avatarZoom))) : 1
     const rotate = Number.isFinite(Number(settings.avatarRotate)) ? Math.min(180, Math.max(-180, Number(settings.avatarRotate))) : 0
     nodes.forEach((node) => {
-      node.innerHTML = ''
+      safeDom(node).html = ''
       node.classList.remove('avatar-shape-circle', 'avatar-shape-rounded', 'avatar-shape-square')
       node.classList.add(`avatar-shape-${shape}`)
       if (avatar) {
@@ -1528,7 +1530,7 @@
     const section = document.createElement('section')
     section.id = 'contentHealth'
     section.className = 'content-health'
-    section.innerHTML =
+    safeDom(section).html =
       '<div class="content-health-head"><div><span>Content intelligence</span><strong>Content Health</strong><small id="contentHealthSummary">Checking…</small></div><button id="contentHealthToggle" type="button" aria-expanded="true">Hide</button></div>' +
       '<div id="contentHealthGroups" class="content-health-groups"></div>' +
       '<div id="contentHealthList" class="content-health-list"></div>'
@@ -1590,18 +1592,18 @@
     summary.textContent = clear + '/' + totalChecks + ' checks clear · ' + blockers + ' action' + (blockers === 1 ? '' : 's') + ' needed'
 
     const groupNames = ['Readability','Evidence','Template coverage']
-    groups.innerHTML = groupNames.map((group) => {
+    safeDom(groups).html = groupNames.map((group) => {
       const count = checks.filter((item) => item.group === group).length
       return '<span><strong>' + escapeHtml(group) + '</strong><small>' + (count ? count + ' finding' + (count === 1 ? '' : 's') : 'Clear') + '</small></span>'
     }).join('')
 
     if (!checks.length) {
-      host.innerHTML = '<div class="content-health-clear"><strong>No content issues detected</strong><p>Current content length, evidence fields and template coverage look clean.</p></div>'
+      safeDom(host).html = '<div class="content-health-clear"><strong>No content issues detected</strong><p>Current content length, evidence fields and template coverage look clean.</p></div>'
       return
     }
 
     const order = { warning:0, review:1, info:2 }
-    host.innerHTML = checks.sort((a,b) => order[a.level]-order[b.level]).map((item) => (
+    safeDom(host).html = checks.sort((a,b) => order[a.level]-order[b.level]).map((item) => (
       '<article class="content-health-item ' + item.level + '">' +
         '<i></i><div><span>' + escapeHtml(item.group) + '</span><strong>' + escapeHtml(item.title) + '</strong><p>' + escapeHtml(item.detail) + '</p></div>' +
         '<button type="button" data-health-action="' + escapeHtml(item.action) + '">' + escapeHtml(item.actionLabel) + '</button>' +
@@ -1674,7 +1676,7 @@
       const line=document.createElement('div')
       line.className='static-page-guide-line'+(lineRiskIds.length?' risk':'')
       line.style.top=top+'px'
-      line.innerHTML='<span>Page '+page+(lineRiskIds.length?' · '+new Set(lineRiskIds).size+' near cut':'')+'</span>'
+      safeDom(line).html ='<span>Page '+page+(lineRiskIds.length?' · '+new Set(lineRiskIds).size+' near cut':'')+'</span>'
       layer.appendChild(line)
     }
     paper.appendChild(layer)
@@ -1683,10 +1685,10 @@
     $('#pageGuideInspectorSummary').textContent=pages+' page'+(pages===1?'':'s')+' · '+risks.length+' edge risk'+(risks.length===1?'':'s')
     const list=$('#pageGuideRiskList')
     if(!risks.length){
-      list.innerHTML='<div class="static-page-guide-clean"><strong>No risky block near an A4 cut</strong><span>Current natural flow has no detected item in the 28px edge zone.</span></div>'
+      safeDom(list).html ='<div class="static-page-guide-clean"><strong>No risky block near an A4 cut</strong><span>Current natural flow has no detected item in the 28px edge zone.</span></div>'
       return
     }
-    list.innerHTML=risks.map((risk)=>'<button type="button" data-page-risk-focus="'+escapeHtml(risk.id)+'" data-page-risk-section="'+escapeHtml(risk.section||'')+'" class="'+(risk.crosses?'crossing':'')+'"><span>Page '+risk.page+' · '+(risk.crosses?'Crossing cut':'Near cut')+'</span><strong>'+escapeHtml(risk.label)+'</strong><small>'+escapeHtml(risk.section||'Content')+' · '+Math.round(risk.distance)+'px from boundary</small><em data-page-risk-edit>Edit block</em></button>').join('')
+    safeDom(list).html =risks.map((risk)=>'<button type="button" data-page-risk-focus="'+escapeHtml(risk.id)+'" data-page-risk-section="'+escapeHtml(risk.section||'')+'" class="'+(risk.crosses?'crossing':'')+'"><span>Page '+risk.page+' · '+(risk.crosses?'Crossing cut':'Near cut')+'</span><strong>'+escapeHtml(risk.label)+'</strong><small>'+escapeHtml(risk.section||'Content')+' · '+Math.round(risk.distance)+'px from boundary</small><em data-page-risk-edit>Edit block</em></button>').join('')
   }
 
   const renderAll = () => {
@@ -1947,7 +1949,7 @@
     shell.id = 'exportPreflightShell'
     shell.className = 'export-preflight-shell no-print'
     shell.hidden = true
-    shell.innerHTML =
+    safeDom(shell).html =
       '<div class="export-preflight-backdrop" data-export-close></div>' +
       '<section class="export-preflight-dialog" role="dialog" aria-modal="true" aria-labelledby="exportPreflightTitle">' +
         '<header><div><span>Export check</span><h2 id="exportPreflightTitle">PDF Preflight</h2><p>Check A4 fit before opening the browser print dialog.</p></div><button type="button" data-export-close aria-label="Close export check">×</button></header>' +
@@ -1994,26 +1996,26 @@
       detail = 'The CV will scale to about ' + percent + '% to stay on one A4 page.'
     }
     status.className = 'export-preflight-status ' + tone
-    status.innerHTML =
+    safeDom(status).html =
       '<div><span>Status</span><strong>' + escapeHtml(title) + '</strong><p>' + escapeHtml(detail) + '</p></div>' +
       '<div class="export-preflight-metrics"><span><small>One-page scale</small><strong>' + percent + '%</strong></span><span><small>Natural length</small><strong>' + health.naturalPages + ' page' + (health.naturalPages === 1 ? '' : 's') + '</strong></span></div>'
     const pressure = $('#exportPressureList')
-    pressure.innerHTML = health.pressure.length
+    safeDom(pressure).html = health.pressure.length
       ? health.pressure.map((item) => '<span><strong>' + escapeHtml(item.label) + '</strong><small>' + Math.round(item.height / health.measuredHeight * 100) + '% of content height</small></span>').join('')
       : '<small>No large section detected.</small>'
     one.disabled = !health.onePagePossible
     if (!health.onePagePossible) {
       multi.checked = true
       one.checked = false
-      $('#exportPreflightAdvice').innerHTML = '<strong>Why one-page is disabled</strong><p>CV Studio will not shrink below 68%. Shorten content, use Compact spacing, or export multiple pages.</p>'
+      safeDom($('#exportPreflightAdvice')).html = '<strong>Why one-page is disabled</strong><p>CV Studio will not shrink below 68%. Shorten content, use Compact spacing, or export multiple pages.</p>'
     } else if (health.appliedFit < 0.8) {
       one.checked = true
       multi.checked = false
-      $('#exportPreflightAdvice').innerHTML = '<strong>Readable, but compressed</strong><p>Consider Compact spacing or shortening the largest section before sending the CV.</p>'
+      safeDom($('#exportPreflightAdvice')).html = '<strong>Readable, but compressed</strong><p>Consider Compact spacing or shortening the largest section before sending the CV.</p>'
     } else {
       one.checked = true
       multi.checked = false
-      $('#exportPreflightAdvice').innerHTML = '<strong>Preflight passed</strong><p>Web content is within the supported one-page fit range. Verify the exported PDF text layer in ATS after saving.</p>'
+      safeDom($('#exportPreflightAdvice')).html = '<strong>Preflight passed</strong><p>Web content is within the supported one-page fit range. Verify the exported PDF text layer in ATS after saving.</p>'
     }
   }
 
@@ -2180,7 +2182,7 @@
         '<div class="layout-section-group"><div class="layout-group-title"><strong>Side content</strong><small>Skills · Languages</small></div>'+side.map((section)=>renderLayoutSectionRow(section,contract)).join('')+'</div>'
       : sections.map((section)=>renderLayoutSectionRow(section,contract)).join('')
 
-    host.innerHTML=
+    safeDom(host).html =
       '<section class="layout-master-context">'+
         '<div><span>'+escapeHtml(layoutModeLabel(contract.mode))+'</span><strong>'+escapeHtml(template.name)+'</strong><p>'+escapeHtml(templateDesignMeta[template.id]?.structure||contract.label)+'</p></div>'+
         '<div class="layout-master-stats"><span><small>Visible</small><strong>'+visible.length+'/'+supported.length+'</strong></span><span><small>Page intent</small><strong>'+escapeHtml(contract.page||'Auto')+'</strong></span></div>'+
@@ -2544,17 +2546,17 @@
     if (!host) return
     if (!payload) {
       host.classList.remove('error')
-      host.innerHTML = '<small>No backup selected.</small>'
+      safeDom(host).html = '<small>No backup selected.</small>'
       return
     }
     if (payload.error) {
       host.classList.add('error')
-      host.innerHTML = '<strong>Cannot restore</strong><small>' + escapeHtml(payload.error) + '</small>'
+      safeDom(host).html = '<strong>Cannot restore</strong><small>' + escapeHtml(payload.error) + '</small>'
       return
     }
     host.classList.remove('error')
     const summary = payload.summary || backupSummary(payload.data || {})
-    host.innerHTML =
+    safeDom(host).html =
       '<div><span>Profile</span><strong>' + escapeHtml(summary.name || 'Unnamed CV') + '</strong></div>' +
       '<div><span>Experience</span><strong>' + Number(summary.experience || 0) + '</strong></div>' +
       '<div><span>Versions</span><strong>' + Number(summary.versions || 0) + '</strong></div>' +
@@ -2567,7 +2569,7 @@
     const host = $('#workspaceBackupSummary')
     if (!host) return
     const summary = backupSummary(workspaceSnapshot())
-    host.innerHTML =
+    safeDom(host).html =
       '<article><span>Profile</span><strong>' + escapeHtml(summary.name) + '</strong></article>' +
       '<article><span>Experience</span><strong>' + summary.experience + '</strong></article>' +
       '<article><span>Projects</span><strong>' + summary.projects + '</strong></article>' +
@@ -2581,7 +2583,7 @@
     shell.id = 'workspaceBackupShell'
     shell.className = 'workspace-backup-shell no-print'
     shell.hidden = true
-    shell.innerHTML =
+    safeDom(shell).html =
       '<div class="workspace-backup-backdrop" data-backup-close></div>' +
       '<section class="workspace-backup-dialog" role="dialog" aria-modal="true" aria-labelledby="workspaceBackupTitle">' +
         '<header><div><span>Data safety</span><h2 id="workspaceBackupTitle">Backup & Recovery</h2><p>Export the current CV Studio workspace before major edits or restore a previous backup.</p></div><button type="button" data-backup-close aria-label="Close backup dialog">×</button></header>' +

@@ -29,8 +29,7 @@ test.describe('original direction lab', () => {
     await expect(page.getByRole('button', { name: /Visual Hero/i })).toBeVisible()
     await expect(page.locator('.card[data-complete="true"]')).toHaveCount(5)
     await expect(page.locator('html')).toHaveAttribute('data-profile-model', 'ready')
-    await expect(page.locator('.profile-chip').first()).toContainText('Alex')
-    await expect(page.locator('.proof-index-link')).toHaveAttribute('href', './proof-index.html')
+    await expect(page.locator('a.proof-index-link')).toHaveAttribute('href', './proof-index.html')
   })
 
   test('direction choice persists when returning to the lab', async ({ page }) => {

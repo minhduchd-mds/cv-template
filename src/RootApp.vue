@@ -22,10 +22,27 @@
 </template>
 
 <script>
-import StudioView from './App.vue'
+import { defineAsyncComponent } from 'vue'
 import MarketingLanding from './landing/MarketingLanding.vue'
-import ConceptExperience from './concepts/ConceptExperience.vue'
-import InterviewStudio from './interview/InterviewStudio.vue'
+
+const RELOAD_FLAG = 'cvstudio:chunk-reload'
+// A redeploy replaces hashed chunk files; reload once so a stale tab picks up the new index.
+const lazyView = (load) => defineAsyncComponent(() => load()
+  .then((module) => {
+    sessionStorage.removeItem(RELOAD_FLAG)
+    return module
+  })
+  .catch((error) => {
+    if (!sessionStorage.getItem(RELOAD_FLAG)) {
+      sessionStorage.setItem(RELOAD_FLAG, '1')
+      window.location.reload()
+    }
+    throw error
+  }))
+const loadStudio = () => import('./App.vue')
+const StudioView = lazyView(loadStudio)
+const ConceptExperience = lazyView(() => import('./concepts/ConceptExperience.vue'))
+const InterviewStudio = lazyView(() => import('./interview/InterviewStudio.vue'))
 
 const IDS = ['apple', 'bento', 'engineer', 'case-study', 'executive']
 const STUDIO_INTERNAL_HASHES = new Set(['#top', '#templates'])
@@ -120,6 +137,11 @@ export default {
   mounted() {
     window.addEventListener('hashchange', this.syncRoute)
     this.updateMeta()
+    if (this.routeMode === 'landing') {
+      const prefetch = () => loadStudio().catch(() => {})
+      if ('requestIdleCallback' in window) window.requestIdleCallback(prefetch, { timeout: 4000 })
+      else window.setTimeout(prefetch, 2500)
+    }
   },
   beforeUnmount() {
     window.removeEventListener('hashchange', this.syncRoute)

@@ -1,5 +1,7 @@
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
+
 
   const PROFILE_KEY = 'cv-studio-static-v2'
   const STOP_WORDS = new Set([
@@ -298,14 +300,14 @@
     button.id = 'atsScanButton'
     button.type = 'button'
     button.className = 'button ats-trigger'
-    button.innerHTML = '<span>ATS Scan</span><b id="atsScoreBadge">—</b>'
+    safeDom(button).html = '<span>ATS Scan</span><b id="atsScoreBadge">—</b>'
     actions.insertBefore(button, $('#reset'))
 
     const shell = document.createElement('div')
     shell.id = 'atsShell'
     shell.className = 'ats-shell'
     shell.hidden = true
-    shell.innerHTML = [
+    safeDom(shell).html = [
       '<div class="ats-backdrop" data-ats-close></div>',
       '<aside class="ats-panel" role="dialog" aria-modal="true" aria-labelledby="atsTitle">',
         '<header class="ats-head">',
@@ -370,17 +372,17 @@
       jobScore.textContent = '—'
       large.textContent = '—'
       meta.textContent = 'Add a JD to calculate match.'
-      matched.innerHTML = '<span class="ats-empty-chip">No JD yet</span>'
-      missing.innerHTML = '<span class="ats-empty-chip">No JD yet</span>'
+      safeDom(matched).html = '<span class="ats-empty-chip">No JD yet</span>'
+      safeDom(missing).html = '<span class="ats-empty-chip">No JD yet</span>'
       return
     }
     jobScore.textContent = match.score
     large.textContent = match.score + '%'
     meta.textContent = match.matched.length + ' of ' + match.terms.length + ' priority terms found'
-    matched.innerHTML = match.matched.length
+    safeDom(matched).html = match.matched.length
       ? match.matched.map((term) => '<span>' + esc(term) + '</span>').join('')
       : '<span class="ats-empty-chip">No priority terms matched yet</span>'
-    missing.innerHTML = match.missing.length
+    safeDom(missing).html = match.missing.length
       ? match.missing.map((term) => '<span>' + esc(term) + '</span>').join('')
       : '<span class="ats-empty-chip">No missing priority terms detected</span>'
   }
@@ -397,7 +399,7 @@
     $('#atsContentScore').textContent = report.content.score
     $('#atsTemplateNote').textContent = ($('#activeTemplateLabel')?.textContent || 'Current template') + ' · ' + report.content.wordCount + ' words'
 
-    $('#atsFieldList').innerHTML = report.groups.map((item) => {
+    safeDom($('#atsFieldList')).html = report.groups.map((item) => {
       const status = statusForCoverage(item.coverage)
       const meta = item.coverage.present
         ? item.coverage.matched + '/' + item.coverage.total + ' source value(s) found'
@@ -409,7 +411,7 @@
       '</article>'
     }).join('')
 
-    $('#atsCheckList').innerHTML = report.checks.map((check) =>
+    safeDom($('#atsCheckList')).html = report.checks.map((check) =>
       '<article class="ats-check ' + check.status + '">' +
         '<span aria-hidden="true">' + (check.status === 'pass' ? '✓' : check.status === 'fail' ? '!' : '△') + '</span>' +
         '<div><strong>' + esc(check.label) + '</strong><p>' + esc(check.detail) + '</p></div>' +
@@ -419,7 +421,7 @@
     const contentNotes = report.content.notes.length
       ? report.content.notes
       : ['Content has the core ATS signals: summary, skills, experience and measurable evidence.']
-    $('#atsContentNotes').innerHTML = contentNotes.map((note, index) =>
+    safeDom($('#atsContentNotes')).html = contentNotes.map((note, index) =>
       '<article><span>' + (index + 1) + '</span><p>' + esc(note) + '</p></article>'
     ).join('')
 
@@ -501,6 +503,7 @@
 /* ATS_PRO_V2_FIXED */
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
 
   const PROFILE_KEY = 'cv-studio-static-v2'
   const TARGET_KEY = 'cv-studio-ats-target-v2'
@@ -813,7 +816,7 @@
       if (event.target.closest('[data-ats-pro-template]')) chooseAtsTemplate()
     })
 
-    ;['#atsFieldList','#atsCheckList','#atsContentNotes'].map($).filter(Boolean).forEach((node) => {
+    ;['#atsFieldList','#atsCheckList','#atsContentNotes'].map((selector) => $(selector)).filter(Boolean).forEach((node) => {
       new MutationObserver(decorateActions).observe(node,{ childList:true, subtree:true })
     })
     decorateActions()
@@ -838,7 +841,7 @@
     if ($('#atsScoreBadge')) $('#atsScoreBadge').textContent = r.score
     $('#atsProTargetHint').textContent = ROLES[f.roleKey][0] + ' · ' + INDUSTRIES[target.industry][0] + ' · ' + SENIORITY[target.seniority][0]
 
-    $('#atsProMetrics').innerHTML = r.metrics.map((item) => {
+    safeDom($('#atsProMetrics')).html = r.metrics.map((item) => {
       return '<article>' +
         '<div><strong>' + item[0] + '</strong><span>' + item[2] + '%</span></div>' +
         '<div class="ats-pro-meter"><i style="width:' + item[1] + '%"></i></div>' +
@@ -851,7 +854,7 @@
       ['Industry signals',f.industry,INDUSTRIES[target.industry][0]],
       ['Seniority signals',f.seniority,SENIORITY[target.seniority][0]]
     ]
-    $('#atsProFitBreakdown').innerHTML = rows.map((item) => {
+    safeDom($('#atsProFitBreakdown')).html = rows.map((item) => {
       const score = item[1]
       return '<article>' +
         '<div><strong>' + item[0] + '</strong><small>' + item[2] + '</small></div>' +
@@ -878,6 +881,7 @@
 /* ATS_PDF_VERIFY_V1_FIXED */
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
 
   const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.3.289/pdf.min.mjs'
   const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.3.289/pdf.worker.min.mjs'
@@ -1093,11 +1097,11 @@
     $('#atsPdfRawText').textContent=report.pdfText || 'No selectable PDF text found.'
     $('#atsPdfOrderTitle').textContent=report.order.inversions ? 'Possible sequence changes' : 'Sequence looks consistent'
     $('#atsPdfOrderMeta').textContent=report.order.matched+' comparable text blocks'
-    $('#atsPdfOrderAdvice').innerHTML=report.order.inversions
+    safeDom($('#atsPdfOrderAdvice')).html =report.order.inversions
       ? '<strong>Review reading order</strong><p>'+report.order.inversions+' sequence break(s) detected. Multi-column layouts are the first thing to review.</p><button type="button" data-pdf-use-ats>Use ATS template</button>'
       : '<strong>Order preserved</strong><p>Matched blocks generally appear in the same sequence as the live CV.</p>'
 
-    $('#atsPdfFieldList').innerHTML=report.groups.map((group) => {
+    safeDom($('#atsPdfFieldList')).html =report.groups.map((group) => {
       const state=stateLabel(group.coverage)
       const detail=group.coverage.present
         ? group.coverage.matched+'/'+group.coverage.total+' source value(s) found in PDF'
@@ -1141,7 +1145,7 @@
       renderResult(analyzePdf(extracted.text||'',Number(extracted.pages||1)),file.name||'Exported CV.pdf')
     }catch(cause){
       console.error('ATS PDF verification failed.',cause)
-      error.innerHTML='<strong>Unable to read this PDF.</strong><span>Try the exported file again. Image-only/scanned PDFs may not contain a readable text layer.</span>'
+      safeDom(error).html ='<strong>Unable to read this PDF.</strong><span>Try the exported file again. Image-only/scanned PDFs may not contain a readable text layer.</span>'
       error.hidden=false
     }finally{
       loading.hidden=true
@@ -1163,7 +1167,7 @@
     const pane=document.createElement('section')
     pane.className='ats-pane'
     pane.dataset.atsPane='pdf'
-    pane.innerHTML=[
+    safeDom(pane).html =[
       '<section class="ats-pdf-intro">',
         '<div><span>Export verification</span><strong>Check the PDF ATS will receive</strong></div>',
         '<p>Export your CV, then drop the saved PDF here. The file stays in this browser; only its text layer is read.</p>',
@@ -1248,6 +1252,7 @@
 /* ATS_VISUAL_HEATMAP_V1 */
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
 
   const PROFILE_KEY = 'cv-studio-static-v2'
   const $ = (selector, root = document) => root.querySelector(selector)
@@ -1412,7 +1417,7 @@
     legend.id='atsHeatmapLegend'
     legend.className='ats-heat-legend'
     legend.hidden=true
-    legend.innerHTML=
+    safeDom(legend).html =
       '<div class="ats-heat-legend-head"><div><span>ATS Heatmap</span><strong id="atsHeatModeLabel">Web scan</strong></div><button id="atsHeatmapClose" type="button" aria-label="Hide ATS heatmap">×</button></div>' +
       '<div class="ats-heat-mode-switch"><button type="button" class="active" data-heat-mode="web">Web</button><button type="button" data-heat-mode="pdf">PDF</button></div>' +
       '<div class="ats-heat-key"><span><i class="good"></i>Readable</span><span><i class="partial"></i>Partial</span><span><i class="bad"></i>Missing</span></div>'
@@ -1469,6 +1474,7 @@
 /* ATS_AUTO_FIX_V1 */
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
 
   const PROFILE_KEY='cv-studio-static-v2'
   const TARGET_KEY='cv-studio-ats-target-v2'
@@ -1718,12 +1724,12 @@
     $('#atsAutoApplyAll').disabled=!safe.length
 
     if(!suggestions.length){
-      host.innerHTML='<div class="ats-auto-empty"><strong>No automatic fixes needed</strong><p>The current CV has no safe deterministic rewrite to apply. You can still review Target Fit and PDF verification.</p></div>'
+      safeDom(host).html ='<div class="ats-auto-empty"><strong>No automatic fixes needed</strong><p>The current CV has no safe deterministic rewrite to apply. You can still review Target Fit and PDF verification.</p></div>'
       renderUndo()
       return
     }
 
-    host.innerHTML=suggestions.map((item)=>{
+    safeDom(host).html =suggestions.map((item)=>{
       const reviewOnly=item.type==='review'
       return '<article class="ats-auto-card '+(reviewOnly?'review':'safe')+'" data-auto-id="'+esc(item.id)+'">' +
         '<div class="ats-auto-card-head"><div><span>'+(reviewOnly?'Review':'Safe fix')+'</span><strong>'+esc(item.title)+'</strong>'+(item.context?'<small>'+esc(item.context)+'</small>':'')+'</div>' +
@@ -1787,11 +1793,11 @@
     const section=document.createElement('section')
     section.id='atsAutoFix'
     section.className='ats-auto-fix'
-    section.innerHTML=
+    safeDom(section).html =
       '<div class="ats-section-title ats-auto-title"><div><span>Optimization</span><strong>ATS Auto Fix</strong></div><small id="atsAutoFixCount">0 safe fixes</small></div>' +
       '<div class="ats-auto-toolbar"><div><strong>Evidence-first fixes</strong><span id="atsAutoStatus">Changes stay local until you export.</span></div><div><button id="atsAutoUndo" type="button" disabled>Undo</button><button id="atsAutoApplyAll" type="button" class="primary">Apply safe fixes</button></div></div>' +
       '<div id="atsAutoFixList" class="ats-auto-list"></div>'
-    scanPane.insertBefore(section,scanPane.querySelector('.ats-section-title')||scanPane.firstChild)
+    scanPane.insertBefore(section,scanPane.querySelector(':scope > .ats-section-title')||scanPane.firstChild)
 
     section.addEventListener('click',(event)=>{
       const apply=event.target.closest('[data-auto-apply]')
@@ -1823,6 +1829,7 @@
 /* ATS_VERSION_COMPARE_V1 */
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
 
   const PROFILE_KEY='cv-studio-static-v2'
   const SETTINGS_KEY='cv-studio-static-settings-v2'
@@ -1913,12 +1920,12 @@
     const items=versions().slice().sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))
     $('#atsVersionCount').textContent=items.length+' saved'
     if(!items.length){
-      host.innerHTML='<div class="ats-version-empty"><strong>No saved versions yet</strong><p>Save the current CV before making a role-specific or JD-specific change.</p></div>'
+      safeDom(host).html ='<div class="ats-version-empty"><strong>No saved versions yet</strong><p>Save the current CV before making a role-specific or JD-specific change.</p></div>'
       renderSelectors(items)
       return
     }
 
-    host.innerHTML=items.map((item)=>(
+    safeDom(host).html =items.map((item)=>(
       '<article class="ats-version-card" data-version-id="'+esc(item.id)+'">'+
         '<div class="ats-version-card-head"><div><strong>'+esc(item.name)+'</strong><small>'+esc(formatDate(item.createdAt))+(item.meta?.template?' · '+esc(item.meta.template):'')+'</small></div><button type="button" data-version-more aria-label="Version actions">•••</button></div>'+
         '<div class="ats-version-score-row">'+
@@ -1937,8 +1944,8 @@
     const a=$('#atsCompareA'), b=$('#atsCompareB')
     if(!a||!b)return
     const options=items.map((item)=>'<option value="'+esc(item.id)+'">'+esc(item.name)+' · '+esc(formatDate(item.createdAt))+'</option>').join('')
-    a.innerHTML='<option value="">Version A</option>'+options
-    b.innerHTML='<option value="">Version B</option>'+options
+    safeDom(a).html ='<option value="">Version A</option>'+options
+    safeDom(b).html ='<option value="">Version B</option>'+options
     if(items.length>=2){
       a.value=items[1].id
       b.value=items[0].id
@@ -1997,15 +2004,15 @@
     const targetA=[a.target?.role,a.target?.industry,a.target?.seniority].filter(Boolean).join(' · ')
     const targetB=[b.target?.role,b.target?.industry,b.target?.seniority].filter(Boolean).join(' · ')
 
-    $('#atsCompareNames').innerHTML='<div><strong>'+esc(a.name)+'</strong><small>'+esc(formatDate(a.createdAt))+'</small></div><span>vs</span><div><strong>'+esc(b.name)+'</strong><small>'+esc(formatDate(b.createdAt))+'</small></div>'
-    $('#atsCompareMetrics').innerHTML=[
+    safeDom($('#atsCompareNames')).html ='<div><strong>'+esc(a.name)+'</strong><small>'+esc(formatDate(a.createdAt))+'</small></div><span>vs</span><div><strong>'+esc(b.name)+'</strong><small>'+esc(formatDate(b.createdAt))+'</small></div>'
+    safeDom($('#atsCompareMetrics')).html =[
       metricCompare('ATS Readiness',diffScore(a,b,'readiness')),
       metricCompare('Target Fit',diffScore(a,b,'targetFit')),
       metricCompare('PDF Fidelity',diffScore(a,b,'pdfFidelity')),
       metricCompare('JD Match',diffScore(a,b,'jdMatch'))
     ].join('')
 
-    $('#atsCompareContent').innerHTML=
+    safeDom($('#atsCompareContent')).html =
       changeRow('Target profile',targetA,targetB)+
       changeRow('Summary',a.profile?.summary,b.profile?.summary)+
       changeRow('Experience',expA,expB)+
@@ -2060,7 +2067,7 @@
     const pane=document.createElement('section')
     pane.className='ats-pane'
     pane.dataset.atsPane='versions'
-    pane.innerHTML=
+    safeDom(pane).html =
       '<section class="ats-version-save">'+
         '<div class="ats-section-title"><div><span>Snapshots</span><strong>CV Version Compare</strong></div><small id="atsVersionCount">0 saved</small></div>'+
         '<p>Save a snapshot before tailoring this CV to another role or job description.</p>'+
@@ -2118,6 +2125,7 @@
 /* ATS_APPLICATION_WORKSPACE_V1 */
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
 
   const PROFILE_KEY='cv-studio-static-v2'
   const SETTINGS_KEY='cv-studio-static-settings-v2'
@@ -2420,7 +2428,7 @@
     const select=$('#atsAppVersion')
     if(!select)return
     const items=versions().slice().sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))
-    select.innerHTML='<option value="">Current CV</option>'+items.map((item)=>(
+    safeDom(select).html ='<option value="">Current CV</option>'+items.map((item)=>(
       '<option value="'+esc(item.id)+'">'+esc(item.name)+' · '+esc(formatDate(item.createdAt))+'</option>'
     )).join('')
   }
@@ -2437,7 +2445,7 @@
   const renderSummary=()=>{
     const items=applications()
     const counts=Object.fromEntries(statusOrder.map((status)=>[status,items.filter((item)=>item.status===status).length]))
-    $('#atsAppSummary').innerHTML=statusOrder.map((status)=>(
+    safeDom($('#atsAppSummary')).html =statusOrder.map((status)=>(
       '<article><span>'+esc(status)+'</span><strong>'+counts[status]+'</strong></article>'
     )).join('')
     $('#atsAppCount').textContent=items.length+' application'+(items.length===1?'':'s')
@@ -2448,10 +2456,10 @@
     if(!host)return
     const items=filteredApplications()
     if(!items.length){
-      host.innerHTML='<div class="ats-app-empty"><strong>No matching applications</strong><p>Create a workspace or change the filters.</p></div>'
+      safeDom(host).html ='<div class="ats-app-empty"><strong>No matching applications</strong><p>Create a workspace or change the filters.</p></div>'
       return
     }
-    host.innerHTML=items.map((item)=>(
+    safeDom(host).html =items.map((item)=>(
       '<article class="ats-app-card" data-app-id="'+esc(item.id)+'">'+
         '<div class="ats-app-card-head">'+
           '<div><span>'+esc(item.company)+'</span><strong>'+esc(item.role)+'</strong><small>'+esc(item.source?.versionName||'Current CV')+' · updated '+esc(formatDate(item.updatedAt))+'</small></div>'+
@@ -2499,7 +2507,7 @@
     const pane=document.createElement('section')
     pane.className='ats-pane'
     pane.dataset.atsPane='applications'
-    pane.innerHTML=
+    safeDom(pane).html =
       '<section class="ats-app-create">'+
         '<div class="ats-section-title"><div><span>Application workspace</span><strong>Track one job from JD to final PDF</strong></div><small id="atsAppCount">0 applications</small></div>'+
         '<div class="ats-app-form">'+
@@ -2571,6 +2579,7 @@
 /* ATS_APPLICATION_ANALYTICS_V1 */
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
 
   const APPLICATIONS_KEY='cv-studio-ats-applications-v1'
   const $=(selector,root=document)=>root.querySelector(selector)
@@ -2691,7 +2700,7 @@
   }
 
   const renderBarList=(host,items,total)=>{
-    host.innerHTML=items.length?items.map(([label,count])=>{
+    safeDom(host).html =items.length?items.map(([label,count])=>{
       const width=total?Math.max(4,Math.round(count/total*100)):0
       return '<article><div><strong>'+esc(label)+'</strong><span>'+count+'</span></div><i><b style="width:'+width+'%"></b></i></article>'
     }).join(''):'<div class="ats-analytics-empty">No data yet.</div>'
@@ -2710,14 +2719,14 @@
     const due=followUps(apps)
     const missing=missingTerms(apps)
 
-    $('#atsAnalyticsHeadline').innerHTML=[
+    safeDom($('#atsAnalyticsHeadline')).html =[
       metricCard('Applications',apps.length,String(active)+' active'),
       metricCard('Recorded interviews',flow.interview,displayPct(flow.interviewRate)+' of recorded Applied'),
       metricCard('Recorded offers',flow.offer,displayPct(flow.offerRate)+' of recorded Interview'),
       metricCard('Follow-ups',due.length,due.filter((item)=>item.followUpState==='overdue').length+' overdue')
     ].join('')
 
-    $('#atsAnalyticsScores').innerHTML=[
+    safeDom($('#atsAnalyticsScores')).html =[
       metricCard('Avg readiness',scoreReadiness==null?'—':scoreReadiness,'Saved snapshots'),
       metricCard('Avg target fit',scoreFit==null?'—':scoreFit,'Saved snapshots'),
       metricCard('Avg PDF fidelity',scorePdf==null?'—':scorePdf,'Verified snapshots'),
@@ -2728,18 +2737,18 @@
     renderBarList($('#atsAnalyticsRoles'),groupCounts(apps,(item)=>item.role).slice(0,7),Math.max(1,apps.length))
     renderBarList($('#atsAnalyticsVersions'),groupCounts(apps,(item)=>item.source?.versionName||'Current CV').slice(0,7),Math.max(1,apps.length))
 
-    $('#atsAnalyticsKeywords').innerHTML=missing.length?missing.map(([term,count])=>(
+    safeDom($('#atsAnalyticsKeywords')).html =missing.length?missing.map(([term,count])=>(
       '<span><strong>'+esc(term)+'</strong><small>'+count+' JD'+(count===1?'':'s')+'</small></span>'
     )).join(''):'<div class="ats-analytics-empty">No repeated missing JD terms yet.</div>'
 
-    $('#atsAnalyticsFollowups').innerHTML=due.length?due.map((item)=>(
+    safeDom($('#atsAnalyticsFollowups')).html =due.length?due.map((item)=>(
       '<article class="'+item.followUpState+'">'+
         '<div><span>'+esc(item.company)+'</span><strong>'+esc(item.role)+'</strong><small>'+esc(item.status)+'</small></div>'+
         '<time>'+esc(prettyDate(item.followUpDate))+'</time>'+
       '</article>'
     )).join(''):'<div class="ats-analytics-empty">No follow-ups due in the next 7 days.</div>'
 
-    $('#atsAnalyticsFunnel').innerHTML=[
+    safeDom($('#atsAnalyticsFunnel')).html =[
       ['Applied',flow.applied,100],
       ['Interview',flow.interview,flow.applied?Math.round(flow.interview/flow.applied*100):0],
       ['Offer',flow.offer,flow.interview?Math.round(flow.offer/flow.interview*100):0]
@@ -2768,7 +2777,7 @@
     pane.id='atsAnalyticsPane'
     pane.className='ats-pane'
     pane.dataset.atsPane='analytics'
-    pane.innerHTML=
+    safeDom(pane).html =
       '<div class="ats-section-title"><div><span>Application analytics</span><strong>Pipeline & CV evidence</strong></div><small>Local-only</small></div>'+
       '<div id="atsAnalyticsHeadline" class="ats-analytics-headline"></div>'+
       '<section class="ats-analytics-grid">'+
@@ -2803,6 +2812,7 @@
 /* ATS_UX_V3 */
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
 
   const $=(selector,root=document)=>root.querySelector(selector)
   const $$=(selector,root=document)=>[...root.querySelectorAll(selector)]
@@ -2873,8 +2883,8 @@
     if(!host)return
     const items=subnavItems(group)
     host.hidden=!items.length
-    if(!items.length){host.innerHTML='';return}
-    host.innerHTML=items.map((item,index)=>{
+    if(!items.length){safeDom(host).html ='';return}
+    safeDom(host).html =items.map((item,index)=>{
       const paneMatch=item.pane===(currentPane||GROUPS[group].defaultPane)
       const targetMatch=currentTarget?item.target===currentTarget:(!item.target||index===0)
       const active=paneMatch&&targetMatch
@@ -2987,7 +2997,7 @@
     const signature=[item.eyebrow,item.title,item.detail,item.action,item.group,item.pane,item.target].join('|')
     if(card.dataset.signature===signature)return
     card.dataset.signature=signature
-    card.innerHTML=
+    safeDom(card).html =
       '<div><span>'+item.eyebrow+'</span><strong>'+item.title+'</strong><p>'+item.detail+'</p></div>'+
       '<button type="button" data-next-group="'+item.group+'" data-next-pane="'+item.pane+'" data-next-target="'+item.target+'">'+item.action+' →</button>'
   }
@@ -3029,7 +3039,7 @@
     nav.id='atsV3Nav'
     nav.className='ats-v3-nav'
     nav.setAttribute('aria-label','ATS workspace')
-    nav.innerHTML=Object.entries(GROUPS).map(([key,item])=>(
+    safeDom(nav).html =Object.entries(GROUPS).map(([key,item])=>(
       '<button type="button" data-v3-group="'+key+'" aria-selected="'+(key==='overview'?'true':'false')+'" class="'+(key==='overview'?'active':'')+'"><span>'+item.label+'</span><small>'+item.hint+'</small></button>'
     )).join('')
 
@@ -3096,6 +3106,7 @@
 /* ATS_APPLICATION_ANALYTICS_V2 */
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
   const APPLICATIONS_KEY='cv-studio-ats-applications-v1'
   const $=(selector,root=document)=>root.querySelector(selector)
   const esc=(value)=>String(value==null?'':value).replace(/[&<>"']/g,(char)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]))
@@ -3125,20 +3136,20 @@
   const renderMetrics=(apps)=>{
     const host=$('#atsAnalyticsV2Velocity');if(!host)return
     const flow=funnel(apps),toInterview=stageTiming(apps,'Applied','Interview'),toOffer=stageTiming(apps,'Interview','Offer')
-    host.innerHTML=[['Reached Applied',flow.applied,apps.length?Math.round(flow.applied/apps.length*100)+'% of workspaces':'No data'],['Reached Interview',flow.interview,pctText(flow.interviewRate)+' of Applied'],['Median Applied → Interview',timingText(toInterview),'Explicit timestamps only'],['Median Interview → Offer',timingText(toOffer),'Explicit timestamps only']].map(([label,value,meta])=>'<article><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong><small>'+esc(meta)+'</small></article>').join('')
-    const funnelHost=$('#atsAnalyticsFunnel');if(funnelHost)funnelHost.innerHTML=[['Applied',flow.applied,100],['Interview',flow.interview,flow.applied?Math.round(flow.interview/flow.applied*100):0],['Offer',flow.offer,flow.interview?Math.round(flow.offer/flow.interview*100):0]].map(([label,count,width])=>'<article><div><strong>'+label+'</strong><span>'+count+'</span></div><i><b style="width:'+Math.max(count?8:0,Math.min(100,width))+'%"></b></i></article>').join('')
+    safeDom(host).html =[['Reached Applied',flow.applied,apps.length?Math.round(flow.applied/apps.length*100)+'% of workspaces':'No data'],['Reached Interview',flow.interview,pctText(flow.interviewRate)+' of Applied'],['Median Applied → Interview',timingText(toInterview),'Explicit timestamps only'],['Median Interview → Offer',timingText(toOffer),'Explicit timestamps only']].map(([label,value,meta])=>'<article><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong><small>'+esc(meta)+'</small></article>').join('')
+    const funnelHost=$('#atsAnalyticsFunnel');if(funnelHost)safeDom(funnelHost).html =[['Applied',flow.applied,100],['Interview',flow.interview,flow.applied?Math.round(flow.interview/flow.applied*100):0],['Offer',flow.offer,flow.interview?Math.round(flow.offer/flow.interview*100):0]].map(([label,count,width])=>'<article><div><strong>'+label+'</strong><span>'+count+'</span></div><i><b style="width:'+Math.max(count?8:0,Math.min(100,width))+'%"></b></i></article>').join('')
     const caveat=$('#atsAnalyticsCaveat');if(caveat)caveat.textContent='Funnel may infer skipped milestones from a later current stage. Timing uses explicit stage timestamps only.'
   }
-  const renderVersions=(apps)=>{const host=$('#atsAnalyticsVersionEvidence');if(!host)return;const rows=versionEvidence(apps);host.innerHTML=rows.length?rows.map((row)=>'<article><div><strong>'+esc(row.name)+'</strong><small>'+row.uses+' application'+(row.uses===1?'':'s')+'</small></div><span><b>'+row.interviews+'</b><small>Interview reached</small></span><span><b>'+row.offers+'</b><small>Offer reached</small></span><span><b>'+(row.fit==null?'—':row.fit)+'</b><small>Avg target fit</small></span></article>').join(''):'<div class="ats-analytics-empty">No CV version evidence yet.</div>'}
-  const renderKeywords=(apps)=>{const host=$('#atsAnalyticsKeywords');if(!host)return;const missing=missingTerms(apps);host.innerHTML=missing.length?missing.map(([term,count])=>'<span><strong>'+esc(term)+'</strong><small>'+count+' JD'+(count===1?'':'s')+'</small></span>').join(''):'<div class="ats-analytics-empty">No repeated missing JD terms yet.</div>'}
-  const renderCoverage=(apps)=>{const host=$('#atsAnalyticsDataCoverage');if(!host)return;const coverage=dataCoverage(apps);host.innerHTML=[['Stage history',coverage.history],['Job descriptions',coverage.jd],['Score snapshots',coverage.scores],['Follow-up dates',coverage.followup]].map(([label,value])=>'<article><div><strong>'+esc(label)+'</strong><span>'+value+'%</span></div><i><b style="width:'+value+'%"></b></i></article>').join('')}
+  const renderVersions=(apps)=>{const host=$('#atsAnalyticsVersionEvidence');if(!host)return;const rows=versionEvidence(apps);safeDom(host).html =rows.length?rows.map((row)=>'<article><div><strong>'+esc(row.name)+'</strong><small>'+row.uses+' application'+(row.uses===1?'':'s')+'</small></div><span><b>'+row.interviews+'</b><small>Interview reached</small></span><span><b>'+row.offers+'</b><small>Offer reached</small></span><span><b>'+(row.fit==null?'—':row.fit)+'</b><small>Avg target fit</small></span></article>').join(''):'<div class="ats-analytics-empty">No CV version evidence yet.</div>'}
+  const renderKeywords=(apps)=>{const host=$('#atsAnalyticsKeywords');if(!host)return;const missing=missingTerms(apps);safeDom(host).html =missing.length?missing.map(([term,count])=>'<span><strong>'+esc(term)+'</strong><small>'+count+' JD'+(count===1?'':'s')+'</small></span>').join(''):'<div class="ats-analytics-empty">No repeated missing JD terms yet.</div>'}
+  const renderCoverage=(apps)=>{const host=$('#atsAnalyticsDataCoverage');if(!host)return;const coverage=dataCoverage(apps);safeDom(host).html =[['Stage history',coverage.history],['Job descriptions',coverage.jd],['Score snapshots',coverage.scores],['Follow-up dates',coverage.followup]].map(([label,value])=>'<article><div><strong>'+esc(label)+'</strong><span>'+value+'%</span></div><i><b style="width:'+value+'%"></b></i></article>').join('')}
   const render=()=>{const pane=$('#atsAnalyticsPane');if(!pane)return;const apps=readApps();renderMetrics(apps);renderVersions(apps);renderKeywords(apps);renderCoverage(apps)}
   const inject=()=>{
     const pane=$('#atsAnalyticsPane'),tab=$('#atsAnalyticsTab');if(!pane||!tab||$('#atsAnalyticsV2Velocity'))return
     const headline=$('#atsAnalyticsHeadline')
-    if(headline){const velocity=document.createElement('section');velocity.className='ats-analytics-v2-section';velocity.innerHTML='<div class="ats-section-title"><div><span>Velocity</span><strong>Recorded progression timing</strong></div><small>Explicit events only</small></div><div id="atsAnalyticsV2Velocity" class="ats-analytics-headline"></div>';headline.insertAdjacentElement('afterend',velocity)}
+    if(headline){const velocity=document.createElement('section');velocity.className='ats-analytics-v2-section';safeDom(velocity).html ='<div class="ats-section-title"><div><span>Velocity</span><strong>Recorded progression timing</strong></div><small>Explicit events only</small></div><div id="atsAnalyticsV2Velocity" class="ats-analytics-headline"></div>';headline.insertAdjacentElement('afterend',velocity)}
     const scores=$('#atsAnalyticsScores')
-    if(scores){const evidence=document.createElement('section');evidence.className='ats-analytics-v2-section';evidence.innerHTML='<div class="ats-section-title"><div><span>CV version evidence</span><strong>Observed application outcomes</strong></div><small>Descriptive, not causal</small></div><div id="atsAnalyticsVersionEvidence" class="ats-analytics-version-evidence"></div><div class="ats-section-title"><div><span>Data quality</span><strong>Analytics coverage</strong></div><small>Saved workspace fields</small></div><div id="atsAnalyticsDataCoverage" class="ats-analytics-bars ats-analytics-coverage"></div>';scores.insertAdjacentElement('afterend',evidence)}
+    if(scores){const evidence=document.createElement('section');evidence.className='ats-analytics-v2-section';safeDom(evidence).html ='<div class="ats-section-title"><div><span>CV version evidence</span><strong>Observed application outcomes</strong></div><small>Descriptive, not causal</small></div><div id="atsAnalyticsVersionEvidence" class="ats-analytics-version-evidence"></div><div class="ats-section-title"><div><span>Data quality</span><strong>Analytics coverage</strong></div><small>Saved workspace fields</small></div><div id="atsAnalyticsDataCoverage" class="ats-analytics-bars ats-analytics-coverage"></div>';scores.insertAdjacentElement('afterend',evidence)}
     tab.addEventListener('click',()=>setTimeout(render,0));window.addEventListener('ats-applications-changed',()=>setTimeout(render,0));window.addEventListener('storage',(event)=>{if(event.key===APPLICATIONS_KEY)setTimeout(render,0)});render()
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject);else inject()
@@ -3148,6 +3159,7 @@
 /* ATS_APPLICATION_TIMELINE_V1 */
 (() => {
   'use strict'
+  const safeDom = window.CVSafeDom
   const KEY='cv-studio-ats-applications-v1'
   const $=(s,r=document)=>r.querySelector(s)
   const $$=(s,r=document)=>[...r.querySelectorAll(s)]
@@ -3223,9 +3235,9 @@
     $('#atsTimelineCompany').textContent=item.company||'Application'
     $('#atsTimelineRole').textContent=item.role||''
     const action=nextAction(item)
-    const next=$('#atsTimelineNext');next.className='ats-timeline-next '+action.tone;next.innerHTML='<strong>'+esc(action.label)+'</strong><small>'+esc(action.detail)+'</small>'
+    const next=$('#atsTimelineNext');next.className='ats-timeline-next '+action.tone;safeDom(next).html ='<strong>'+esc(action.label)+'</strong><small>'+esc(action.detail)+'</small>'
     const events=timelineEvents(item)
-    $('#atsTimelineEvents').innerHTML=events.length?events.map((event)=>'<article class="ats-timeline-event '+esc(event.type)+(event.inferred?' inferred':'')+'"><i></i><div><div><strong>'+esc(event.title)+'</strong>'+(event.inferred?'<span>Inferred</span>':'')+'</div><p>'+esc(event.detail||'')+'</p><time>'+esc(fmt(event.at))+'</time></div></article>').join(''):'<div class="ats-timeline-empty">No activity recorded yet.</div>'
+    safeDom($('#atsTimelineEvents')).html =events.length?events.map((event)=>'<article class="ats-timeline-event '+esc(event.type)+(event.inferred?' inferred':'')+'"><i></i><div><div><strong>'+esc(event.title)+'</strong>'+(event.inferred?'<span>Inferred</span>':'')+'</div><p>'+esc(event.detail||'')+'</p><time>'+esc(fmt(event.at))+'</time></div></article>').join(''):'<div class="ats-timeline-empty">No activity recorded yet.</div>'
     $('#atsTimelineFollowUp').value=item.followUpDate||''
     $('#atsTimelineNote').value=''
     sheet.hidden=false
@@ -3243,7 +3255,7 @@
   const inject=()=>{
     const panel=$('.ats-panel');if(!panel||$('#atsAppTimelineSheet'))return
     const sheet=document.createElement('aside');sheet.id='atsAppTimelineSheet';sheet.className='ats-timeline-sheet';sheet.hidden=true
-    sheet.innerHTML='<div class="ats-timeline-backdrop" data-timeline-close></div><section class="ats-timeline-panel" role="dialog" aria-modal="true" aria-labelledby="atsTimelineCompany"><header><div><span>Application timeline</span><strong id="atsTimelineCompany"></strong><small id="atsTimelineRole"></small></div><button type="button" data-timeline-close aria-label="Close timeline">×</button></header><div id="atsTimelineNext" class="ats-timeline-next neutral"></div><label class="ats-timeline-followup"><span>Next follow-up</span><input id="atsTimelineFollowUp" type="date" /></label><div id="atsTimelineEvents" class="ats-timeline-events"></div><div class="ats-timeline-note"><label for="atsTimelineNote">Add activity note</label><textarea id="atsTimelineNote" rows="3" maxlength="600" placeholder="Recruiter reply, interview takeaway, next action…"></textarea><div><small>Saved locally with this application.</small><button id="atsTimelineAddNote" type="button">Add note</button></div></div></section>'
+    safeDom(sheet).html ='<div class="ats-timeline-backdrop" data-timeline-close></div><section class="ats-timeline-panel" role="dialog" aria-modal="true" aria-labelledby="atsTimelineCompany"><header><div><span>Application timeline</span><strong id="atsTimelineCompany"></strong><small id="atsTimelineRole"></small></div><button type="button" data-timeline-close aria-label="Close timeline">×</button></header><div id="atsTimelineNext" class="ats-timeline-next neutral"></div><label class="ats-timeline-followup"><span>Next follow-up</span><input id="atsTimelineFollowUp" type="date" /></label><div id="atsTimelineEvents" class="ats-timeline-events"></div><div class="ats-timeline-note"><label for="atsTimelineNote">Add activity note</label><textarea id="atsTimelineNote" rows="3" maxlength="600" placeholder="Recruiter reply, interview takeaway, next action…"></textarea><div><small>Saved locally with this application.</small><button id="atsTimelineAddNote" type="button">Add note</button></div></div></section>'
     panel.appendChild(sheet)
 
     document.addEventListener('click',(event)=>{

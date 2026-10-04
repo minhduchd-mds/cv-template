@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 
 const files=[
+  ['public/studio/safe-dom.js','Static safe DOM helper'],
   ['public/studio/app.js','Static Studio app'],
   ['public/studio/ats.js','Static ATS module'],
   ['public/studio/workspace-store.js','Static workspace store'],
@@ -24,9 +25,11 @@ app.split('\n').forEach((line,index)=>{
 
 const index=fs.readFileSync(new URL('../public/studio/index.html',import.meta.url),'utf8')
 const workspaceIndex=index.indexOf('workspace-store.js')
+const safeDomIndex=index.indexOf('safe-dom.js')
 const appIndex=index.indexOf('app.js')
 const atsIndex=index.indexOf('ats.js')
-if(workspaceIndex<0||appIndex<0||atsIndex<0)fail('Static Studio scripts are missing from index.html')
+if(workspaceIndex<0||safeDomIndex<0||appIndex<0||atsIndex<0)fail('Static Studio scripts are missing from index.html')
+if(!(safeDomIndex<appIndex))fail('Static Studio safe-dom.js must load before app.js')
 if(!(workspaceIndex<appIndex&&appIndex<atsIndex))fail('Static Studio script order must be workspace-store.js → app.js → ats.js')
 
 if(!failed)console.log('✓ Static Studio runtime guard passed')

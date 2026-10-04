@@ -29,6 +29,10 @@ import {
   questionRelevanceScore,
   relatedClaimsForAnswer,
 } from '../../src/interview/interview-studio-engine.js'
+import '../studio/safe-dom.js'
+
+const safeDom = window.CVSafeDom
+
 
 const WORKSPACE_KEY='cv-studio-workspace-v3'
 const SESSION_KEY='interview-studio-sessions-v2'
@@ -228,17 +232,17 @@ const formatDate=value=>{try{return new Intl.DateTimeFormat('vi-VN',{day:'2-digi
 const options=(items,valueFn,labelFn,selected)=>items.map(item=>`<option value="${e(valueFn(item))}" ${valueFn(item)===selected?'selected':''}>${e(labelFn(item))}</option>`).join('')
 
 function renderNav(){
-  nav.innerHTML=modules.map(item=>`<button type="button" data-module="${item.id}" class="${state.activeModule===item.id?'active':''}"><span class="icon">${item.icon}</span><span>${item.label}</span>${item.badge?`<b>${item.badge}</b>`:''}</button>`).join('')
+  safeDom(nav).html =modules.map(item=>`<button type="button" data-module="${item.id}" class="${state.activeModule===item.id?'active':''}"><span class="icon">${item.icon}</span><span>${item.label}</span>${item.badge?`<b>${item.badge}</b>`:''}</button>`).join('')
   nav.querySelectorAll('[data-module]').forEach(button=>button.addEventListener('click',()=>{state.activeModule=button.dataset.module;render()}))
 }
 function renderTop(){
   moduleTitle.textContent=modules.find(m=>m.id===state.activeModule)?.label||'Interview Studio'
   const app=activeApplication()
   applicationLabel.textContent=app?`${app.company} · ${app.role}`:'CV hiện tại · chưa gắn job'
-  applicationSelect.innerHTML=`<option value="">CV hiện tại · không gắn job</option>`+applications().map(a=>`<option value="${e(a.id)}" ${a.id===state.applicationId?'selected':''}>${e(a.company)} · ${e(a.role)}</option>`).join('')
+  safeDom(applicationSelect).html =`<option value="">CV hiện tại · không gắn job</option>`+applications().map(a=>`<option value="${e(a.id)}" ${a.id===state.applicationId?'selected':''}>${e(a.company)} · ${e(a.role)}</option>`).join('')
   applicationSelect.onchange=()=>{state.applicationId=applicationSelect.value;renderTop();if(state.activeModule==='overview'||state.activeModule==='mock')renderView()}
   const template=templates.find(t=>t.id===state.selectedTemplateId)
-  profileContext.innerHTML=`<span class="eyebrow">ACTIVE PROFILE</span><strong>${e(template?.name||state.selectedTemplateId)}</strong><p>${e(activePack().label)}</p><div class="chips"><span>${e(activeIndustry().label)}</span><span>${e(state.seniority)}</span><span>${e(marketLabel())}</span></div>`
+  safeDom(profileContext).html =`<span class="eyebrow">ACTIVE PROFILE</span><strong>${e(template?.name||state.selectedTemplateId)}</strong><p>${e(activePack().label)}</p><div class="chips"><span>${e(activeIndustry().label)}</span><span>${e(state.seniority)}</span><span>${e(marketLabel())}</span></div>`
 }
 document.querySelector('#quick-practice').addEventListener('click',()=>{state.activeModule='mock';render()})
 
@@ -253,7 +257,7 @@ function renderOverview(){
   const templateSpecific=deck.filter(q=>q.templateId===state.selectedTemplateId).length
   const industrySpecific=deck.filter(q=>q.industryId===resolvedIndustryId()).length
   const sourced=deck.filter(q=>Array.isArray(q.sourceIds)&&q.sourceIds.length).length
-  root.innerHTML=`
+  safeDom(root).html =`
     <section class="hero compact-hero">
       <div><span class="eyebrow">INTERVIEW STUDIO</span><h1>Luyện phỏng vấn theo <em>CV thật.</em></h1><div class="hero-actions"><button class="primary" data-start-quick="5">Luyện 5 câu</button><button class="secondary" data-go="claims">CV Claims</button></div></div>
       <article class="readiness compact-readiness"><div class="score-row"><span>READINESS</span><b>${readiness()}</b></div><strong>${e(readinessLabel())}</strong><div class="bar"><span style="width:${readiness()}%"></span></div></article>
@@ -373,7 +377,7 @@ function renderApplications(){
     state.applicationId=applications()[0].id;editApplication(applications()[0])
   }
   const analysis=applicationAnalysis()
-  root.innerHTML=pageHeading('APPLICATION LAB','Ứng tuyển <em>theo từng job.</em>','',applications().length)+`
+  safeDom(root).html =pageHeading('APPLICATION LAB','Ứng tuyển <em>theo từng job.</em>','',applications().length)+`
     <div class="application-layout">
       <aside class="application-list">
         <div class="application-list-head"><span class="eyebrow">APPLICATIONS</span><button id="new-app">＋ New</button></div>
@@ -415,7 +419,7 @@ function renderApplications(){
 
 function renderQuestions(){
   const qs=filteredQuestions()
-  root.innerHTML=pageHeading('QUESTION BANK','Câu hỏi <em>phù hợp context.</em>','',qs.length)+`
+  safeDom(root).html =pageHeading('QUESTION BANK','Câu hỏi <em>phù hợp context.</em>','',qs.length)+`
     <section class="filterbar">
       <label><span>Tìm câu hỏi</span><input id="q-search" type="search" value="${e(state.query)}" placeholder="stakeholder, design system, failure, metric..." /></label>
       <label><span>Nhóm</span><select id="q-category">${options(questionCategories,x=>x.id,x=>x.label,state.categoryId)}</select></label>
@@ -435,7 +439,7 @@ function renderClaims(){
   const claims=cvClaims()
   if(!state.selectedClaimId||!claims.some(c=>c.id===state.selectedClaimId))state.selectedClaimId=claims[0]?.id||''
   const selected=claims.find(c=>c.id===state.selectedClaimId)
-  root.innerHTML=pageHeading('CLAIM DEFENSE','Bảo vệ <em>CV claims.</em>','',claims.length)+`
+  safeDom(root).html =pageHeading('CLAIM DEFENSE','Bảo vệ <em>CV claims.</em>','',claims.length)+`
   <div class="claim-layout">
     <aside class="claim-list">${claims.map(c=>`<button data-claim="${c.id}" class="${c.id===state.selectedClaimId?'active':''}"><span><small>${e(c.source)} · ${e(c.label)}</small><strong>${e(c.text)}</strong></span><b class="risk ${claimRisk(c)>=70?'high':''}">${claimRisk(c)}</b></button>`).join('')}</aside>
     ${selected?`<section class="claim-detail">
@@ -458,15 +462,15 @@ function renderClaims(){
 function renderStories(){
   const stories=Array.isArray(state.storyBank)?state.storyBank:[]
   const avg=stories.length?Math.round(stories.reduce((sum,s)=>sum+Number(s.score||0),0)/stories.length):0
-  root.innerHTML=pageHeading('STORY BANK','Câu chuyện <em>đã lưu.</em>','',stories.length)
+  safeDom(root).html =pageHeading('STORY BANK','Câu chuyện <em>đã lưu.</em>','',stories.length)
   const stats=document.createElement('section');stats.className='stats story-stats'
-  stats.innerHTML='<article><span>Stories</span><b>'+stories.length+'</b><small>câu chuyện đã lưu</small></article><article><span>Evidence ready</span><b>'+stories.filter(s=>String(s.evidence||'').trim().length>=12).length+'</b><small>có STAR/evidence anchor</small></article><article><span>Average signal</span><b>'+(avg||'—')+'</b><small>practice signal trung bình</small></article>'
+  safeDom(stats).html ='<article><span>Stories</span><b>'+stories.length+'</b><small>câu chuyện đã lưu</small></article><article><span>Evidence ready</span><b>'+stories.filter(s=>String(s.evidence||'').trim().length>=12).length+'</b><small>có STAR/evidence anchor</small></article><article><span>Average signal</span><b>'+(avg||'—')+'</b><small>practice signal trung bình</small></article>'
   root.appendChild(stats)
-  if(!stories.length){const empty=document.createElement('div');empty.className='empty';empty.innerHTML='Chưa có story.<button class="text-btn" data-go="mock">Bắt đầu luyện →</button>';root.appendChild(empty);bindGo();return}
+  if(!stories.length){const empty=document.createElement('div');empty.className='empty';safeDom(empty).html ='Chưa có story.<button class="text-btn" data-go="mock">Bắt đầu luyện →</button>';root.appendChild(empty);bindGo();return}
   const grid=document.createElement('div');grid.className='story-grid'
   stories.forEach(story=>{
     const card=document.createElement('article');card.className='story-card'
-    card.innerHTML='<div class="story-top"><div><span>'+e(story.categoryLabel)+' · '+e(story.contextLabel)+'</span><h2>'+e(story.title)+'</h2></div><b>'+(story.score||'—')+'</b></div><p class="story-question">'+e(story.question)+'</p><blockquote>'+e(story.answer)+'</blockquote>'+(story.evidence?'<div class="story-evidence"><span>EVIDENCE</span><p>'+e(story.evidence)+'</p></div>':'')+(story.claims&&story.claims.length?'<div class="story-claims">'+story.claims.map(claim=>'<span>'+e(claim.label)+'</span>').join('')+'</div>':'')+'<div class="story-footer"><small>Cập nhật '+e(formatDate(story.updatedAt||story.createdAt))+'</small><div><button data-practice-story="'+e(story.id)+'">Luyện lại →</button><button class="danger" data-delete-story="'+e(story.id)+'">Xóa</button></div></div>'
+    safeDom(card).html ='<div class="story-top"><div><span>'+e(story.categoryLabel)+' · '+e(story.contextLabel)+'</span><h2>'+e(story.title)+'</h2></div><b>'+(story.score||'—')+'</b></div><p class="story-question">'+e(story.question)+'</p><blockquote>'+e(story.answer)+'</blockquote>'+(story.evidence?'<div class="story-evidence"><span>EVIDENCE</span><p>'+e(story.evidence)+'</p></div>':'')+(story.claims&&story.claims.length?'<div class="story-claims">'+story.claims.map(claim=>'<span>'+e(claim.label)+'</span>').join('')+'</div>':'')+'<div class="story-footer"><small>Cập nhật '+e(formatDate(story.updatedAt||story.createdAt))+'</small><div><button data-practice-story="'+e(story.id)+'">Luyện lại →</button><button class="danger" data-delete-story="'+e(story.id)+'">Xóa</button></div></div>'
     grid.appendChild(card)
   })
   root.appendChild(grid)
@@ -570,7 +574,7 @@ function speakQuestion(){if(!window.speechSynthesis||!currentQuestion())return;w
 
 function renderMock(){
   if(!state.practice){
-    root.innerHTML=pageHeading('MOCK INTERVIEW','Luyện như <em>vòng thật.</em>','', '5Q')+`
+    safeDom(root).html =pageHeading('MOCK INTERVIEW','Luyện như <em>vòng thật.</em>','', '5Q')+`
       <section class="mock-start"><div class="mock-config"><h2>Thiết lập phiên luyện</h2>
       <label class="field"><span>Application</span><select id="mock-app"><option value="">CV hiện tại · không gắn job</option>${applications().map(a=>`<option value="${e(a.id)}" ${a.id===state.applicationId?'selected':''}>${e(a.company)} · ${e(a.role)}</option>`).join('')}</select></label>
       <label class="field"><span>Vòng phỏng vấn</span><select id="mock-stage">${options(interviewStages,x=>x.id,x=>x.label,state.stageId)}</select></label>
@@ -587,7 +591,7 @@ function renderMock(){
     return
   }
   const q=currentQuestion(),draft=currentDraft(),evaluation=draft.evaluation
-  root.innerHTML=pageHeading('MOCK INTERVIEW','Luyện như <em>vòng thật.</em>','',`${state.practice.index+1}/${state.practice.questions.length}`)+`
+  safeDom(root).html =pageHeading('MOCK INTERVIEW','Luyện như <em>vòng thật.</em>','',`${state.practice.index+1}/${state.practice.questions.length}`)+`
     <section class="live"><div class="live-meta"><div><span>QUESTION ${state.practice.index+1} / ${state.practice.questions.length}${q.adaptive?.isFollowUp?' <b class="adaptive-badge">ADAPTIVE FOLLOW-UP</b>':''}</span><small>${e(categoryName(q.category))} · ${e(activeStage().label)} · ${e(activeInterviewer().label)} · ${e(activePressure().label)}</small></div><div class="timer ${state.timerRemaining<=20?'warning':''}"><b id="timer-value">${formatTimer()}</b><span>${state.timerRunning?'đang chạy':'tạm dừng'}</span></div></div>
     ${q.adaptive?.isFollowUp?`<div class="adaptive-reason"><span>WHY THIS FOLLOW-UP</span><p>${e(q.adaptive.reason)}</p><small>Trigger: ${e(dimensionLabel(q.adaptive.triggerDimension))} · ${q.adaptive.triggerScore}/100 · ${e(q.adaptive.interviewerLabel||activeInterviewer().label)} · ${e(q.adaptive.pressureLabel||activePressure().label)}</small></div>`:''}
     <h2>${e(q.question)}</h2><div class="tools"><button id="speak-q">🔊 Đọc câu hỏi</button><button id="speech-q" class="${state.speechRecording?'recording':''}">${state.speechRecording?'■ Dừng ghi âm':'🎙 Trả lời bằng giọng nói'}</button><button id="pause-timer">${state.timerRunning?'Ⅱ Tạm dừng timer':'▶ Tiếp tục timer'}</button></div>
@@ -611,7 +615,7 @@ function renderMock(){
 
 function renderReports(){
   const latest=latestReport()
-  root.innerHTML=pageHeading('INTERVIEW REPORTS','Kết quả <em>luyện tập.</em>','',state.sessions.length)+
+  safeDom(root).html =pageHeading('INTERVIEW REPORTS','Kết quả <em>luyện tập.</em>','',state.sessions.length)+
   (latest?`<section class="report-hero"><div class="report-score"><span>LATEST PRACTICE SIGNAL</span><b>${latest.report.overall}</b><small>/100</small></div><div><strong>${e(latest.contextLabel)}</strong><p>${e(formatDate(latest.createdAt))} · ${e(latest.stageLabel)} · ${e(latest.interviewerLabel||'Interviewer')} · ${e(latest.pressureLabel||'Realistic')} · ${latest.answered}/${latest.total} câu</p><span class="chip">${latest.report.evidenceReady}/${latest.total} câu có evidence note · ${latest.report.adaptiveCount||0} adaptive follow-up</span></div></section><div class="grid2"><section class="panel"><span class="eyebrow">DIMENSIONS</span><h2>Dimensions</h2><div class="metric-bars">${Object.entries(latest.report.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div></section><section class="panel"><span class="eyebrow">EVIDENCE GAPS</span><h2>Evidence gaps</h2><ul class="warnings">${list(latest.report.warnings.length?latest.report.warnings:['Chưa phát hiện cảnh báo lớn trong session gần nhất.'])}</ul></section></div>${latest.report.adaptiveCount?`<section class="panel adaptive-report"><span class="eyebrow">ADAPTIVE TRACE</span><h2>Adaptive trace</h2><div class="adaptive-stats"><div><b>${latest.report.adaptiveCount}</b><span>follow-up đã chèn</span></div><div><b>${latest.report.adaptiveDimensions.length}</b><span>dimension bị đào sâu</span></div></div><ul class="warnings">${list(latest.report.adaptiveReasons)}</ul></section>`:''}`:'')+
   (latest?.report?.adaptiveTrace?.length?`<section class="panel branch-trace"><span class="eyebrow">BRANCH MEMORY</span><h2>Branch trace</h2><div class="branch-trace-list">${latest.report.adaptiveTrace.map(item=>`<article><div class="branch-index">${String(item.index).padStart(2,'0')}</div><div><span>${e(item.interviewerLabel||latest.interviewerLabel||'Interviewer')} · ${e(item.pressureLabel||latest.pressureLabel||'Realistic')}</span><strong>${e(item.question)}</strong><p>${e(item.reason)}</p></div><div class="branch-trigger"><span>${e(dimensionLabel(item.triggerDimension))}</span><b>${item.triggerScore}</b></div></article>`).join('')}</div></section>`:'')+
   (latest?.report?.practicePlan?practicePlanHtml(latest.report.practicePlan):'')+`<section class="panel"><span class="eyebrow">HISTORY</span><h2>Lịch sử luyện tập</h2>${state.sessions.length?`<div class="history">${state.sessions.map(s=>`<article><div><strong>${e(s.contextLabel)}</strong><small>${e(formatDate(s.createdAt))}</small></div><span>${e(s.stageLabel||'')}</span><span>${s.answered||0}/${s.total||0} answered</span><span>${s.report?.evidenceReady||s.evidenceReady||0} evidence</span><b>${s.report?.overall||'—'}</b></article>`).join('')}</div><button id="clear-history" class="text-btn">Xóa lịch sử local</button>`:`<div class="empty">Chưa có report.<button class="text-btn" data-go="mock">Bắt đầu luyện →</button></div>`}</section>`

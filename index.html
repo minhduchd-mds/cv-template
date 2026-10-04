@@ -85,9 +85,8 @@
     </script>
 
     <script>
-      // GitHub Pages can temporarily publish the branch source when hosted Actions
-      // runners are unavailable. In that mode the raw Vue SFC entry cannot mount
-      // in a browser, so fall back to the self-contained static Directions app.
+      // If the built Vue entry fails to load or mount, fall back to the
+      // self-contained static apps that Vite copies from public/ into dist/.
       // src/main.js clears the timer right after mount, so slow networks are
       // never redirected once the real app starts.
       (function () {
@@ -97,11 +96,9 @@
           if (redirected || !app || app.childElementCount !== 0) return
           redirected = true
           var hash = window.location.hash
-          var target = (hash === '#interview' || hash === '#interview-studio')
-            ? './public/interview-studio/?v=20260926-is3'
-            : hash === '#studio'
-              ? './public/studio/?v=20260927-iife-fix-v1'
-              : './public/directions/'
+          var target = hash === '#studio'
+            ? './studio/?v=20261004-safe-dom-v1'
+            : './directions/'
           window.location.replace(target)
         }
         // Only same-origin script failures count; extension or image errors must

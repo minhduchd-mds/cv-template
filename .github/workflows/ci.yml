@@ -1,9 +1,9 @@
 name: CV Studio CI
 
-# Hosted Actions runners are currently unavailable for this repository.
-# Keep the full quality gate available on demand without emitting false-red
-# push checks until runner access is restored.
 on:
+  push:
+    branches: [master]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -33,16 +33,28 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Run deterministic quality gate
-        run: npm run verify
+      - name: Security lint, layout contracts and build
+        id: build
+        run: |
+          npm run layout:check
+          npm run security:lint
+          npm run build
+
+      # Later gates run even when an earlier one fails so each run reports every regression.
+      - name: Enforce bundle budget
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: npm run verify:bundle
 
       - name: Install Chromium for browser QA
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npx playwright install --with-deps chromium
 
       - name: Run responsive end-to-end tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm run test:e2e:ci
 
       - name: Enforce Lighthouse quality budgets
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: bash
         run: |
           set -euo pipefail
