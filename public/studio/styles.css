@@ -3670,5 +3670,11 @@ button{cursor:pointer}
 @media screen and (max-width: 980px) {
   .topbar { gap: 12px; }
   .brand small { display: none; }
-  .topbar-actions { min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .topbar-actions { min-width: 0; }
+}
+
+/* Keep the compact mobile action rail on one scrollable row so the bottom
+   editor sheet cannot cover its close action. */
+@media screen and (min-width: 761px) and (max-width: 980px) {
+  .topbar-actions { flex-wrap: wrap; justify-content: flex-end; }
 }
