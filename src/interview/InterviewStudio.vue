@@ -2841,91 +2841,11 @@ export default {
   border: 0;
 }
 
-@media (max-width: 1180px) {
-  .is-shell { grid-template-columns: 190px minmax(0, 1fr); }
-  .is-source-grid { grid-template-columns: repeat(3, 1fr); }
-  .is-stage-matrix__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .is-claim-layout { grid-template-columns: 300px minmax(0, 1fr); }
-}
 
-@media (max-width: 900px) {
-  .is-shell { display: block; }
-  .is-sidebar {
-    position: sticky;
-    z-index: 30;
-    height: auto;
-    padding: 9px 12px;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .is-brand { padding: 0; }
-  .is-brand small, .is-sidebar__context, .is-sidebar__footer { display: none; }
-  .is-nav { display: flex; min-width: 0; justify-content: flex-start; overflow: auto; }
-  .is-nav button { min-width: max-content; min-height: 44px; display: flex; }
-  .is-nav button span:not(.is-nav__icon) { display: none; }
-  .is-nav__icon { width: 28px; height: 28px; }
-  .is-topbar { top: 58px; }
-  .is-hero { min-height: auto; grid-template-columns: 1fr; gap: 30px; }
-  .is-stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .is-stat-grid article:nth-child(2) { border-right: 0; }
-  .is-overview-grid, .is-report-grid, .is-mock-start { grid-template-columns: 1fr; }
-  .is-source-grid { grid-template-columns: repeat(2, 1fr); }
-  .is-claim-layout, .is-application-layout { grid-template-columns: 1fr; }
-  .is-stage-matrix__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .is-claim-list { max-height: 340px; grid-template-columns: repeat(2, 1fr); }
-  .is-answer-grid { grid-template-columns: 1fr; }
-}
 
-@media (max-width: 620px) {
-  .is-sidebar { grid-template-columns: auto 1fr; }
-  .is-brand span:last-child { display: none; }
-  .is-topbar { padding-inline: 14px; }
-  .is-topbar > div:first-child small, .is-topbar__actions label { display: none; }
-  .is-content { padding: 24px 14px 70px; }
-  .is-hero { padding-top: 28px; }
-  .is-hero h1 { font-size: 44px; }
-  .is-stat-grid { grid-template-columns: 1fr 1fr; }
-  .is-stat-grid article { padding: 16px 10px; }
-  .is-context-grid, .is-mock-config, .is-application-form, .is-coverage-grid { grid-template-columns: 1fr; }
-  .is-application-form label.wide { grid-column: auto; }
-  .is-stage-matrix__grid { grid-template-columns: 1fr; }
-  .is-application-actions { grid-template-columns: 1fr; }
-  .is-coverage-summary { grid-template-columns: 72px 1fr; }
-  .is-mock-config > div { grid-column: auto; }
-  .is-source-grid { grid-template-columns: 1fr; }
-  .is-page-heading { min-height: 200px; align-items: start; }
-  .is-page-heading h1 { font-size: 40px; }
-  .is-heading-number { display: none; }
-  .is-filterbar { grid-template-columns: 1fr; }
-  .is-question__body { padding-left: 16px; grid-template-columns: 1fr; }
-  .is-question__example, .is-question__sources { grid-column: auto; }
-  .is-claim-list { grid-template-columns: 1fr; }
-  .is-claim-detail { padding: 18px; }
-  .is-claim-detail__header { grid-template-columns: 1fr; }
-  .is-risk-ring { width: 80px; }
-  .is-live-session { padding: 20px 15px; }
-  .is-live-session__meta { align-items: start; }
-  .is-live-session > h2 { font-size: 30px; }
-  .is-coach-grid { grid-template-columns: 1fr; }
-  .is-story-grid { grid-template-columns: 1fr; }
-  .is-story-stats { grid-template-columns: 1fr 1fr; }
-  .is-story-stats article:nth-child(2) { border-right: 0; }
-  .is-practice-plan__focus { grid-template-columns: 1fr; }
-  .is-evaluation { grid-template-columns: 1fr; }
-  .is-evaluation__score { padding-bottom: 14px; border-right: 0; border-bottom: 1px solid var(--line); }
-  .is-session-actions { flex-direction: column; }
-  .is-session-actions button { width: 100%; }
-  .is-branch-trace__list article { grid-template-columns: 26px 1fr; }
-  .is-branch-trace__trigger { grid-column: 2; display: flex; gap: 8px; align-items: baseline; text-align: left; }
-  .is-branch-trace__trigger span, .is-branch-trace__trigger b { display: inline; }
-  .is-history-table article { grid-template-columns: 1fr auto; }
-  .is-history-table article > span { display: none; }
-  .is-report-hero { grid-template-columns: 1fr; }
-  .is-report-score { padding-right: 0; padding-bottom: 14px; border-right: 0; border-bottom: 1px solid var(--line); }
-}
+
+
+
 
 @media (prefers-reduced-motion: reduce) {
   .is-view, .is-question__plus { animation: none; transition: none; }
@@ -3247,4 +3167,90 @@ export default {
 }
 
 
+/* Responsive rules follow all component base styles, including Application Lab. */
+@media (max-width: 1180px) {
+  .is-shell { grid-template-columns: 190px minmax(0, 1fr); }
+  .is-source-grid { grid-template-columns: repeat(3, 1fr); }
+  .is-stage-matrix__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .is-claim-layout { grid-template-columns: 300px minmax(0, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .is-shell { display: block; }
+  .is-sidebar {
+    position: sticky;
+    z-index: 30;
+    height: auto;
+    padding: 9px 12px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .is-brand { padding: 0; }
+  .is-brand small, .is-sidebar__context, .is-sidebar__footer { display: none; }
+  .is-nav { display: flex; min-width: 0; justify-content: flex-start; overflow: auto; }
+  .is-nav button { min-width: max-content; min-height: 44px; display: flex; }
+  .is-nav button span:not(.is-nav__icon) { display: none; }
+  .is-nav__icon { width: 28px; height: 28px; }
+  .is-topbar { top: 58px; }
+  .is-hero { min-height: auto; grid-template-columns: 1fr; gap: 30px; }
+  .is-stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .is-stat-grid article:nth-child(2) { border-right: 0; }
+  .is-overview-grid, .is-report-grid, .is-mock-start { grid-template-columns: 1fr; }
+  .is-source-grid { grid-template-columns: repeat(2, 1fr); }
+  .is-claim-layout, .is-application-layout { grid-template-columns: 1fr; }
+  .is-stage-matrix__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .is-claim-list { max-height: 340px; grid-template-columns: repeat(2, 1fr); }
+  .is-answer-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .is-sidebar { grid-template-columns: auto 1fr; }
+  .is-brand span:last-child { display: none; }
+  .is-topbar { padding-inline: 14px; }
+  .is-topbar > div:first-child small, .is-topbar__actions label { display: none; }
+  .is-content { padding: 24px 14px 70px; }
+  .is-hero { padding-top: 28px; }
+  .is-hero h1 { font-size: 44px; }
+  .is-stat-grid { grid-template-columns: 1fr 1fr; }
+  .is-stat-grid article { padding: 16px 10px; }
+  .is-context-grid, .is-mock-config, .is-application-form, .is-coverage-grid { grid-template-columns: 1fr; }
+  .is-application-form label.wide { grid-column: auto; }
+  .is-stage-matrix__grid { grid-template-columns: 1fr; }
+  .is-application-actions { grid-template-columns: 1fr; }
+  .is-coverage-summary { grid-template-columns: 72px 1fr; }
+  .is-mock-config > div { grid-column: auto; }
+  .is-source-grid { grid-template-columns: 1fr; }
+  .is-page-heading { min-height: 200px; align-items: start; }
+  .is-page-heading h1 { font-size: 40px; }
+  .is-heading-number { display: none; }
+  .is-filterbar { grid-template-columns: 1fr; }
+  .is-question__body { padding-left: 16px; grid-template-columns: 1fr; }
+  .is-question__example, .is-question__sources { grid-column: auto; }
+  .is-claim-list { grid-template-columns: 1fr; }
+  .is-claim-detail { padding: 18px; }
+  .is-claim-detail__header { grid-template-columns: 1fr; }
+  .is-risk-ring { width: 80px; }
+  .is-live-session { padding: 20px 15px; }
+  .is-live-session__meta { align-items: start; }
+  .is-live-session > h2 { font-size: 30px; }
+  .is-coach-grid { grid-template-columns: 1fr; }
+  .is-story-grid { grid-template-columns: 1fr; }
+  .is-story-stats { grid-template-columns: 1fr 1fr; }
+  .is-story-stats article:nth-child(2) { border-right: 0; }
+  .is-practice-plan__focus { grid-template-columns: 1fr; }
+  .is-evaluation { grid-template-columns: 1fr; }
+  .is-evaluation__score { padding-bottom: 14px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .is-session-actions { flex-direction: column; }
+  .is-session-actions button { width: 100%; }
+  .is-branch-trace__list article { grid-template-columns: 26px 1fr; }
+  .is-branch-trace__trigger { grid-column: 2; display: flex; gap: 8px; align-items: baseline; text-align: left; }
+  .is-branch-trace__trigger span, .is-branch-trace__trigger b { display: inline; }
+  .is-history-table article { grid-template-columns: 1fr auto; }
+  .is-history-table article > span { display: none; }
+  .is-report-hero { grid-template-columns: 1fr; }
+  .is-report-score { padding-right: 0; padding-bottom: 14px; border-right: 0; border-bottom: 1px solid var(--line); }
+}
 </style>

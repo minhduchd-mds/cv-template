@@ -2596,9 +2596,7 @@ button{cursor:pointer}
     width:160px;
     height:186px;
   }
-  .ref-brand-projects{
-    grid-template-columns:1fr;
-  }
+  /* The A4 canvas keeps its card grid when the surrounding UI narrows. */
 }
 
 
@@ -3667,4 +3665,10 @@ button{cursor:pointer}
   .topbar-actions #backupWorkspace { display: inline-flex; }
   .topbar-actions button { min-width: 44px; min-height: 44px; }
   .paper-stage { scrollbar-gutter: auto; }
+}
+
+@media screen and (max-width: 980px) {
+  .topbar { gap: 12px; }
+  .brand small { display: none; }
+  .topbar-actions { min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
 }
