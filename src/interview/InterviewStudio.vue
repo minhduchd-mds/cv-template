@@ -2863,7 +2863,7 @@ export default {
   }
   .is-brand { padding: 0; }
   .is-brand small, .is-sidebar__context, .is-sidebar__footer { display: none; }
-  .is-nav { display: flex; justify-content: flex-end; overflow: auto; }
+  .is-nav { display: flex; min-width: 0; justify-content: flex-start; overflow: auto; }
   .is-nav button { min-width: max-content; min-height: 44px; display: flex; }
   .is-nav button span:not(.is-nav__icon) { display: none; }
   .is-nav__icon { width: 28px; height: 28px; }

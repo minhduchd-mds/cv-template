@@ -5,8 +5,12 @@ const expectNoHorizontalOverflow = async (page) => {
   const overflow = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
+    offenders: [...document.querySelectorAll('body *')].map(node => {
+      const rect = node.getBoundingClientRect()
+      return { tag: node.tagName, id: node.id, cls: String(node.className || '').slice(0, 60), right: rect.right, width: rect.width }
+    }).filter(node => node.width > 0 && node.right > document.documentElement.clientWidth + 2).slice(0, 10),
   }))
-  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 2)
+  expect(overflow.scrollWidth, JSON.stringify(overflow.offenders)).toBeLessThanOrEqual(overflow.clientWidth + 2)
 }
 
 const watchRuntimeErrors = (page) => {
@@ -222,8 +226,7 @@ test('static fallback builder keeps core editing and template controls functiona
 
   await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
   await expect(page.locator('.template-card')).toHaveCount(20)
-  const wideWorkspace = await page.evaluate(() => matchMedia('(min-width: 901px)').matches)
-  await expect(page.locator('.templates')).toHaveCSS('overflow-y', wideWorkspace ? 'auto' : 'visible')
+  await expect(page.locator('.templates')).toHaveCSS('overflow-y', 'auto')
 
   const referenceChecks = [
     ['Executive Edge', 'executive-edge', '.ref-executive-edge'],

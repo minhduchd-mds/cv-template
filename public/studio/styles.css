@@ -3653,3 +3653,18 @@ button{cursor:pointer}
 .paper .page-break-risk-focus{outline:3px solid #e11d48!important;outline-offset:4px!important;background:rgba(225,29,72,.04)!important}
 @media(max-width:760px){.static-page-guide-inspector-head{flex-direction:column}.static-page-guide-risk-list>button{min-width:175px}}
 @media print{.static-page-guide-inspector{display:none!important}}
+
+
+/* Keep the compact template picker in its own scroll area. Its former
+   max-height with visible overflow painted cards underneath the preview. */
+@media screen and (max-width: 980px) {
+  .workspace, .workspace:has(.editor.collapsed) { display: block; grid-template-columns: 1fr; }
+  .templates { position: relative; top: auto; height: auto; max-height: 360px; overflow: auto; overscroll-behavior: contain; }
+  .preview { min-width: 0; max-width: 100%; }
+  .paper-stage { width: 100%; box-sizing: border-box; overflow: auto; }
+}
+@media screen and (max-width: 720px) {
+  .topbar-actions #backupWorkspace { display: inline-flex; }
+  .topbar-actions button { min-width: 44px; min-height: 44px; }
+  .paper-stage { scrollbar-gutter: auto; }
+}

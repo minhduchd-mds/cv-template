@@ -297,8 +297,10 @@
     }
   }
 
-  .studio-shell .topbar { height: auto; min-height: 64px; padding-block: 8px; }
+  .studio-shell .topbar { height: auto; min-height: 64px; padding: 8px 10px; }
   .studio-shell .topbar-actions { flex-wrap: wrap; gap: 4px; }
+  .studio-shell .topbar-actions .completion-button { display: inline-flex; padding-inline: 8px; }
+  .studio-shell .topbar-actions .completion-button > span, .studio-shell .topbar-actions .export-button > span { display: none; }
   .studio-shell .topbar-actions .backup-trigger { display: inline-flex; padding-inline: 8px; font-size: 11px; }
   .studio-shell .topbar-actions button { min-width: 44px; min-height: 44px; }
 
