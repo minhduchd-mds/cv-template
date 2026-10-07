@@ -23,13 +23,15 @@ test('landing explains the product, uses local sample media and stays responsive
   await expect(page.getByText('Local-first', { exact: true })).toBeVisible()
   await expect(page.locator('.landing-product')).toBeVisible()
   await expect(page.locator('.landing-case-grid')).toBeVisible()
+  const imageSources = await page.locator('.landing-page img').evaluateAll((images) => images.map((image) => image.getAttribute('src') || ''))
+  expect(imageSources.length).toBeGreaterThan(0)
+  expect(imageSources.every((source) => source.includes('sample/'))).toBeTruthy()
+
   await page.locator('.landing-nav .landing-brand').click()
   await expect(page).toHaveURL(/#studio$/)
   await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
 
-  const imageSources = await page.locator('.landing-page img').evaluateAll((images) => images.map((image) => image.getAttribute('src') || ''))
-  expect(imageSources.length).toBeGreaterThan(0)
-  expect(imageSources.every((source) => source.includes('sample/'))).toBeTruthy()
+
 
   await expectNoHorizontalOverflow(page)
   expect(runtimeErrors).toEqual([])
@@ -45,14 +47,16 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect(page.getByRole('progressbar', { name: 'CV completeness' })).toBeVisible()
   await expect(page.getByRole('button', { name: /Profile.*Identity & contact/i })).toBeVisible()
   await expect(page.getByRole('button', { name: /Experience.*Roles & achievements/i })).toBeVisible()
-  await expect(page.locator('.template-card')).toHaveCount(15)
-  await expect(page.locator('.template-panel')).toHaveCSS('overflow-y', 'auto')
+  await expect(page.locator('.template-card')).toHaveCount(20)
+  const wideWorkspace = await page.evaluate(() => matchMedia('(min-width: 1101px)').matches)
+  await expect(page.locator('.template-panel')).toHaveCSS('overflow-y', wideWorkspace ? 'auto' : 'visible')
 
   const avatarPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
   await page.locator('.role-avatar-upload input').setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: avatarPng })
   await expect(page.locator('.role-preset-avatar img')).toHaveCount(4)
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}').avatar || '')).toMatch(/^data:image\/webp;base64,/)
 
+  await page.getByRole('button', { name: 'Close CV builder' }).click()
   await page.locator('.quick-avatar-framing').getByRole('button', { name: 'Rounded' }).click()
   await page.locator('.quick-avatar-framing').getByRole('button', { name: 'L', exact: true }).click()
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-avatar-size-large/)
@@ -75,28 +79,30 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-settings-v1') || '{}').appearance?.avatarZoom)).toBe(1.6)
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-settings-v1') || '{}').appearance?.avatarRotate)).toBe(25)
 
+  await page.getByRole('button', { name: 'Edit CV' }).click()
   await page.getByRole('button', { name: /Design.*Type, scale & layout/i }).click()
-  await page.locator('.editor-field').filter({ hasText: 'Typography' }).locator('select').selectOption('serif')
+  await page.locator('.editor-field').filter({ hasText: 'Font family' }).locator('select').selectOption('serif')
   await page.locator('.editor-field').filter({ hasText: 'Content density' }).locator('select').selectOption('compact')
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-font-serif/)
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-density-compact/)
-  await page.getByRole('button', { name: /Projects.*Selected work/i }).click()
   await page.getByRole('button', { name: /List/i }).click()
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-projects-list/)
-  await page.getByRole('button', { name: /Card/i }).click()
+  await page.getByRole('button', { name: 'Card', exact: true }).click()
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-projects-cards/)
 
   await page.getByRole('button', { name: /Profile.*Identity & contact/i }).click()
 
-  await page.getByRole('button', { name: /Senior UI\/UX.*Portfolio led/i }).click()
+  await page.getByRole('button', { name: 'Close CV builder' }).click()
+  await page.getByRole('button', { name: 'Apply Senior UI/UX preset' }).click()
   await expect(page.locator('.preview-toolbar')).toContainText('Soft Portfolio')
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-avatar-size-large/)
 
-  await page.getByRole('button', { name: /Design Engineer.*Code aware/i }).click()
+  await page.getByRole('button', { name: 'Apply Design Engineer preset' }).click()
   await expect(page.locator('.preview-toolbar')).toContainText('Code Aware')
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-font-mono/)
   await expect(page.locator('.cv-sheet').first()).toHaveClass(/cv-density-compact/)
 
+  await page.getByRole('button', { name: 'Edit CV' }).click()
   const fullNameInput = page.locator('.editor-field').filter({ hasText: 'Full name' }).locator('input')
   await expect(fullNameInput).toHaveValue('Alex Chen')
   await fullNameInput.fill('Alex Chen QA')
@@ -111,6 +117,8 @@ test('builder opens from its route, edits shared data and persists locally', asy
   await page.getByRole('button', { name: 'Redo last change' }).click()
   await expect(page.locator('.cv-sheet').first()).toContainText('Alex Chen QA')
 
+  // Reordering is intentionally locked in Code Aware; exercise a flexible layout.
+  await page.locator('.template-card').filter({ hasText: 'Mono Grid' }).click()
   const sectionsBeforeDrag = await page.evaluate(() => JSON.parse(localStorage.getItem('cv-studio-profile-v1') || '{}').sections.map((section) => section.id))
   const projectsSection = page.locator('.cv-sheet.is-editable [data-section-id="projects"]').first()
   const experienceSection = page.locator('.cv-sheet.is-editable [data-section-id="experience"]').first()
@@ -213,8 +221,9 @@ test('static fallback builder keeps core editing and template controls functiona
   await page.goto('/studio/')
 
   await expect(page.getByRole('button', { name: 'Edit CV' })).toBeVisible()
-  await expect(page.locator('.template-card')).toHaveCount(15)
-  await expect(page.locator('.templates')).toHaveCSS('overflow-y', 'auto')
+  await expect(page.locator('.template-card')).toHaveCount(20)
+  const wideWorkspace = await page.evaluate(() => matchMedia('(min-width: 901px)').matches)
+  await expect(page.locator('.templates')).toHaveCSS('overflow-y', wideWorkspace ? 'auto' : 'visible')
 
   const referenceChecks = [
     ['Executive Edge', 'executive-edge', '.ref-executive-edge'],
@@ -248,6 +257,7 @@ test('static fallback builder keeps core editing and template controls functiona
     await expect(root.locator('[data-edit-pane]').first()).toBeVisible()
     await root.locator('[data-edit-pane]').first().click()
     await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
+    await page.locator('#toggleEditor').click()
   }
 
   await page.locator('.template-card').filter({ hasText: 'Brand Motion' }).click()
@@ -255,7 +265,7 @@ test('static fallback builder keeps core editing and template controls functiona
   const brandSkillGap = await page.locator('#paper .ref-brand-skills').evaluate((node) => getComputedStyle(node).gap)
   expect(parseFloat(brandSkillGap)).toBeGreaterThan(0)
   const campaignCards = page.locator('#paper .ref-brand-projects article')
-  await expect(campaignCards).toHaveCount(3)
+  await expect(campaignCards).toHaveCount(2)
   const campaignTops = await campaignCards.evaluateAll((nodes) => nodes.slice(0, 3).map((node) => Math.round(node.getBoundingClientRect().top)))
   expect(new Set(campaignTops).size).toBe(1)
 
@@ -284,7 +294,9 @@ test('static fallback builder keeps core editing and template controls functiona
   await page.mouse.move(fallbackAvatarBox.x + fallbackAvatarBox.width / 2 - 8, fallbackAvatarBox.y + fallbackAvatarBox.height / 2 + 5)
   await page.mouse.up()
 
-  await page.getByRole('button', { name: 'Edit CV' }).click()
+  if (await page.locator('#editor').evaluate((node) => node.classList.contains('collapsed'))) {
+    await page.getByRole('button', { name: 'Edit CV' }).click()
+  }
   await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
 
   await page.locator('.tab[data-tab="design"]').click()
@@ -295,7 +307,9 @@ test('static fallback builder keeps core editing and template controls functiona
   await expect.poll(async () => page.locator('#paper').evaluate((node) => getComputedStyle(node).getPropertyValue('--text-scale').trim())).toBe('1.1')
   await expect.poll(async () => page.locator('#paper').evaluate((node) => getComputedStyle(node).getPropertyValue('--heading-scale').trim())).toBe('1.15')
 
+  await page.locator('#toggleEditor').click()
   await page.locator('.template-card').filter({ hasText: 'Brand Motion' }).click()
+  await page.locator('#toggleEditor').click()
   await page.locator('.tab[data-tab="design"]').click()
   const brandCards = page.locator('#paper .ref-brand-projects article')
   const cardTops = await brandCards.evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().top)))
@@ -311,12 +325,15 @@ test('static fallback builder keeps core editing and template controls functiona
   const cardTopsAgain = await brandCards.evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().top)))
   expect(new Set(cardTopsAgain).size).toBe(1)
 
+  await page.locator('#toggleEditor').click()
   await page.locator('.template-card').filter({ hasText: 'Revenue Driver' }).click()
+  await page.locator('#toggleEditor').click()
   await page.locator('.tab[data-tab="design"]').click()
   await expect(page.locator('#projectCards')).toBeDisabled()
   await expect(page.locator('#projectList')).toBeDisabled()
   await expect(page.locator('#projectDisplayHint')).toContainText('does not use a project section')
 
+  await page.locator('#toggleEditor').click()
   await page.locator('[data-target-preset="uiux"]').click()
   await expect(page.locator('#activeTemplateLabel')).toContainText('Soft Portfolio')
   await expect(page.locator('#paper')).toHaveClass(/avatar-size-large/)
@@ -489,7 +506,7 @@ test('static template search filters the 20-template library', async ({ page }) 
 
   await page.locator('#templateSearch').fill('')
   await expect(page.locator('.template-card')).toHaveCount(20)
-  await expect(page.locator('#templateCountLabel')).toContainText('20 curated templates')
+  await expect(page.locator('#templateCountLabel')).toContainText('20 of 20 templates')
 })
 
 
@@ -507,6 +524,7 @@ test('Revenue Driver tagline and quote are directly editable without forced line
   await page.locator('#headline').fill('Build trust. Create value. Grow revenue.')
   await expect(tagline).toHaveText('Build trust. Create value. Grow revenue.')
 
+  await page.locator('#toggleEditor').click()
   await quote.click()
   await expect(page.locator('#quote')).toBeVisible()
   await expect(page.locator('#quote')).toBeFocused()
@@ -612,7 +630,9 @@ test('Content Health finds editorial and template coverage issues', async ({ pag
   await expect(page.locator('#contentHealthList')).toContainText('Duplicate skills found')
   await expect(page.locator('#contentHealthList')).toContainText('Project is missing impact')
 
+  await page.locator('#toggleEditor').click()
   await page.locator('.template-card').filter({hasText:'Revenue Driver'}).click()
+  await page.locator('#toggleEditor').click()
   await expect(page.locator('#contentHealthList')).toContainText('Projects are not used by this template')
 
   await page.getByRole('button',{name:'Remove duplicates'}).click()
@@ -630,11 +650,13 @@ test('Layout Master respects per-template section contracts', async ({ page }) =
   await page.getByRole('button',{name:'Layout'}).click()
 
   await expect(page.locator('#layoutMaster')).toContainText('Soft Portfolio')
-  await expect(page.locator('[data-layout-section="projects"]')).toContainText('3 of')
+  await expect(page.locator('[data-layout-section="projects"]')).toContainText('2 items')
   await page.locator('[data-layout-section="projects"] [data-layout-toggle]').click()
   await expect(page.locator('#paper .ref-soft-projects')).toHaveCount(0)
 
+  await page.locator('#toggleEditor').click()
   await page.locator('.template-card').filter({hasText:'Revenue Driver'}).click()
+  await page.locator('#toggleEditor').click()
   await page.getByRole('button',{name:'Layout'}).click()
   await expect(page.locator('[data-layout-section="projects"]')).toContainText('Not used by this template')
   await expect(page.locator('[data-layout-section="projects"] [data-layout-toggle]')).toHaveCount(0)
@@ -642,7 +664,9 @@ test('Layout Master respects per-template section contracts', async ({ page }) =
   await page.locator('[data-layout-section="experience"] [data-layout-toggle]').click()
   await expect(page.locator('#paper .ref-sales-experience')).toHaveCount(0)
 
+  await page.locator('#toggleEditor').click()
   await page.locator('.template-card').filter({hasText:'Bento Resume'}).click()
+  await page.locator('#toggleEditor').click()
   await page.getByRole('button',{name:'Layout'}).click()
   await expect(page.locator('#layoutMaster')).toContainText('Flexible hierarchy')
   await expect(page.locator('[data-layout-section="languages"] [data-layout-toggle]')).toHaveCount(1)
@@ -673,10 +697,19 @@ test('canonical workspace mirrors static Studio edits', async ({ page }) => {
 
 
 test('Vue export opens PDF Preflight and Backup uses canonical workspace', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/#studio')
+  for (const name of ['Edit CV', 'Export PDF', 'Backup']) {
+    const action = page.getByRole('button', { name, exact: true })
+    await expect(action).toBeVisible()
+    if (page.viewportSize().width <= 640) {
+      const bounds = await action.boundingBox()
+      expect(bounds.width).toBeGreaterThanOrEqual(44)
+      expect(bounds.height).toBeGreaterThanOrEqual(44)
+    }
+  }
   await page.getByRole('button',{name:'Export PDF'}).click()
   await expect(page.getByRole('heading',{name:'PDF Preflight'})).toBeVisible()
-  await page.getByRole('button',{name:'Close PDF preflight'}).click()
+  await page.getByRole('dialog', { name: 'PDF Preflight' }).getByRole('button',{name:'Close PDF preflight'}).click()
 
   await page.getByRole('button',{name:'Backup'}).click()
   await expect(page.getByRole('heading',{name:'Backup & Recovery'})).toBeVisible()

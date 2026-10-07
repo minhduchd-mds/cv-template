@@ -149,6 +149,7 @@
 </template>
 
 <script>
+import '../styles/marketing.scss'
 import { sampleProfile360 } from '../data/sample-profile-360'
 import { templates } from '../data/cv'
 

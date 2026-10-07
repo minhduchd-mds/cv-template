@@ -3,7 +3,7 @@ import './data/initialize-sample-media'
 import RootApp from './RootApp.vue'
 import { migrateStoredProfile } from './data/migrate-stored-profile'
 import { sanitizeStoredProfile } from './security/safe-media'
-import './styles/main.scss'
+import './styles/global.scss'
 
 sanitizeStoredProfile()
 migrateStoredProfile()

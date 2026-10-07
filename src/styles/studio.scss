@@ -1,0 +1,74 @@
+
+
+// Core studio styles are first-class Sass modules. Keep this order stable:
+// base/reset -> shell -> template browser -> CV documents -> responsive.
+
+@use 'studio-core';
+@use 'template-browser';
+@use 'cv-template-core';
+@use 'studio-responsive';
+
+@use 'enhancements';
+@use 'template-themes';
+@use 'editor';
+@use 'auto-complete';
+@use 'builder-advanced';
+@use 'cv-sections';
+@use 'motion';
+@use 'quality';
+
+
+
+
+
+// Shared HIG-inspired tokens/material/hierarchy and adaptive interaction layer.
+@use 'apple-ui';
+
+// Claude frontend-design refinement layers: text geometry, readable measure,
+// Builder microcopy and screenshot-driven finishing passes.
+@use 'text-frames';
+@use 'microcopy';
+@use 'detail-polish';
+
+// Final production detail: CV print continuity and explicit interaction states.
+@use 'cv-detail';
+@use 'interaction-states';
+
+// Shared brand asset applied after concept/theme overrides.
+@use 'brand-seo';
+
+// CV Builder v2: focused editor hierarchy layered after legacy/theme overrides.
+@use 'editor-v2';
+
+// Studio v2: role presets and direct-edit preview affordances.
+@use 'studio-v2';
+
+// Modern CV directions + project Card/List display modes.
+@use 'modern-templates';
+
+// Shared avatar crop/shape controls across Studio and PDF.
+@use 'avatar-framing';
+
+// Undo/redo controls and direct canvas section reordering.
+@use 'history-reorder';
+
+// Designer/young visual refresh and responsive preset/avatar fixes.
+@use 'designer-youth-refresh';
+
+// Curated 20-template professional library.
+@use 'professional-curated';
+
+// Dedicated layouts for the 10 reference-led CV templates.
+@use 'reference-layouts';
+
+// Overflow guards for the five retained legacy templates.
+@use 'retained-template-fixes';
+
+// Template-aware design controls and preview toolbar.
+@use 'design-controls-v3';
+
+// Final Studio UI audit: sticky preview + readability states.
+@use 'ui-audit-v4';
+
+// Five new consulting, healthcare, finance, creative and academic themes.
+@use 'template-expansion-v4';

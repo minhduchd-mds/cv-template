@@ -5,7 +5,7 @@ test('static ATS scanner separates readiness from target fit and supports edits'
   page.on('pageerror', (error) => runtimeErrors.push(error.message))
 
   await page.goto('/studio/')
-  await page.getByRole('button', { name: /ATS Scan/i }).click()
+  await page.getByRole('button', { name: /^ATS Scan/i }).click()
 
   await expect(page.getByRole('heading', { name: 'ATS Scanner' })).toBeVisible()
   await expect(page.locator('#atsProReadiness')).not.toHaveText('—')
@@ -13,18 +13,20 @@ test('static ATS scanner separates readiness from target fit and supports edits'
   await expect(page.locator('#atsProMetrics article')).toHaveCount(5)
   await expect(page.locator('.ats-pro-method')).toContainText('Text extraction 30%')
 
+  await page.getByRole('button', { name: /Optimize/ }).click()
   await page.locator('#atsProRole').selectOption('sales')
   await page.locator('#atsProIndustry').selectOption('technology')
   await page.locator('#atsProSeniority').selectOption('senior')
   await expect(page.locator('#atsProTargetHint')).toContainText('Sales · Business Development')
 
+  await page.getByRole('button', { name: /Overview/ }).click()
   const nameRow = page.locator('.ats-field-row').filter({ hasText: 'Name' }).first()
   await expect(nameRow).toContainText(/Readable|Partial/)
   await nameRow.getByRole('button', { name: 'Edit' }).click()
   await expect(page.locator('#editor')).not.toHaveClass(/collapsed/)
   await expect(page.locator('#name')).toBeFocused()
 
-  await page.getByRole('button', { name: /ATS Scan/i }).click()
+  await page.getByRole('button', { name: /^ATS Scan/i }).click()
   await page.getByRole('button', { name: /Verify/ }).click()
   await page.getByRole('button', { name: 'ATS sees this' }).click()
   await expect(page.locator('#atsPlainText')).toContainText('Alex Chen')
@@ -63,7 +65,7 @@ test('ATS PDF verification compares exported text with the live CV', async ({ pa
     })
   })
 
-  await page.getByRole('button', { name: /ATS Scan/i }).click()
+  await page.getByRole('button', { name: /^ATS Scan/i }).click()
   await page.getByRole('button', { name: /Verify/ }).click()
   await page.getByRole('button', { name: 'PDF verify' }).click()
   await expect(page.getByText('Check the PDF ATS will receive')).toBeVisible()
@@ -91,18 +93,19 @@ test('ATS visual heatmap highlights readable and risky CV regions', async ({ pag
   page.on('pageerror', (error) => runtimeErrors.push(error.message))
 
   await page.goto('/studio/')
-  await page.getByRole('button', { name: /ATS Scan/i }).click()
-  await expect(page.getByText('ATS Heatmap')).toBeVisible()
-
+  await page.locator('.template-card').filter({ hasText: 'Executive Edge' }).click()
+  await page.getByRole('button', { name: /^ATS Scan/i }).click()
   await page.getByRole('button',{name:/Optimize/}).click()
+  await expect(page.locator('#atsShell').getByText('ATS Heatmap', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Show heatmap' }).click()
   await expect(page.locator('#paper')).toHaveClass(/ats-heatmap-active/)
   await expect(page.locator('#atsHeatmapLegend')).toBeVisible()
   await expect(page.locator('#paper .ats-heat').first()).toBeVisible()
 
-  const summary = page.locator('#paper [data-edit-focus="#summary"]').first()
+  const summary = page.locator('#paper [data-ats-heat-field="Summary"]').first()
   await expect(summary).toHaveClass(/ats-heat-/)
 
+  await page.getByRole('button', { name: 'Close ATS Scanner', exact: true }).click()
   await page.getByRole('button', { name: 'Hide ATS heatmap' }).click()
   await expect(page.locator('#paper')).not.toHaveClass(/ats-heatmap-active/)
 
@@ -130,7 +133,7 @@ test('ATS Auto Fix applies factual safe fixes and supports undo', async ({ page 
   })
 
   await page.goto('/studio/')
-  await page.getByRole('button', { name: /ATS Scan/i }).click()
+  await page.getByRole('button', { name: /^ATS Scan/i }).click()
 
   await page.getByRole('button',{name:/Optimize/}).click()
   await expect(page.getByText('ATS Auto Fix')).toBeVisible()
@@ -153,7 +156,7 @@ test('ATS versions save compare and restore snapshots locally', async ({ page })
   page.on('pageerror',(error)=>runtimeErrors.push(error.message))
 
   await page.goto('/studio/')
-  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/^ATS Scan/i}).click()
   await page.getByRole('button',{name:/Applications/}).click()
   await page.getByRole('button',{name:'Versions'}).click()
 
@@ -162,17 +165,21 @@ test('ATS versions save compare and restore snapshots locally', async ({ page })
   await page.locator('#atsVersionSave').click()
   await expect(page.locator('#atsVersionList')).toContainText('Baseline')
 
-  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button', { name: 'Close ATS Scanner', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit CV', exact: true }).click()
   const skills=page.locator('#skills')
   await skills.fill((await skills.inputValue())+'\\nUser Research')
-  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/^ATS Scan/i}).click()
+  await page.getByRole('button',{name:/Applications/}).click()
   await page.getByRole('button',{name:'Versions'}).click()
   await page.locator('#atsVersionName').fill('Tailored')
   await page.locator('#atsVersionSave').click()
 
   await expect(page.locator('#atsVersionList .ats-version-card')).toHaveCount(2)
-  await page.locator('#atsCompareA').selectOption({label:/Baseline/})
-  await page.locator('#atsCompareB').selectOption({label:/Tailored/})
+  const baselineId = await page.locator('#atsCompareA option').filter({ hasText: 'Baseline' }).getAttribute('value')
+  const tailoredId = await page.locator('#atsCompareB option').filter({ hasText: 'Tailored' }).getAttribute('value')
+  await page.locator('#atsCompareA').selectOption(baselineId)
+  await page.locator('#atsCompareB').selectOption(tailoredId)
   await page.locator('#atsCompareRun').click()
   await expect(page.locator('#atsCompareResult')).toBeVisible()
   await expect(page.locator('#atsCompareContent')).toContainText('User Research')
@@ -189,7 +196,7 @@ test('ATS application workspace creates tracks and restores a job snapshot', asy
   page.on('pageerror',(error)=>runtimeErrors.push(error.message))
 
   await page.goto('/studio/')
-  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/^ATS Scan/i}).click()
   await page.getByRole('button',{name:'Applications'}).click()
 
   await expect(page.getByText('Track one job from JD to final PDF')).toBeVisible()
@@ -242,7 +249,7 @@ test('ATS application analytics summarizes pipeline keywords and follow-ups', as
   })
 
   await page.goto('/studio/')
-  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/^ATS Scan/i}).click()
   await page.getByRole('button',{name:/Applications/}).click()
   await page.getByRole('button',{name:'Analytics'}).click()
 
@@ -261,7 +268,7 @@ test('ATS UX V3 consolidates scanner navigation and next action', async ({ page 
   page.on('pageerror',(error)=>runtimeErrors.push(error.message))
 
   await page.goto('/studio/')
-  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/^ATS Scan/i}).click()
 
   await expect(page.locator('#atsV3Nav [data-v3-group]')).toHaveCount(4)
   await expect(page.locator('.ats-v3-legacy-tabs')).toBeHidden()
@@ -290,7 +297,7 @@ test('ATS V3 layout remains bounded across viewport sizes', async ({ page }) => 
   for (const viewport of [{width:1440,height:900},{width:768,height:1024},{width:390,height:844}]) {
     await page.setViewportSize(viewport)
     await page.goto('/studio/')
-    await page.getByRole('button',{name:/ATS Scan/i}).click()
+    await page.getByRole('button',{name:/^ATS Scan/i}).click()
     await page.getByRole('button',{name:/Applications/}).click()
     const bounds=await page.locator('.ats-panel').evaluate((panel)=>({
       left:panel.getBoundingClientRect().left,
@@ -318,7 +325,7 @@ test('ATS analytics V2 infers skipped funnel stages but times explicit events on
     ]))
   })
   await page.goto('/studio/')
-  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/^ATS Scan/i}).click()
   await page.getByRole('button',{name:/Applications/}).click()
   await page.getByRole('button',{name:'Analytics'}).click()
   await expect(page.locator('#atsAnalyticsV2Velocity')).toContainText('Reached Applied')
@@ -333,7 +340,7 @@ test('ATS analytics V2 infers skipped funnel stages but times explicit events on
 
 test('ATS application stage jump records inferred milestones for funnel integrity', async ({ page }) => {
   await page.goto('/studio/')
-  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/^ATS Scan/i}).click()
   await page.getByRole('button',{name:/Applications/}).click()
   await page.locator('#atsAppCompany').fill('Jump Corp')
   await page.locator('#atsAppRole').fill('Product Designer')
@@ -358,7 +365,7 @@ test('ATS analytics keyword matching uses exact tokens for single words', async 
     ]))
   })
   await page.goto('/studio/')
-  await page.getByRole('button',{name:/ATS Scan/i}).click()
+  await page.getByRole('button',{name:/^ATS Scan/i}).click()
   await page.getByRole('button',{name:/Applications/}).click()
   await page.getByRole('button',{name:'Analytics'}).click()
   await expect(page.locator('#atsAnalyticsKeywords')).toContainText('java')

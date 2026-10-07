@@ -15,9 +15,9 @@
         <button class="completion-button" type="button" :aria-label="`Complete missing CV fields · ${completionPercent}% complete`" @click="runAutoComplete">
           <span>Complete gaps</span><strong>{{ completionPercent }}%</strong>
         </button>
-        <button class="ghost-button" type="button" @click="backupOpen = true">Backup</button>
-        <button class="editor-trigger primary-button" type="button" @click="openEditor('profile')">Edit CV</button>
-        <button class="ghost-button export-button" type="button" @click="openExportPreflight"><span>Export PDF</span><span aria-hidden="true">↗</span></button>
+        <button class="ghost-button backup-trigger" type="button" @click="backupOpen = true">Backup</button>
+        <button class="editor-trigger primary-button" type="button" aria-label="Edit CV" @click="openEditor('profile')">Edit CV</button>
+        <button class="ghost-button export-button" type="button" aria-label="Export PDF" @click="openExportPreflight"><span>Export PDF</span><span aria-hidden="true">↗</span></button>
       </div>
     </header>
 
@@ -257,6 +257,7 @@
 </template>
 
 <script>
+import './styles/studio.scss'
 import CvDocument from './components/CvDocument.vue'
 import ProfileEditor from './components/ProfileEditor.vue'
 import WorkspaceBackupDialog from './components/WorkspaceBackupDialog.vue'
@@ -1027,9 +1028,43 @@ export default {
     },
     measurePrintHealth() {
       const sheet=document.querySelector('.preview-stage .cv-sheet')
-      const a4HeightPx=1123
+      // Qualify the actual print cascade. Preview layouts can be shorter than
+      // their printable version (different widths, grid flow and typography).
+      const a4HeightPx=296 * 96 / 25.4 // keep 1 mm for pagination rounding
       if(!sheet)return{a4HeightPx,measuredHeight:a4HeightPx,requiredFit:1,appliedFit:1,onePagePossible:true,naturalPages:1,pressure:[]}
-      const measuredHeight=Math.max(a4HeightPx,sheet.scrollHeight,sheet.offsetHeight)
+      const printRules=[]
+      for(const stylesheet of document.styleSheets){
+        try {
+          for(const rule of stylesheet.cssRules){
+            if(rule.type===CSSRule.MEDIA_RULE && /\bprint\b/.test(rule.conditionText)) {
+              printRules.push(...[...rule.cssRules].filter((item)=>item.type===CSSRule.STYLE_RULE).map((item)=>
+                '.print-measure :is('+item.selectorText+') {'+item.style.cssText+'}'
+              ))
+            }
+          }
+        } catch { /* External stylesheets are not part of the CV print contract. */ }
+      }
+      const scope=document.createElement('div')
+      scope.className='print-measure'
+      scope.style.cssText='position:fixed;left:-10000px;top:0;width:210mm;visibility:hidden;pointer-events:none'
+      scope.setAttribute('aria-hidden','true')
+      const wrapper=document.createElement('div')
+      wrapper.className='print-document print-only'
+      const printSheet=sheet.cloneNode(true)
+      printSheet.style.removeProperty('--print-fit')
+      printSheet.style.removeProperty('--print-width')
+      printSheet.style.removeProperty('--print-min-height')
+      delete printSheet.dataset.printMode
+      delete printSheet.dataset.printFit
+      wrapper.appendChild(printSheet)
+      scope.appendChild(wrapper)
+      const style=document.createElement('style')
+      style.textContent=printRules.join('\n')
+      document.head.appendChild(style)
+      document.body.appendChild(scope)
+      let measuredHeight
+      try { measuredHeight=Math.max(a4HeightPx,printSheet.scrollHeight,printSheet.getBoundingClientRect().height) }
+      finally { scope.remove(); style.remove() }
       const requiredFit=Math.min(1,a4HeightPx/measuredHeight)
       const appliedFit=Math.max(.68,requiredFit)
       const nodes=[...sheet.querySelectorAll('[data-section-id],section')]
@@ -1066,7 +1101,7 @@ export default {
       sheets.forEach((sheet) => {
         sheet.style.setProperty('--print-fit', fit.toFixed(4))
         sheet.style.setProperty('--print-width', (210 / fit).toFixed(2)+'mm')
-        sheet.style.setProperty('--print-min-height', (297 / fit).toFixed(2)+'mm')
+        sheet.style.setProperty('--print-min-height', (296 / fit).toFixed(2)+'mm')
         sheet.dataset.printFit = fit.toFixed(4)
         sheet.dataset.printMode='one'
       })

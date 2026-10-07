@@ -254,3 +254,10 @@
     order:2;
   }
 }
+
+/* Keep critical headings and contact identifiers readable by PDF parsers. */
+@media print {
+  .cv-sheet :is(h2, h3) { letter-spacing: normal !important; }
+  .creative-contact { min-width: max-content; }
+  .creative-contact span { overflow-wrap: normal; }
+}

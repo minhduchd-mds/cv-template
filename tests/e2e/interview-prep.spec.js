@@ -55,18 +55,21 @@ test('opens standalone Interview Studio from selected CV', async ({ page }) => {
 
   await page.goto('/#interview-studio')
 
-  await expect(page.getByText('Interview Studio', { exact: true }).first()).toBeVisible()
-  await expect(page.getByText('Practice & Evidence Lab')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Interview Studio', exact: true })).toBeVisible()
+  const wideNavigation = await page.evaluate(() => matchMedia('(min-width: 901px)').matches)
+  if (wideNavigation) await expect(page.getByText('Practice & Evidence Lab')).toBeVisible()
+  else await expect(page.getByText('Practice & Evidence Lab')).toBeHidden()
   await expect(page.getByRole('heading', { name: /Biến CV thành/i })).toBeVisible()
-  await expect(page.getByText('Soft Portfolio', { exact: true })).toBeVisible()
-  await expect(page.getByText(/UI\/UX & Product Design/).first()).toBeVisible()
+  await expect(page.locator('.is-sidebar__context')).toContainText('Soft Portfolio')
+  await expect(page.locator('.is-sidebar__context')).toContainText('UI/UX & Product Design')
+  await expect(page.locator('.is-nav').getByRole('button', { name: 'Overview', exact: true })).toBeVisible()
   await expect(page.getByText(/TopCV/).first()).toBeVisible()
   expect(pageErrors).toEqual([])
 })
 
 test('legacy interview hash stays compatible with Interview Studio', async ({ page }) => {
   await page.goto('/#interview')
-  await expect(page.getByText('Interview Studio', { exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Interview Studio', exact: true })).toBeVisible()
 })
 
 test('question bank keeps Vietnam source provenance', async ({ page }) => {
@@ -76,7 +79,7 @@ test('question bank keeps Vietnam source provenance', async ({ page }) => {
   await page.getByPlaceholder(/stakeholder, design system/).fill('quy trình thiết kế')
   const question = page.locator('.is-question').filter({ hasText: 'Quy trình thiết kế' }).first()
   await expect(question).toBeVisible()
-  await question.locator('summary').click()
+  if (!(await question.evaluate((node) => node.open))) await question.locator('summary').click()
   await expect(question.getByText(/Glints Vietnam/)).toBeVisible()
   await expect(question.getByText(/ITviec/)).toBeVisible()
 })
@@ -85,7 +88,7 @@ test('claim defense extracts measurable CV claims and persists evidence', async 
   await page.goto('/#interview-studio')
   await page.getByRole('button', { name: /Claim Defense/ }).click()
 
-  await expect(page.getByText(/Led a design system across 15 modules/)).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Led a design system across 15 modules/ })).toBeVisible()
   await expect(page.getByText(/Con số này lấy baseline nào/)).toBeVisible()
 
   const note = page.getByPlaceholder(/Baseline, phạm vi mình sở hữu/)
@@ -103,7 +106,7 @@ test('mock interview adapts to weak answers and creates traceable report', async
   await page.goto('/#interview-studio')
   await page.getByRole('button', { name: /Mock Interview/ }).click()
 
-  await page.getByLabel('Application').selectOption('app-vn-1')
+  await page.locator('.is-mock-config').getByLabel('Application').selectOption('app-vn-1')
   await page.getByLabel('Interviewer mode').selectOption('skeptical')
   await page.getByLabel('Pressure').selectOption('pressure')
   await page.getByLabel('Timer / câu').selectOption('60')
@@ -119,8 +122,8 @@ test('mock interview adapts to weak answers and creates traceable report', async
 
   await expect(page.getByText('ADAPTIVE FOLLOW-UP')).toBeVisible()
   await expect(page.getByText('WHY THIS FOLLOW-UP')).toBeVisible()
-  await expect(page.getByText(/Skeptical Panel/)).toBeVisible()
-  await expect(page.getByText(/Pressure/)).toBeVisible()
+  await expect(page.locator('.is-live-session__meta').getByText(/Skeptical Panel/)).toBeVisible()
+  await expect(page.locator('.is-live-session__meta').getByText(/Pressure/)).toBeVisible()
   await expect(page.getByRole('heading', { name: /Tôi chưa bị thuyết phục|Hãy chứng minh rõ hơn|challenge/i })).toBeVisible()
 
   // Finish the adaptive follow-up and the remaining base/adaptive questions.
@@ -141,8 +144,8 @@ test('mock interview adapts to weak answers and creates traceable report', async
   }
 
   await expect(page.getByText(/LATEST PRACTICE SIGNAL/)).toBeVisible()
-  await expect(page.getByText(/Viettel Digital · Senior Product Designer/)).toBeVisible()
-  await expect(page.getByText(/ADAPTIVE TRACE/)).toBeVisible()
+  await expect(page.locator('.is-report-hero').getByText(/Viettel Digital · Senior Product Designer/)).toBeVisible()
+  await expect(page.locator('.is-branch-trace')).toBeVisible()
   await expect(page.getByText(/BRANCH MEMORY/)).toBeVisible()
   await expect(page.getByText(/Interviewer đã rẽ nhánh/)).toBeVisible()
   await expect(page.getByText(/NEXT PRACTICE PLAN/)).toBeVisible()
@@ -169,7 +172,7 @@ test('mock interview adapts to weak answers and creates traceable report', async
 test('Story Bank saves a strong answer and can start focused practice', async ({ page }) => {
   await page.goto('/#interview-studio')
   await page.getByRole('button', { name: /Mock Interview/ }).click()
-  await page.getByLabel('Application').selectOption('app-vn-1')
+  await page.locator('.is-mock-config').getByLabel('Application').selectOption('app-vn-1')
   await page.getByRole('button', { name: /Bắt đầu session/ }).click()
 
   await page.getByPlaceholder(/Nói hoặc nhập đúng cách/).fill(
@@ -189,7 +192,7 @@ test('Story Bank saves a strong answer and can start focused practice', async ({
   expect(stored[0].answer).toContain('31%')
   expect(stored[0].evidence).toContain('ownership')
 
-  await page.getByRole('button', { name: /Story Bank/ }).click()
+  await page.getByRole('button', { name: 'Story Bank', exact: true }).click()
   await expect(page.getByRole('heading', { name: /Lưu những câu chuyện nghề nghiệp/ })).toBeVisible()
   await expect(page.getByText(/31%/).first()).toBeVisible()
   await page.getByRole('button', { name: /Luyện lại/ }).click()

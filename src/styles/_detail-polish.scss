@@ -283,7 +283,8 @@
     font-size: 11px;
   }
 
-  .primary-button {
+  .studio-shell .topbar-actions .export-button {
+    display: inline-flex;
     min-width: 54px;
     padding-inline: 10px;
     font-size: 11px;
@@ -295,6 +296,11 @@
       font-weight: 650;
     }
   }
+
+  .studio-shell .topbar { height: auto; min-height: 64px; padding-block: 8px; }
+  .studio-shell .topbar-actions { flex-wrap: wrap; gap: 4px; }
+  .studio-shell .topbar-actions .backup-trigger { display: inline-flex; padding-inline: 8px; font-size: 11px; }
+  .studio-shell .topbar-actions button { min-width: 44px; min-height: 44px; }
 
   .studio-home-launch,
   .concept-launch {

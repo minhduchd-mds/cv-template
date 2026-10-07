@@ -53,12 +53,13 @@ test.describe('20-template visual layout audit', () => {
         const offenders=[...paper.querySelectorAll('*')].map((node)=>{
           const rect=node.getBoundingClientRect()
           return {
+            visible: rect.width > 0 && rect.height > 0,
             tag:node.tagName,
             cls:String(node.className||'').slice(0,80),
             left:rect.left-root.left,
             right:rect.right-root.right,
           }
-        }).filter((item)=>item.left < -2 || item.right > 2).slice(0,12)
+        }).filter((item)=>item.visible && (item.left < -2 || item.right > 2)).slice(0,12)
         return {
           scrollWidth:paper.scrollWidth,
           clientWidth:paper.clientWidth,

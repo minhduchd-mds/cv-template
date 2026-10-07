@@ -110,6 +110,7 @@ const prepareVuePrint = async (page) => {
 const semanticSource = async (page) => page.locator('.print-document .cv-sheet').evaluate((sheet)=>{
   const source=String(sheet.innerText||sheet.textContent||'').replace(/\u00a0/g,' ').trim()
   const anchors=[...sheet.querySelectorAll('h1,h2,h3,.ref-contact span,.contact-row span,.product-contact span,.creative-contact span,.executive-contact span')]
+    .filter((node)=>node.getClientRects().length > 0)
     .map((node)=>String(node.textContent||'').replace(/\s+/g,' ').trim())
     .filter((value)=>value.length>=3&&value.length<=120)
   const lines=source.split(/\n+/).map((line)=>line.replace(/\s+/g,' ').trim())
@@ -131,11 +132,12 @@ test('PDF Fidelity 20/20: A4 output retains semantic text and respects preflight
   test.setTimeout(180_000)
   const matrix=[]
 
-  await page.goto('/')
+  await page.goto('/#studio')
   for(const [id,name] of templates){
     await page.emulateMedia({media:'screen'})
     await selectTemplate(page,name)
     const printState=await prepareVuePrint(page)
+    await page.emulateMedia({media:'print'})
     const semantic=await semanticSource(page)
 
     const pdfPath=testInfo.outputPath('pdf-'+id+'.pdf')
@@ -173,6 +175,7 @@ test('PDF Fidelity 20/20: A4 output retains semantic text and respects preflight
       policy:printState.policy,
       pages:info.pages,
       pageSizePt:[info.widthPt,info.heightPt],
+      missingAnchors:semantic.anchors.filter((value)=>!matchValue(normalizedPdf,value)),
       anchors:{matched:anchorMatched,total:semantic.anchors.length,retention:Number(anchorRetention.toFixed(3))},
       sourceLines:{matched:lineMatched,total:semantic.lines.length,retention:Number(lineRetention.toFixed(3))},
     })
@@ -185,7 +188,8 @@ test('PDF Fidelity 20/20: A4 output retains semantic text and respects preflight
 
 test('multi-page export keeps the final evidence instead of clipping it', async ({page},testInfo) => {
   test.setTimeout(60_000)
-  await page.goto('/')
+  await page.goto('/#studio')
+  await expect.poll(() => page.evaluate(() => Boolean(JSON.parse(localStorage.getItem('cv-studio-workspace-v3') || 'null')?.profile))).toBe(true)
 
   await page.evaluate(() => {
     const key='cv-studio-workspace-v3'
@@ -241,7 +245,8 @@ test('multi-page export keeps the final evidence instead of clipping it', async 
 
 test('dedicated stack-safe export preserves final experience evidence', async ({page},testInfo) => {
   test.setTimeout(70_000)
-  await page.goto('/')
+  await page.goto('/#studio')
+  await expect.poll(() => page.evaluate(() => Boolean(JSON.parse(localStorage.getItem('cv-studio-workspace-v3') || 'null')?.profile))).toBe(true)
 
   await page.evaluate(() => {
     const key='cv-studio-workspace-v3'

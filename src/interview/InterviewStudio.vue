@@ -15,6 +15,8 @@
           :key="item.id"
           type="button"
           :class="{ active: activeModule === item.id }"
+          :aria-label="item.label"
+          :aria-pressed="activeModule === item.id"
           @click="activeModule = item.id"
         >
           <span class="is-nav__icon">{{ item.icon }}</span>
@@ -48,7 +50,7 @@
         </div>
         <div class="is-topbar__actions">
           <label>
-            <span class="sr-only">Application</span>
+            <span class="sr-only">Current job context</span>
             <select v-model="applicationId">
               <option value="">CV hiện tại · không gắn job</option>
               <option v-for="application in applications" :key="application.id" :value="application.id">
@@ -2862,7 +2864,7 @@ export default {
   .is-brand { padding: 0; }
   .is-brand small, .is-sidebar__context, .is-sidebar__footer { display: none; }
   .is-nav { display: flex; justify-content: flex-end; overflow: auto; }
-  .is-nav button { min-width: max-content; min-height: 38px; display: flex; }
+  .is-nav button { min-width: max-content; min-height: 44px; display: flex; }
   .is-nav button span:not(.is-nav__icon) { display: none; }
   .is-nav__icon { width: 28px; height: 28px; }
   .is-topbar { top: 58px; }

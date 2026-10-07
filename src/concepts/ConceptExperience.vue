@@ -105,6 +105,7 @@
 </template>
 
 <script>
+import '../styles/concepts.scss'
 import { candidate } from '../data/cv'
 
 const STORAGE_KEY = 'cv-studio-profile-v1'

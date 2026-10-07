@@ -137,11 +137,6 @@ export default {
   mounted() {
     window.addEventListener('hashchange', this.syncRoute)
     this.updateMeta()
-    if (this.routeMode === 'landing') {
-      const prefetch = () => loadStudio().catch(() => {})
-      if ('requestIdleCallback' in window) window.requestIdleCallback(prefetch, { timeout: 4000 })
-      else window.setTimeout(prefetch, 2500)
-    }
   },
   beforeUnmount() {
     window.removeEventListener('hashchange', this.syncRoute)

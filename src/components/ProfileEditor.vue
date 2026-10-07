@@ -24,6 +24,8 @@
             :key="tab.id"
             type="button"
             :class="{ active: activeTab === tab.id }"
+            :aria-label="`${tab.label} · ${tab.hint}`"
+            :aria-pressed="activeTab === tab.id"
             @click="activeTab = tab.id"
           >
             <span class="editor-tab-icon">{{ tab.icon }}</span>

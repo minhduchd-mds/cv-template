@@ -1754,7 +1754,8 @@
   })
 
   $('#staticAvatarInput').addEventListener('change', async (event) => {
-    const imageFile = event.currentTarget.files?.[0]
+    const input = event.currentTarget
+    const imageFile = input.files?.[0]
     if (!imageFile) return
     try {
       profile.avatar = await compressAvatar(imageFile)
@@ -1762,7 +1763,7 @@
     } catch (error) {
       window.alert(error.message || 'Unable to process this image.')
     } finally {
-      event.currentTarget.value = ''
+      input.value = ''
     }
   })
 
