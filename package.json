@@ -16,13 +16,14 @@
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --project=desktop-chromium --project=tablet-chromium --project=mobile-chromium",
     "lighthouse:assert": "node scripts/assert-lighthouse.mjs",
-    "verify": "npm run layout:check && npm run security:lint && npm run build && npm run verify:bundle",
+    "verify": "npm run layout:check && npm run security:lint && npm run build && npm run test:unit && npm run verify:bundle",
     "preview": "vite preview",
     "test:perf": "playwright test tests/e2e/studio-perf.spec.js --project=desktop-chromium --project=tablet-chromium --project=mobile-chromium",
     "test:templates": "playwright test tests/e2e/template-layout-audit.spec.js --project=desktop-chromium --project=tablet-chromium --project=mobile-chromium",
     "layout:check": "node scripts/check-template-layout-contracts.mjs",
     "test:pdf-fidelity": "playwright test tests/e2e/pdf-fidelity.spec.js --project=desktop-chromium",
-    "static:check": "node scripts/check-static-studio.mjs"
+    "static:check": "node scripts/check-static-studio.mjs",
+    "test:unit": "node --test tests/unit/*.test.mjs"
   },
   "dependencies": {
     "vue": "3.5.42"
