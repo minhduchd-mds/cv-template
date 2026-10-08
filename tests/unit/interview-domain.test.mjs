@@ -8,6 +8,11 @@ import {
 import {
   buildAnswerImprovement,
   compareAnswerAttempts,
+  snapshotAnswerInput,
+  isEvaluationCurrent,
+  evaluateInterviewResponse,
+  aggregateInterviewReport,
+  buildAdaptiveFollowUp,
   summarizeAnswerRevisions,
   extractCvClaims,
   getUnassignedClaimNotes,
@@ -339,4 +344,46 @@ test('revisions are counted per question and never treated as interview success'
   assert.equal(result.revisions[0].difference,19)
   assert.equal(result.revisions[1].difference,-6)
   assert.deepEqual(summarizeAnswerRevisions().revisions,[])
+})
+
+test('evaluation snapshots are invalidated when any answer input changes', () => {
+  const draft={answer:'Tôi trực tiếp sở hữu giải pháp.',evidence:'Kiểm thử trong dự án',confidence:3}
+  const scored={
+    ...draft,
+    evaluation:evaluateInterviewResponse(draft),
+    evaluatedInput:snapshotAnswerInput(draft),
+  }
+  assert.equal(isEvaluationCurrent(scored),true)
+  assert.equal(isEvaluationCurrent({...scored,answer:scored.answer+' Kết quả có ghi nhận.'}),false)
+  assert.equal(isEvaluationCurrent({...scored,evidence:'Đã thay đổi nguồn bằng chứng'}),false)
+  assert.equal(isEvaluationCurrent({...scored,confidence:4}),false)
+  assert.equal(isEvaluationCurrent({...scored,evaluation:null}),false)
+  assert.equal(isEvaluationCurrent({...scored,evaluatedInput:null}),false)
+})
+
+test('blank interview answers are skipped, not scored as confident answers', () => {
+  const empty=evaluateInterviewResponse({
+    answer:'   ',evidence:'Project có kết quả 60%!',confidence:5,elapsedSeconds:90,
+  })
+  assert.equal(empty.overall,0)
+  assert.equal(empty.unanswered,true)
+  assert.ok(Object.values(empty.dimensions).every(score=>score===0))
+  const actual=evaluateInterviewResponse({
+    answer:'Tôi trực tiếp phụ trách một luồng thiết kế và kiểm thử người dùng.',
+    evidence:'Project Atlas, phạm vi trực tiếp và kết quả được kiểm chứng.',confidence:3,
+  })
+  const report=aggregateInterviewReport([
+    {questionId:'q1',answer:'',evidence:'Số liệu không thay thế cho câu trả lời',evaluation:empty},
+    {questionId:'q2',answer:'Tôi trực tiếp phụ trách một luồng thiết kế và kiểm thử người dùng.',evidence:'Project Atlas',evaluation:actual},
+  ])
+  assert.equal(report.answered,1)
+  assert.equal(report.skipped,1)
+  assert.equal(report.overall,actual.overall)
+  assert.equal(buildAdaptiveFollowUp({
+    question:{id:'q1'},answer:' ',evaluation:empty,pressureLevel:'pressure',
+  }),null)
+  const fullyEmpty=aggregateInterviewReport([{answer:'',evaluation:empty}])
+  assert.equal(fullyEmpty.overall,0)
+  assert.equal(fullyEmpty.answered,0)
+  assert.equal(fullyEmpty.skipped,1)
 })
