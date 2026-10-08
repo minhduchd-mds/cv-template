@@ -11,6 +11,16 @@ export const candidateGoals = Object.freeze([
   { id: 'general', label: 'Phỏng vấn tổng quát', scenarioId: 'hr-screening', pack: 'general' },
 ])
 
+export const inferCandidateGoal = ({ rolePackId = '', profileRole = '', templateId = '' } = {}) => {
+  const text = [rolePackId, profileRole, templateId].join(' ').toLocaleLowerCase('vi')
+  if (/ux|ui|design|research|portfolio|creative/.test(text)) return 'design'
+  if (/lead|director|executive|manager|head of/.test(text)) return 'leadership'
+  if (/ai|machine learning|data|analyst|business intelligence|ml engineer/.test(text)) return 'ai'
+  if (/front.?end|back.?end|full.?stack|developer|engineering|software|devops|code|mobile/.test(text)) return 'engineering'
+  if (/product|business analyst|business-analysis|product-owner|scrum|strategy/.test(text)) return 'product'
+  return 'general'
+}
+
 const focusGuide = {
   relevance: { label: 'Đúng trọng tâm', action: 'Trả lời kết luận chính trong câu đầu tiên.', check: 'Có trả lời thẳng vào câu hỏi?' },
   structure: { label: 'Cấu trúc câu trả lời', action: 'Sắp xếp: Bối cảnh → Hành động → Kết quả.', check: 'Người nghe có theo được 3 ý?' },
