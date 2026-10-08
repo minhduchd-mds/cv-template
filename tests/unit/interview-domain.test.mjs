@@ -7,6 +7,7 @@ import {
 } from '../../src/interview/question-catalog.js'
 import {
   extractCvClaims,
+  getUnassignedClaimNotes,
   migrateLegacyClaimEvidence,
 } from '../../src/interview/interview-studio-engine.js'
 import { interviewSources, templateInterviewPack } from '../../src/data/interview-prep.js'
@@ -61,17 +62,26 @@ test('CV claim IDs remain stable when bullets are reordered', () => {
   assert.notEqual(findId(a, first), findId(a, second))
 })
 
-test('legacy evidence is preserved as draft but never auto-validated', () => {
+test('legacy evidence is archived without guessing which claim it belongs to', () => {
   const claims = extractCvClaims({
     experience: [{ bullets: ['Led a design system across 15 modules and improved handoff quality.'] }],
   })
   const item = claims[0]
   const stored = { [item.legacyId]: { note: 'Baseline measured before rollout', ready: true } }
-  const migrated = migrateLegacyClaimEvidence(stored, claims)
-  assert.equal(migrated[item.id].note, stored[item.legacyId].note)
-  assert.equal(migrated[item.id].ready, false)
-  assert.equal(migrated[item.id].needsReview, true)
-  assert.equal(migrated[item.legacyId].ready, true)
+  const migrated = migrateLegacyClaimEvidence(stored)
+  assert.equal(migrated[item.id], undefined, 'No inferred assignment to hashed IDs')
+  const notes = getUnassignedClaimNotes(migrated)
+  assert.equal(notes.length, 1)
+  assert.equal(notes[0].note, stored[item.legacyId].note)
+  assert.equal(notes[0].appliedTo, '')
+  assert.equal(notes[0].wasReady, true)
+  const again = migrateLegacyClaimEvidence(migrated)
+  assert.equal(getUnassignedClaimNotes(again).length, 1, 'No duplicate migrations')
+  const archived = {
+    ...again,
+    __legacyNotes: again.__legacyNotes.map(note => ({ ...note, appliedTo: item.id })),
+  }
+  assert.equal(getUnassignedClaimNotes(archived).length, 0)
   const edited = extractCvClaims({
     experience: [{ bullets: ['Led a design system across 16 modules and improved handoff quality.'] }],
   })
