@@ -5,6 +5,7 @@ export const INTERVIEW_LOCAL_KEYS = Object.freeze([
   'interview-studio-claim-evidence-v1',
   'interview-studio-story-bank-v1',
   'interview-studio-preferences-v1',
+  'interview-studio-growth-goal-v1',
   'cv-studio-interview-sessions-v1',
 ])
 
