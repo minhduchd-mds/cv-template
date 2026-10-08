@@ -92,7 +92,7 @@
             <article>
               <span>Question bank</span>
               <b>{{ questionDeck.length }}</b>
-              <small>{{ vietnamQuestionCount }} câu có nguồn Việt Nam</small>
+              <small>{{ vietnamQuestionCount }} câu từ bank Việt Nam</small>
             </article>
             <article>
               <span>CV claims</span>
@@ -130,6 +130,12 @@
                   <span>Role pack</span>
                   <select v-model="rolePackId">
                     <option v-for="pack in interviewPacks" :key="pack.id" :value="pack.id">{{ pack.label }}</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Ngành nghề</span>
+                  <select v-model="industryId" aria-label="Ngành nghề">
+                    <option v-for="industry in industryOptions" :key="industry.id" :value="industry.id">{{ industry.label }}</option>
                   </select>
                 </label>
                 <label>
@@ -644,6 +650,7 @@
               <div><b>{{ activeStageLabel }}</b><span>interview stage</span></div>
               <div><b>{{ activeInterviewer.shortLabel }}</b><span>{{ activeInterviewer.label }}</span></div>
               <div><b>{{ activePressure.label }}</b><span>adaptive pressure</span></div>
+              <div><b>{{ industryPracticeProfiles[resolvedIndustryId]?.label || 'Industry' }}</b><span>industry context</span></div>
               <div><b>{{ marketLabel }}</b><span>question sources</span></div>
               <button type="button" class="is-button is-button--primary" @click="startPractice">Bắt đầu session →</button>
             </div>
@@ -883,15 +890,21 @@
 import { templates } from '../data/cv'
 import { patchCanonicalWorkspace, readCanonicalWorkspace } from '../data/workspace-store'
 import {
-  coreQuestions,
+  industryPracticeProfiles,
+  templateDefaultIndustry,
   interviewPacks,
   interviewSources,
   interviewStages,
   questionCategories,
   seniorityLevels,
   templateInterviewPack,
-  vietnamQuestionBank,
 } from '../data/interview-prep'
+import {
+  buildQuestionDeck,
+  interviewStageWeight,
+  practiceContextBonus,
+  resolvePracticeIndustry,
+} from './question-catalog'
 import {
   aggregateInterviewReport,
   analyzeApplicationEvidence,
@@ -912,6 +925,7 @@ import {
 const SESSION_KEY = 'interview-studio-sessions-v2'
 const CLAIM_KEY = 'interview-studio-claim-evidence-v1'
 const STORY_KEY = 'interview-studio-story-bank-v1'
+const PREF_KEY = 'interview-studio-preferences-v1'
 
 export default {
   name: 'InterviewStudio',
@@ -924,6 +938,7 @@ export default {
       questionCategories,
       seniorityLevels,
       interviewSources,
+      industryPracticeProfiles,
       interviewerModes,
       pressureLevels,
       modules: [
@@ -939,6 +954,7 @@ export default {
       workspace: null,
       selectedTemplateId: templates[0]?.id || '',
       rolePackId: 'general',
+      industryId: 'auto',
       seniority: 'Senior',
       stageId: 'hiring-manager',
       market: 'vietnam',
@@ -1017,20 +1033,23 @@ export default {
         questions: this.questionDeck,
       })
     },
-    vietnamQuestions() {
-      if (this.market === 'global') return []
-      return vietnamQuestionBank.filter((item) => item.pack === 'general' || item.pack === this.rolePackId)
+    resolvedIndustryId() {
+      return resolvePracticeIndustry(this.selectedTemplateId, this.industryId)
+    },
+    industryOptions() {
+      return [
+        { id: 'auto', label: 'Auto · ' + (this.industryPracticeProfiles[this.resolvedIndustryId]?.label || 'Software / IT') },
+        ...Object.entries(this.industryPracticeProfiles).map(([id, value]) => ({ id, label: value.label })),
+      ]
     },
     questionDeck() {
-      const merged = [...coreQuestions, ...this.activePack.questions, ...this.vietnamQuestions]
-      const seen = new Set()
-      return merged
-        .filter((item) => {
-          if (seen.has(item.id)) return false
-          seen.add(item.id)
-          return true
-        })
-        .sort((a, b) => this.stageWeight(a) - this.stageWeight(b))
+      return buildQuestionDeck({
+        templateId: this.selectedTemplateId,
+        industryId: this.industryId,
+        rolePackId: this.rolePackId,
+        stageId: this.stageId,
+        market: this.market,
+      })
     },
     filteredQuestions() {
       const keyword = this.query.toLocaleLowerCase('vi')
@@ -1194,6 +1213,9 @@ export default {
       const mapped = templateInterviewPack[nextId]
       if (mapped) this.rolePackId = mapped
     },
+    industryId() { this.savePracticePrefs() },
+    seniority() { this.savePracticePrefs() },
+    market() { this.savePracticePrefs() },
     selectedClaim(next) {
       if (next && !this.selectedClaimId) this.selectedClaimId = next.id
     },
@@ -1223,6 +1245,7 @@ export default {
     },
   },
   mounted() {
+    this.loadPracticePrefs()
     this.workspace = readCanonicalWorkspace()
     const storedId = this.workspace?.studio?.selectedId
     if (storedId && this.templates.some((template) => template.id === storedId)) this.selectedTemplateId = storedId
@@ -1239,6 +1262,23 @@ export default {
     window.speechSynthesis?.cancel()
   },
   methods: {
+    loadPracticePrefs() {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem(PREF_KEY) || '{}')
+        if (saved && typeof saved === 'object') {
+          if (saved.industryId === 'auto' || this.industryPracticeProfiles[saved.industryId]) this.industryId = saved.industryId
+          if (this.seniorityLevels.includes(saved.seniority)) this.seniority = saved.seniority
+          if (['vietnam', 'all', 'global'].includes(saved.market)) this.market = saved.market
+        }
+      } catch { /* Preferences must never block app startup. */ }
+    },
+    savePracticePrefs() {
+      try {
+        window.localStorage.setItem(PREF_KEY, JSON.stringify({
+          industryId: this.industryId, seniority: this.seniority, market: this.market,
+        }))
+      } catch { /* Storage can be disabled or full. */ }
+    },
     goHome() {
       this.$emit('back')
     },
@@ -1257,14 +1297,18 @@ export default {
       })[key] || key
     },
     stageWeight(item) {
-      const maps = {
-        hr: { core: 1, behavioral: 2, challenge: 3, role: 4, case: 5, askback: 6 },
-        'hiring-manager': { role: 1, core: 2, case: 3, behavioral: 4, challenge: 5, askback: 6 },
-        technical: { role: 1, case: 2, challenge: 3, core: 4, behavioral: 5, askback: 6 },
-        portfolio: { case: 1, role: 2, core: 3, behavioral: 4, challenge: 5, askback: 6 },
-        final: { behavioral: 1, challenge: 2, role: 3, core: 4, case: 5, askback: 6 },
-      }
-      return maps[this.stageId]?.[item.category] || 9
+      return interviewStageWeight(item.category, this.stageId)
+    },
+    contextBonus(item) {
+      return practiceContextBonus(item, {
+        templateId: this.selectedTemplateId,
+        industryId: this.industryId,
+        rolePackId: this.rolePackId,
+        seniority: this.seniority,
+        industryId: this.resolvedIndustryId,
+        stageId: this.stageId,
+        market: this.market,
+      })
     },
     questionSources(item) {
       if (!Array.isArray(item?.sourceIds)) return []
@@ -1521,7 +1565,7 @@ export default {
       const ranked = [...this.questionDeck]
         .map((question) => ({
           question,
-          score: questionRelevanceScore(question, application, this.cvClaims) + (8 - this.stageWeight(question)),
+          score: questionRelevanceScore(question, application, this.cvClaims) + this.contextBonus(question) + (8 - this.stageWeight(question)),
         }))
         .sort((a, b) => b.score - a.score)
 
