@@ -42,6 +42,7 @@ import {
   salaryDisplay, jobSourceForRole, isObservedJobCurrent,
 } from '../../src/data/job-market-vn.js'
 import { interviewScenarios, getInterviewScenario, scenarioPracticeQuestions } from '../../src/interview/interview-scenarios.js'
+import { candidateGoals, buildCandidateGrowthPlan, buildMicroPracticeSet } from '../../src/interview/candidate-growth.js'
 import '../studio/safe-dom.js'
 
 const safeDom = window.CVSafeDom
@@ -52,6 +53,7 @@ const SESSION_KEY='interview-studio-sessions-v2'
 const CLAIM_KEY='interview-studio-claim-evidence-v1'
 const STORY_KEY='interview-studio-story-bank-v1'
 const PREF_KEY='interview-studio-preferences-v1'
+const GROWTH_KEY='interview-studio-growth-goal-v1'
 const modules=[
   {id:'overview',label:'Overview',icon:'◇'},
   {id:'applications',label:'Application Lab',icon:'◎',badge:'JD'},
@@ -79,6 +81,7 @@ let workspace=readJson(WORKSPACE_KEY,{profile:{},studio:{},ats:{target:{},versio
 const initialTemplate=workspace?.studio?.selectedId&&templates.some(t=>t.id===workspace.studio.selectedId)?workspace.studio.selectedId:'soft-portfolio-pro'
 const state={
   activeModule:'overview',
+  growthGoalId: candidateGoals.some(g=>g.id===(() => { try {return localStorage.getItem(GROWTH_KEY)} catch {return null} })()) ? (() => {try{return localStorage.getItem(GROWTH_KEY)}catch{return 'general'}})() : 'general',
   selectedTemplateId:initialTemplate,
   rolePackId:templateInterviewPack[initialTemplate]||'general',
   industryId:preferences.industryId||'auto',
@@ -186,6 +189,30 @@ const activeSources=()=>{
 const questionSources=item=>(item?.sourceIds||[]).map(id=>interviewSources.find(s=>s.id===id)).filter(Boolean)
 const evidenceReadyCount=()=>cvClaims().filter(item=>state.claimEvidence[item.id]?.ready).length
 const latestReport=()=>state.sessions.find(session=>session.report)||null
+const growthPlan=()=>buildCandidateGrowthPlan({
+  sessions: state.sessions,
+  claims: cvClaims(),
+  claimEvidence: state.claimEvidence,
+  storyBank: state.storyBank,
+  goalId: state.growthGoalId,
+})
+const saveGrowthGoal=id=>{
+  if(!candidateGoals.some(goal=>goal.id===id)) return
+  state.growthGoalId=id
+  try{localStorage.setItem(GROWTH_KEY,id)}catch{}
+}
+function startMicroPractice(){
+  if(state.practice){state.activeModule='mock';render();return}
+  state.selectedScenarioId=''
+  const questions=buildMicroPracticeSet({
+    goalId:state.growthGoalId,sessions:state.sessions,questions:questionDeck(),count:3,
+  })
+  if(!questions.length){state.activeModule='mock';render();return}
+  state.practice={questions,index:0,drafts:{},startedAt:new Date().toISOString(),timerChoice:90,baseSize:questions.length,adaptiveInserted:0}
+  questions.forEach(q=>state.practice.drafts[q.id]={answer:'',evidence:'',confidence:3,evaluation:null})
+  state.activeModule='mock'
+  startTimer();render()
+}
 const practiceDataCoverage=()=>{
   const deck=questionDeck()
   const sourced=deck.filter(item=>Array.isArray(item.sourceIds)&&item.sourceIds.length).length
@@ -251,7 +278,7 @@ function renderTop(){
   const template=templates.find(t=>t.id===state.selectedTemplateId)
   safeDom(profileContext).html =`<span class="eyebrow">ACTIVE PROFILE</span><strong>${e(template?.name||state.selectedTemplateId)}</strong><p>${e(activePack().label)}</p><div class="chips"><span>${e(activeIndustry().label)}</span><span>${e(state.seniority)}</span><span>${e(marketLabel())}</span></div>`
 }
-document.querySelector('#quick-practice').addEventListener('click',()=>{state.activeModule='mock';render()})
+document.querySelector('#quick-practice').addEventListener('click',startMicroPractice)
 
 function render(){
   renderNav();renderTop();renderView()
@@ -264,7 +291,15 @@ function renderOverview(){
   const templateSpecific=deck.filter(q=>q.templateId===state.selectedTemplateId).length
   const industrySpecific=deck.filter(q=>q.industryId===resolvedIndustryId()).length
   const sourced=deck.filter(q=>Array.isArray(q.sourceIds)&&q.sourceIds.length).length
+  const growth=growthPlan()
   safeDom(root).html =`
+    <section class="growth-coach" aria-label="Lộ trình luyện phỏng vấn cá nhân">
+      <header class="growth-header"><div><span class="eyebrow">MY GROWTH · 5 PHÚT MỖI LƯỢT</span><h2>Luyện đúng điểm cần cải thiện</h2><p>Chọn mục tiêu một lần. Mỗi lượt tập trung một kỹ năng.</p></div><small>${growth.hasBaseline?state.sessions.length+' phiên đã luyện':'Chưa có bài đầu tiên'}</small></header>
+      <div class="growth-goals" role="group" aria-label="Mục tiêu nghề nghiệp">${candidateGoals.map(goal=>`<button type="button" class="${goal.id===state.growthGoalId?'active':''}" data-growth-goal="${e(goal.id)}" aria-pressed="${goal.id===state.growthGoalId}">${e(goal.label)}</button>`).join('')}</div>
+      <div class="growth-content"><div class="growth-primary"><span class="eyebrow">${growth.hasBaseline?'KỸ NĂNG CẦN TẬP':'BẮT ĐẦU TỪ ĐÂY'}</span><h3>${e(growth.hasBaseline?growth.focusLabel:'Tạo mốc luyện tập đầu tiên')}</h3><p>${e(growth.message)}</p><button type="button" class="primary" id="start-growth">${growth.hasBaseline?'Luyện lại 3 câu →':'Luyện 3 câu đầu tiên →'}</button><small>Khoảng 5 phút · Có hướng dẫn sau khi trả lời</small></div>
+      <div class="growth-steps"><span class="eyebrow">3 VIỆC CẦN LÀM</span><ol>${growth.checklist.map((tip,i)=>`<li><b>${i+1}</b><span>${e(tip)}</span></li>`).join('')}</ol><p>${growth.isComparable?`Tín hiệu luyện tập: ${growth.delta>0?'+':''}${growth.delta} điểm so với phiên cùng kịch bản/job.`:'Chưa có hai lượt cùng bối cảnh để so sánh tiến bộ.'}</p></div></div>
+      <p class="growth-disclaimer">Điểm là phản hồi luyện tập theo quy tắc, không dự đoán khả năng trúng tuyển.</p>
+    </section>
     <section class="hero compact-hero">
       <div><span class="eyebrow">INTERVIEW STUDIO</span><h1>Luyện phỏng vấn theo <em>CV thật.</em></h1><div class="hero-actions"><button class="primary" data-start-quick="5">Luyện 5 câu</button><button class="secondary" data-go="claims">CV Claims</button></div></div>
       <article class="readiness compact-readiness"><div class="score-row"><span>READINESS</span><b>${readiness()}</b></div><strong>${e(readinessLabel())}</strong><div class="bar"><span style="width:${readiness()}%"></span></div></article>
@@ -291,6 +326,8 @@ function renderOverview(){
     <section class="panel source-panel"><div class="panel-title inline"><span class="eyebrow">SOURCES · ${e(marketLabel())}</span><b>${activeSources().length}</b></div><div class="sources compact-sources">${activeSources().map(s=>`<a href="${e(s.url)}" target="_blank" rel="noreferrer noopener"><span>${s.region==='vietnam'?'VN':'GL'}</span><strong>${e(s.name)}</strong><small>${e(s.label)}</small></a>`).join('')}</div></section>
   `
   bindGo()
+  root.querySelectorAll('[data-growth-goal]').forEach(button=>button.onclick=()=>{saveGrowthGoal(button.dataset.growthGoal);renderOverview()})
+  document.querySelector('#start-growth').onclick=startMicroPractice
   root.querySelectorAll('[data-start-quick]').forEach(button=>button.onclick=()=>{state.activeModule='mock';startMock(Number(button.dataset.startQuick||5),90)})
   document.querySelector('#template-field').onchange=ev=>{state.selectedTemplateId=ev.target.value;state.rolePackId=templateInterviewPack[state.selectedTemplateId]||'general';render()}
   document.querySelector('#pack-field').onchange=ev=>{state.rolePackId=ev.target.value;render()}
@@ -686,7 +723,8 @@ function renderMock(){
 
 function renderReports(){
   const latest=latestReport()
-  safeDom(root).html =pageHeading('INTERVIEW REPORTS','Kết quả <em>luyện tập.</em>','',state.sessions.length)+
+  const growth=growthPlan()
+  safeDom(root).html =`<section class="growth-next" aria-label="Luyện lượt tiếp theo"><div><span class="eyebrow">NEXT BEST ACTION</span><strong>${e(growth.focusLabel)}</strong><small>${e(growth.selfCheck)}</small></div><button id="retry-growth" class="primary">Luyện lại 3 câu →</button></section>`+pageHeading('INTERVIEW REPORTS','Kết quả <em>luyện tập.</em>','',state.sessions.length)+
   (latest?`<section class="report-hero"><div class="report-score"><span>LATEST PRACTICE SIGNAL</span><b>${latest.report.overall}</b><small>/100</small></div><div><strong>${e(latest.contextLabel)}</strong><p>${e(formatDate(latest.createdAt))} · ${e(latest.stageLabel)} · ${e(latest.interviewerLabel||'Interviewer')} · ${e(latest.pressureLabel||'Realistic')} · ${latest.answered}/${latest.total} câu</p><span class="chip">${latest.report.evidenceReady}/${latest.total} câu có evidence note · ${latest.report.adaptiveCount||0} adaptive follow-up</span></div></section><div class="grid2"><section class="panel"><span class="eyebrow">DIMENSIONS</span><h2>Dimensions</h2><div class="metric-bars">${Object.entries(latest.report.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div></section><section class="panel"><span class="eyebrow">EVIDENCE GAPS</span><h2>Evidence gaps</h2><ul class="warnings">${list(latest.report.warnings.length?latest.report.warnings:['Chưa phát hiện cảnh báo lớn trong session gần nhất.'])}</ul></section></div>${latest.report.adaptiveCount?`<section class="panel adaptive-report"><span class="eyebrow">ADAPTIVE TRACE</span><h2>Adaptive trace</h2><div class="adaptive-stats"><div><b>${latest.report.adaptiveCount}</b><span>follow-up đã chèn</span></div><div><b>${latest.report.adaptiveDimensions.length}</b><span>dimension bị đào sâu</span></div></div><ul class="warnings">${list(latest.report.adaptiveReasons)}</ul></section>`:''}`:'')+
   (latest?.report?.adaptiveTrace?.length?`<section class="panel branch-trace"><span class="eyebrow">BRANCH MEMORY</span><h2>Branch trace</h2><div class="branch-trace-list">${latest.report.adaptiveTrace.map(item=>`<article><div class="branch-index">${String(item.index).padStart(2,'0')}</div><div><span>${e(item.interviewerLabel||latest.interviewerLabel||'Interviewer')} · ${e(item.pressureLabel||latest.pressureLabel||'Realistic')}</span><strong>${e(item.question)}</strong><p>${e(item.reason)}</p></div><div class="branch-trigger"><span>${e(dimensionLabel(item.triggerDimension))}</span><b>${item.triggerScore}</b></div></article>`).join('')}</div></section>`:'')+
   (latest?.report?.practicePlan?practicePlanHtml(latest.report.practicePlan):'')+`<section class="panel"><span class="eyebrow">HISTORY</span><h2>Lịch sử luyện tập</h2>${state.sessions.length?`<div class="history">${state.sessions.map(s=>`<article><div><strong>${e(s.contextLabel)}</strong><small>${e(formatDate(s.createdAt))}</small></div><span>${e(s.stageLabel||'')}</span><span>${s.answered||0}/${s.total||0} answered</span><span>${s.report?.evidenceReady||s.evidenceReady||0} evidence</span><b>${s.report?.overall||'—'}</b></article>`).join('')}</div><button id="clear-history" class="text-btn">Xóa lịch sử local</button>`:`<div class="empty">Chưa có report.<button class="text-btn" data-go="mock">Bắt đầu luyện →</button></div>`}</section>
@@ -700,6 +738,7 @@ function renderReports(){
     </div>
   </section>`
   bindGo()
+  document.querySelector('#retry-growth').onclick=startMicroPractice
   const plan=document.querySelector('#practice-plan');if(plan&&latest?.report?.practicePlan)plan.onclick=()=>startPracticePlan(latest.report.practicePlan)
   const clear=document.querySelector('#clear-history');if(clear)clear.onclick=()=>{
     if(!window.confirm('Xóa lịch sử mock interview trên thiết bị này?'))return
