@@ -264,7 +264,7 @@ test('Micro-practice retries the weakest prior question when trusted by the cata
   const sessions=[{
     report:{overall:53,dimensions:{evidence:45}},
     responses:[{
-      questionId:weak.id,adaptive:null,
+      questionId:weak.id,adaptive:null,answer:'Tôi phân tích kết quả thử nghiệm cùng nhóm.',
       evaluation:{dimensions:{relevance:90,evidence:10,ownership:70}},
     }],
   }]
@@ -447,4 +447,57 @@ test('evidence-only revisions count, but unchanged retry taps do not', () => {
   assert.equal(report[0].before,'My answer')
   assert.equal(report[0].after,'My answer')
   assert.equal(summarizeAnswerRevisions([evidenceOnly]).revised,1)
+})
+
+test('Growth Coach ignores missing or invalid dimension scores', () => {
+  const session = {
+    id: 'valid-dimensions',
+    createdAt: '2026-10-08T13:00:00Z',
+    report: {
+      overall: 70,
+      dimensions: { evidence: null, structure: '', ownership: 60, depth: undefined, credibility: 130 },
+    },
+  }
+  const plan = buildCandidateGrowthPlan({ sessions: [session], goalId: 'general' })
+  assert.equal(plan.focusKey, 'ownership')
+  assert.equal(plan.focusScore, 60)
+})
+
+test('Growth Coach avoids progress comparison if the questions differ', () => {
+  const first = {
+    createdAt: '2026-10-07T13:00:00Z', scenarioId: '', applicationId: '',
+    stageId: 'hr', baseQuestions: 3,
+    responses: [{ questionId: 'core-one' }, { questionId: 'core-two' }, { questionId: 'core-three' }],
+    report: { overall: 50, dimensions: { evidence: 50 } },
+  }
+  const second = {
+    ...first, createdAt: '2026-10-08T13:00:00Z',
+    responses: [{ questionId: 'core-one' }, { questionId: 'core-four' }, { questionId: 'core-three' }],
+    report: { overall: 70, dimensions: { evidence: 70 } },
+  }
+  const plan = buildCandidateGrowthPlan({ sessions: [second, first] })
+  assert.equal(plan.isComparable, false)
+  assert.equal(plan.delta, null)
+  const matching = buildCandidateGrowthPlan({ sessions: [{ ...second, responses: first.responses }, first] })
+  assert.equal(matching.delta, 20)
+})
+
+test('Micro-practice ignores skipped answers and uses latest completed session', () => {
+  const deck = buildQuestionDeck({ templateId: 'soft-portfolio-pro', rolePackId: 'design' })
+  const skipped = deck[7], answered = deck[8]
+  const sessions = [
+    {
+      createdAt: '2026-10-06T11:00:00Z', growthGoalId: 'design',
+      report: { overall: 80, dimensions: { evidence: 80 } },
+      responses: [{ questionId: skipped.id, answer: '', evaluation: { dimensions: { evidence: 1 } } }],
+    },
+    {
+      createdAt: '2026-10-08T11:00:00Z', growthGoalId: 'design',
+      report: { overall: 55, dimensions: { evidence: 55 } },
+      responses: [{ questionId: answered.id, answer: 'Tôi có tham gia vào kết quả.', evaluation: { dimensions: { evidence: 21 } } }],
+    },
+  ]
+  const selected = buildMicroPracticeSet({ goalId: 'design', sessions, questions: deck, count: 3 })
+  assert.equal(selected[0].id, answered.id)
+  assert.equal(selected.length, 3)
 })
