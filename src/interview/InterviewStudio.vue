@@ -517,6 +517,9 @@
 
               <div class="is-claim-section">
                 <span class="is-eyebrow">EVIDENCE NOTE</span>
+                <p v-if="claimEvidence[selectedClaim.id]?.needsReview" role="status">
+                  Ghi chú từ CV phiên bản cũ: cần xác minh lại nội dung vì thứ tự claim đã thay đổi. Trạng thái ready không được tự động chuyển sang claim mới.
+                </p>
                 <textarea
                   v-model="claimNote"
                   rows="6"
@@ -918,6 +921,7 @@ import {
   evaluateInterviewResponse,
   extractCvClaims,
   matchQuestionsToClaim,
+  migrateLegacyClaimEvidence,
   questionRelevanceScore,
   relatedClaimsForAnswer,
 } from './interview-studio-engine'
@@ -1405,7 +1409,7 @@ export default {
     loadClaimEvidence() {
       try {
         const parsed = JSON.parse(window.localStorage.getItem(CLAIM_KEY) || '{}')
-        this.claimEvidence = parsed && typeof parsed === 'object' ? parsed : {}
+        this.claimEvidence = migrateLegacyClaimEvidence(parsed, this.cvClaims)
       } catch {
         this.claimEvidence = {}
       }
@@ -1425,7 +1429,7 @@ export default {
       const current = this.claimEvidence[this.selectedClaim.id] || {}
       this.claimEvidence = {
         ...this.claimEvidence,
-        [this.selectedClaim.id]: { ...current, ready: !current.ready },
+        [this.selectedClaim.id]: { ...current, ready: !current.ready, needsReview: false, claimText: this.selectedClaim.text },
       }
       this.saveClaimEvidence()
     },
