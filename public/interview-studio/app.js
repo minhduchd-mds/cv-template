@@ -405,9 +405,6 @@ function renderApplications(){
   if(!state.applicationDraft.id&&state.applicationId){
     const app=activeApplication();if(app)editApplication(app)
   }
-  if(!state.applicationDraft.id&&!state.applicationId&&applications().length){
-    state.applicationId=applications()[0].id;editApplication(applications()[0])
-  }
   const analysis=applicationAnalysis()
   safeDom(root).html =pageHeading('APPLICATION LAB','Ứng tuyển <em>theo từng job.</em>','',applications().length)+`
     ${renderMarketExplorer()}
