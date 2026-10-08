@@ -26,6 +26,8 @@ import {
   evaluateInterviewResponse,
   buildAnswerImprovement,
   compareAnswerAttempts,
+  snapshotAnswerInput,
+  isEvaluationCurrent,
   summarizeAnswerRevisions,
   extractCvClaims,
   getUnassignedClaimNotes,
@@ -613,12 +615,22 @@ function startMock(size,timerChoice){
 }
 const currentQuestion=()=>state.practice?.questions[state.practice.index]
 const currentDraft=()=>state.practice?.drafts[currentQuestion()?.id]
+function invalidateDraftScore(draft){
+  if(!draft?.evaluation)return false
+  draft.retryBaseline=draft.retryBaseline||{
+    ...snapshotAnswerInput(draft.evaluatedInput||draft),evaluation:draft.evaluation,
+  }
+  draft.evaluation=null
+  draft.evaluatedInput=null
+  return true
+}
 function evaluateCurrent(){
   const q=currentQuestion(),draft=currentDraft();if(!q||!draft)return
   draft.evaluation=evaluateInterviewResponse({answer:draft.answer,evidence:draft.evidence,confidence:draft.confidence,question:q,claims:cvClaims(),elapsedSeconds:Math.max(0,state.practice.timerChoice-state.timerRemaining)})
+  draft.evaluatedInput=snapshotAnswerInput(draft)
 }
 function nextMock(){
-  if(!currentDraft()?.evaluation)evaluateCurrent()
+  if(!isEvaluationCurrent(currentDraft()))evaluateCurrent()
   const q=currentQuestion(),draft=currentDraft()
   const maxAdaptive=(state.practice.baseSize<=3?1:state.practice.baseSize>=8?3:2)+Number(activePressure()?.followUpBonus||0)
   if(!q?.adaptive?.isFollowUp&&state.practice.adaptiveInserted<maxAdaptive){
@@ -642,11 +654,11 @@ function nextMock(){
 }
 function finishMock(){
   stopTimer();stopSpeech()
-  const responses=state.practice.questions.map(q=>{const d=state.practice.drafts[q.id];if(!d.evaluation)d.evaluation=evaluateInterviewResponse({answer:d.answer,evidence:d.evidence,confidence:d.confidence,question:q,claims:cvClaims(),elapsedSeconds:state.practice.timerChoice});return{questionId:q.id,question:q.question,answer:d.answer.trim(),evidence:d.evidence.trim(),confidence:d.confidence,evaluation:d.evaluation,retryBefore:d.retryBaseline?.evaluation?.overall??null,adaptive:q.adaptive||null}})
+  const responses=state.practice.questions.map(q=>{const d=state.practice.drafts[q.id];const evaluation=isEvaluationCurrent(d)?d.evaluation:evaluateInterviewResponse({answer:d.answer,evidence:d.evidence,confidence:d.confidence,question:q,claims:cvClaims(),elapsedSeconds:state.practice.timerChoice});return{questionId:q.id,question:q.question,answer:d.answer.trim(),evidence:d.evidence.trim(),confidence:d.confidence,evaluation,retryBefore:d.retryBaseline?.evaluation?.overall??null,adaptive:q.adaptive||null}})
   const report=aggregateInterviewReport(responses),app=activeApplication()
   report.revisions=summarizeAnswerRevisions(responses)
   report.practicePlan=buildNextPracticePlan({report,responses,questions:questionDeck(),claims:cvClaims(),application:app||{}})
-  state.sessions=[{id:'interview-studio-'+Date.now(),createdAt:new Date().toISOString(),startedAt:state.practice.startedAt,applicationId:app?.id||'',contextLabel:app?`${app.company} · ${app.role}`:`${activePack().label} · CV`,stageLabel:activeStage().label,growthGoalId:state.growthGoalId,scenarioId:state.selectedScenarioId||'',scenarioLabel:getInterviewScenario(state.selectedScenarioId)?.label||'',interviewerMode:state.interviewerMode,interviewerLabel:activeInterviewer().label,pressureLevel:state.pressureLevel,pressureLabel:activePressure().label,total:responses.length,baseQuestions:state.practice.baseSize,adaptiveFollowUps:responses.filter(r=>r.adaptive?.isFollowUp).length,answered:responses.filter(r=>r.answer||r.evidence).length,responses,report},...state.sessions]
+  state.sessions=[{id:'interview-studio-'+Date.now(),createdAt:new Date().toISOString(),startedAt:state.practice.startedAt,applicationId:app?.id||'',contextLabel:app?`${app.company} · ${app.role}`:`${activePack().label} · CV`,stageLabel:activeStage().label,growthGoalId:state.growthGoalId,scenarioId:state.selectedScenarioId||'',scenarioLabel:getInterviewScenario(state.selectedScenarioId)?.label||'',interviewerMode:state.interviewerMode,interviewerLabel:activeInterviewer().label,pressureLevel:state.pressureLevel,pressureLabel:activePressure().label,total:responses.length,baseQuestions:state.practice.baseSize,adaptiveFollowUps:responses.filter(r=>r.adaptive?.isFollowUp).length,answered:responses.filter(r=>r.answer).length,responses,report},...state.sessions]
   saveSessions();state.practice=null;state.activeModule='reports';render();toast('Đã tạo Interview Report')
 }
 function stopSpeech(){if(state.speech){try{state.speech.stop()}catch{}}state.speech=null;state.speechRecording=false}
@@ -656,8 +668,8 @@ function startSpeech(){
   const q=currentQuestion(),draft=currentDraft();if(!q||!draft)return
   stopSpeech();const recognition=new Recognition();recognition.lang='vi-VN';recognition.continuous=true;recognition.interimResults=true
   const base=draft.answer.replace(/\s*\[đang nghe:.*$/s,'').trim();let committed=''
-  recognition.onresult=event=>{let interim='';for(let i=event.resultIndex;i<event.results.length;i++){const t=event.results[i][0]?.transcript||'';if(event.results[i].isFinal)committed+=t+' ';else interim+=t}draft.answer=[base,committed.trim()].filter(Boolean).join(' ')+(interim?` [đang nghe: ${interim}]`:'');const ta=document.querySelector('#mock-answer');if(ta)ta.value=draft.answer}
-  recognition.onend=()=>{state.speechRecording=false;draft.answer=draft.answer.replace(/\s*\[đang nghe:.*$/s,'').trim();renderMock()}
+  recognition.onresult=event=>{invalidateDraftScore(draft);let interim='';for(let i=event.resultIndex;i<event.results.length;i++){const t=event.results[i][0]?.transcript||'';if(event.results[i].isFinal)committed+=t+' ';else interim+=t}draft.answer=[base,committed.trim()].filter(Boolean).join(' ')+(interim?` [đang nghe: ${interim}]`:'');const ta=document.querySelector('#mock-answer');if(ta)ta.value=draft.answer}
+  recognition.onend=()=>{invalidateDraftScore(draft);state.speechRecording=false;draft.answer=draft.answer.replace(/\s*\[đang nghe:.*$/s,'').trim();renderMock()}
   recognition.onerror=()=>{state.speechRecording=false}
   state.speech=recognition;state.speechRecording=true;recognition.start();renderMock()
 }
@@ -703,7 +715,7 @@ function renderMock(){
     document.querySelector('#start-mock').onclick=()=>startMock(Number(document.querySelector('#mock-size').value),Number(document.querySelector('#mock-timer').value))
     return
   }
-  const q=currentQuestion(),draft=currentDraft(),evaluation=draft.evaluation
+  const q=currentQuestion(),draft=currentDraft(),evaluation=isEvaluationCurrent(draft)?draft.evaluation:null
   const improvement=evaluation?buildAnswerImprovement(evaluation):null
   const retryComparison=compareAnswerAttempts(draft.retryBaseline?.evaluation,evaluation)
   safeDom(root).html =pageHeading('MOCK INTERVIEW','Luyện như <em>vòng thật.</em>','',`${state.practice.index+1}/${state.practice.questions.length}`)+`
@@ -715,18 +727,29 @@ function renderMock(){
     ${evaluation?`<div class="evaluation"><div class="eval-score"><b>${evaluation.overall}</b><span>practice signal</span></div><div class="metric-bars">${Object.entries(evaluation.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div>${evaluation.warnings.length?`<ul class="warnings">${list(evaluation.warnings)}</ul>`:''}</div>`:''}
     ${improvement?`<section class="retry-coach" aria-label="Một điều cần cải thiện"><div class="retry-heading"><span class="eyebrow">ĐIỂM CẦN SỬA</span><strong>${e(improvement.title)}</strong></div><p>${e(improvement.action)}</p><small>${e(improvement.check)}</small>${retryComparison?`<div class="retry-comparison" role="status"><strong>${retryComparison.difference>0?'+':''}${retryComparison.difference} điểm</strong><span>Trước ${retryComparison.previous} → sau ${retryComparison.current} · ${e(retryComparison.note)}</span></div>`:''}<button type="button" id="retry-answer" class="secondary">Sửa và đánh giá lại ↻</button></section>`:''}
     <button id="coach-toggle" class="coach-toggle">Mở Answer Coach</button><div id="coach" class="coach-grid hidden"><section><span>Recruiter intent</span><p>${e(q.why)}</p></section><section><span>Framework</span><ol>${list(q.framework)}</ol></section><section><span>Reference answer</span><p>“${e(q.example)}”</p></section><section><span>Adaptive follow-up</span><ul>${list([...(evaluation?.dimensions?.evidence<65?['Evidence cụ thể nào chứng minh kết quả này? Baseline và nguồn đo là gì?']:[]),...(evaluation?.dimensions?.ownership<65?['Phần nào anh trực tiếp sở hữu, phần nào thuộc team?']:[]),...(q.followUps||[])].slice(0,4))}</ul></section></div>
-    <div class="session-actions">${evaluation&&draft.answer?'<button id="save-story" class="secondary">'+(state.storyBank.some(story=>story.questionId===q.id&&story.applicationId===(activeApplication()?.id||''))?'✓ Đã lưu Story Bank':'✦ Lưu vào Story Bank')+'</button>':''}<button id="eval-q" class="secondary">Đánh giá câu này</button><button id="next-q" class="primary">${!q.adaptive?.isFollowUp&&state.practice.adaptiveInserted<((state.practice.baseSize>=8?3:2)+Number(activePressure()?.followUpBonus||0))?'Phân tích & tiếp tục →':state.practice.index===state.practice.questions.length-1?'Hoàn tất & tạo report':'Câu tiếp theo →'}</button></div></section>`
+    <div class="session-actions">${evaluation&&draft.answer?'<button id="save-story" class="secondary">'+(state.storyBank.some(story=>story.questionId===q.id&&story.applicationId===(activeApplication()?.id||''))?'✓ Đã lưu Story Bank':'✦ Lưu vào Story Bank')+'</button>':''}<button id="eval-q" class="secondary">Đánh giá câu này</button><button id="next-q" class="primary">${!draft.answer.trim()?'Bỏ qua câu này →':!q.adaptive?.isFollowUp&&state.practice.adaptiveInserted<((state.practice.baseSize>=8?3:2)+Number(activePressure()?.followUpBonus||0))?'Phân tích & tiếp tục →':state.practice.index===state.practice.questions.length-1?'Hoàn tất & tạo report':'Câu tiếp theo →'}</button></div></section>`
   const answer=document.querySelector('#mock-answer'),evd=document.querySelector('#mock-evidence'),conf=document.querySelector('#mock-confidence')
-  answer.oninput=()=>{draft.answer=answer.value;document.querySelector('#word-count').textContent=answer.value.trim().split(/\s+/).filter(Boolean).length+' từ'}
-  evd.oninput=()=>{draft.evidence=evd.value}
-  conf.oninput=()=>{draft.confidence=Number(conf.value);document.querySelector('#confidence-value').textContent=conf.value+'/5'}
+  const staleFeedback=()=>{
+    if(!invalidateDraftScore(draft))return
+    root.querySelector('.evaluation')?.remove()
+    root.querySelector('.retry-coach')?.remove()
+    root.querySelector('#save-story')?.remove()
+    root.querySelector('#coach')?.classList.add('hidden')
+    const hint=document.createElement('p')
+    hint.className='retry-hint'
+    hint.setAttribute('role','status')
+    hint.textContent='Câu trả lời đã thay đổi. Đánh giá lại để cập nhật phản hồi.'
+    root.querySelector('.session-actions')?.before(hint)
+  }
+  answer.oninput=()=>{staleFeedback();draft.answer=answer.value;document.querySelector('#word-count').textContent=answer.value.trim().split(/\s+/).filter(Boolean).length+' từ'}
+  evd.oninput=()=>{staleFeedback();draft.evidence=evd.value}
+  conf.oninput=()=>{staleFeedback();draft.confidence=Number(conf.value);document.querySelector('#confidence-value').textContent=conf.value+'/5'}
   const saveStory=document.querySelector('#save-story');if(saveStory)saveStory.onclick=saveCurrentStory
   document.querySelector('#eval-q').onclick=()=>{evaluateCurrent();renderMock()}
   const retryButton=document.querySelector('#retry-answer')
   if(retryButton)retryButton.onclick=()=>{
     const d=currentDraft();if(!d?.evaluation)return
-    d.retryBaseline=d.retryBaseline||{answer:d.answer.trim(),evidence:d.evidence.trim(),evaluation:d.evaluation}
-    d.evaluation=null
+    invalidateDraftScore(d)
     stopTimer()
     renderMock()
   }
@@ -741,7 +764,7 @@ function renderReports(){
   const latest=latestReport()
   const growth=growthPlan()
   safeDom(root).html =`<section class="growth-next" aria-label="Luyện lượt tiếp theo"><div><span class="eyebrow">NEXT BEST ACTION</span><strong>${e(growth.focusLabel)}</strong><small>${e(growth.selfCheck)}</small></div><button id="retry-growth" class="primary">Luyện lại 3 câu →</button></section>`+pageHeading('INTERVIEW REPORTS','Kết quả <em>luyện tập.</em>','',state.sessions.length)+
-  (latest?`<section class="report-hero"><div class="report-score"><span>LATEST PRACTICE SIGNAL</span><b>${latest.report.overall}</b><small>/100</small></div><div><strong>${e(latest.contextLabel)}</strong><p>${e(formatDate(latest.createdAt))} · ${e(latest.stageLabel)} · ${e(latest.interviewerLabel||'Interviewer')} · ${e(latest.pressureLabel||'Realistic')} · ${latest.answered}/${latest.total} câu</p><span class="chip">${latest.report.evidenceReady}/${latest.total} câu có evidence note · ${latest.report.adaptiveCount||0} adaptive follow-up</span>${latest.report.revisions?.revised?`<p>${latest.report.revisions.revised} câu đã sửa · ${latest.report.revisions.improved} câu có tín hiệu cải thiện sau sửa</p>`:''}</div></section><div class="grid2"><section class="panel"><span class="eyebrow">DIMENSIONS</span><h2>Dimensions</h2><div class="metric-bars">${Object.entries(latest.report.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div></section><section class="panel"><span class="eyebrow">EVIDENCE GAPS</span><h2>Evidence gaps</h2><ul class="warnings">${list(latest.report.warnings.length?latest.report.warnings:['Chưa phát hiện cảnh báo lớn trong session gần nhất.'])}</ul></section></div>${latest.report.adaptiveCount?`<section class="panel adaptive-report"><span class="eyebrow">ADAPTIVE TRACE</span><h2>Adaptive trace</h2><div class="adaptive-stats"><div><b>${latest.report.adaptiveCount}</b><span>follow-up đã chèn</span></div><div><b>${latest.report.adaptiveDimensions.length}</b><span>dimension bị đào sâu</span></div></div><ul class="warnings">${list(latest.report.adaptiveReasons)}</ul></section>`:''}`:'')+
+  (latest?`<section class="report-hero"><div class="report-score"><span>LATEST PRACTICE SIGNAL</span><b>${latest.report.overall}</b><small>/100</small></div><div><strong>${e(latest.contextLabel)}</strong><p>${e(formatDate(latest.createdAt))} · ${e(latest.stageLabel)} · ${e(latest.interviewerLabel||'Interviewer')} · ${e(latest.pressureLabel||'Realistic')} · ${latest.answered}/${latest.total} câu</p><span class="chip">${latest.report.evidenceReady}/${latest.total} câu có evidence note · ${latest.report.skipped||0} câu bỏ qua · ${latest.report.adaptiveCount||0} adaptive follow-up</span>${latest.report.revisions?.revised?`<p>${latest.report.revisions.revised} câu đã sửa · ${latest.report.revisions.improved} câu có tín hiệu cải thiện sau sửa</p>`:''}</div></section><div class="grid2"><section class="panel"><span class="eyebrow">DIMENSIONS</span><h2>Dimensions</h2><div class="metric-bars">${Object.entries(latest.report.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div></section><section class="panel"><span class="eyebrow">EVIDENCE GAPS</span><h2>Evidence gaps</h2><ul class="warnings">${list(latest.report.warnings.length?latest.report.warnings:['Chưa phát hiện cảnh báo lớn trong session gần nhất.'])}</ul></section></div>${latest.report.adaptiveCount?`<section class="panel adaptive-report"><span class="eyebrow">ADAPTIVE TRACE</span><h2>Adaptive trace</h2><div class="adaptive-stats"><div><b>${latest.report.adaptiveCount}</b><span>follow-up đã chèn</span></div><div><b>${latest.report.adaptiveDimensions.length}</b><span>dimension bị đào sâu</span></div></div><ul class="warnings">${list(latest.report.adaptiveReasons)}</ul></section>`:''}`:'')+
   (latest?.report?.adaptiveTrace?.length?`<section class="panel branch-trace"><span class="eyebrow">BRANCH MEMORY</span><h2>Branch trace</h2><div class="branch-trace-list">${latest.report.adaptiveTrace.map(item=>`<article><div class="branch-index">${String(item.index).padStart(2,'0')}</div><div><span>${e(item.interviewerLabel||latest.interviewerLabel||'Interviewer')} · ${e(item.pressureLabel||latest.pressureLabel||'Realistic')}</span><strong>${e(item.question)}</strong><p>${e(item.reason)}</p></div><div class="branch-trigger"><span>${e(dimensionLabel(item.triggerDimension))}</span><b>${item.triggerScore}</b></div></article>`).join('')}</div></section>`:'')+
   (latest?.report?.practicePlan?practicePlanHtml(latest.report.practicePlan):'')+`<section class="panel"><span class="eyebrow">HISTORY</span><h2>Lịch sử luyện tập</h2>${state.sessions.length?`<div class="history">${state.sessions.map(s=>`<article><div><strong>${e(s.contextLabel)}</strong><small>${e(formatDate(s.createdAt))}</small></div><span>${e(s.stageLabel||'')}</span><span>${s.answered||0}/${s.total||0} answered</span><span>${s.report?.evidenceReady||s.evidenceReady||0} evidence</span><b>${s.report?.overall||'—'}</b></article>`).join('')}</div><button id="clear-history" class="text-btn">Xóa lịch sử local</button>`:`<div class="empty">Chưa có report.<button class="text-btn" data-go="mock">Bắt đầu luyện →</button></div>`}</section>
   <section class="panel privacy-controls" aria-label="Quản lý dữ liệu Interview Studio">
