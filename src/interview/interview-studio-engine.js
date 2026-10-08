@@ -53,7 +53,7 @@ export const migrateLegacyClaimEvidence = (saved = {}) => {
   const seen = new Set(archived.map(item => item?.legacyId))
   const added = Object.entries(legacy)
     .filter(([key, item]) =>
-      /^claim-\\d+$/.test(key)
+      /^claim-\d+$/.test(key)
       && !seen.has(key)
       && item && typeof item === 'object'
       && String(item.note || '').trim())
