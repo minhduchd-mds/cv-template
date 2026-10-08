@@ -424,3 +424,32 @@ test('standalone Growth Coach preserves role and starts same short drill', async
   await expect(page.locator('.live-meta')).toContainText('QUESTION 1 / 3')
   expect(errors).toEqual([])
 })
+
+
+test('Vue guided answer retry gives same-question comparison', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  await page.getByRole('button', { name:/Mock Interview/ }).click()
+  await page.getByRole('button', { name:/Bắt đầu session/ }).click()
+  await page.getByPlaceholder(/Nói hoặc nhập đúng cách/).fill('Team chúng tôi làm dự án.')
+  await page.getByRole('button',{name:'Đánh giá câu này'}).click()
+  await expect(page.locator('.is-retry-coach')).toBeVisible()
+  await page.getByRole('button',{name:/Sửa và đánh giá lại/}).click()
+  await page.getByPlaceholder(/Nói hoặc nhập đúng cách/).fill('Tôi trực tiếp phân tích vấn đề, thiết kế luồng thao tác và tổ chức usability test. Bối cảnh là quy trình phức tạp, tôi chọn giải pháp sau khi so sánh phương án và báo cáo kết quả.')
+  await page.getByPlaceholder(/Project · ownership/).fill('Dự án thử nghiệm: vai trò trực tiếp, baseline, quyết định, trade-off, kết quả')
+  await page.getByRole('button',{name:'Đánh giá câu này'}).click()
+  await expect(page.locator('.is-retry-coach__comparison')).toContainText('Trước')
+})
+
+test('standalone guided retry keeps feedback on the same question', async ({ page }) => {
+  await page.goto('/interview-studio/')
+  await page.locator('[data-module="mock"]').click()
+  await page.locator('#start-mock').click()
+  await page.locator('#mock-answer').fill('Chúng tôi làm dự án.')
+  await page.locator('#eval-q').click()
+  await expect(page.locator('.retry-coach')).toBeVisible()
+  await page.locator('#retry-answer').click()
+  await page.locator('#mock-answer').fill('Tôi trực tiếp thiết kế quy trình mới và kiểm thử với người dùng. Tôi đã cân nhắc trade-off, đánh giá dữ liệu, lựa chọn phương án và tổng kết kết quả.')
+  await page.locator('#mock-evidence').fill('Bối cảnh dự án, nguồn đo, quyết định cá nhân, kết quả')
+  await page.locator('#eval-q').click()
+  await expect(page.locator('.retry-comparison')).toContainText('Trước')
+})
