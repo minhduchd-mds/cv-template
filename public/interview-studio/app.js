@@ -29,6 +29,11 @@ import {
   questionRelevanceScore,
   relatedClaimsForAnswer,
 } from '../../src/interview/interview-studio-engine.js'
+import {
+  buildQuestionDeck as assembleQuestionDeck,
+  practiceContextBonus as catalogContextBonus,
+  resolvePracticeIndustry,
+} from '../../src/interview/question-catalog.js'
 import '../studio/safe-dom.js'
 
 const safeDom = window.CVSafeDom
@@ -100,7 +105,7 @@ const profileContext=document.querySelector('#profile-context')
 const e=(value='')=>String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]))
 const list=(items=[],tag='li')=>items.map(item=>`<${tag}>${e(item)}</${tag}>`).join('')
 const activePack=()=>interviewPacks.find(p=>p.id===state.rolePackId)||interviewPacks.find(p=>p.id==='general')||interviewPacks[0]
-const resolvedIndustryId=()=>state.industryId==='auto'?(templateDefaultIndustry[state.selectedTemplateId]||'technology-software'):state.industryId
+const resolvedIndustryId=()=>resolvePracticeIndustry(state.selectedTemplateId,state.industryId)
 const activeIndustry=()=>industryPracticeProfiles[resolvedIndustryId()]||industryPracticeProfiles['technology-software']
 const industryOptions=()=>[
   {id:'auto',label:'Auto · '+(industryPracticeProfiles[templateDefaultIndustry[state.selectedTemplateId]]?.label||'Software / IT')},
@@ -128,37 +133,21 @@ const stageWeight=item=>{
   }
   return maps[state.stageId]?.[item.category]||9
 }
-const seniorityQuestionBonus=q=>{
-  const category=q.category||'role'
-  const maps={
-    Entry:{core:14,behavioral:12,role:8,case:3,challenge:0,askback:4},
-    Mid:{role:12,behavioral:9,case:9,core:7,challenge:4,askback:3},
-    Senior:{case:14,challenge:13,role:11,behavioral:7,core:4,askback:3},
-    Lead:{challenge:16,case:14,behavioral:11,role:9,core:2,askback:4},
-    Director:{challenge:18,behavioral:14,case:13,role:8,core:1,askback:5},
-  }
-  return maps[state.seniority]?.[category]||0
-}
-const practiceContextBonus=q=>{
-  let score=seniorityQuestionBonus(q)
-  if(q.templateId===state.selectedTemplateId)score+=22
-  if(q.industryId===resolvedIndustryId())score+=20
-  if(q.pack===state.rolePackId)score+=12
-  if(q.market===state.market)score+=4
-  if(q.category==='challenge'&&state.stageId==='hiring-manager')score+=6
-  if(q.category==='case'&&(state.stageId==='technical'||state.stageId==='portfolio'))score+=6
-  return score
-}
-const questionDeck=()=>{
-  const vietnam=state.market==='global'?[]:vietnamQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
-  const global=state.market==='vietnam'?[]:globalQuestionBank.filter(item=>item.pack==='general'||item.pack===state.rolePackId)
-  const templateQuestions=buildTemplatePracticeQuestions(state.selectedTemplateId)
-  const industryQuestions=buildIndustryPracticeQuestions(resolvedIndustryId(),state.rolePackId)
-  const seen=new Set()
-  return [...templateQuestions,...industryQuestions,...coreQuestions,...activePack().questions,...vietnam,...global]
-    .filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true})
-    .sort((a,b)=>stageWeight(a)-stageWeight(b))
-}
+const practiceContextBonus=q=>catalogContextBonus(q,{
+  templateId:state.selectedTemplateId,
+  industryId:state.industryId,
+  rolePackId:state.rolePackId,
+  seniority:state.seniority,
+  stageId:state.stageId,
+  market:state.market,
+})
+const questionDeck=()=>assembleQuestionDeck({
+  templateId:state.selectedTemplateId,
+  industryId:state.industryId,
+  rolePackId:state.rolePackId,
+  stageId:state.stageId,
+  market:state.market,
+})
 const filteredQuestions=()=>questionDeck().filter(item=>{
   if(state.categoryId!=='all'&&item.category!==state.categoryId)return false
   if(!state.query)return true
