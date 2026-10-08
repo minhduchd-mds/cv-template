@@ -31,6 +31,39 @@ const meaningful = (value) => {
   return text.length >= 18 && text.length <= 420
 }
 
+// Fingerprints are independent of list order; editing a claim invalidates its
+// previous evidence link rather than silently assigning notes to another claim.
+export const stableClaimId = (source, text) => {
+  const value = source + ':' + normalizeInterviewText(text)
+  let first = 2166136261
+  let second = 16777619
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    first = Math.imul(first ^ code, 16777619)
+    second = Math.imul(second ^ code, 2246822519)
+  }
+  return 'claim-' + (first >>> 0).toString(36) + '-' + (second >>> 0).toString(36)
+}
+
+// Old notes used position-based ids. Carry the text forward as an unverified
+// draft only: an old "ready" flag cannot safely be mapped after CV reordering.
+export const migrateLegacyClaimEvidence = (saved = {}, claims = []) => {
+  const legacy = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {}
+  const next = { ...legacy }
+  for (const item of claims) {
+    if (!item?.id || !item.legacyId || Object.prototype.hasOwnProperty.call(next, item.id)) continue
+    const previous = legacy[item.legacyId]
+    if (!previous || typeof previous !== 'object') continue
+    next[item.id] = {
+      note: String(previous.note || ''),
+      ready: false,
+      needsReview: true,
+      legacySourceId: item.legacyId,
+    }
+  }
+  return next
+}
+
 const claim = (id, source, label, text) => {
   const numberSignals = text.match(/\b\d+(?:[.,]\d+)?%?\+?\b/g) || []
   const leadershipSignal = /\b(lead|led|managed|owner|owned|chu tri|lanh dao|quan ly|dẫn dắt|dẫn dat)\b/i.test(text)
@@ -54,7 +87,8 @@ export const extractCvClaims = (profile = {}) => {
     if (!meaningful(text)) return
     const normalized = normalizeInterviewText(text)
     if (!normalized || claims.some((item) => normalizeInterviewText(item.text) === normalized)) return
-    claims.push(claim(`claim-${claims.length + 1}`, source, label, text))
+    const legacyId = `claim-${claims.length + 1}`
+    claims.push({ ...claim(stableClaimId(source, text), source, label, text), legacyId })
   }
 
   const role = profile.role || profile.identity?.role || profile.personal?.role
