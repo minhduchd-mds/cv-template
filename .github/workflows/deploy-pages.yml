@@ -12,8 +12,11 @@ permissions:
   pages: write
   id-token: write
 
+# Do not let late-arriving old push events displace the latest HEAD run.
+# Each SHA gets an independent pipeline, while the deploy job below checks
+# that its SHA still matches current master before publishing.
 concurrency:
-  group: pages
+  group: pages-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
@@ -60,6 +63,20 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Verify deployment is the current master commit
+        id: freshness
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/master" --jq '.object.sha')"
+          if [ "${latest_sha}" = "${GITHUB_SHA}" ]; then
+            echo "current=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "current=false" >> "${GITHUB_OUTPUT}"
+            echo "Skipping stale Pages publish: current master is ${latest_sha}"
+          fi
+
       - name: Deploy to GitHub Pages
+        if: steps.freshness.outputs.current == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
