@@ -11,6 +11,7 @@ import {
   migrateLegacyClaimEvidence,
 } from '../../src/interview/interview-studio-engine.js'
 import { interviewSources, templateInterviewPack } from '../../src/data/interview-prep.js'
+import { candidateGoals, buildCandidateGrowthPlan, buildMicroPracticeSet } from '../../src/interview/candidate-growth.js'
 import {
   interviewScenarios, getInterviewScenario, scenarioPracticeQuestions,
 } from '../../src/interview/interview-scenarios.js'
@@ -197,4 +198,71 @@ test('scenarios keep the question sequence and fill an eight-question session', 
   assert.deepEqual(result.slice(0,5).map(q=>q.id),sc.questions.map(q=>q.id))
   assert.equal(new Set(result.map(q=>q.id)).size,8)
   assert.equal(getInterviewScenario('unknown'),null)
+})
+
+test('Growth Coach uses role goals and gives a no-score first exercise', () => {
+  assert.equal(candidateGoals.length,6)
+  const plan=buildCandidateGrowthPlan({goalId:'design',sessions:[],claims:[],storyBank:[]})
+  assert.equal(plan.hasBaseline,false)
+  assert.equal(plan.focusKey,'structure')
+  assert.equal(plan.delta,null)
+  const questions=buildMicroPracticeSet({goalId:'design',count:3})
+  assert.equal(questions.length,3)
+  assert.equal(new Set(questions.map(q=>q.id)).size,3)
+  assert.ok(questions.every(q=>q.scenarioId==='ux-portfolio'))
+})
+
+test('Growth Coach prioritizes weak answer dimension and unverified evidence', () => {
+  const base={
+    id:'practice-1', createdAt:'2026-10-08T09:00:00Z', scenarioId:'',
+    applicationId:'',stageId:'hiring-manager',baseQuestions:3,
+    report:{ overall:60,dimensions:{relevance:80,structure:74,evidence:32,ownership:45,depth:75,credibility:78,delivery:85}},
+  }
+  const plan=buildCandidateGrowthPlan({
+    goalId:'general',
+    sessions:[base],
+    claims:[{id:'c1'}],
+    claimEvidence:{},
+  })
+  assert.equal(plan.hasBaseline,true)
+  assert.equal(plan.focusKey,'evidence')
+  assert.equal(plan.focusScore,32)
+  assert.equal(plan.pendingClaims,1)
+  assert.equal(plan.isComparable,false)
+  assert.ok(plan.checklist[1].includes('thành tích CV'))
+})
+
+test('Growth Coach compares only sessions with the same job, stage and scenario', () => {
+  const older={
+    id:'old',createdAt:'2026-10-07T09:00:00Z',scenarioId:'',stageId:'hr',baseQuestions:3,applicationId:'job-a',
+    report:{overall:55,dimensions:{relevance:55,evidence:42}},
+  }
+  const newer={
+    id:'new',createdAt:'2026-10-08T09:00:00Z',scenarioId:'',stageId:'hr',baseQuestions:3,applicationId:'job-a',
+    report:{overall:71,dimensions:{relevance:70,evidence:60}},
+  }
+  let plan=buildCandidateGrowthPlan({sessions:[newer,older]})
+  assert.equal(plan.isComparable,true)
+  assert.equal(plan.delta,16)
+  plan=buildCandidateGrowthPlan({sessions:[{...newer,applicationId:'job-b'},older]})
+  assert.equal(plan.isComparable,false)
+  assert.equal(plan.delta,null)
+})
+
+test('Micro-practice retries the weakest prior question when trusted by the catalog', () => {
+  const deck=buildQuestionDeck({templateId:'soft-portfolio-pro',rolePackId:'design'})
+  const weak=deck[3]
+  const sessions=[{
+    report:{overall:53,dimensions:{evidence:45}},
+    responses:[{
+      questionId:weak.id,adaptive:null,
+      evaluation:{dimensions:{relevance:90,evidence:10,ownership:70}},
+    }],
+  }]
+  const qs=buildMicroPracticeSet({goalId:'design',sessions,questions:deck,count:3})
+  assert.equal(qs[0].id,weak.id)
+  assert.equal(qs.length,3)
+  assert.equal(new Set(qs.map(q=>q.id)).size,3)
+  const unknown=buildMicroPracticeSet({goalId:'not-a-goal',count:3})
+  assert.equal(unknown.length,3)
 })
