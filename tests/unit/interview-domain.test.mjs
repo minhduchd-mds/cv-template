@@ -11,6 +11,11 @@ import {
   migrateLegacyClaimEvidence,
 } from '../../src/interview/interview-studio-engine.js'
 import { interviewSources, templateInterviewPack } from '../../src/data/interview-prep.js'
+import {
+  INTERVIEW_LOCAL_KEYS,
+  buildInterviewDataExport,
+  clearInterviewLocalData,
+} from '../../src/interview/interview-data-controls.js'
 
 test('every one of the 20 CV templates maps to a working interview pack', () => {
   const ids = Object.keys(templateInterviewPack)
@@ -86,4 +91,33 @@ test('legacy evidence is archived without guessing which claim it belongs to', (
     experience: [{ bullets: ['Led a design system across 16 modules and improved handoff quality.'] }],
   })
   assert.notEqual(item.id, edited[0].id)
+})
+
+test('privacy backup preserves interview data and scoped deletion keeps shared CV/JD', () => {
+  const workspace = {
+    format: 'cv-studio-workspace',
+    schemaVersion: 3,
+    studio: { selectedId: 'soft-portfolio-pro' },
+    profile: { name: 'Only for verification' },
+    ats: { applications: [{ id: 'job-1', company: 'Demo Corp', jd: 'Design Systems' }] },
+  }
+  const values = new Map([
+    ['cv-studio-workspace-v3', JSON.stringify(workspace)],
+    ['interview-studio-sessions-v2', '[{"id":"s1"}]'],
+    ['interview-studio-claim-evidence-v1', '{"claim-key":{"note":"evidence"}}'],
+    ['interview-studio-story-bank-v1', '[{"id":"story-1"}]'],
+  ])
+  const store = {
+    getItem: key => values.has(key) ? values.get(key) : null,
+    removeItem: key => values.delete(key),
+  }
+  const backup = buildInterviewDataExport(store, '2026-10-08T00:00:00Z')
+  assert.equal(backup.format, 'interview-studio-backup')
+  assert.equal(backup.sharedReadOnlyContext.applications[0].id, 'job-1')
+  assert.equal(backup.localStorageEntries['interview-studio-sessions-v2'], '[{"id":"s1"}]')
+  assert.equal(backup.localStorageEntries['cv-studio-workspace-v3'], undefined)
+  assert.equal(backup.exportedAt, '2026-10-08T00:00:00Z')
+  assert.equal(clearInterviewLocalData(store), INTERVIEW_LOCAL_KEYS.length)
+  assert.equal(store.getItem('interview-studio-story-bank-v1'), null)
+  assert.deepEqual(JSON.parse(store.getItem('cv-studio-workspace-v3')), workspace)
 })
