@@ -14,6 +14,7 @@ import {
   aggregateInterviewReport,
   buildAdaptiveFollowUp,
   summarizeAnswerRevisions,
+  buildRevisionReview,
   extractCvClaims,
   getUnassignedClaimNotes,
   migrateLegacyClaimEvidence,
@@ -386,4 +387,44 @@ test('blank interview answers are skipped, not scored as confident answers', () 
   assert.equal(fullyEmpty.overall,0)
   assert.equal(fullyEmpty.answered,0)
   assert.equal(fullyEmpty.skipped,1)
+})
+
+test('answer revision review stores original and revised text without false scores', () => {
+  const result = buildRevisionReview([
+    {
+      questionId:'q-design',
+      question:'Anh đã sở hữu phần nào?',
+      retryBefore:34,
+      retryOriginal:{answer:'Nhóm đã triển khai sản phẩm.',evidence:'',confidence:3},
+      answer:'Tôi trực tiếp thiết kế luồng và kiểm tra với người dùng.',
+      evidence:'Thiết kế và nghiên cứu trong dự án thật.',
+      evaluation:{overall:63},
+    },
+    {
+      questionId:'q-unchanged',
+      retryBefore:20,
+      retryOriginal:{answer:'Không đổi'},
+      answer:'Không đổi',evaluation:{overall:30},
+    },
+    {questionId:'q-no-baseline',retryBefore:null,retryOriginal:{answer:'Bản đầu'},answer:'Bản cuối',evaluation:{overall:70}},
+  ])
+  assert.equal(result.length,1)
+  assert.equal(result[0].difference,29)
+  assert.match(result[0].before,/Nhóm đã triển khai/)
+  assert.match(result[0].after,/Tôi trực tiếp thiết kế/)
+  assert.equal(result[0].afterEvidence,'Thiết kế và nghiên cứu trong dự án thật.')
+  assert.equal(buildRevisionReview().length,0)
+})
+
+test('answer revision review caps long personal text for the report preview', () => {
+  const result=buildRevisionReview([{
+    questionId:'q-long',retryBefore:10,
+    retryOriginal:{answer:'a'.repeat(3500),evidence:'x'.repeat(1200)},
+    answer:'b'.repeat(3500),evidence:'y'.repeat(1200),
+    evaluation:{overall:20},
+  }])
+  assert.equal(result[0].before.length,900)
+  assert.equal(result[0].after.length,900)
+  assert.equal(result[0].beforeEvidence.length,360)
+  assert.equal(result[0].afterEvidence.length,360)
 })
