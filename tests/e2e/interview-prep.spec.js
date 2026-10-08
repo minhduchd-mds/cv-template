@@ -264,3 +264,52 @@ test('mobile Interview Studio has no horizontal page overflow', async ({ page },
 
   expect(overflow.page).toBeLessThanOrEqual(overflow.viewport + 1)
 })
+
+test('Interview Studio exports locally and deletes only interview-owned data', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  await page.evaluate(() => {
+    localStorage.setItem('interview-studio-sessions-v2', JSON.stringify([{ id: 'qa-session', answered: 1 }]))
+    localStorage.setItem('interview-studio-story-bank-v1', JSON.stringify([{ id: 'qa-story', answer: 'Prepared evidence' }]))
+    localStorage.setItem('interview-studio-claim-evidence-v1', JSON.stringify({ 'claim-1': { note: 'Old note' } }))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: 'Reports', exact: true }).click()
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: /Xuất dữ liệu Interview Studio/ }).click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toMatch(/^interview-studio-backup-.*\.json$/)
+
+  page.once('dialog', dialog => dialog.accept())
+  await page.getByRole('button', { name: /Xóa dữ liệu luyện tập trên thiết bị/ }).click()
+  const kept = await page.evaluate(() => ({
+    workspace: localStorage.getItem('cv-studio-workspace-v3'),
+    session: localStorage.getItem('interview-studio-sessions-v2'),
+    stories: localStorage.getItem('interview-studio-story-bank-v1'),
+    claims: localStorage.getItem('interview-studio-claim-evidence-v1'),
+  }))
+  expect(kept.workspace).toContain('app-vn-1')
+  expect(kept.session).toBeNull()
+  expect(kept.stories).toBeNull()
+  expect(kept.claims).toBeNull()
+})
+
+test('Legacy notes are archived and applied only after explicit user selection', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  await page.evaluate(() => {
+    localStorage.setItem('interview-studio-claim-evidence-v1', JSON.stringify({
+      'claim-1': { note: 'Old baseline note to review', ready: true },
+    }))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: 'Claim Defense' }).click()
+  await expect(page.getByText('Old baseline note to review')).toBeVisible()
+  await page.getByRole('button', { name: 'Gán vào claim đang chọn' }).click()
+  const note = page.getByPlaceholder(/Baseline, phạm vi mình sở hữu/)
+  await expect(note).toHaveValue('Old baseline note to review')
+  const state = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('interview-studio-claim-evidence-v1') || '{}'))
+  expect(state.__legacyNotes[0].appliedTo).toMatch(/^claim-/)
+  const assigned = state[state.__legacyNotes[0].appliedTo]
+  expect(assigned.ready).toBe(false)
+  expect(assigned.needsReview).toBe(true)
+})
