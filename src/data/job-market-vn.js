@@ -47,7 +47,13 @@ export const observedJobSignals = [
   { id:'fpt-3d', employerId:'fpt-software', title:'Middle 3D Design Engineer (CATIA)', location:'Hà Nội', roleId:'ux', sourceUrl:'https://career.fpt-software.com/jobs-search', checkedAt:JOB_MARKET_AS_OF, pay:'undisclosed', note:'3D engineering; không phải UI/UX' },
 ]
 
-export const isObservedJobCurrent = (job, date = JOB_MARKET_AS_OF) => !job.expiresAt || job.expiresAt >= date
+export const isObservedJobCurrent = (job, date = new Date().toISOString().slice(0, 10)) => {
+  if (!job?.checkedAt || job.checkedAt > date) return false
+  if (job.expiresAt && job.expiresAt < date) return false
+  const checked = Date.parse(job.checkedAt + 'T00:00:00Z')
+  const now = Date.parse(date + 'T00:00:00Z')
+  return Number.isFinite(now) && Number.isFinite(checked) && now - checked <= 30 * 86400000
+}
 export const jobSourceForRole = role => jobMarketSources.find(source => source.id === role?.sourceId)
 export const salaryDisplay = (role, city = 'hanoi', years = '1-5') => {
   if (!role) return 'Chưa có dữ liệu'
