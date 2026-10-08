@@ -456,6 +456,32 @@ export const compareAnswerAttempts = (before = null, after = null) => {
   }
 }
 
+// Persist compact before/after evidence in Reports, only for a real revision.
+// Never label a higher heuristic score as proof of better interview ability.
+export const buildRevisionReview = (responses = []) =>
+  (Array.isArray(responses) ? responses : [])
+    .filter(item => item?.retryOriginal?.answer && item?.evaluation
+      && Number.isFinite(Number(item.retryBefore)))
+    .slice(0, 10)
+    .map(item => {
+      const original = String(item.retryOriginal.answer || '').trim()
+      const revised = String(item.answer || '').trim()
+      if (!original || original === revised) return null
+      const compared = compareAnswerAttempts(
+        { overall: item.retryBefore }, item.evaluation)
+      if (!compared) return null
+      return {
+        questionId: String(item.questionId || ''),
+        question: String(item.question || '').slice(0, 280),
+        before: original.slice(0, 900),
+        after: revised.slice(0, 900),
+        beforeEvidence: String(item.retryOriginal.evidence || '').trim().slice(0, 360),
+        afterEvidence: String(item.evidence || '').trim().slice(0, 360),
+        ...compared,
+      }
+    })
+    .filter(Boolean)
+
 export const summarizeAnswerRevisions = (responses = []) => {
   const revisions = (Array.isArray(responses) ? responses : [])
     .filter(item => item?.retryBefore !== null && item?.retryBefore !== undefined && item?.evaluation)
