@@ -967,6 +967,9 @@
                 · {{ latestReport.answered }}/{{ latestReport.total }} câu
               </p>
               <span>{{ latestReport.report.evidenceReady }}/{{ latestReport.total }} câu có evidence note · {{ latestReport.report.adaptiveCount || 0 }} adaptive follow-up</span>
+              <small v-if="latestReport.report.revisions?.revised">
+                {{ latestReport.report.revisions.revised }} câu đã sửa · {{ latestReport.report.revisions.improved }} câu có tín hiệu cải thiện sau sửa
+              </small>
             </div>
           </section>
 
@@ -1121,6 +1124,7 @@ import {
   evaluateInterviewResponse,
   buildAnswerImprovement,
   compareAnswerAttempts,
+  summarizeAnswerRevisions,
   extractCvClaims,
   getUnassignedClaimNotes,
   matchQuestionsToClaim,
@@ -2089,10 +2093,12 @@ export default {
           evidence: String(draft.evidence || '').trim(),
           confidence: Number(draft.confidence || 0),
           evaluation,
+          retryBefore: draft.retryBaseline?.evaluation?.overall ?? null,
           adaptive: item.adaptive || null,
         }
       })
       const report = aggregateInterviewReport(responses)
+      report.revisions = summarizeAnswerRevisions(responses)
       report.practicePlan = buildNextPracticePlan({
         report,
         responses,
