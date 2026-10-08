@@ -11,7 +11,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: cv-studio-${{ github.workflow }}-${{ github.ref }}
+# Keep concurrent pushes distinguishable by commit: late old events must not
+  # cancel a newer validated HEAD run in the GitHub Actions queue.
+  group: cv-studio-${{ github.workflow }}-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
