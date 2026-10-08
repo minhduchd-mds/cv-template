@@ -58,12 +58,50 @@
               </option>
             </select>
           </label>
-          <button type="button" class="is-command" @click="activeModule = 'mock'">▶ Luyện ngay</button>
+          <button type="button" class="is-command" @click="startMicroPractice">▶ Luyện ngay</button>
         </div>
       </header>
 
       <div class="is-content">
         <section v-if="activeModule === 'overview'" class="is-view">
+          <section class="is-growth" aria-label="Lộ trình luyện phỏng vấn cá nhân">
+            <div class="is-growth__heading">
+              <div>
+                <span class="is-eyebrow">MY GROWTH · 5 PHÚT MỖI LƯỢT</span>
+                <h2>Luyện đúng điểm cần cải thiện</h2>
+                <p>Chọn mục tiêu một lần. Mỗi lượt tập trung một kỹ năng.</p>
+              </div>
+              <span class="is-growth__baseline">{{ growthPlan.hasBaseline ? practiceSessions.length + ' phiên đã luyện' : 'Chưa có bài đầu tiên' }}</span>
+            </div>
+            <div class="is-growth__goals" role="group" aria-label="Mục tiêu nghề nghiệp">
+              <button v-for="goal in candidateGoals" :key="goal.id" type="button"
+                :aria-pressed="growthGoalId === goal.id"
+                :class="{ active: growthGoalId === goal.id }"
+                @click="setGrowthGoal(goal.id)">{{ goal.label }}</button>
+            </div>
+            <div class="is-growth__focus">
+              <div class="is-growth__primary">
+                <span class="is-eyebrow">{{ growthPlan.hasBaseline ? 'KỸ NĂNG CẦN TẬP' : 'BẮT ĐẦU TỪ ĐÂY' }}</span>
+                <h3>{{ growthPlan.hasBaseline ? growthPlan.focusLabel : 'Tạo mốc luyện tập đầu tiên' }}</h3>
+                <p>{{ growthPlan.message }}</p>
+                <button type="button" class="is-button is-button--primary" @click="startMicroPractice">
+                  {{ growthPlan.hasBaseline ? 'Luyện lại 3 câu →' : 'Luyện 3 câu đầu tiên →' }}
+                </button>
+                <small>Khoảng 5 phút · Có hướng dẫn sau khi trả lời</small>
+              </div>
+              <div class="is-growth__steps">
+                <span class="is-eyebrow">3 VIỆC CẦN LÀM</span>
+                <ol>
+                  <li v-for="(tip, i) in growthPlan.checklist" :key="tip"><b>{{ i + 1 }}</b><span>{{ tip }}</span></li>
+                </ol>
+                <p v-if="growthPlan.isComparable" class="is-growth__trend">
+                  Tín hiệu luyện tập: {{ growthPlan.delta > 0 ? '+' : '' }}{{ growthPlan.delta }} điểm so với phiên cùng kịch bản/job.
+                </p>
+                <p v-else class="is-growth__hint">Chưa có hai lượt cùng bối cảnh để so sánh tiến bộ.</p>
+              </div>
+            </div>
+            <p class="is-growth__disclaimer">Điểm chỉ là phản hồi luyện tập theo quy tắc, không dự đoán khả năng trúng tuyển.</p>
+          </section>
           <div class="is-hero">
             <div>
               <span class="is-eyebrow">INTERVIEW STUDIO · VIETNAM-FIRST</span>
@@ -889,6 +927,10 @@
         </section>
 
         <section v-else-if="activeModule === 'reports'" class="is-view">
+          <div class="is-growth-next" role="region" aria-label="Luyện lượt tiếp theo">
+            <div><span class="is-eyebrow">NEXT BEST ACTION</span><strong>{{ growthPlan.focusLabel }}</strong><small>{{ growthPlan.selfCheck }}</small></div>
+            <button type="button" class="is-button is-button--primary" @click="startMicroPractice">Luyện lại 3 câu →</button>
+          </div>
           <div class="is-page-heading">
             <div>
               <span class="is-eyebrow">INTERVIEW REPORTS</span>
@@ -1032,6 +1074,7 @@ import { templates } from '../data/cv'
 import { patchCanonicalWorkspace, readCanonicalWorkspace } from '../data/workspace-store'
 import { clearInterviewLocalData, downloadInterviewDataExport } from './interview-data-controls'
 import { interviewScenarios, getInterviewScenario, scenarioPracticeQuestions } from './interview-scenarios'
+import { candidateGoals, buildCandidateGrowthPlan, buildMicroPracticeSet } from './candidate-growth'
 import {
   JOB_MARKET_AS_OF, observedJobSignals, salaryBenchmarks, verifiedEmployers,
   jobMarketSources, salaryDisplay, jobSourceForRole, isObservedJobCurrent,
@@ -1075,6 +1118,7 @@ const SESSION_KEY = 'interview-studio-sessions-v2'
 const CLAIM_KEY = 'interview-studio-claim-evidence-v1'
 const STORY_KEY = 'interview-studio-story-bank-v1'
 const PREF_KEY = 'interview-studio-preferences-v1'
+const GROWTH_KEY = 'interview-studio-growth-goal-v1'
 
 export default {
   name: 'InterviewStudio',
@@ -1096,6 +1140,8 @@ export default {
       interviewerModes,
       pressureLevels,
       interviewScenarios,
+      candidateGoals,
+      growthGoalId: 'general',
       selectedScenarioId: '',
       showAllScenarios: false,
       modules: [
@@ -1362,6 +1408,15 @@ export default {
     latestReport() {
       return this.practiceSessions.find((session) => session.report) || null
     },
+    growthPlan() {
+      return buildCandidateGrowthPlan({
+        sessions: this.practiceSessions,
+        claims: this.cvClaims,
+        claimEvidence: this.claimEvidence,
+        storyBank: this.storyBank,
+        goalId: this.growthGoalId,
+      })
+    },
     readinessSignal() {
       if (!this.latestReport) {
         const claimBase = this.cvClaims.length ? Math.round((this.evidenceReadyCount / this.cvClaims.length) * 45) : 0
@@ -1435,6 +1490,7 @@ export default {
   },
   mounted() {
     this.loadPracticePrefs()
+    this.loadGrowthGoal()
     this.workspace = readCanonicalWorkspace()
     const storedId = this.workspace?.studio?.selectedId
     if (storedId && this.templates.some((template) => template.id === storedId)) this.selectedTemplateId = storedId
@@ -1451,6 +1507,47 @@ export default {
     window.speechSynthesis?.cancel()
   },
   methods: {
+    loadGrowthGoal() {
+      try {
+        const stored = window.localStorage.getItem(GROWTH_KEY)
+        if (this.candidateGoals.some(item => item.id === stored)) this.growthGoalId = stored
+      } catch { /* Storage may be unavailable. */ }
+    },
+    setGrowthGoal(id) {
+      if (!this.candidateGoals.some(item => item.id === id)) return
+      this.growthGoalId = id
+      try { window.localStorage.setItem(GROWTH_KEY, id) } catch { /* Optional persistence. */ }
+    },
+    startMicroPractice() {
+      if (this.practiceActive) {
+        this.activeModule = 'mock'
+        return
+      }
+      // A 3-question rehearsal: short enough for daily repetition, built from
+      // a selected role + the weakest prior response where a trusted match exists.
+      this.selectedScenarioId = ''
+      this.practiceSize = 3
+      const selected = buildMicroPracticeSet({
+        goalId: this.growthGoalId,
+        sessions: this.practiceSessions,
+        questions: this.questionDeck,
+        count: 3,
+      })
+      if (!selected.length) { this.activeModule = 'mock'; return }
+      this.practiceBaseSize = selected.length
+      this.adaptiveInsertedCount = 0
+      this.practiceQuestions = selected
+      this.practiceDrafts = Object.fromEntries(selected.map(item => [
+        item.id, { answer: '', evidence: '', confidence: 3, evaluation: null },
+      ]))
+      this.practiceIndex = 0
+      this.practiceShowGuide = false
+      this.practiceStartedAt = new Date().toISOString()
+      this.timerChoice = 90
+      this.practiceActive = true
+      this.activeModule = 'mock'
+      this.startQuestionTimer()
+    },
     selectScenario(id) {
       this.selectedScenarioId = id
       const scenario = getInterviewScenario(id)
@@ -3895,4 +3992,68 @@ export default {
 
 .is-scenario-picker__actions { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
 .is-scenario-picker__actions button { font-size:11px; color:var(--accent); }
+
+/* One-minute decision: objective > focus > three-question practice > feedback. */
+.is-growth {
+  margin-bottom: 26px;
+  padding: clamp(18px,2vw,28px);
+  background: #fff;
+  border: 1px solid rgba(24,74,94,.13);
+  border-radius: 18px;
+  box-shadow: 0 10px 34px rgba(30,73,93,.045);
+}
+.is-growth__heading {
+  display:flex;
+  justify-content:space-between;
+  align-items:start;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.is-growth__heading h2 { margin:7px 0 5px; font-size:clamp(21px,2.4vw,27px); letter-spacing:-.035em; }
+.is-growth__heading p { margin:0; color:var(--muted); font-size:12px; }
+.is-growth__baseline {
+  padding:7px 10px;
+  border:1px solid var(--line);
+  border-radius:99px;
+  color:var(--muted);
+  background:#f7fafb;
+  font-size:11px;
+}
+.is-growth__goals { display:flex; gap:7px; flex-wrap:wrap; margin:19px 0 17px; }
+.is-growth__goals button {
+  padding:10px 12px;
+  min-height:40px;
+  font:inherit;
+  font-size:11px;
+  background:#f9fbfc;
+  border:1px solid rgba(24,74,94,.16);
+  color:var(--muted);
+  border-radius:9px;
+  cursor:pointer;
+}
+.is-growth__goals button:hover { border-color:var(--accent); color:var(--ink); }
+.is-growth__goals button.active { background:#e7f6f2; border-color:var(--accent); color:#08685f; font-weight:750; }
+.is-growth__focus { display:grid; grid-template-columns:minmax(0,1fr) minmax(290px,.85fr); gap:12px; }
+.is-growth__primary {
+  padding:22px;
+  background:linear-gradient(125deg,#e8f8f3,#f6fbfc);
+  border:1px solid #d6ebe6;
+  border-radius:13px;
+}
+.is-growth__primary h3 { margin:9px 0 7px; font-size:clamp(22px,2.5vw,30px); letter-spacing:-.035em; }
+.is-growth__primary p { max-width:44ch; margin:0 0 18px; color:var(--muted); font-size:12px; line-height:1.55; }
+.is-growth__primary small { display:block; margin-top:9px; font-size:10px; color:var(--muted); }
+.is-growth__steps { padding:19px 22px; border:1px solid var(--line); border-radius:13px; background:#fff; }
+.is-growth__steps ol { margin:13px 0 0; padding:0; list-style:none; display:grid; gap:13px; }
+.is-growth__steps li { display:grid; grid-template-columns:24px 1fr; gap:9px; align-items:start; color:var(--ink); font-size:12px; line-height:1.5; }
+.is-growth__steps li b { display:grid; place-items:center; width:22px; height:22px; border-radius:7px; background:#e7f6f2; color:var(--accent); font-size:11px; }
+.is-growth__trend,.is-growth__hint { margin:13px 0 0; color:var(--muted); font-size:10px; line-height:1.5; }
+.is-growth__disclaimer { margin:12px 0 0; color:var(--muted); font-size:10px; }
+.is-growth-next { padding:17px 20px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; border:1px solid #d6ebe6; border-radius:13px; background:#eff9f6; }
+.is-growth-next > div { display:grid; gap:4px; }
+.is-growth-next strong { color:var(--ink); font-size:16px; }
+.is-growth-next small { color:var(--muted); font-size:11px; }
+@media(max-width:950px){.is-growth__focus{grid-template-columns:1fr}.is-growth__steps{padding:16px}}
+@media(max-width:620px){.is-growth{padding:15px}.is-growth__goals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.is-growth__goals button{min-width:0;padding:10px 7px;font-size:10px}.is-growth__primary{padding:17px}.is-growth-next{align-items:stretch}.is-growth-next button{width:100%}}
+
 </style>
