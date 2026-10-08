@@ -67,6 +67,30 @@ test('opens standalone Interview Studio from selected CV', async ({ page }) => {
   expect(pageErrors).toEqual([])
 })
 
+test('Vue Interview Studio uses the canonical industry question catalogue', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  await page.getByLabel('Ngành nghề').selectOption('telecom')
+  await page.getByRole('button', { name: /Question Bank/ }).click()
+  await expect(page.locator('.is-question').filter({ hasText: /ngành Telecom/i }).first()).toBeVisible()
+})
+
+test('compiled standalone Interview Studio fallback loads without src imports', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  const missing = []
+  page.on('response', response => {
+    if (response.status() >= 400 && response.url().includes('/src/')) missing.push(response.url())
+  })
+  await page.goto('/interview-studio/')
+  await expect(page.locator('#module-nav')).toContainText('Question Bank')
+  await expect(page.locator('#app-view')).toContainText('CV thật')
+  await page.locator('#industry-field').selectOption('telecom')
+  await page.locator('[data-module="questions"]').click()
+  await expect(page.locator('.question').filter({ hasText: /ngành Telecom/i }).first()).toBeVisible()
+  expect(missing).toEqual([])
+  expect(errors).toEqual([])
+})
+
 test('legacy interview hash stays compatible with Interview Studio', async ({ page }) => {
   await page.goto('/#interview')
   await expect(page.getByRole('link', { name: 'Interview Studio', exact: true })).toBeVisible()
