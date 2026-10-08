@@ -11,7 +11,7 @@
     "serve": "vite",
     "security:lint": "node scripts/security-lint.mjs",
     "prebuild": "npm run data:sync && npm run static:check",
-    "build": "vite build",
+    "build": "vite build && node scripts/build-interview-fallback.mjs",
     "verify:bundle": "node scripts/check-bundle-budget.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --project=desktop-chromium --project=tablet-chromium --project=mobile-chromium",
