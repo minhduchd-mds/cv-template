@@ -37,6 +37,10 @@ import {
   resolvePracticeIndustry,
 } from '../../src/interview/question-catalog.js'
 import { clearInterviewLocalData, downloadInterviewDataExport } from '../../src/interview/interview-data-controls.js'
+import {
+  JOB_MARKET_AS_OF, observedJobSignals, salaryBenchmarks, verifiedEmployers,
+  salaryDisplay, jobSourceForRole, isObservedJobCurrent,
+} from '../../src/data/job-market-vn.js'
 import '../studio/safe-dom.js'
 
 const safeDom = window.CVSafeDom
@@ -85,6 +89,13 @@ const state={
   applicationId:'',
   applicationDraft:{id:'',company:'',role:'',status:'Interview',jd:'',notes:'',sourceUrl:''},
   applicationStatuses:['Saved','Applied','Screening','Interview','Technical','Portfolio','Final','Offer','Closed'],
+  jobMarketTab:'jobs',
+  jobMarketSearch:'',
+  jobMarketCompany:'all',
+  jobMarketCity:'all',
+  jobMarketSalaryCity:'hanoi',
+  jobMarketSalaryYears:'1-5',
+  showMarketExplorer:true,
   interviewerMode:'hiring-manager',
   pressureLevel:'realistic',
   selectedClaimId:'',
@@ -362,6 +373,34 @@ function startApplicationPractice(app=activeApplication()||state.applicationDraf
   selected.forEach(q=>state.practice.drafts[q.id]={answer:'',evidence:'',confidence:3,evaluation:null})
   state.activeModule='mock';startTimer();render()
 }
+const renderMarketExplorer=()=>{
+  const keyword=state.jobMarketSearch.trim().toLocaleLowerCase('vi')
+  const jobs=observedJobSignals.filter(j=>isObservedJobCurrent(j,JOB_MARKET_AS_OF)&&
+    (state.jobMarketCompany==='all'||j.employerId===state.jobMarketCompany)&&
+    (state.jobMarketCity==='all'||j.location.toLocaleLowerCase('vi').includes(state.jobMarketCity))&&
+    (!keyword||[j.title,verifiedEmployers.find(x=>x.id===j.employerId)?.name,j.location].join(' ').toLocaleLowerCase('vi').includes(keyword)))
+  const roles=salaryBenchmarks.filter(r=>!keyword||[r.role,r.group,...r.skills].join(' ').toLocaleLowerCase('vi').includes(keyword))
+  const jobCards=jobs.map(j=>{const company=verifiedEmployers.find(c=>c.id===j.employerId);return `<article class="market-card"><div><strong>${e(company?.name)}</strong><small>${e(j.location)}</small></div><h3>${e(j.title)}</h3><small>Đối chiếu ${e(j.checkedAt)} · Lương chưa công bố</small><footer><a href="${e(j.sourceUrl)}" target="_blank" rel="noopener noreferrer">Xem nguồn ↗</a><button type="button" data-market-job="${e(j.id)}">Dùng job này →</button></footer></article>`}).join('')
+  const roleCards=roles.map(r=>{const source=jobSourceForRole(r);return `<article class="market-card"><div><strong>${e(r.group)}</strong><small>${e(source?.year)}</small></div><h3>${e(r.role)}</h3><b>${e(salaryDisplay(r,state.jobMarketSalaryCity,state.jobMarketSalaryYears))}</b><footer><small>Lương thị trường · không phải offer</small><a href="${e(source?.url)}" target="_blank" rel="noopener noreferrer">${e(source?.name)} ↗</a></footer></article>`}).join('')
+  const companies=verifiedEmployers.map(c=>`<article class="market-card"><div><strong>${e(c.category)}</strong><small>${e(c.location)}</small></div><h3>${e(c.name)}</h3><footer><small>${e(c.source)}</small><a href="${e(c.careersUrl)}" target="_blank" rel="noopener noreferrer">Trang tuyển dụng ↗</a></footer></article>`).join('')
+  const tabs=['jobs','salary','companies'].map((id,i)=>`<button type="button" data-market-tab="${id}" class="${state.jobMarketTab===id?'active':''}" aria-pressed="${state.jobMarketTab===id}">${['Vị trí đã đối chiếu','Lương theo role','Công ty'][i]}</button>`).join('')
+  return `<section class="market-section" aria-label="Việc làm và lương Việt Nam"><header><div><span class="eyebrow">JOB MARKET · VIETNAM</span><h2>Khám phá cơ hội & lương</h2><small>Dữ liệu đối chiếu ${JOB_MARKET_AS_OF} · Không phải feed trực tiếp</small></div><button type="button" id="toggle-market" aria-expanded="${state.showMarketExplorer}">${state.showMarketExplorer?'Thu gọn':'Mở khám phá'}</button></header>${state.showMarketExplorer?`<div class="market-body"><div class="market-tools"><div class="market-tabs">${tabs}</div>${state.jobMarketTab==='companies'?'':`<input id="market-search" type="search" placeholder="Tìm role / công ty..." aria-label="Tìm role hoặc công ty" value="${e(state.jobMarketSearch)}" />`}${state.jobMarketTab==='jobs'?`<select id="market-company" aria-label="Lọc công ty"><option value="all">Tất cả công ty</option>${options(verifiedEmployers,x=>x.id,x=>x.name,state.jobMarketCompany)}</select><select id="market-city" aria-label="Lọc khu vực"><option value="all">Toàn quốc</option><option value="hà nội" ${state.jobMarketCity==='hà nội'?'selected':''}>Hà Nội</option><option value="tp.hcm" ${state.jobMarketCity==='tp.hcm'?'selected':''}>TP.HCM</option></select>`:''}${state.jobMarketTab==='salary'?`<select id="market-salary-city" aria-label="Thành phố tham khảo"><option value="hanoi" ${state.jobMarketSalaryCity==='hanoi'?'selected':''}>Hà Nội</option><option value="hcm" ${state.jobMarketSalaryCity==='hcm'?'selected':''}>TP.HCM</option></select><select id="market-salary-years" aria-label="Kinh nghiệm tham khảo"><option value="1-5" ${state.jobMarketSalaryYears==='1-5'?'selected':''}>1–5 năm</option><option value="5+" ${state.jobMarketSalaryYears==='5+'?'selected':''}>Trên 5 năm</option></select>`:''}</div><div class="market-grid">${state.jobMarketTab==='jobs'?jobCards:state.jobMarketTab==='salary'?roleCards:companies}</div>${state.jobMarketTab==='jobs'&&!jobs.length?'<p>Không có kết quả. Thử bộ lọc khác.</p>':''}<p class="market-disclaimer">Tin đăng có thể hết hạn. Lương ITviec là trung vị thị trường; Adecco là khoảng gross tham khảo, không phải lương của công ty.</p></div>`:''}</section>`
+}
+const bindMarketExplorer=()=>{
+  const toggle=document.querySelector('#toggle-market');if(toggle)toggle.onclick=()=>{state.showMarketExplorer=!state.showMarketExplorer;renderApplications()}
+  root.querySelectorAll('[data-market-tab]').forEach(node=>node.onclick=()=>{state.jobMarketTab=node.dataset.marketTab;renderApplications()})
+  for(const [id,key] of [['#market-company','jobMarketCompany'],['#market-city','jobMarketCity'],['#market-salary-city','jobMarketSalaryCity'],['#market-salary-years','jobMarketSalaryYears']]){
+    const node=document.querySelector(id);if(node)node.onchange=()=>{state[key]=node.value;renderApplications()}
+  }
+  const search=document.querySelector('#market-search');if(search)search.onchange=()=>{state.jobMarketSearch=search.value;renderApplications()}
+  root.querySelectorAll('[data-market-job]').forEach(node=>node.onclick=()=>{
+    const j=observedJobSignals.find(item=>item.id===node.dataset.marketJob)
+    const company=verifiedEmployers.find(item=>item.id===j?.employerId)
+    if(!j||!company)return
+    newApplication();state.applicationDraft={...state.applicationDraft,company:company.name,role:j.title,status:'Saved',sourceUrl:j.sourceUrl,notes:'Nguồn: '+company.source+' · quan sát '+j.checkedAt+(j.expiresAt?' · hạn đăng '+j.expiresAt:'')+(j.note?' · '+j.note:'')}
+    state.showMarketExplorer=false;renderApplications();renderTop()
+  })
+}
 function renderApplications(){
   if(!state.applicationDraft.id&&state.applicationId){
     const app=activeApplication();if(app)editApplication(app)
@@ -371,6 +410,7 @@ function renderApplications(){
   }
   const analysis=applicationAnalysis()
   safeDom(root).html =pageHeading('APPLICATION LAB','Ứng tuyển <em>theo từng job.</em>','',applications().length)+`
+    ${renderMarketExplorer()}
     <div class="application-layout">
       <aside class="application-list">
         <div class="application-list-head"><span class="eyebrow">APPLICATIONS</span><button id="new-app">＋ New</button></div>
@@ -397,6 +437,7 @@ function renderApplications(){
         :''}
       </section>
     </div>`
+  bindMarketExplorer()
   const bindField=(id,key)=>{const node=document.querySelector(id);if(!node)return;node.oninput=()=>{state.applicationDraft[key]=node.value};node.onchange=()=>{state.applicationDraft[key]=node.value;if(key==='jd'||key==='status')renderApplications()}}
   bindField('#app-company','company');bindField('#app-role','role');bindField('#app-status','status');bindField('#app-url','sourceUrl');bindField('#app-jd','jd');bindField('#app-notes','notes')
   document.querySelector('#new-app').onclick=()=>{newApplication();renderApplications()}
