@@ -427,6 +427,21 @@ export const compareAnswerAttempts = (before = null, after = null) => {
   }
 }
 
+export const summarizeAnswerRevisions = (responses = []) => {
+  const revisions = (Array.isArray(responses) ? responses : [])
+    .filter(item => item?.retryBefore !== null && item?.retryBefore !== undefined && item?.evaluation)
+    .map(item => ({
+      questionId: item.questionId || '',
+      ...compareAnswerAttempts({ overall: item.retryBefore }, item.evaluation),
+    }))
+    .filter(item => item.current !== undefined)
+  return {
+    revised: revisions.length,
+    improved: revisions.filter(item => item.difference > 0).length,
+    revisions: revisions.slice(0, 10),
+  }
+}
+
 export const buildAdaptiveFollowUp = ({
   question = {},
   evaluation = {},
