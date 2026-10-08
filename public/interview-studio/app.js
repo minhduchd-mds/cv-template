@@ -42,7 +42,7 @@ import {
   salaryDisplay, jobSourceForRole, isObservedJobCurrent,
 } from '../../src/data/job-market-vn.js'
 import { interviewScenarios, getInterviewScenario, scenarioPracticeQuestions } from '../../src/interview/interview-scenarios.js'
-import { candidateGoals, buildCandidateGrowthPlan, buildMicroPracticeSet } from '../../src/interview/candidate-growth.js'
+import { candidateGoals, buildCandidateGrowthPlan, buildMicroPracticeSet, inferCandidateGoal } from '../../src/interview/candidate-growth.js'
 import '../studio/safe-dom.js'
 
 const safeDom = window.CVSafeDom
@@ -82,7 +82,7 @@ const initialTemplate=workspace?.studio?.selectedId&&templates.some(t=>t.id===wo
 const savedGrowthGoal=(()=>{try{return localStorage.getItem(GROWTH_KEY)}catch{return null}})()
 const state={
   activeModule:'overview',
-  growthGoalId: candidateGoals.some(goal=>goal.id===savedGrowthGoal) ? savedGrowthGoal : 'general',
+  growthGoalId: candidateGoals.some(goal=>goal.id===savedGrowthGoal) ? savedGrowthGoal : inferCandidateGoal({rolePackId:templateInterviewPack[initialTemplate]||'general',profileRole:workspace?.profile?.role||'',templateId:initialTemplate}),
   selectedTemplateId:initialTemplate,
   rolePackId:templateInterviewPack[initialTemplate]||'general',
   industryId:preferences.industryId||'auto',
