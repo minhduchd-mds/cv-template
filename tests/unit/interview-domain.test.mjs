@@ -11,7 +11,7 @@ import {
   migrateLegacyClaimEvidence,
 } from '../../src/interview/interview-studio-engine.js'
 import { interviewSources, templateInterviewPack } from '../../src/data/interview-prep.js'
-import { candidateGoals, buildCandidateGrowthPlan, buildMicroPracticeSet } from '../../src/interview/candidate-growth.js'
+import { candidateGoals, buildCandidateGrowthPlan, buildMicroPracticeSet, inferCandidateGoal } from '../../src/interview/candidate-growth.js'
 import {
   interviewScenarios, getInterviewScenario, scenarioPracticeQuestions,
 } from '../../src/interview/interview-scenarios.js'
@@ -283,4 +283,12 @@ test('Growth Coach does not mix scores between two named career goals', () => {
   const aiPlan=buildCandidateGrowthPlan({goalId:'ai',sessions:[ai,design]})
   assert.equal(aiPlan.sessionsCount,1)
   assert.equal(aiPlan.focusScore,70)
+})
+
+test('suggest an initial career goal from CV role and template', () => {
+  assert.equal(inferCandidateGoal({profileRole:'Senior UI/UX Designer'}),'design')
+  assert.equal(inferCandidateGoal({profileRole:'Backend Developer'}),'engineering')
+  assert.equal(inferCandidateGoal({profileRole:'AI Engineer'}),'ai')
+  assert.equal(inferCandidateGoal({profileRole:'Product Manager'}),'product')
+  assert.equal(inferCandidateGoal({profileRole:'Sales Associate'}),'general')
 })
