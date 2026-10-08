@@ -24,6 +24,8 @@ import {
   interviewerModes,
   pressureLevels,
   evaluateInterviewResponse,
+  buildAnswerImprovement,
+  compareAnswerAttempts,
   extractCvClaims,
   getUnassignedClaimNotes,
   matchQuestionsToClaim,
@@ -700,6 +702,8 @@ function renderMock(){
     return
   }
   const q=currentQuestion(),draft=currentDraft(),evaluation=draft.evaluation
+  const improvement=evaluation?buildAnswerImprovement(evaluation):null
+  const retryComparison=compareAnswerAttempts(draft.retryBaseline?.evaluation,evaluation)
   safeDom(root).html =pageHeading('MOCK INTERVIEW','Luyện như <em>vòng thật.</em>','',`${state.practice.index+1}/${state.practice.questions.length}`)+`
     <section class="live"><div class="live-meta"><div><span>QUESTION ${state.practice.index+1} / ${state.practice.questions.length}${q.adaptive?.isFollowUp?' <b class="adaptive-badge">ADAPTIVE FOLLOW-UP</b>':''}</span><small>${e(getInterviewScenario(state.selectedScenarioId)?.label||categoryName(q.category))} · ${e(activeStage().label)} · ${e(activeInterviewer().label)} · ${e(activePressure().label)}</small></div><div class="timer ${state.timerRemaining<=20?'warning':''}"><b id="timer-value">${formatTimer()}</b><span>${state.timerRunning?'đang chạy':'tạm dừng'}</span></div></div>
     ${q.adaptive?.isFollowUp?`<div class="adaptive-reason"><span>WHY THIS FOLLOW-UP</span><p>${e(q.adaptive.reason)}</p><small>Trigger: ${e(dimensionLabel(q.adaptive.triggerDimension))} · ${q.adaptive.triggerScore}/100 · ${e(q.adaptive.interviewerLabel||activeInterviewer().label)} · ${e(q.adaptive.pressureLabel||activePressure().label)}</small></div>`:''}
@@ -707,6 +711,7 @@ function renderMock(){
     <div class="answer-grid"><label><span>Câu trả lời của anh</span><textarea id="mock-answer" rows="9" placeholder="Nói hoặc nhập đúng cách anh sẽ trả lời trong buổi phỏng vấn thật...">${e(draft.answer)}</textarea><small id="word-count">${draft.answer.trim().split(/\s+/).filter(Boolean).length} từ</small></label><label><span>Evidence / STAR anchors</span><textarea id="mock-evidence" rows="6" placeholder="Project · ownership · baseline · decision · trade-off · result · learning">${e(draft.evidence)}</textarea></label></div>
     <label class="confidence"><span>Mức tự tin</span><input id="mock-confidence" type="range" min="1" max="5" value="${draft.confidence}"><b id="confidence-value">${draft.confidence}/5</b></label>
     ${evaluation?`<div class="evaluation"><div class="eval-score"><b>${evaluation.overall}</b><span>practice signal</span></div><div class="metric-bars">${Object.entries(evaluation.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div>${evaluation.warnings.length?`<ul class="warnings">${list(evaluation.warnings)}</ul>`:''}</div>`:''}
+    ${improvement?`<section class="retry-coach" aria-label="Một điều cần cải thiện"><div class="retry-heading"><span class="eyebrow">ĐIỂM CẦN SỬA</span><strong>${e(improvement.title)}</strong></div><p>${e(improvement.action)}</p><small>${e(improvement.check)}</small>${retryComparison?`<div class="retry-comparison" role="status"><strong>${retryComparison.difference>0?'+':''}${retryComparison.difference} điểm</strong><span>Trước ${retryComparison.previous} → sau ${retryComparison.current} · ${e(retryComparison.note)}</span></div>`:''}<button type="button" id="retry-answer" class="secondary">Sửa và đánh giá lại ↻</button></section>`:''}
     <button id="coach-toggle" class="coach-toggle">Mở Answer Coach</button><div id="coach" class="coach-grid hidden"><section><span>Recruiter intent</span><p>${e(q.why)}</p></section><section><span>Framework</span><ol>${list(q.framework)}</ol></section><section><span>Reference answer</span><p>“${e(q.example)}”</p></section><section><span>Adaptive follow-up</span><ul>${list([...(evaluation?.dimensions?.evidence<65?['Evidence cụ thể nào chứng minh kết quả này? Baseline và nguồn đo là gì?']:[]),...(evaluation?.dimensions?.ownership<65?['Phần nào anh trực tiếp sở hữu, phần nào thuộc team?']:[]),...(q.followUps||[])].slice(0,4))}</ul></section></div>
     <div class="session-actions">${evaluation&&draft.answer?'<button id="save-story" class="secondary">'+(state.storyBank.some(story=>story.questionId===q.id&&story.applicationId===(activeApplication()?.id||''))?'✓ Đã lưu Story Bank':'✦ Lưu vào Story Bank')+'</button>':''}<button id="eval-q" class="secondary">Đánh giá câu này</button><button id="next-q" class="primary">${!q.adaptive?.isFollowUp&&state.practice.adaptiveInserted<((state.practice.baseSize>=8?3:2)+Number(activePressure()?.followUpBonus||0))?'Phân tích & tiếp tục →':state.practice.index===state.practice.questions.length-1?'Hoàn tất & tạo report':'Câu tiếp theo →'}</button></div></section>`
   const answer=document.querySelector('#mock-answer'),evd=document.querySelector('#mock-evidence'),conf=document.querySelector('#mock-confidence')
@@ -715,6 +720,14 @@ function renderMock(){
   conf.oninput=()=>{draft.confidence=Number(conf.value);document.querySelector('#confidence-value').textContent=conf.value+'/5'}
   const saveStory=document.querySelector('#save-story');if(saveStory)saveStory.onclick=saveCurrentStory
   document.querySelector('#eval-q').onclick=()=>{evaluateCurrent();renderMock()}
+  const retryButton=document.querySelector('#retry-answer')
+  if(retryButton)retryButton.onclick=()=>{
+    const d=currentDraft();if(!d?.evaluation)return
+    d.retryBaseline=d.retryBaseline||{answer:d.answer.trim(),evidence:d.evidence.trim(),evaluation:d.evaluation}
+    d.evaluation=null
+    stopTimer()
+    renderMock()
+  }
   document.querySelector('#next-q').onclick=nextMock
   document.querySelector('#coach-toggle').onclick=()=>document.querySelector('#coach').classList.toggle('hidden')
   document.querySelector('#pause-timer').onclick=()=>{state.timerRunning=!state.timerRunning;renderMock()}
