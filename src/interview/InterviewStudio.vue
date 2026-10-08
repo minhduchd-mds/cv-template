@@ -68,10 +68,7 @@
             <div>
               <span class="is-eyebrow">INTERVIEW STUDIO · VIETNAM-FIRST</span>
               <h1>Biến CV thành <em>lợi thế trong phòng phỏng vấn.</em></h1>
-              <p>
-                Interview Studio đọc CV, JD và lịch sử luyện tập để chuẩn bị câu hỏi,
-                bảo vệ từng claim bằng evidence và giúp anh luyện cách trả lời trước vòng thật.
-              </p>
+              <p>Chọn việc phù hợp. Bảo vệ kinh nghiệm. Luyện trước vòng thật.</p>
               <div class="is-hero__actions">
                 <button type="button" class="is-button is-button--primary" @click="activeModule = 'mock'">Bắt đầu mock interview</button>
                 <button type="button" class="is-button" @click="activeModule = 'claims'">Kiểm tra CV claims</button>
@@ -83,7 +80,7 @@
                 <b>{{ readinessSignal }}</b>
               </div>
               <strong>{{ readinessLabel }}</strong>
-              <p>Đây là tín hiệu luyện tập nội bộ, không phải dự đoán kết quả tuyển dụng.</p>
+              <p>Tín hiệu luyện tập, không dự đoán tuyển dụng.</p>
               <div class="is-readiness__bar"><span :style="{ width: readinessSignal + '%' }"></span></div>
             </article>
           </div>
@@ -213,7 +210,7 @@
             <div class="is-panel__heading is-panel__heading--split">
               <div>
                 <span class="is-eyebrow">SOURCE LAYER</span>
-                <h2>Dữ liệu có provenance, không phải câu hỏi sinh ngẫu nhiên</h2>
+                <h2>Nguồn dữ liệu tham khảo</h2>
               </div>
               <span class="is-source-status">{{ activeSources.length }} nguồn đang áp dụng</span>
             </div>
@@ -222,7 +219,7 @@
                 <span>{{ source.region === 'vietnam' ? 'VN' : 'GL' }}</span>
                 <strong>{{ source.name }}</strong>
                 <small>{{ source.label }}</small>
-                <p>{{ source.note }}</p>
+                <p v-if="source.region === 'vietnam'">{{ source.note }}</p>
               </a>
             </div>
           </section>
@@ -233,10 +230,80 @@
             <div>
               <span class="is-eyebrow">APPLICATION LAB</span>
               <h1>Mỗi job là một <em>workspace phỏng vấn riêng.</em></h1>
-              <p>Dán JD, giữ context tuyển dụng và xem Evidence Coverage giữa yêu cầu công việc với CV Claims, Story Bank và Question Bank.</p>
+              <p>Chọn job, lưu JD và luyện phỏng vấn.</p>
             </div>
             <div class="is-heading-number">{{ applications.length }}</div>
           </div>
+
+          <section class="is-market" aria-label="Việc làm và mức lương Việt Nam">
+            <div class="is-market__header">
+              <div>
+                <span class="is-eyebrow">JOB MARKET · VIETNAM</span>
+                <h2>Khám phá cơ hội & lương</h2>
+                <small>Dữ liệu đối chiếu {{ jobMarketDate }} · Không phải feed tuyển dụng trực tiếp</small>
+              </div>
+              <button type="button" class="is-market__toggle" :aria-expanded="showMarketExplorer" @click="showMarketExplorer = !showMarketExplorer">{{ showMarketExplorer ? 'Thu gọn' : 'Mở khám phá' }}</button>
+            </div>
+            <div v-if="showMarketExplorer" class="is-market__body">
+              <div class="is-market__tools">
+                <div class="is-market__tabs" role="group" aria-label="Loại dữ liệu việc làm">
+                  <button type="button" :aria-pressed="jobMarketTab === 'jobs'" :class="{ active: jobMarketTab === 'jobs' }" @click="jobMarketTab = 'jobs'">Vị trí đã đối chiếu</button>
+                  <button type="button" :aria-pressed="jobMarketTab === 'salary'" :class="{ active: jobMarketTab === 'salary' }" @click="jobMarketTab = 'salary'">Lương theo role</button>
+                  <button type="button" :aria-pressed="jobMarketTab === 'companies'" :class="{ active: jobMarketTab === 'companies' }" @click="jobMarketTab = 'companies'">Công ty</button>
+                </div>
+                <label v-if="jobMarketTab !== 'companies'" class="is-market__search">
+                  <span class="sr-only">Tìm vị trí hoặc công ty</span>
+                  <input v-model="jobMarketSearch" type="search" placeholder="Tìm role / công ty..." aria-label="Tìm role hoặc công ty"/>
+                </label>
+                <select v-if="jobMarketTab === 'jobs'" v-model="jobMarketCompany" aria-label="Lọc công ty">
+                  <option value="all">Tất cả công ty</option>
+                  <option v-for="employer in verifiedEmployers" :key="employer.id" :value="employer.id">{{ employer.name }}</option>
+                </select>
+                <select v-if="jobMarketTab === 'jobs'" v-model="jobMarketCity" aria-label="Lọc khu vực">
+                  <option value="all">Toàn quốc</option>
+                  <option value="hà nội">Hà Nội</option>
+                  <option value="tp.hcm">TP.HCM</option>
+                </select>
+                <select v-if="jobMarketTab === 'salary'" v-model="jobMarketSalaryCity" aria-label="Thành phố tham khảo">
+                  <option value="hanoi">Hà Nội</option>
+                  <option value="hcm">TP.HCM</option>
+                </select>
+                <select v-if="jobMarketTab === 'salary'" v-model="jobMarketSalaryYears" aria-label="Kinh nghiệm tham khảo">
+                  <option value="1-5">1–5 năm</option>
+                  <option value="5+">Trên 5 năm</option>
+                </select>
+              </div>
+              <div v-if="jobMarketTab === 'jobs'" class="is-market__grid">
+                <article v-for="job in marketJobs" :key="job.id" class="is-market__card">
+                  <div class="is-market__card-top"><strong>{{ marketEmployer(job.employerId)?.name }}</strong><small>{{ job.location }}</small></div>
+                  <h3>{{ job.title }}</h3>
+                  <small>Đối chiếu {{ job.checkedAt }} · Lương chưa công bố</small>
+                  <div class="is-market__links">
+                    <a :href="job.sourceUrl" target="_blank" rel="noopener noreferrer">Xem nguồn ↗</a>
+                    <button type="button" @click="useMarketJob(job)">Dùng job này →</button>
+                  </div>
+                </article>
+                <p v-if="!marketJobs.length" class="is-market__empty">Chưa có kết quả trong bản dữ liệu đã đối chiếu. Thử công ty hoặc từ khóa khác.</p>
+              </div>
+              <div v-else-if="jobMarketTab === 'salary'" class="is-market__grid">
+                <article v-for="role in marketSalaryRoles" :key="role.id" class="is-market__card">
+                  <div class="is-market__card-top"><strong>{{ role.group }}</strong><small>{{ marketSalarySource(role)?.year }}</small></div>
+                  <h3>{{ role.role }}</h3>
+                  <strong class="is-market__salary">{{ marketSalary(role) }}</strong>
+                  <div class="is-market__links"><span>Tham khảo thị trường · không phải offer</span><a :href="marketSalarySource(role)?.url" target="_blank" rel="noopener noreferrer">{{ marketSalarySource(role)?.name }} ↗</a></div>
+                </article>
+                <p v-if="!marketSalaryRoles.length" class="is-market__empty">Không tìm thấy role phù hợp.</p>
+              </div>
+              <div v-else class="is-market__grid">
+                <article v-for="employer in verifiedEmployers" :key="employer.id" class="is-market__card">
+                  <div class="is-market__card-top"><strong>{{ employer.category }}</strong><small>{{ employer.location }}</small></div>
+                  <h3>{{ employer.name }}</h3>
+                  <div class="is-market__links"><span>{{ employer.source }}</span><a :href="employer.careersUrl" target="_blank" rel="noopener noreferrer">Trang tuyển dụng ↗</a></div>
+                </article>
+              </div>
+              <p class="is-market__disclaimer">Tin đăng có thể thay đổi; xác minh tại website công ty. Báo cáo ITviec là trung vị toàn quốc, Adecco là khoảng gross theo thành phố/kinh nghiệm. Không suy ra lương từng doanh nghiệp.</p>
+            </div>
+          </section>
 
           <div class="is-application-layout">
             <aside class="is-application-list">
@@ -921,6 +988,10 @@ import { templates } from '../data/cv'
 import { patchCanonicalWorkspace, readCanonicalWorkspace } from '../data/workspace-store'
 import { clearInterviewLocalData, downloadInterviewDataExport } from './interview-data-controls'
 import {
+  JOB_MARKET_AS_OF, observedJobSignals, salaryBenchmarks, verifiedEmployers,
+  jobMarketSources, salaryDisplay, jobSourceForRole, isObservedJobCurrent,
+} from '../data/job-market-vn'
+import {
   industryPracticeProfiles,
   templateDefaultIndustry,
   interviewPacks,
@@ -972,6 +1043,11 @@ export default {
       seniorityLevels,
       interviewSources,
       industryPracticeProfiles,
+      salaryBenchmarks,
+      jobMarketSources,
+      verifiedEmployers,
+      observedJobSignals,
+      jobMarketDate: JOB_MARKET_AS_OF,
       interviewerModes,
       pressureLevels,
       modules: [
@@ -995,6 +1071,13 @@ export default {
       query: '',
       applicationId: '',
       applicationDraft: { id: '', company: '', role: '', status: 'Interview', jd: '', notes: '', sourceUrl: '' },
+      jobMarketTab: 'jobs',
+      jobMarketSearch: '',
+      jobMarketCompany: 'all',
+      jobMarketCity: 'all',
+      jobMarketSalaryCity: 'hanoi',
+      jobMarketSalaryYears: '1-5',
+      showMarketExplorer: true,
       applicationStatuses: ['Saved', 'Applied', 'Screening', 'Interview', 'Technical', 'Portfolio', 'Final', 'Offer', 'Closed'],
       selectedClaimId: '',
       claimEvidence: {},
@@ -1042,6 +1125,22 @@ export default {
     },
     applications() {
       return Array.isArray(this.workspace?.ats?.applications) ? this.workspace.ats.applications : []
+    },
+    marketJobs() {
+      const keyword = String(this.jobMarketSearch || '').trim().toLocaleLowerCase('vi')
+      return this.observedJobSignals.filter((job) => {
+        if (!isObservedJobCurrent(job, this.jobMarketDate)) return false
+        if (this.jobMarketCompany !== 'all' && job.employerId !== this.jobMarketCompany) return false
+        if (this.jobMarketCity !== 'all' && !job.location.toLocaleLowerCase('vi').includes(this.jobMarketCity)) return false
+        const employer = this.verifiedEmployers.find(item => item.id === job.employerId)
+        const target = [job.title, employer?.name, job.location].join(' ').toLocaleLowerCase('vi')
+        return !keyword || target.includes(keyword)
+      })
+    },
+    marketSalaryRoles() {
+      const keyword = String(this.jobMarketSearch || '').trim().toLocaleLowerCase('vi')
+      return this.salaryBenchmarks.filter(role =>
+        !keyword || [role.role, role.group, ...(role.skills || [])].join(' ').toLocaleLowerCase('vi').includes(keyword))
     },
     activeApplication() {
       if (!this.applicationId) return null
@@ -1320,6 +1419,31 @@ export default {
     },
     categoryName(id) {
       return this.questionCategories.find((category) => category.id === id)?.label || 'Role-specific'
+    },
+    marketEmployer(id) {
+      return this.verifiedEmployers.find(item => item.id === id) || null
+    },
+    marketSalary(role) {
+      return salaryDisplay(role, this.jobMarketSalaryCity, this.jobMarketSalaryYears)
+    },
+    marketSalarySource(role) {
+      return jobSourceForRole(role)
+    },
+    useMarketJob(job) {
+      const employer = this.marketEmployer(job.employerId)
+      if (!employer) return
+      this.newApplication()
+      this.applicationDraft = {
+        ...this.applicationDraft,
+        company: employer.name,
+        role: job.title,
+        status: 'Saved',
+        sourceUrl: job.sourceUrl,
+        notes: 'Nguồn: ' + employer.source + ' · quan sát ' + job.checkedAt
+          + (job.expiresAt ? ' · hạn đăng ' + job.expiresAt : '')
+          + (job.note ? ' · ' + job.note : ''),
+      }
+      this.showMarketExplorer = false
     },
     dimensionLabel(key) {
       return ({
