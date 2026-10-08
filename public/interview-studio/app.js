@@ -41,6 +41,7 @@ import {
   JOB_MARKET_AS_OF, observedJobSignals, salaryBenchmarks, verifiedEmployers,
   salaryDisplay, jobSourceForRole, isObservedJobCurrent,
 } from '../../src/data/job-market-vn.js'
+import { interviewScenarios, getInterviewScenario, scenarioPracticeQuestions } from '../../src/interview/interview-scenarios.js'
 import '../studio/safe-dom.js'
 
 const safeDom = window.CVSafeDom
@@ -97,6 +98,7 @@ const state={
   jobMarketSalaryYears:'1-5',
   showMarketExplorer:false,
   interviewerMode:'hiring-manager',
+  selectedScenarioId:'',
   pressureLevel:'realistic',
   selectedClaimId:'',
   claimEvidence:readJson(CLAIM_KEY,{}),
@@ -561,7 +563,8 @@ function startMock(size,timerChoice){
   const selected=[],cats=new Set()
   ranked.forEach(({q})=>{if(selected.length>=size)return;if(!cats.has(q.category)||selected.length>=Math.ceil(size/2)){selected.push(q);cats.add(q.category)}})
   ranked.forEach(({q})=>{if(selected.length<size&&!selected.some(x=>x.id===q.id))selected.push(q)})
-  state.practice={questions:selected.slice(0,size),index:0,drafts:{},startedAt:new Date().toISOString(),timerChoice,baseSize:size,adaptiveInserted:0}
+  const scripted=scenarioPracticeQuestions(state.selectedScenarioId,size,selected)
+  state.practice={questions:scripted,index:0,drafts:{},startedAt:new Date().toISOString(),timerChoice,baseSize:scripted.length,adaptiveInserted:0}
   state.practice.questions.forEach(q=>state.practice.drafts[q.id]={answer:'',evidence:'',confidence:3,evaluation:null})
   startTimer();renderMock()
 }
@@ -599,7 +602,7 @@ function finishMock(){
   const responses=state.practice.questions.map(q=>{const d=state.practice.drafts[q.id];if(!d.evaluation)d.evaluation=evaluateInterviewResponse({answer:d.answer,evidence:d.evidence,confidence:d.confidence,question:q,claims:cvClaims(),elapsedSeconds:state.practice.timerChoice});return{questionId:q.id,question:q.question,answer:d.answer.trim(),evidence:d.evidence.trim(),confidence:d.confidence,evaluation:d.evaluation,adaptive:q.adaptive||null}})
   const report=aggregateInterviewReport(responses),app=activeApplication()
   report.practicePlan=buildNextPracticePlan({report,responses,questions:questionDeck(),claims:cvClaims(),application:app||{}})
-  state.sessions=[{id:'interview-studio-'+Date.now(),createdAt:new Date().toISOString(),startedAt:state.practice.startedAt,applicationId:app?.id||'',contextLabel:app?`${app.company} · ${app.role}`:`${activePack().label} · CV`,stageLabel:activeStage().label,interviewerMode:state.interviewerMode,interviewerLabel:activeInterviewer().label,pressureLevel:state.pressureLevel,pressureLabel:activePressure().label,total:responses.length,baseQuestions:state.practice.baseSize,adaptiveFollowUps:responses.filter(r=>r.adaptive?.isFollowUp).length,answered:responses.filter(r=>r.answer||r.evidence).length,responses,report},...state.sessions]
+  state.sessions=[{id:'interview-studio-'+Date.now(),createdAt:new Date().toISOString(),startedAt:state.practice.startedAt,applicationId:app?.id||'',contextLabel:app?`${app.company} · ${app.role}`:`${activePack().label} · CV`,stageLabel:activeStage().label,scenarioId:state.selectedScenarioId||'',scenarioLabel:getInterviewScenario(state.selectedScenarioId)?.label||'',interviewerMode:state.interviewerMode,interviewerLabel:activeInterviewer().label,pressureLevel:state.pressureLevel,pressureLabel:activePressure().label,total:responses.length,baseQuestions:state.practice.baseSize,adaptiveFollowUps:responses.filter(r=>r.adaptive?.isFollowUp).length,answered:responses.filter(r=>r.answer||r.evidence).length,responses,report},...state.sessions]
   saveSessions();state.practice=null;state.activeModule='reports';render();toast('Đã tạo Interview Report')
 }
 function stopSpeech(){if(state.speech){try{state.speech.stop()}catch{}}state.speech=null;state.speechRecording=false}
@@ -618,7 +621,13 @@ function speakQuestion(){if(!window.speechSynthesis||!currentQuestion())return;w
 
 function renderMock(){
   if(!state.practice){
-    safeDom(root).html =pageHeading('MOCK INTERVIEW','Luyện như <em>vòng thật.</em>','', '5Q')+`
+    const chosen=getInterviewScenario(state.selectedScenarioId)
+    safeDom(root).html =pageHeading('MOCK INTERVIEW','Luyện theo <em>tình huống.</em>','', '5Q')+`
+      <section class="scenario-picker" aria-label="Kịch bản phỏng vấn">
+        <header><div><span class="eyebrow">PRACTICE SCENARIOS</span><h2>Chọn kịch bản phỏng vấn</h2><p>10 tình huống · HR, UI/UX, kỹ thuật và đàm phán</p></div>${chosen?'<button id="clear-scenario">Bỏ chọn</button>':''}</header>
+        <div class="scenario-grid">${interviewScenarios.map(sc=>`<button type="button" class="scenario-card ${state.selectedScenarioId===sc.id?'selected':''}" data-scenario="${e(sc.id)}" aria-pressed="${state.selectedScenarioId===sc.id}"><span class="scenario-number">${e(sc.icon)}</span><span><strong>${e(sc.label)}</strong><small>${e(sc.group)} · ${e(sc.time)}</small></span><b>${state.selectedScenarioId===sc.id?'✓':'↗'}</b></button>`).join('')}</div>
+        ${chosen?`<div class="scenario-preview"><span>${e(chosen.level)} · ${chosen.questions.length} câu gốc</span><p>${e(chosen.context)}</p><button id="start-scenario" class="primary">Luyện kịch bản này →</button></div>`:''}
+      </section>
       <section class="mock-start"><div class="mock-config"><h2>Thiết lập phiên luyện</h2>
       <label class="field"><span>Application</span><select id="mock-app"><option value="">CV hiện tại · không gắn job</option>${applications().map(a=>`<option value="${e(a.id)}" ${a.id===state.applicationId?'selected':''}>${e(a.company)} · ${e(a.role)}</option>`).join('')}</select></label>
       <label class="field"><span>Vòng phỏng vấn</span><select id="mock-stage">${options(interviewStages,x=>x.id,x=>x.label,state.stageId)}</select></label>
@@ -627,6 +636,20 @@ function renderMock(){
       <label class="field"><span>Timer / câu</span><select id="mock-timer"><option value="60">60 giây</option><option value="90" selected>90 giây</option><option value="120">120 giây</option></select></label>
       <label class="field"><span>Số câu</span><select id="mock-size"><option value="5">5 câu · Quick round</option><option value="8">8 câu · Full round</option></select></label>
       </div><div class="mock-preview"><span class="eyebrow">SESSION</span><div><b>${cvClaims().length}</b><span>CV claims</span></div><div><b>${activeApplication()?'JD':'CV'}</b><span>application context</span></div><div><b>${e(activeStage().label)}</b><span>interview stage</span></div><div><b>${e(activeInterviewer().shortLabel)}</b><span>${e(activeInterviewer().label)}</span></div><div><b>${e(activePressure().label)}</b><span>adaptive pressure</span></div><div><b>${e(marketLabel())}</b><span>question sources</span></div><button id="start-mock" class="primary">Bắt đầu session →</button></div></section>`
+    root.querySelectorAll('[data-scenario]').forEach(button=>button.onclick=()=>{
+      state.selectedScenarioId=button.dataset.scenario
+      const scenario=getInterviewScenario(state.selectedScenarioId)
+      if(scenario){
+        state.stageId=scenario.stageId
+        state.interviewerMode=scenario.interviewerMode
+        state.pressureLevel=scenario.pressureLevel
+      }
+      renderMock()
+    })
+    const clearScenario=document.querySelector('#clear-scenario')
+    if(clearScenario)clearScenario.onclick=()=>{state.selectedScenarioId='';renderMock()}
+    const startScenario=document.querySelector('#start-scenario')
+    if(startScenario)startScenario.onclick=()=>startMock(5,90)
     document.querySelector('#mock-app').onchange=ev=>{state.applicationId=ev.target.value;renderTop()}
     document.querySelector('#mock-stage').onchange=ev=>{state.stageId=ev.target.value;state.interviewerMode=interviewerForStage(state.stageId);renderMock()}
     document.querySelector('#mock-interviewer').onchange=ev=>{state.interviewerMode=ev.target.value;renderMock()}
@@ -636,7 +659,7 @@ function renderMock(){
   }
   const q=currentQuestion(),draft=currentDraft(),evaluation=draft.evaluation
   safeDom(root).html =pageHeading('MOCK INTERVIEW','Luyện như <em>vòng thật.</em>','',`${state.practice.index+1}/${state.practice.questions.length}`)+`
-    <section class="live"><div class="live-meta"><div><span>QUESTION ${state.practice.index+1} / ${state.practice.questions.length}${q.adaptive?.isFollowUp?' <b class="adaptive-badge">ADAPTIVE FOLLOW-UP</b>':''}</span><small>${e(categoryName(q.category))} · ${e(activeStage().label)} · ${e(activeInterviewer().label)} · ${e(activePressure().label)}</small></div><div class="timer ${state.timerRemaining<=20?'warning':''}"><b id="timer-value">${formatTimer()}</b><span>${state.timerRunning?'đang chạy':'tạm dừng'}</span></div></div>
+    <section class="live"><div class="live-meta"><div><span>QUESTION ${state.practice.index+1} / ${state.practice.questions.length}${q.adaptive?.isFollowUp?' <b class="adaptive-badge">ADAPTIVE FOLLOW-UP</b>':''}</span><small>${e(getInterviewScenario(state.selectedScenarioId)?.label||categoryName(q.category))} · ${e(activeStage().label)} · ${e(activeInterviewer().label)} · ${e(activePressure().label)}</small></div><div class="timer ${state.timerRemaining<=20?'warning':''}"><b id="timer-value">${formatTimer()}</b><span>${state.timerRunning?'đang chạy':'tạm dừng'}</span></div></div>
     ${q.adaptive?.isFollowUp?`<div class="adaptive-reason"><span>WHY THIS FOLLOW-UP</span><p>${e(q.adaptive.reason)}</p><small>Trigger: ${e(dimensionLabel(q.adaptive.triggerDimension))} · ${q.adaptive.triggerScore}/100 · ${e(q.adaptive.interviewerLabel||activeInterviewer().label)} · ${e(q.adaptive.pressureLabel||activePressure().label)}</small></div>`:''}
     <h2>${e(q.question)}</h2><div class="tools"><button id="speak-q">🔊 Đọc câu hỏi</button><button id="speech-q" class="${state.speechRecording?'recording':''}">${state.speechRecording?'■ Dừng ghi âm':'🎙 Trả lời bằng giọng nói'}</button><button id="pause-timer">${state.timerRunning?'Ⅱ Tạm dừng timer':'▶ Tiếp tục timer'}</button></div>
     <div class="answer-grid"><label><span>Câu trả lời của anh</span><textarea id="mock-answer" rows="9" placeholder="Nói hoặc nhập đúng cách anh sẽ trả lời trong buổi phỏng vấn thật...">${e(draft.answer)}</textarea><small id="word-count">${draft.answer.trim().split(/\s+/).filter(Boolean).length} từ</small></label><label><span>Evidence / STAR anchors</span><textarea id="mock-evidence" rows="6" placeholder="Project · ownership · baseline · decision · trade-off · result · learning">${e(draft.evidence)}</textarea></label></div>
