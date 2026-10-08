@@ -467,7 +467,9 @@ export const buildRevisionReview = (responses = []) =>
     .map(item => {
       const original = String(item.retryOriginal.answer || '').trim()
       const revised = String(item.answer || '').trim()
-      if (!original || original === revised) return null
+      const oldEvidence = String(item.retryOriginal.evidence || '').trim()
+      const updatedEvidence = String(item.evidence || '').trim()
+      if (!original || (original === revised && oldEvidence === updatedEvidence)) return null
       const compared = compareAnswerAttempts(
         { overall: item.retryBefore }, item.evaluation)
       if (!compared) return null
@@ -486,6 +488,9 @@ export const buildRevisionReview = (responses = []) =>
 export const summarizeAnswerRevisions = (responses = []) => {
   const revisions = (Array.isArray(responses) ? responses : [])
     .filter(item => item?.retryBefore !== null && item?.retryBefore !== undefined && item?.evaluation)
+    .filter(item => !item.retryOriginal ||
+      String(item.retryOriginal.answer || '').trim() !== String(item.answer || '').trim() ||
+      String(item.retryOriginal.evidence || '').trim() !== String(item.evidence || '').trim())
     .map(item => ({
       questionId: item.questionId || '',
       ...compareAnswerAttempts({ overall: item.retryBefore }, item.evaluation),
