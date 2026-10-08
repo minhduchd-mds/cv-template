@@ -42,6 +42,10 @@ const workspace = {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript((value) => {
+    // The same tab may reload to test persistence. Seed only once per test,
+    // otherwise a navigation silently wipes the fixture we're verifying.
+    if (window.sessionStorage.getItem('__interview_e2e_seeded__') === '1') return
+    window.sessionStorage.setItem('__interview_e2e_seeded__', '1')
     window.localStorage.setItem('cv-studio-workspace-v3', JSON.stringify(value))
     window.localStorage.removeItem('interview-studio-sessions-v2')
     window.localStorage.removeItem('interview-studio-claim-evidence-v1')
