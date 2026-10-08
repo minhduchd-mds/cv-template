@@ -121,3 +121,45 @@ test('privacy backup preserves interview data and scoped deletion keeps shared C
   assert.equal(store.getItem('interview-studio-story-bank-v1'), null)
   assert.deepEqual(JSON.parse(store.getItem('cv-studio-workspace-v3')), workspace)
 })
+
+
+import {
+  JOB_MARKET_AS_OF, observedJobSignals, salaryBenchmarks, verifiedEmployers,
+  jobMarketSources, salaryDisplay, isObservedJobCurrent, jobSourceForRole,
+} from '../../src/data/job-market-vn.js'
+
+test('market snapshot has traceable employer and salary sources', () => {
+  assert.equal(JOB_MARKET_AS_OF, '2026-10-08')
+  const employerIds = new Set(verifiedEmployers.map(item => item.id))
+  const sourceIds = new Set(jobMarketSources.map(item => item.id))
+  assert.ok(verifiedEmployers.length >= 5)
+  assert.ok(salaryBenchmarks.length >= 10)
+  assert.ok(observedJobSignals.length >= 5)
+  for (const employer of verifiedEmployers) assert.match(employer.careersUrl, /^https:\/\//)
+  for (const job of observedJobSignals) {
+    assert.ok(employerIds.has(job.employerId), 'unknown employer ' + job.employerId)
+    assert.match(job.sourceUrl, /^https:\/\//)
+    assert.equal(job.pay, 'undisclosed')
+    assert.ok(job.checkedAt)
+  }
+  for (const role of salaryBenchmarks) {
+    assert.ok(sourceIds.has(role.sourceId), 'unverified salary source ' + role.sourceId)
+    assert.ok(jobSourceForRole(role)?.url)
+    assert.ok(['median','range-gross'].includes(role.kind))
+  }
+})
+
+test('salary labels never attribute market data to an employer', () => {
+  const ux = salaryBenchmarks.find(item => item.id === 'ux')
+  const frontend = salaryBenchmarks.find(item => item.id === 'frontend')
+  assert.equal(salaryDisplay(ux, 'hanoi', '1-5'), '20–40 tr/tháng · gross')
+  assert.equal(salaryDisplay(ux, 'hanoi', '5+'), '40–80 tr/tháng · gross')
+  assert.match(salaryDisplay(frontend), /34,8 tr\/tháng · trung vị VN/)
+  assert.equal(salaryDisplay(null), 'Chưa có dữ liệu')
+})
+
+test('expiration excludes out-of-date company job signals', () => {
+  const deadline = observedJobSignals.find(job => job.id === 'viettel-project')
+  assert.equal(isObservedJobCurrent(deadline, JOB_MARKET_AS_OF), true)
+  assert.equal(isObservedJobCurrent(deadline, '2026-12-01'), false)
+})
