@@ -54,8 +54,8 @@ export const downloadInterviewDataExport = (storage, doc, URLApi, BlobApi) => {
     anchor.click()
     anchor.remove()
   } finally {
-    // Release the object URL after the click event completes.
-    if (typeof queueMicrotask === 'function') queueMicrotask(() => URLApi.revokeObjectURL(url))
+    // A short delay lets the browser start the download before we release the URL.
+    if (typeof setTimeout === 'function') setTimeout(() => URLApi.revokeObjectURL(url), 1500)
     else URLApi.revokeObjectURL(url)
   }
   return backup
