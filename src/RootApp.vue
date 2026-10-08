@@ -26,16 +26,33 @@ import { defineAsyncComponent } from 'vue'
 import MarketingLanding from './landing/MarketingLanding.vue'
 
 const RELOAD_FLAG = 'cvstudio:chunk-reload'
-// A redeploy replaces hashed chunk files; reload once so a stale tab picks up the new index.
+const recoverStaticRoute = () => {
+  const hash = window.location.hash
+  const fallback = hash === '#studio'
+    ? './studio/'
+    : hash === '#interview' || hash === '#interview-studio'
+      ? './interview-studio/'
+      : './directions/'
+  window.location.replace(new URL(fallback, window.location.href).href)
+}
+// When hashed route chunks disappear after a deploy, reload to pick up the
+// newest index. If the chunk still fails, recover to the bundled static app.
 const lazyView = (load) => defineAsyncComponent(() => load()
   .then((module) => {
     sessionStorage.removeItem(RELOAD_FLAG)
     return module
   })
   .catch((error) => {
-    if (!sessionStorage.getItem(RELOAD_FLAG)) {
-      sessionStorage.setItem(RELOAD_FLAG, '1')
-      window.location.reload()
+    try {
+      if (!sessionStorage.getItem(RELOAD_FLAG)) {
+        sessionStorage.setItem(RELOAD_FLAG, '1')
+        window.location.reload()
+      } else {
+        sessionStorage.removeItem(RELOAD_FLAG)
+        recoverStaticRoute()
+      }
+    } catch {
+      recoverStaticRoute()
     }
     throw error
   }))
