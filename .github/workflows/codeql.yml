@@ -1,9 +1,24 @@
 name: CodeQL
 
-# Hosted Actions runners are currently unavailable for this repository.
-# Keep CodeQL available on demand without generating false-red push/schedule
-# checks until runner access is restored.
+# Analyze changed application code on push/PR and scan the full project weekly.
 on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '.github/workflows/codeql.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '.github/workflows/codeql.yml'
+  schedule:
+    - cron: '19 3 * * 1'
   workflow_dispatch:
 
 permissions:
