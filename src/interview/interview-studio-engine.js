@@ -461,6 +461,7 @@ export const compareAnswerAttempts = (before = null, after = null) => {
 export const buildRevisionReview = (responses = []) =>
   (Array.isArray(responses) ? responses : [])
     .filter(item => item?.retryOriginal?.answer && item?.evaluation
+      && item.retryBefore !== null && item.retryBefore !== undefined
       && Number.isFinite(Number(item.retryBefore)))
     .slice(0, 10)
     .map(item => {
