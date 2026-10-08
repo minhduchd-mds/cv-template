@@ -96,9 +96,11 @@
           if (redirected || !app || app.childElementCount !== 0) return
           redirected = true
           var hash = window.location.hash
-          var target = hash === '#studio'
-            ? './studio/?v=20261004-safe-dom-v1'
-            : './directions/'
+          var target = (hash === '#interview' || hash === '#interview-studio')
+            ? './interview-studio/?v=20261008-bundled-v1'
+            : hash === '#studio'
+              ? './studio/?v=20261004-safe-dom-v1'
+              : './directions/'
           window.location.replace(target)
         }
         // Only same-origin script failures count; extension or image errors must
