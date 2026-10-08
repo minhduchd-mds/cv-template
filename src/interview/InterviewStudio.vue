@@ -1074,7 +1074,7 @@ import { templates } from '../data/cv'
 import { patchCanonicalWorkspace, readCanonicalWorkspace } from '../data/workspace-store'
 import { clearInterviewLocalData, downloadInterviewDataExport } from './interview-data-controls'
 import { interviewScenarios, getInterviewScenario, scenarioPracticeQuestions } from './interview-scenarios'
-import { candidateGoals, buildCandidateGrowthPlan, buildMicroPracticeSet } from './candidate-growth'
+import { candidateGoals, buildCandidateGrowthPlan, buildMicroPracticeSet, inferCandidateGoal } from './candidate-growth'
 import {
   JOB_MARKET_AS_OF, observedJobSignals, salaryBenchmarks, verifiedEmployers,
   jobMarketSources, salaryDisplay, jobSourceForRole, isObservedJobCurrent,
@@ -1490,11 +1490,11 @@ export default {
   },
   mounted() {
     this.loadPracticePrefs()
-    this.loadGrowthGoal()
     this.workspace = readCanonicalWorkspace()
     const storedId = this.workspace?.studio?.selectedId
     if (storedId && this.templates.some((template) => template.id === storedId)) this.selectedTemplateId = storedId
     else this.rolePackId = templateInterviewPack[this.selectedTemplateId] || 'general'
+    this.loadGrowthGoal()
     this.loadClaimEvidence()
     this.loadPracticeSessions()
     this.loadStoryBank()
@@ -1510,8 +1510,16 @@ export default {
     loadGrowthGoal() {
       try {
         const stored = window.localStorage.getItem(GROWTH_KEY)
-        if (this.candidateGoals.some(item => item.id === stored)) this.growthGoalId = stored
+        if (this.candidateGoals.some(item => item.id === stored)) {
+          this.growthGoalId = stored
+          return
+        }
       } catch { /* Storage may be unavailable. */ }
+      this.growthGoalId = inferCandidateGoal({
+        rolePackId: this.rolePackId,
+        profileRole: this.workspace?.profile?.role || '',
+        templateId: this.selectedTemplateId,
+      })
     },
     setGrowthGoal(id) {
       if (!this.candidateGoals.some(item => item.id === id)) return
