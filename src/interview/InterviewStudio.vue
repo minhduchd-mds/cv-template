@@ -897,6 +897,19 @@
               </ul>
             </div>
 
+            <section v-if="currentImprovement" class="is-retry-coach" aria-label="Một điều cần cải thiện">
+              <div class="is-retry-coach__title">
+                <span class="is-eyebrow">ĐIỂM CẦN SỬA</span>
+                <strong>{{ currentImprovement.title }}</strong>
+              </div>
+              <p>{{ currentImprovement.action }}</p>
+              <small>{{ currentImprovement.check }}</small>
+              <div v-if="currentRetryComparison" class="is-retry-coach__comparison" role="status">
+                <strong>{{ currentRetryComparison.difference > 0 ? '+' : '' }}{{ currentRetryComparison.difference }} điểm</strong>
+                <span>Trước {{ currentRetryComparison.previous }} → sau {{ currentRetryComparison.current }} · {{ currentRetryComparison.note }}</span>
+              </div>
+              <button type="button" class="is-button" @click="retryCurrentAnswer">Sửa và đánh giá lại ↻</button>
+            </section>
             <button type="button" class="is-coach-toggle" @click="practiceShowGuide = !practiceShowGuide">
               {{ practiceShowGuide ? 'Ẩn Answer Coach' : 'Mở Answer Coach sau khi đã trả lời' }}
             </button>
@@ -1106,6 +1119,8 @@ import {
   interviewerModes,
   pressureLevels,
   evaluateInterviewResponse,
+  buildAnswerImprovement,
+  compareAnswerAttempts,
   extractCvClaims,
   getUnassignedClaimNotes,
   matchQuestionsToClaim,
@@ -1370,6 +1385,12 @@ export default {
     },
     currentAnswerWords() {
       return String(this.currentDraft.answer || '').trim().split(/\s+/).filter(Boolean).length
+    },
+    currentImprovement() {
+      return this.currentDraft.evaluation ? buildAnswerImprovement(this.currentDraft.evaluation) : null
+    },
+    currentRetryComparison() {
+      return compareAnswerAttempts(this.currentDraft.retryBaseline?.evaluation, this.currentDraft.evaluation)
     },
     activeInterviewer() {
       return this.interviewerModes.find((item) => item.id === this.interviewerMode) || this.interviewerModes[1]
@@ -1970,6 +1991,25 @@ export default {
     },
     elapsedSeconds() {
       return Math.max(0, this.timerChoice - this.timerRemaining)
+    },
+    retryCurrentAnswer() {
+      if (!this.practiceCurrent || !this.currentDraft.evaluation) return
+      const id = this.practiceCurrent.id
+      const current = this.practiceDrafts[id]
+      this.practiceDrafts = {
+        ...this.practiceDrafts,
+        [id]: {
+          ...current,
+          retryBaseline: current.retryBaseline || {
+            answer: String(current.answer || '').trim(),
+            evidence: String(current.evidence || '').trim(),
+            evaluation: current.evaluation,
+          },
+          evaluation: null,
+        },
+      }
+      this.practiceShowGuide = false
+      this.stopQuestionTimer()
     },
     evaluateCurrent() {
       if (!this.practiceCurrent) return
@@ -4064,5 +4104,26 @@ export default {
 .is-growth-next small { color:var(--muted); font-size:11px; }
 @media(max-width:950px){.is-growth__focus{grid-template-columns:1fr}.is-growth__steps{padding:16px}}
 @media(max-width:620px){.is-growth{padding:15px}.is-growth__goals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.is-growth__goals button{min-width:0;padding:10px 7px;font-size:10px}.is-growth__primary{padding:17px}.is-growth-next{align-items:stretch}.is-growth-next button{width:100%}}
+
+
+.is-retry-coach {
+  margin: 16px 0;
+  padding: 16px 18px;
+  background: #f1f9f6;
+  border: 1px solid #cae8df;
+  border-radius: 12px;
+}
+.is-retry-coach__title { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.is-retry-coach__title strong { font-size:15px; color:var(--ink); }
+.is-retry-coach > p { margin:8px 0 5px; color:var(--ink); font-size:12px; line-height:1.55; }
+.is-retry-coach > small { display:block; color:var(--muted); font-size:11px; }
+.is-retry-coach > button { margin-top:12px; }
+.is-retry-coach__comparison {
+  display:flex; align-items:center; flex-wrap:wrap; gap:11px;
+  margin-top:13px; padding:10px 12px;
+  background:#fff; border:1px solid var(--line); border-radius:9px;
+}
+.is-retry-coach__comparison strong { font-size:17px; color:var(--accent); }
+.is-retry-coach__comparison span { font-size:11px; color:var(--muted); line-height:1.45; }
 
 </style>
