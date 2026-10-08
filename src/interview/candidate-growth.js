@@ -14,10 +14,10 @@ export const candidateGoals = Object.freeze([
 export const inferCandidateGoal = ({ rolePackId = '', profileRole = '', templateId = '' } = {}) => {
   const text = [rolePackId, profileRole, templateId].join(' ').toLocaleLowerCase('vi')
   if (/ux|ui|design|research|portfolio|creative/.test(text)) return 'design'
-  if (/lead|director|executive|manager|head of/.test(text)) return 'leadership'
-  if (/ai|machine learning|data|analyst|business intelligence|ml engineer/.test(text)) return 'ai'
-  if (/front.?end|back.?end|full.?stack|developer|engineering|software|devops|code|mobile/.test(text)) return 'engineering'
+  if (/ai|machine learning|data|business intelligence|ml engineer/.test(text)) return 'ai'
   if (/product|business analyst|business-analysis|product-owner|scrum|strategy/.test(text)) return 'product'
+  if (/lead|director|executive|manager|head of/.test(text)) return 'leadership'
+  if (/front.?end|back.?end|full.?stack|developer|engineering|software|devops|code|mobile/.test(text)) return 'engineering'
   return 'general'
 }
 
