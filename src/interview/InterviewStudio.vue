@@ -1624,10 +1624,7 @@ export default {
         templateId: this.selectedTemplateId,
         industryId: this.industryId,
         rolePackId: this.rolePackId,
-        scenarioId: this.selectedScenarioId || '',
-        scenarioLabel: this.selectedScenario?.label || '',
         seniority: this.seniority,
-        industryId: this.resolvedIndustryId,
         stageId: this.stageId,
         market: this.market,
       })
@@ -2064,6 +2061,9 @@ export default {
           ? this.activeApplication.company + ' · ' + this.activeApplication.role
           : this.activePack.label + ' · ' + (this.selectedTemplate?.name || 'CV'),
         rolePackId: this.rolePackId,
+        growthGoalId: this.growthGoalId,
+        scenarioId: this.selectedScenarioId || '',
+        scenarioLabel: this.selectedScenario?.label || '',
         seniority: this.seniority,
         stageId: this.stageId,
         stageLabel: this.activeStageLabel,
@@ -2083,6 +2083,7 @@ export default {
       this.practiceSessions = [session, ...this.practiceSessions]
       this.savePracticeSessions()
       this.practiceActive = false
+      if (this.practiceSize === 3) this.practiceSize = 5
       this.activeModule = 'reports'
     },
     clearPracticeHistory() {
