@@ -327,6 +327,7 @@ test('Job Market explorer shows sourced role salary and fills a draft applicatio
 
   const market = page.locator('.is-market')
   await expect(market.getByRole('heading', { name: 'Khám phá cơ hội & lương' })).toBeVisible()
+  await market.getByRole('button', { name: 'Mở khám phá' }).click()
   await market.getByRole('button', { name: 'Lương theo role' }).click()
   await market.getByLabel('Tìm role hoặc công ty').fill('UI/UX')
   await expect(market.getByText('20–40 tr/tháng · gross')).toBeVisible()
@@ -351,6 +352,7 @@ test('standalone Job Market fallback renders employer and salary source links', 
   await page.goto('/interview-studio/')
   await page.locator('[data-module="applications"]').click()
   await expect(page.locator('.market-section')).toContainText('Khám phá cơ hội & lương')
+  await page.locator('#toggle-market').click()
   await page.locator('[data-market-tab="salary"]').click()
   await expect(page.locator('.market-section')).toContainText('20–40 tr/tháng · gross')
   await page.locator('[data-market-tab="jobs"]').click()
