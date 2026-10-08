@@ -1129,7 +1129,7 @@ export default {
     marketJobs() {
       const keyword = String(this.jobMarketSearch || '').trim().toLocaleLowerCase('vi')
       return this.observedJobSignals.filter((job) => {
-        if (!isObservedJobCurrent(job, this.jobMarketDate)) return false
+        if (!isObservedJobCurrent(job)) return false
         if (this.jobMarketCompany !== 'all' && job.employerId !== this.jobMarketCompany) return false
         if (this.jobMarketCity !== 'all' && !job.location.toLocaleLowerCase('vi').includes(this.jobMarketCity)) return false
         const employer = this.verifiedEmployers.find(item => item.id === job.employerId)
