@@ -95,7 +95,7 @@ const state={
   jobMarketCity:'all',
   jobMarketSalaryCity:'hanoi',
   jobMarketSalaryYears:'1-5',
-  showMarketExplorer:true,
+  showMarketExplorer:false,
   interviewerMode:'hiring-manager',
   pressureLevel:'realistic',
   selectedClaimId:'',
