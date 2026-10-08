@@ -616,7 +616,7 @@ function evaluateCurrent(){
 function nextMock(){
   if(!currentDraft()?.evaluation)evaluateCurrent()
   const q=currentQuestion(),draft=currentDraft()
-  const maxAdaptive=(state.practice.baseSize>=8?3:2)+Number(activePressure()?.followUpBonus||0)
+  const maxAdaptive=(state.practice.baseSize<=3?1:state.practice.baseSize>=8?3:2)+Number(activePressure()?.followUpBonus||0)
   if(!q?.adaptive?.isFollowUp&&state.practice.adaptiveInserted<maxAdaptive){
     const followUp=buildAdaptiveFollowUp({
       question:q,
