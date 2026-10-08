@@ -145,3 +145,31 @@
 .legacy-notes article p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; line-height: 1.5; }
 .legacy-notes article button { min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--accent); cursor: pointer; }
 .legacy-notes article button:disabled { opacity: .45; cursor: not-allowed; }
+
+
+/* Compact Job Market Explorer, aligned with Vue Interview Studio */
+.market-section { margin: 18px 0 6px; border: 1px solid var(--line); border-radius: 15px; background: rgba(12,23,29,.75); overflow: hidden; }
+.market-section>header { display:flex; justify-content:space-between; align-items:center; gap:15px; padding:17px 20px; }
+.market-section>header h2 { margin:5px 0 3px; font-size:20px; letter-spacing:-.03em; }
+.market-section>header small { color:var(--muted); font-size:10px; }
+.market-section>header button { min-height:35px; padding:0 12px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--accent); cursor:pointer; }
+.market-body { padding:0 20px 17px; }
+.market-tools { padding:12px 0; display:flex; flex-wrap:wrap; align-items:center; gap:8px; border-top:1px solid var(--line); }
+.market-tabs { display:flex; flex-wrap:wrap; gap:5px; margin-right:auto; }
+.market-tabs button { min-height:35px; padding:0 12px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--muted); font-size:11px; cursor:pointer; }
+.market-tabs button.active { color:var(--accent); border-color:rgba(114,231,212,.25); background:rgba(114,231,212,.09); }
+.market-tools input, .market-tools select { min-width:135px; min-height:35px; padding:0 10px; border:1px solid var(--line); border-radius:8px; background:#09151b; color:var(--ink); font:inherit; font-size:11px; }
+.market-grid { padding:10px 0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+.market-card { min-width:0; min-height:140px; padding:13px; display:flex; flex-direction:column; border:1px solid var(--line); border-radius:10px; background:rgba(7,17,22,.56); }
+.market-card>div { display:flex; justify-content:space-between; gap:8px; }
+.market-card>div strong { color:var(--accent2); font-size:10px; }
+.market-card>div small { color:var(--faint); font-size:9px; text-align:right; }
+.market-card h3 { margin:10px 0; font-size:14px; line-height:1.35; }
+.market-card>b { color:var(--accent); font-size:13px; }
+.market-card>small { margin-top:auto; color:var(--muted); font-size:10px; }
+.market-card footer { display:flex; justify-content:space-between; gap:9px; flex-wrap:wrap; align-items:center; margin-top:auto; padding-top:12px; }
+.market-card footer a,.market-card footer button { padding:0; border:0; background:transparent; color:var(--accent); font:inherit; font-size:11px; text-decoration:none; cursor:pointer; }
+.market-card footer small { color:var(--faint); font-size:9px; }
+.market-disclaimer { margin:9px 0 0; color:var(--muted); font-size:10px; line-height:1.5; }
+@media(max-width:1199px){.market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.market-section>header{padding:14px}.market-body{padding:0 14px 14px}.market-tools{align-items:stretch}.market-tabs{width:100%}.market-tools input,.market-tools select{flex:1 1 42%;min-width:0}.market-grid{grid-template-columns:1fr}}
