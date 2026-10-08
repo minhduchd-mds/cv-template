@@ -528,7 +528,7 @@ test('Vue can restore its original answer and compare actual revisions in Report
   }
   await expect(page.locator('.is-revision-report')).toBeVisible()
   await page.locator('.is-revision-report__item summary').first().click()
-  await expect(page.locator('.is-revision-report__compare')).toContainText('Bản đầu chỉ nói cả nhóm hoàn thành.')
+  await expect(page.locator('.is-revision-report__compare')).toContainText('Cả nhóm hoàn thành dự án.')
   await expect(page.locator('.is-revision-report__compare')).toContainText('Tôi trực tiếp thiết kế luồng')
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('interview-studio-sessions-v2') || '[]')[0])
   expect(stored.report.revisionReview).toHaveLength(1)
@@ -557,6 +557,6 @@ test('standalone Interview Studio restores and compares the first attempt', asyn
   }
   await expect(page.locator('.revision-report')).toBeVisible()
   await page.locator('.revision-report-item summary').first().click()
-  await expect(page.locator('.revision-pair')).toContainText('Chúng tôi triển khai dự án.')
+  await expect(page.locator('.revision-pair')).toContainText('Cả nhóm thực hiện dự án.')
   await expect(page.locator('.revision-pair')).toContainText('Tôi trực tiếp thiết kế luồng')
 })
