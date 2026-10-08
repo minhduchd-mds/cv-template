@@ -12,6 +12,9 @@ import {
 } from '../../src/interview/interview-studio-engine.js'
 import { interviewSources, templateInterviewPack } from '../../src/data/interview-prep.js'
 import {
+  interviewScenarios, getInterviewScenario, scenarioPracticeQuestions,
+} from '../../src/interview/interview-scenarios.js'
+import {
   INTERVIEW_LOCAL_KEYS,
   buildInterviewDataExport,
   clearInterviewLocalData,
@@ -162,4 +165,36 @@ test('expiration excludes out-of-date company job signals', () => {
   const deadline = observedJobSignals.find(job => job.id === 'viettel-project')
   assert.equal(isObservedJobCurrent(deadline, JOB_MARKET_AS_OF), true)
   assert.equal(isObservedJobCurrent(deadline, '2026-12-01'), false)
+})
+
+test('all 10 Vietnam practice scenarios are complete and uniquely sequenced', () => {
+  assert.equal(interviewScenarios.length, 10)
+  const ids=new Set()
+  for (const sc of interviewScenarios) {
+    assert.ok(!ids.has(sc.id), 'Duplicate scenario id: '+sc.id)
+    ids.add(sc.id)
+    assert.equal(sc.questions.length, 5)
+    assert.ok(sc.context.length >= 30)
+    assert.ok(sc.stageId)
+    assert.ok(sc.interviewerMode)
+    assert.ok(sc.pressureLevel)
+    assert.equal(getInterviewScenario(sc.id)?.label, sc.label)
+    for (const q of sc.questions) {
+      assert.ok(q.id.startsWith('scenario-'+sc.id+'-'))
+      assert.ok(q.question.length >= 20)
+      assert.ok(q.framework.length >= 3)
+      assert.equal(q.provenance,'simulation-authored')
+    }
+    assert.deepEqual(scenarioPracticeQuestions(sc.id,5).map(q=>q.id),sc.questions.map(q=>q.id))
+  }
+})
+
+test('scenarios keep the question sequence and fill an eight-question session', () => {
+  const sc=getInterviewScenario('ux-portfolio')
+  const supplemental=buildQuestionDeck({templateId:'soft-portfolio-pro',rolePackId:'design'})
+  const result=scenarioPracticeQuestions(sc.id,8,supplemental)
+  assert.equal(result.length,8)
+  assert.deepEqual(result.slice(0,5).map(q=>q.id),sc.questions.map(q=>q.id))
+  assert.equal(new Set(result.map(q=>q.id)).size,8)
+  assert.equal(getInterviewScenario('unknown'),null)
 })
