@@ -317,3 +317,45 @@ test('Legacy notes are archived and applied only after explicit user selection',
   expect(assigned.ready).toBe(false)
   expect(assigned.needsReview).toBe(true)
 })
+
+
+test('Job Market explorer shows sourced role salary and fills a draft application', async ({ page }) => {
+  const pageErrors = []
+  page.on('pageerror', error => pageErrors.push(error.message))
+  await page.goto('/#interview-studio')
+  await page.getByRole('button', { name: /Application Lab/ }).click()
+
+  const market = page.locator('.is-market')
+  await expect(market.getByRole('heading', { name: 'Khám phá cơ hội & lương' })).toBeVisible()
+  await market.getByRole('button', { name: 'Lương theo role' }).click()
+  await market.getByLabel('Tìm role hoặc công ty').fill('UI/UX')
+  await expect(market.getByText('20–40 tr/tháng · gross')).toBeVisible()
+  await expect(market.getByText(/không phải offer/i).first()).toBeVisible()
+  await expect(market.getByRole('link', { name: /Adecco/ })).toHaveAttribute('href', /adecco.com/)
+
+  await market.getByRole('button', { name: 'Vị trí đã đối chiếu' }).click()
+  await market.getByLabel('Tìm role hoặc công ty').fill('')
+  await market.getByLabel('Lọc công ty').selectOption('vng')
+  await market.getByRole('button', { name: 'Dùng job này' }).first().click()
+
+  await expect(page.getByPlaceholder(/Viettel Digital, FPT, Shopee/)).toHaveValue('VNG')
+  await expect(page.getByPlaceholder(/Senior Product Designer/)).toHaveValue(/AI Engineer/)
+  await expect(page.getByPlaceholder('https://...')).toHaveValue(/career.vng.com.vn/)
+  await expect(market.getByRole('button', { name: 'Mở khám phá' })).toBeVisible()
+  expect(pageErrors).toEqual([])
+})
+
+test('standalone Job Market fallback renders employer and salary source links', async ({ page }) => {
+  const pageErrors = []
+  page.on('pageerror', error => pageErrors.push(error.message))
+  await page.goto('/interview-studio/')
+  await page.locator('[data-module="applications"]').click()
+  await expect(page.locator('.market-section')).toContainText('Khám phá cơ hội & lương')
+  await page.locator('[data-market-tab="salary"]').click()
+  await expect(page.locator('.market-section')).toContainText('20–40 tr/tháng · gross')
+  await page.locator('[data-market-tab="jobs"]').click()
+  await page.locator('[data-market-job="vng-ai"]').click()
+  await expect(page.locator('#app-company')).toHaveValue('VNG')
+  await expect(page.locator('#app-role')).toHaveValue(/AI Engineer/)
+  expect(pageErrors).toEqual([])
+})
