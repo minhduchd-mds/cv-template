@@ -382,6 +382,51 @@ export const evaluateInterviewResponse = ({
   }
 }
 
+// Rule-based coaching suggestions are practice heuristics, not human hiring scores.
+// Return only one improvement target to avoid overwhelming the candidate.
+export const buildAnswerImprovement = (evaluation = {}) => {
+  if (Array.isArray(evaluation.unsupportedNumbers) && evaluation.unsupportedNumbers.length) {
+    return {
+      key: 'credibility',
+      title: 'Xác minh số liệu',
+      action: 'Kiểm tra nguồn, baseline và phạm vi đóng góp trước khi dùng con số này.',
+      check: 'Con số có thể đối chiếu với CV hoặc tài liệu thực tế không?',
+    }
+  }
+  const playbook = {
+    relevance: ['Đi thẳng vào câu hỏi', 'Mở đầu bằng kết luận chính và một ví dụ phù hợp.', 'Câu đầu tiên đã trả lời đúng trọng tâm chưa?'],
+    structure: ['Sắp xếp lại câu chuyện', 'Trình bày theo bối cảnh → hành động → kết quả.', 'Người nghe có thấy rõ trình tự ba phần không?'],
+    evidence: ['Thêm bằng chứng thật', 'Bổ sung kết quả có nguồn, baseline hoặc artifact kiểm chứng được.', 'Đã có ít nhất một bằng chứng thật chưa?'],
+    ownership: ['Làm rõ vai trò của mình', 'Nói rõ quyết định anh/chị thực hiện, tách khỏi phần của nhóm.', 'Người nghe biết chính xác phần anh/chị chịu trách nhiệm chưa?'],
+    depth: ['Nêu đánh đổi', 'Bổ sung một phương án đã cân nhắc và lý do quyết định.', 'Có nhắc tới giới hạn hoặc trade-off quan trọng không?'],
+    credibility: ['Kiểm tra tính xác thực', 'Chỉ dùng số liệu có thể đối chiếu với CV hoặc artifact thật.', 'Có chi tiết nào chưa thể chứng minh không?'],
+    delivery: ['Nói ngắn và rõ', 'Giữ một thông điệp chính, một ví dụ và một kết quả.', 'Có thể nói lại trong 60–90 giây không?'],
+  }
+  const weakest = Object.entries(evaluation.dimensions || {})
+    .filter(([key, value]) => Object.prototype.hasOwnProperty.call(playbook, key) && Number.isFinite(Number(value)))
+    .sort((a, b) => Number(a[1]) - Number(b[1]))[0]?.[0] || 'structure'
+  const [title, action, check] = playbook[weakest]
+  return { key: weakest, title, action, check }
+}
+
+export const compareAnswerAttempts = (before = null, after = null) => {
+  const oldValue = Number(before?.overall)
+  const newValue = Number(after?.overall)
+  if (!before || !after || !Number.isFinite(oldValue) || !Number.isFinite(newValue)) return null
+  const difference = Math.round(newValue - oldValue)
+  return {
+    previous: Math.round(oldValue),
+    current: Math.round(newValue),
+    difference,
+    direction: difference > 0 ? 'improved' : difference < 0 ? 'lower' : 'unchanged',
+    note: difference > 0
+      ? 'Tín hiệu luyện tập cải thiện ở cùng câu hỏi. Kiểm tra lại bằng chứng trước khi dùng.'
+      : difference < 0
+        ? 'Điểm quy tắc giảm; đối chiếu góp ý và thử diễn đạt lại.'
+        : 'Tín hiệu chưa thay đổi; ưu tiên thêm bằng chứng hoặc làm rõ vai trò.',
+  }
+}
+
 export const buildAdaptiveFollowUp = ({
   question = {},
   evaluation = {},
