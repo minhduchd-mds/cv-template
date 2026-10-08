@@ -913,6 +913,14 @@
               </div>
               <button type="button" class="is-button" @click="retryCurrentAnswer">Sửa và đánh giá lại ↻</button>
             </section>
+            <details v-if="currentDraft.retryBaseline?.answer" class="is-revision-original">
+              <summary>So sánh với câu trả lời ban đầu</summary>
+              <p>{{ currentDraft.retryBaseline.answer }}</p>
+              <div v-if="currentDraft.retryBaseline.evidence" class="is-revision-original__evidence">
+                <strong>Evidence lúc đầu</strong><p>{{ currentDraft.retryBaseline.evidence }}</p>
+              </div>
+              <button type="button" class="is-button" @click="restoreOriginalAnswer">Khôi phục bản đầu</button>
+            </details>
             <p v-if="currentDraft.retryBaseline && !currentDraft.evaluation" class="is-revision-prompt" role="status">Câu trả lời đã được sửa. Bấm “Đánh giá câu này” để cập nhật phản hồi.</p>
             <button type="button" class="is-coach-toggle" @click="practiceShowGuide = !practiceShowGuide">
               {{ practiceShowGuide ? 'Ẩn Answer Coach' : 'Mở Answer Coach sau khi đã trả lời' }}
@@ -996,6 +1004,23 @@
               </ul>
             </section>
           </div>
+
+          <section v-if="latestReport?.report?.revisionReview?.length" class="is-panel is-revision-report">
+            <div class="is-panel__heading">
+              <div><span class="is-eyebrow">ANSWER REVISION</span><h2>Trước & sau khi sửa</h2></div>
+            </div>
+            <details v-for="item in latestReport.report.revisionReview" :key="item.questionId" class="is-revision-report__item">
+              <summary>
+                <strong>{{ item.question }}</strong>
+                <span>{{ item.difference > 0 ? '+' : '' }}{{ item.difference }} điểm quy tắc</span>
+              </summary>
+              <div class="is-revision-report__compare">
+                <article><span>BẢN ĐẦU · {{ item.previous }}</span><p>{{ item.before }}</p><small v-if="item.beforeEvidence">Evidence: {{ item.beforeEvidence }}</small></article>
+                <article><span>BẢN SAU · {{ item.current }}</span><p>{{ item.after }}</p><small v-if="item.afterEvidence">Evidence: {{ item.afterEvidence }}</small></article>
+              </div>
+            </details>
+            <p class="is-revision-report__note">Chênh lệch chỉ phản ánh quy tắc chấm nội bộ, không chứng minh kỹ năng tăng tương ứng.</p>
+          </section>
 
           <section v-if="latestReport?.report?.adaptiveTrace?.length" class="is-panel is-branch-trace">
             <div class="is-panel__heading is-panel__heading--split">
@@ -1128,6 +1153,7 @@ import {
   evaluateInterviewResponse,
   buildAnswerImprovement,
   compareAnswerAttempts,
+  buildRevisionReview,
   snapshotAnswerInput,
   isEvaluationCurrent,
   summarizeAnswerRevisions,
@@ -2042,6 +2068,26 @@ export default {
       this.stopQuestionTimer()
       this.$nextTick(() => this.$refs.practiceAnswer?.focus())
     },
+    restoreOriginalAnswer() {
+      if (!this.practiceCurrent) return
+      const id = this.practiceCurrent.id
+      const draft = this.practiceDrafts[id]
+      const baseline = draft?.retryBaseline
+      if (!baseline) return
+      const original = snapshotAnswerInput(baseline)
+      this.practiceDrafts = {
+        ...this.practiceDrafts,
+        [id]: {
+          ...draft,
+          ...original,
+          evaluation: baseline.evaluation || null,
+          evaluatedInput: baseline.evaluation ? original : null,
+          retryBaseline: null,
+        },
+      }
+      this.practiceShowGuide = false
+      this.$nextTick(() => this.$refs.practiceAnswer?.focus())
+    },
     evaluateCurrent() {
       if (!this.practiceCurrent) return
       const id = this.practiceCurrent.id
@@ -2121,11 +2167,14 @@ export default {
           confidence: Number(draft.confidence || 0),
           evaluation,
           retryBefore: draft.retryBaseline?.evaluation?.overall ?? null,
+          retryOriginal: draft.retryBaseline
+            ? snapshotAnswerInput(draft.retryBaseline) : null,
           adaptive: item.adaptive || null,
         }
       })
       const report = aggregateInterviewReport(responses)
       report.revisions = summarizeAnswerRevisions(responses)
+      report.revisionReview = buildRevisionReview(responses)
       report.practicePlan = buildNextPracticePlan({
         report,
         responses,
@@ -4162,4 +4211,22 @@ export default {
 .is-retry-coach__comparison span { font-size:11px; color:var(--muted); line-height:1.45; }
 
 .is-revision-prompt { margin: 10px 0; color: var(--accent); font-size: 12px; line-height: 1.45; }
+
+.is-revision-original { margin: 14px 0; padding: 14px 16px; border: 1px solid #c9e3dd; border-radius: 12px; background: #f5fbf9; }
+.is-revision-original > summary { color: var(--accent); font-size: 12px; font-weight: 700; cursor: pointer; }
+.is-revision-original p,.is-revision-report p { margin: 10px 0; font-size: 12px; line-height: 1.65; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.is-revision-original__evidence { padding: 10px 0; border-top: 1px solid var(--line); }
+.is-revision-original__evidence strong { font-size: 11px; }
+.is-revision-original button { min-height: 36px; margin-top: 4px; }
+.is-revision-report__item { border-top: 1px solid var(--line); padding: 13px 0; }
+.is-revision-report__item > summary { cursor: pointer; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.is-revision-report__item > summary strong { font-size: 12px; }
+.is-revision-report__item > summary span { color: var(--accent); font-size: 11px; white-space: nowrap; }
+.is-revision-report__compare { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 11px; padding-top: 13px; }
+.is-revision-report__compare article { padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: #f8fbfd; min-width: 0; }
+.is-revision-report__compare article span { color: var(--muted); font-size: 10px; font-weight: 750; }
+.is-revision-report__compare article small { display: block; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.is-revision-report__note { color: var(--muted); font-size: 10px; line-height: 1.5; }
+@media (max-width: 690px) { .is-revision-report__compare { grid-template-columns: 1fr; } }
+
 </style>
