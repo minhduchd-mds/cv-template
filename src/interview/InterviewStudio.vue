@@ -1378,7 +1378,7 @@ export default {
       return this.pressureLevels.find((item) => item.id === this.pressureLevel) || this.pressureLevels[1]
     },
     adaptiveMaxFollowUps() {
-      const base = this.practiceBaseSize >= 8 ? 3 : 2
+      const base = this.practiceBaseSize <= 3 ? 1 : this.practiceBaseSize >= 8 ? 3 : 2
       return base + Number(this.activePressure?.followUpBonus || 0)
     },
     adaptiveFollowUpCount() {
