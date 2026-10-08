@@ -375,7 +375,7 @@ function startApplicationPractice(app=activeApplication()||state.applicationDraf
 }
 const renderMarketExplorer=()=>{
   const keyword=state.jobMarketSearch.trim().toLocaleLowerCase('vi')
-  const jobs=observedJobSignals.filter(j=>isObservedJobCurrent(j,JOB_MARKET_AS_OF)&&
+  const jobs=observedJobSignals.filter(j=>isObservedJobCurrent(j)&&
     (state.jobMarketCompany==='all'||j.employerId===state.jobMarketCompany)&&
     (state.jobMarketCity==='all'||j.location.toLocaleLowerCase('vi').includes(state.jobMarketCity))&&
     (!keyword||[j.title,verifiedEmployers.find(x=>x.id===j.employerId)?.name,j.location].join(' ').toLocaleLowerCase('vi').includes(keyword)))
