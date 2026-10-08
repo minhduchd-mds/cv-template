@@ -79,9 +79,10 @@ const readJson=(key,fallback)=>{
 const preferences=readJson(PREF_KEY,{industryId:'auto',seniority:'Senior',market:'vietnam'})
 let workspace=readJson(WORKSPACE_KEY,{profile:{},studio:{},ats:{target:{},versions:[],applications:[]}})
 const initialTemplate=workspace?.studio?.selectedId&&templates.some(t=>t.id===workspace.studio.selectedId)?workspace.studio.selectedId:'soft-portfolio-pro'
+const savedGrowthGoal=(()=>{try{return localStorage.getItem(GROWTH_KEY)}catch{return null}})()
 const state={
   activeModule:'overview',
-  growthGoalId: candidateGoals.some(g=>g.id===(() => { try {return localStorage.getItem(GROWTH_KEY)} catch {return null} })()) ? (() => {try{return localStorage.getItem(GROWTH_KEY)}catch{return 'general'}})() : 'general',
+  growthGoalId: candidateGoals.some(goal=>goal.id===savedGrowthGoal) ? savedGrowthGoal : 'general',
   selectedTemplateId:initialTemplate,
   rolePackId:templateInterviewPack[initialTemplate]||'general',
   industryId:preferences.industryId||'auto',
@@ -641,7 +642,7 @@ function finishMock(){
   const responses=state.practice.questions.map(q=>{const d=state.practice.drafts[q.id];if(!d.evaluation)d.evaluation=evaluateInterviewResponse({answer:d.answer,evidence:d.evidence,confidence:d.confidence,question:q,claims:cvClaims(),elapsedSeconds:state.practice.timerChoice});return{questionId:q.id,question:q.question,answer:d.answer.trim(),evidence:d.evidence.trim(),confidence:d.confidence,evaluation:d.evaluation,adaptive:q.adaptive||null}})
   const report=aggregateInterviewReport(responses),app=activeApplication()
   report.practicePlan=buildNextPracticePlan({report,responses,questions:questionDeck(),claims:cvClaims(),application:app||{}})
-  state.sessions=[{id:'interview-studio-'+Date.now(),createdAt:new Date().toISOString(),startedAt:state.practice.startedAt,applicationId:app?.id||'',contextLabel:app?`${app.company} · ${app.role}`:`${activePack().label} · CV`,stageLabel:activeStage().label,scenarioId:state.selectedScenarioId||'',scenarioLabel:getInterviewScenario(state.selectedScenarioId)?.label||'',interviewerMode:state.interviewerMode,interviewerLabel:activeInterviewer().label,pressureLevel:state.pressureLevel,pressureLabel:activePressure().label,total:responses.length,baseQuestions:state.practice.baseSize,adaptiveFollowUps:responses.filter(r=>r.adaptive?.isFollowUp).length,answered:responses.filter(r=>r.answer||r.evidence).length,responses,report},...state.sessions]
+  state.sessions=[{id:'interview-studio-'+Date.now(),createdAt:new Date().toISOString(),startedAt:state.practice.startedAt,applicationId:app?.id||'',contextLabel:app?`${app.company} · ${app.role}`:`${activePack().label} · CV`,stageLabel:activeStage().label,growthGoalId:state.growthGoalId,scenarioId:state.selectedScenarioId||'',scenarioLabel:getInterviewScenario(state.selectedScenarioId)?.label||'',interviewerMode:state.interviewerMode,interviewerLabel:activeInterviewer().label,pressureLevel:state.pressureLevel,pressureLabel:activePressure().label,total:responses.length,baseQuestions:state.practice.baseSize,adaptiveFollowUps:responses.filter(r=>r.adaptive?.isFollowUp).length,answered:responses.filter(r=>r.answer||r.evidence).length,responses,report},...state.sessions]
   saveSessions();state.practice=null;state.activeModule='reports';render();toast('Đã tạo Interview Report')
 }
 function stopSpeech(){if(state.speech){try{state.speech.stop()}catch{}}state.speech=null;state.speechRecording=false}
