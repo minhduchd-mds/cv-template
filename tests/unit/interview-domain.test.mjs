@@ -8,6 +8,7 @@ import {
 import {
   buildAnswerImprovement,
   compareAnswerAttempts,
+  summarizeAnswerRevisions,
   extractCvClaims,
   getUnassignedClaimNotes,
   migrateLegacyClaimEvidence,
@@ -324,4 +325,18 @@ test('retry reports only observed same-question score delta, without win probabi
   )
   assert.equal(compareAnswerAttempts({overall:60},{overall:45}).direction,'lower')
   assert.equal(compareAnswerAttempts({overall:60},{overall:60}).direction,'unchanged')
+})
+
+test('revisions are counted per question and never treated as interview success', () => {
+  const result=summarizeAnswerRevisions([
+    {questionId:'q1',retryBefore:42,evaluation:{overall:61}},
+    {questionId:'q2',retryBefore:76,evaluation:{overall:70}},
+    {questionId:'q3',retryBefore:null,evaluation:{overall:80}},
+  ])
+  assert.equal(result.revised,2)
+  assert.equal(result.improved,1)
+  assert.equal(result.revisions[0].questionId,'q1')
+  assert.equal(result.revisions[0].difference,19)
+  assert.equal(result.revisions[1].difference,-6)
+  assert.deepEqual(summarizeAnswerRevisions().revisions,[])
 })
