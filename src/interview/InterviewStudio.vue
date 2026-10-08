@@ -1821,9 +1821,8 @@ export default {
         this.practiceSessions = []
         this.claimEvidence = {}
         this.storyBank = []
-        this.industryId = 'auto'
-        this.market = 'vietnam'
-        this.seniority = 'Senior'
+        // Keep current in-memory selectors. Their watchers persist changes,
+        // so resetting them here would recreate preferences after deletion.
       } catch (error) {
         console.warn('Unable to clear Interview Studio data.', error)
         window.alert('Không thể xóa hết dữ liệu trong trình duyệt này.')
