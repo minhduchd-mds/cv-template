@@ -361,3 +361,35 @@ test('standalone Job Market fallback renders employer and salary source links', 
   await expect(page.locator('#app-role')).toHaveValue(/AI Engineer/)
   expect(pageErrors).toEqual([])
 })
+
+
+test('Interview Studio is light by default and starts a salary scenario', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  const theme = await page.locator('.is-sidebar').evaluate(element => getComputedStyle(element).backgroundColor)
+  expect(theme).toMatch(/rgba?\(255, 255, 255/)
+  await page.getByRole('button', { name: 'Mock Interview', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Chọn kịch bản phỏng vấn' })).toBeVisible()
+  await expect(page.locator('.is-scenario-card')).toHaveCount(10)
+  const salary = page.locator('.is-scenario-card').filter({ hasText: 'Đàm phán lương' })
+  await salary.click()
+  await expect(salary).toHaveAttribute('aria-pressed','true')
+  await expect(page.getByText('HR hỏi kỳ vọng, cơ cấu gross/net')).toBeVisible()
+  await page.getByRole('button',{name:'Luyện kịch bản này'}).click()
+  await expect(page.getByRole('heading',{name:/Mức thu nhập mong muốn/})).toBeVisible()
+  await expect(page.getByText(/Đàm phán lương ·/).first()).toBeVisible()
+})
+
+test('standalone recovery app keeps the same light theme and scenario selection', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.goto('/interview-studio/')
+  const theme = await page.locator('.sidebar').evaluate(element => getComputedStyle(element).backgroundColor)
+  expect(theme).toMatch(/rgba?\(255, 255, 255/)
+  await page.locator('[data-module="mock"]').click()
+  await expect(page.locator('.scenario-card')).toHaveCount(10)
+  await page.locator('[data-scenario="ux-portfolio"]').click()
+  await expect(page.locator('[data-scenario="ux-portfolio"]')).toHaveAttribute('aria-pressed','true')
+  await page.locator('#start-scenario').click()
+  await expect(page.locator('.live h2')).toContainText('case study')
+  expect(errors).toEqual([])
+})
