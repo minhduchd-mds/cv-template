@@ -1084,7 +1084,7 @@ export default {
       jobMarketCity: 'all',
       jobMarketSalaryCity: 'hanoi',
       jobMarketSalaryYears: '1-5',
-      showMarketExplorer: true,
+      showMarketExplorer: false,
       applicationStatuses: ['Saved', 'Applied', 'Screening', 'Interview', 'Technical', 'Portfolio', 'Final', 'Offer', 'Closed'],
       selectedClaimId: '',
       claimEvidence: {},
