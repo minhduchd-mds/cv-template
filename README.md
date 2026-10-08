@@ -25,7 +25,7 @@ GitHub Pages is the canonical and supported production deployment for this repos
 | --- | --- | --- |
 | Marketing landing | `/` | Explain the product, workflow, templates, sample cases and privacy model |
 | CV Builder | `#studio` | Edit one structured profile, preview templates and export A4/PDF |
-| Interview Prep | `#interview` | Practice role-aware interview questions mapped from the selected CV, with sourced answer frameworks |
+| Interview Studio | `#interview-studio` (legacy `#interview`) | Independent interview practice workspace with CV claim defense, JD context, story bank and source-aware questions |
 | Apple Editorial | `#concept-apple` | Typography-first portfolio CV |
 | Bento Product | `#concept-bento` | Metrics, modular proof and product storytelling |
 | Design Engineer | `#concept-engineer` | Design × engineering positioning |
@@ -34,9 +34,9 @@ GitHub Pages is the canonical and supported production deployment for this repos
 
 ## Current features
 
-- **6 A4 CV directions**: Senior Product Designer, ATS Clean, Creative Portfolio, Executive Minimal, Design System Lead and Design Engineer.
+- **20 A4 CV templates**, covering design, technical, ATS, product, leadership, business and specialist roles.
 - **5 full-screen web identities** with different information architecture and visual language.
-- **Role-aware Interview Prep** maps all CV templates to interview packs, question intent, answer frameworks, follow-ups, avoid lists and external reference sources.
+- **Independent Interview Studio** maps all 20 templates to a shared role/industry/seniority catalogue, sourced Vietnam and international question banks, claim defense, mock interview branching and practice reports.
 - Structured 360° sample profile projected into a concise CV data model.
 - Builder editing for profile, impact, experience, projects, education, certificates, skills and languages.
 - Section show/hide and ordering controls.
@@ -52,7 +52,7 @@ GitHub Pages is the canonical and supported production deployment for this repos
 
 ## Quality and security gates
 
-The full quality gate includes dangerous frontend API linting, a production Vite build, JS/CSS bundle budgets, responsive Playwright E2E tests, visual QA captures, Lighthouse budgets and CodeQL. Automatic hosted-runner checks are temporarily paused because GitHub is currently not assigning a hosted runner to this repository; both workflows remain available through `workflow_dispatch` and should be restored to push/PR triggers when runner access returns.
+The full quality gate includes frontend security linting, deterministic interview domain tests, Vite and compiled Interview Studio fallback builds, bundle budgets, responsive Playwright E2E, Lighthouse budgets and CodeQL. As of October 2026, CI runs on pushes and PRs; Pages deploys the validated `dist/` build on pushes to `master`. CodeQL scans changed application code and runs weekly.
 
 Application-level security includes safe image-source normalization and CI rejection of risky frontend patterns such as `eval`, `new Function`, `document.write`, direct `innerHTML`, `v-html` and remote script injection.
 
@@ -79,5 +79,5 @@ npm run test:e2e
 - GitHub Pages is the single production target.
 - Automatic Vercel Git deployments are disabled in `vercel.json` so the legacy Vercel integration cannot create misleading blocked deployment checks.
 - The custom Pages workflow builds Vite `dist` with Node 22.23.2 and `npm ci`.
-- It waits until legacy Pages jobs on `master` are quiet before publishing Vite last, preventing older deployments from overwriting the current assets.
+- The build separately bundles the independent Interview Studio fallback into `dist/interview-studio/app.js` so its source imports resolve without exposing `src/` paths in production.
 - Canonical URL, Open Graph metadata, structured data, `robots.txt` and `sitemap.xml` all point to the GitHub Pages production URL.
