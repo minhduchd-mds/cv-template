@@ -515,6 +515,16 @@
                 </div>
               </div>
 
+              <div v-if="unassignedLegacyNotes.length" class="is-claim-section is-legacy-notes">
+                <span class="is-eyebrow">GHI CHÚ CŨ CẦN GÁN LẠI</span>
+                <p>Ghi chú từng gắn theo thứ tự CV; hệ thống không tự đoán thuộc claim nào. Chỉ chuyển khi anh xác nhận đúng nội dung.</p>
+                <article v-for="item in unassignedLegacyNotes" :key="item.legacyId">
+                  <small>{{ item.legacyId }}</small>
+                  <p>{{ item.note }}</p>
+                  <button type="button" :disabled="Boolean(claimNote.trim())" @click="assignLegacyNote(item)">Gán vào claim đang chọn</button>
+                </article>
+              </div>
+
               <div class="is-claim-section">
                 <span class="is-eyebrow">EVIDENCE NOTE</span>
                 <p v-if="claimEvidence[selectedClaim.id]?.needsReview" role="status">
@@ -920,6 +930,7 @@ import {
   pressureLevels,
   evaluateInterviewResponse,
   extractCvClaims,
+  getUnassignedClaimNotes,
   matchQuestionsToClaim,
   migrateLegacyClaimEvidence,
   questionRelevanceScore,
@@ -1119,6 +1130,9 @@ export default {
     },
     selectedClaimReady() {
       return Boolean(this.claimEvidence[this.selectedClaim?.id]?.ready)
+    },
+    unassignedLegacyNotes() {
+      return getUnassignedClaimNotes(this.claimEvidence)
     },
     highRiskClaims() {
       return this.cvClaims.filter((item) => this.claimRisk(item) >= 70)
@@ -1422,6 +1436,25 @@ export default {
       }
     },
     saveClaimNote() {
+      this.saveClaimEvidence()
+    },
+    assignLegacyNote(item) {
+      if (!this.selectedClaim || !item || this.claimNote.trim()) return
+      const notes = Array.isArray(this.claimEvidence.__legacyNotes)
+        ? this.claimEvidence.__legacyNotes.map(note =>
+          note.legacyId === item.legacyId ? { ...note, appliedTo: this.selectedClaim.id } : note)
+        : []
+      this.claimEvidence = {
+        ...this.claimEvidence,
+        __legacyNotes: notes,
+        [this.selectedClaim.id]: {
+          note: item.note,
+          ready: false,
+          needsReview: true,
+          claimText: this.selectedClaim.text,
+          legacySourceId: item.legacyId,
+        },
+      }
       this.saveClaimEvidence()
     },
     toggleClaimReady() {
@@ -2434,6 +2467,28 @@ export default {
   span { margin-top: 2px; color: var(--muted); font-size: 8px; }
 }
 
+.is-legacy-notes {
+  > p { margin: 9px 0 12px; color: var(--muted); font-size: 10px; line-height: 1.55; }
+  article {
+    padding: 12px;
+    margin-top: 7px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: #09151b;
+  }
+  article small { color: var(--accent-2); font-size: 9px; }
+  article p { margin: 7px 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; line-height: 1.5; }
+  article button {
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+  }
+  article button:disabled { opacity: .45; cursor: not-allowed; }
+}
 .is-claim-meta { margin: 22px 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .is-claim-meta span { padding: 5px 7px; border-radius: 6px; background: rgba(255,255,255,.035); color: var(--muted); font-size: 8px; }
 
