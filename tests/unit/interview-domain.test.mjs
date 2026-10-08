@@ -6,6 +6,8 @@ import {
   resolvePracticeIndustry,
 } from '../../src/interview/question-catalog.js'
 import {
+  buildAnswerImprovement,
+  compareAnswerAttempts,
   extractCvClaims,
   getUnassignedClaimNotes,
   migrateLegacyClaimEvidence,
@@ -291,4 +293,35 @@ test('suggest an initial career goal from CV role and template', () => {
   assert.equal(inferCandidateGoal({profileRole:'AI Engineer'}),'ai')
   assert.equal(inferCandidateGoal({profileRole:'Product Manager'}),'product')
   assert.equal(inferCandidateGoal({profileRole:'Sales Associate'}),'general')
+})
+
+test('answer coaching prioritizes unverifiable numbers before generic advice', () => {
+  const advice = buildAnswerImprovement({
+    dimensions: { structure: 15, evidence: 28, credibility: 65 },
+    unsupportedNumbers: ['98%'],
+  })
+  assert.equal(advice.key,'credibility')
+  assert.match(advice.action,/nguồn/)
+  const normal = buildAnswerImprovement({
+    dimensions:{structure:70,evidence:28,ownership:90},
+    unsupportedNumbers:[],
+  })
+  assert.equal(normal.key,'evidence')
+  assert.ok(normal.check.length > 20)
+})
+
+test('retry reports only observed same-question score delta, without win probability', () => {
+  assert.equal(compareAnswerAttempts(null,{overall:75}),null)
+  assert.equal(compareAnswerAttempts({overall:44},null),null)
+  assert.deepEqual(
+    {
+      previous:compareAnswerAttempts({overall:51},{overall:68}).previous,
+      current:compareAnswerAttempts({overall:51},{overall:68}).current,
+      difference:compareAnswerAttempts({overall:51},{overall:68}).difference,
+      direction:compareAnswerAttempts({overall:51},{overall:68}).direction,
+    },
+    { previous:51,current:68,difference:17,direction:'improved' }
+  )
+  assert.equal(compareAnswerAttempts({overall:60},{overall:45}).direction,'lower')
+  assert.equal(compareAnswerAttempts({overall:60},{overall:60}).direction,'unchanged')
 })
