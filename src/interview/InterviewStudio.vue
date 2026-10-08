@@ -687,11 +687,14 @@
                 <h2>Chọn kịch bản phỏng vấn</h2>
                 <p>10 tình huống · Từ HR đến vòng chuyên môn và đàm phán offer</p>
               </div>
-              <button v-if="selectedScenarioId" type="button" class="is-text-button" @click="selectScenario('')">Bỏ chọn</button>
+              <div class="is-scenario-picker__actions">
+                <button type="button" class="is-text-button" @click="showAllScenarios = !showAllScenarios">{{ showAllScenarios ? 'Thu gọn' : 'Xem đủ 10 kịch bản' }}</button>
+                <button v-if="selectedScenarioId" type="button" class="is-text-button" @click="selectScenario('')">Bỏ chọn</button>
+              </div>
             </div>
             <div class="is-scenario-grid">
               <button
-                v-for="scenario in interviewScenarios"
+                v-for="scenario in visibleScenarios"
                 :key="scenario.id"
                 type="button"
                 class="is-scenario-card"
@@ -1094,6 +1097,7 @@ export default {
       pressureLevels,
       interviewScenarios,
       selectedScenarioId: '',
+      showAllScenarios: false,
       modules: [
         { id: 'overview', label: 'Overview', icon: '◇' },
         { id: 'applications', label: 'Application Lab', icon: '◎', badge: 'JD' },
@@ -1169,6 +1173,9 @@ export default {
     },
     selectedScenario() {
       return getInterviewScenario(this.selectedScenarioId)
+    },
+    visibleScenarios() {
+      return this.showAllScenarios ? this.interviewScenarios : this.interviewScenarios.slice(0, 5)
     },
     applications() {
       return Array.isArray(this.workspace?.ats?.applications) ? this.workspace.ats.applications : []
@@ -1591,6 +1598,7 @@ export default {
     },
     practiceApplication(application = this.activeApplication || this.applicationDraft) {
       if (!application) return
+      this.selectedScenarioId = ''
       let contextApplication = application
       if (!application.id) contextApplication = this.saveApplication() || application
       if (contextApplication.id) this.applicationId = contextApplication.id
@@ -3885,4 +3893,6 @@ export default {
   .is-scenario-preview > p { flex-basis:auto; }
 }
 
+.is-scenario-picker__actions { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+.is-scenario-picker__actions button { font-size:11px; color:var(--accent); }
 </style>
