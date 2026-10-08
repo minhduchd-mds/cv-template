@@ -36,6 +36,7 @@ import {
   practiceContextBonus as catalogContextBonus,
   resolvePracticeIndustry,
 } from '../../src/interview/question-catalog.js'
+import { clearInterviewLocalData, downloadInterviewDataExport } from '../../src/interview/interview-data-controls.js'
 import '../studio/safe-dom.js'
 
 const safeDom = window.CVSafeDom
@@ -623,10 +624,46 @@ function renderReports(){
   safeDom(root).html =pageHeading('INTERVIEW REPORTS','Kết quả <em>luyện tập.</em>','',state.sessions.length)+
   (latest?`<section class="report-hero"><div class="report-score"><span>LATEST PRACTICE SIGNAL</span><b>${latest.report.overall}</b><small>/100</small></div><div><strong>${e(latest.contextLabel)}</strong><p>${e(formatDate(latest.createdAt))} · ${e(latest.stageLabel)} · ${e(latest.interviewerLabel||'Interviewer')} · ${e(latest.pressureLabel||'Realistic')} · ${latest.answered}/${latest.total} câu</p><span class="chip">${latest.report.evidenceReady}/${latest.total} câu có evidence note · ${latest.report.adaptiveCount||0} adaptive follow-up</span></div></section><div class="grid2"><section class="panel"><span class="eyebrow">DIMENSIONS</span><h2>Dimensions</h2><div class="metric-bars">${Object.entries(latest.report.dimensions).map(([k,v])=>`<div><span>${e(dimensionLabel(k))}</span><i><b style="width:${v}%"></b></i><strong>${v}</strong></div>`).join('')}</div></section><section class="panel"><span class="eyebrow">EVIDENCE GAPS</span><h2>Evidence gaps</h2><ul class="warnings">${list(latest.report.warnings.length?latest.report.warnings:['Chưa phát hiện cảnh báo lớn trong session gần nhất.'])}</ul></section></div>${latest.report.adaptiveCount?`<section class="panel adaptive-report"><span class="eyebrow">ADAPTIVE TRACE</span><h2>Adaptive trace</h2><div class="adaptive-stats"><div><b>${latest.report.adaptiveCount}</b><span>follow-up đã chèn</span></div><div><b>${latest.report.adaptiveDimensions.length}</b><span>dimension bị đào sâu</span></div></div><ul class="warnings">${list(latest.report.adaptiveReasons)}</ul></section>`:''}`:'')+
   (latest?.report?.adaptiveTrace?.length?`<section class="panel branch-trace"><span class="eyebrow">BRANCH MEMORY</span><h2>Branch trace</h2><div class="branch-trace-list">${latest.report.adaptiveTrace.map(item=>`<article><div class="branch-index">${String(item.index).padStart(2,'0')}</div><div><span>${e(item.interviewerLabel||latest.interviewerLabel||'Interviewer')} · ${e(item.pressureLabel||latest.pressureLabel||'Realistic')}</span><strong>${e(item.question)}</strong><p>${e(item.reason)}</p></div><div class="branch-trigger"><span>${e(dimensionLabel(item.triggerDimension))}</span><b>${item.triggerScore}</b></div></article>`).join('')}</div></section>`:'')+
-  (latest?.report?.practicePlan?practicePlanHtml(latest.report.practicePlan):'')+`<section class="panel"><span class="eyebrow">HISTORY</span><h2>Lịch sử luyện tập</h2>${state.sessions.length?`<div class="history">${state.sessions.map(s=>`<article><div><strong>${e(s.contextLabel)}</strong><small>${e(formatDate(s.createdAt))}</small></div><span>${e(s.stageLabel||'')}</span><span>${s.answered||0}/${s.total||0} answered</span><span>${s.report?.evidenceReady||s.evidenceReady||0} evidence</span><b>${s.report?.overall||'—'}</b></article>`).join('')}</div><button id="clear-history" class="text-btn">Xóa lịch sử local</button>`:`<div class="empty">Chưa có report.<button class="text-btn" data-go="mock">Bắt đầu luyện →</button></div>`}</section>`
+  (latest?.report?.practicePlan?practicePlanHtml(latest.report.practicePlan):'')+`<section class="panel"><span class="eyebrow">HISTORY</span><h2>Lịch sử luyện tập</h2>${state.sessions.length?`<div class="history">${state.sessions.map(s=>`<article><div><strong>${e(s.contextLabel)}</strong><small>${e(formatDate(s.createdAt))}</small></div><span>${e(s.stageLabel||'')}</span><span>${s.answered||0}/${s.total||0} answered</span><span>${s.report?.evidenceReady||s.evidenceReady||0} evidence</span><b>${s.report?.overall||'—'}</b></article>`).join('')}</div><button id="clear-history" class="text-btn">Xóa lịch sử local</button>`:`<div class="empty">Chưa có report.<button class="text-btn" data-go="mock">Bắt đầu luyện →</button></div>`}</section>
+  <section class="panel privacy-controls" aria-label="Quản lý dữ liệu Interview Studio">
+    <span class="eyebrow">DATA PRIVACY</span>
+    <h2>Kiểm soát dữ liệu luyện phỏng vấn</h2>
+    <p>Câu trả lời, Story Bank và ghi chú evidence được lưu trong trình duyệt này. File JSON được xuất ra <strong>không mã hóa</strong>. CV và JD dùng chung với CV Studio sẽ được giữ lại khi xóa dữ liệu Interview Studio.</p>
+    <div class="privacy-actions">
+      <button id="export-interview" class="secondary">Xuất dữ liệu Interview Studio (.json)</button>
+      <button id="erase-interview" class="secondary privacy-danger">Xóa dữ liệu luyện tập trên thiết bị</button>
+    </div>
+  </section>`
   bindGo()
   const plan=document.querySelector('#practice-plan');if(plan&&latest?.report?.practicePlan)plan.onclick=()=>startPracticePlan(latest.report.practicePlan)
-  const clear=document.querySelector('#clear-history');if(clear)clear.onclick=()=>{state.sessions=[];saveSessions();renderReports()}
+  const clear=document.querySelector('#clear-history');if(clear)clear.onclick=()=>{
+    if(!window.confirm('Xóa lịch sử mock interview trên thiết bị này?'))return
+    state.sessions=[];saveSessions();renderReports()
+  }
+  document.querySelector('#export-interview').onclick=()=>{
+    try {
+      downloadInterviewDataExport(localStorage,document,URL,Blob)
+    } catch(error) {
+      console.warn('Interview export failed',error)
+      toast('Không thể xuất dữ liệu. Hãy kiểm tra quyền bộ nhớ.')
+    }
+  }
+  document.querySelector('#erase-interview').onclick=()=>{
+    if(!window.confirm('Xóa toàn bộ lịch sử luyện tập, Story Bank, evidence và thiết lập Interview Studio? CV và JD dùng chung được giữ lại.'))return
+    try {
+      clearInterviewLocalData(localStorage)
+      stopTimer();stopSpeech()
+      state.practice=null
+      state.sessions=[]
+      state.claimEvidence={}
+      state.storyBank=[]
+      renderReports()
+      toast('Đã xóa dữ liệu Interview Studio trên thiết bị')
+    } catch(error) {
+      console.warn('Interview cleanup failed',error)
+      toast('Không thể xóa hết dữ liệu trên thiết bị này')
+    }
+  }
 }
 
 function renderView(){
