@@ -173,17 +173,17 @@
               <ol class="is-action-list">
                 <li>
                   <b>01</b>
-                  <div><strong>Bảo vệ claim mạnh nhất</strong><p>Chuẩn bị baseline, contribution, trade-off và cách đo cho claim có số liệu.</p></div>
+                  <div><strong>Bảo vệ claim mạnh nhất</strong><p>Kiểm chứng số liệu & phần trực tiếp làm.</p></div>
                   <button type="button" @click="openFirstRiskClaim">Mở →</button>
                 </li>
                 <li>
                   <b>02</b>
-                  <div><strong>Luyện 5 câu theo JD</strong><p>Question engine ưu tiên CV, role pack, vòng phỏng vấn và application context.</p></div>
+                  <div><strong>Luyện 5 câu theo JD</strong><p>5 câu theo CV và job.</p></div>
                   <button type="button" @click="activeModule = 'mock'">Luyện →</button>
                 </li>
                 <li>
                   <b>03</b>
-                  <div><strong>Xem evidence gaps</strong><p>Report chỉ ra câu trả lời dài dòng, thiếu ownership hoặc số liệu chưa có trong CV.</p></div>
+                  <div><strong>Xem evidence gaps</strong><p>Sửa các điểm còn yếu.</p></div>
                   <button type="button" @click="activeModule = 'reports'">Xem →</button>
                 </li>
               </ol>
@@ -377,6 +377,8 @@
                   </section>
                 </div>
 
+                <details class="is-deep-evidence">
+                  <summary>CV & Story evidence chi tiết <span>＋</span></summary>
                 <div class="is-coverage-grid">
                   <section>
                     <span class="is-eyebrow">TOP CV EVIDENCE</span>
@@ -393,11 +395,13 @@
                   </section>
                 </div>
 
+                </details>
+
                 <section class="is-stage-matrix">
                   <div class="is-panel__heading is-panel__heading--split">
                     <div>
                       <span class="is-eyebrow">INTERVIEW STAGE MATRIX</span>
-                      <h3>Mỗi vòng kiểm tra một loại evidence khác nhau</h3>
+                      <h3>Chọn vòng phỏng vấn</h3>
                     </div>
                     <small>Preparedness = tín hiệu chuẩn bị nội bộ</small>
                   </div>
@@ -418,9 +422,12 @@
                       <div class="is-stage-matrix__focus">
                         <span v-for="term in stage.focus" :key="term">{{ term }}</span>
                       </div>
-                      <ol>
-                        <li v-for="question in stage.questions" :key="question.id">{{ question.question }}</li>
-                      </ol>
+                      <details class="is-stage-questions">
+                        <summary>Xem {{ stage.questions.length }} câu hỏi</summary>
+                        <ol>
+                          <li v-for="question in stage.questions" :key="question.id">{{ question.question }}</li>
+                        </ol>
+                      </details>
                       <button type="button" @click="stageId = stage.id; practiceApplication(applicationDraft)">
                         Luyện vòng này →
                       </button>
@@ -431,7 +438,7 @@
                 <section class="is-application-questions">
                   <span class="is-eyebrow">RECOMMENDED INTERVIEW QUESTIONS</span>
                   <ol>
-                    <li v-for="item in applicationDraftAnalysis.recommendedQuestions.slice(0, 5)" :key="item.id">
+                    <li v-for="item in applicationDraftAnalysis.recommendedQuestions.slice(0, 3)" :key="item.id">
                       <span>{{ categoryName(item.category) }}</span>
                       <strong>{{ item.question }}</strong>
                     </li>
@@ -3680,4 +3687,33 @@ export default {
   .is-market__grid { grid-template-columns: 1fr; }
 }
 
+
+.is-deep-evidence {
+  margin: 14px 0 20px;
+  border-bottom: 1px solid var(--line);
+}
+.is-deep-evidence > summary {
+  padding: 12px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.is-deep-evidence[open] > summary span { transform: rotate(45deg); }
+.is-stage-questions { margin: 11px 0; }
+.is-stage-questions > summary {
+  color: var(--accent-2);
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.is-stage-questions ol { margin-top: 8px; }
+.is-market__card:focus-within, .is-market__tabs button:focus-visible,
+.is-market__toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 </style>
