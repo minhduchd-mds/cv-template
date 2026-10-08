@@ -428,3 +428,23 @@ test('answer revision review caps long personal text for the report preview', ()
   assert.equal(result[0].beforeEvidence.length,360)
   assert.equal(result[0].afterEvidence.length,360)
 })
+
+test('evidence-only revisions count, but unchanged retry taps do not', () => {
+  const unchanged = {
+    questionId:'same',retryBefore:45,
+    retryOriginal:{answer:'My answer',evidence:'Baseline'},
+    answer:'My answer',evidence:'Baseline',evaluation:{overall:45},
+  }
+  const evidenceOnly = {
+    ...unchanged,questionId:'evidence-only',
+    evidence:'Baseline and audit link',evaluation:{overall:55},
+  }
+  assert.equal(buildRevisionReview([unchanged]).length,0)
+  assert.equal(summarizeAnswerRevisions([unchanged]).revised,0)
+  const report=buildRevisionReview([evidenceOnly])
+  assert.equal(report.length,1)
+  assert.equal(report[0].difference,10)
+  assert.equal(report[0].before,'My answer')
+  assert.equal(report[0].after,'My answer')
+  assert.equal(summarizeAnswerRevisions([evidenceOnly]).revised,1)
+})
