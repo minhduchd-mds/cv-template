@@ -397,3 +397,30 @@ test('standalone recovery app keeps the same light theme and scenario selection'
   await expect(page.locator('.live h2')).toContainText('case study')
   expect(errors).toEqual([])
 })
+
+
+test('Growth Coach gives a beginner three-question path and remembers the chosen goal', async ({ page }) => {
+  await page.goto('/#interview-studio')
+  const coach=page.getByRole('region', { name:'Lộ trình luyện phỏng vấn cá nhân' })
+  await expect(coach.getByRole('heading',{name:'Luyện đúng điểm cần cải thiện'})).toBeVisible()
+  await coach.getByRole('button',{name:'UI/UX & Product Design'}).click()
+  await expect(coach.getByRole('button',{name:'UI/UX & Product Design'})).toHaveAttribute('aria-pressed','true')
+  expect(await page.evaluate(()=>localStorage.getItem('interview-studio-growth-goal-v1'))).toBe('design')
+  await coach.getByRole('button',{name:'Luyện 3 câu đầu tiên'}).click()
+  await expect(page.locator('.is-live-session')).toBeVisible()
+  await expect(page.locator('.is-live-session__meta')).toContainText('QUESTION 1 / 3')
+  await expect(page.locator('.is-live-session h2')).toContainText('case study')
+})
+
+test('standalone Growth Coach preserves role and starts same short drill', async ({ page }) => {
+  const errors=[]
+  page.on('pageerror', e=>errors.push(e.message))
+  await page.goto('/interview-studio/')
+  await expect(page.locator('.growth-coach')).toContainText('Luyện đúng điểm cần cải thiện')
+  await page.locator('[data-growth-goal="design"]').click()
+  await expect(page.locator('[data-growth-goal="design"]')).toHaveAttribute('aria-pressed','true')
+  await page.locator('#start-growth').click()
+  await expect(page.locator('.live h2')).toContainText('case study')
+  await expect(page.locator('.live-meta')).toContainText('QUESTION 1 / 3')
+  expect(errors).toEqual([])
+})
