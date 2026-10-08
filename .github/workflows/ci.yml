@@ -42,6 +42,10 @@ jobs:
           npm run build
 
       # Later gates run even when an earlier one fails so each run reports every regression.
+      - name: Run deterministic interview domain tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: npm run test:unit
+
       - name: Enforce bundle budget
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: npm run verify:bundle
