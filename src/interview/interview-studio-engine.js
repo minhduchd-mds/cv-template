@@ -289,6 +289,23 @@ const interviewerQuestion = (question, mode, pressure, dimension) => {
   return question
 }
 
+// An evaluation is only valid for the exact input it assessed. Never show a
+// previous score against text edited after the evaluation was produced.
+export const snapshotAnswerInput = (draft = {}) => ({
+  answer: String(draft.answer || '').trim(),
+  evidence: String(draft.evidence || '').trim(),
+  confidence: Number(draft.confidence || 0),
+})
+
+export const isEvaluationCurrent = (draft = {}) => {
+  if (!draft.evaluation || !draft.evaluatedInput) return false
+  const actual = snapshotAnswerInput(draft)
+  const assessed = draft.evaluatedInput
+  return actual.answer === assessed.answer
+    && actual.evidence === assessed.evidence
+    && actual.confidence === Number(assessed.confidence)
+}
+
 export const evaluateInterviewResponse = ({
   answer = '',
   evidence = '',
@@ -299,6 +316,18 @@ export const evaluateInterviewResponse = ({
 } = {}) => {
   const normalized = normalizeInterviewText(answer)
   const words = countWords(answer)
+  if (!words) {
+    return {
+      overall: 0,
+      dimensions: Object.fromEntries(['relevance', 'structure', 'evidence', 'ownership', 'depth', 'credibility', 'delivery'].map(key => [key, 0])),
+      warnings: ['Chưa có câu trả lời. Câu này được tính là bỏ qua, không có điểm đánh giá.'],
+      strengths: [],
+      words: 0,
+      elapsedSeconds: Number(elapsedSeconds || 0),
+      unsupportedNumbers: [],
+      unanswered: true,
+    }
+  }
   const evidenceWords = countWords(evidence)
   const answerNumbers = answer.match(/\b\d+(?:[.,]\d+)?%?\+?\b/g) || []
   const cvNumbers = unique(claims.flatMap((item) => item.numbers || []))
@@ -451,7 +480,7 @@ export const buildAdaptiveFollowUp = ({
   interviewerMode = 'hiring-manager',
   pressureLevel = 'realistic',
 } = {}) => {
-  if (question?.adaptive?.isFollowUp) return null
+  if (question?.adaptive?.isFollowUp || !String(answer || '').trim()) return null
 
   const dimensions = evaluation?.dimensions || {}
   const config = interviewerConfig(interviewerMode, pressureLevel)
@@ -565,11 +594,13 @@ export const buildAdaptiveFollowUp = ({
 }
 
 export const aggregateInterviewReport = (responses = []) => {
-  const scored = responses.filter((item) => item?.evaluation)
+  const scored = responses.filter((item) => item?.evaluation && String(item?.answer || '').trim())
+  const skipped = responses.length - scored.length
   if (!scored.length) {
     return {
       overall: 0,
       answered: 0,
+      skipped,
       dimensions: {},
       warnings: [],
       strongest: [],
@@ -593,11 +624,12 @@ export const aggregateInterviewReport = (responses = []) => {
   return {
     overall: clamp(scored.reduce((sum, item) => sum + Number(item.evaluation.overall || 0), 0) / scored.length),
     answered: scored.length,
+    skipped,
     dimensions,
     warnings,
     strongest: ranked.slice(0, 2).map(([key, score]) => ({ key, score })),
     weakest: ranked.slice(-2).reverse().map(([key, score]) => ({ key, score })),
-    evidenceReady: responses.filter((item) => String(item?.evidence || '').trim().length >= 12).length,
+    evidenceReady: scored.filter((item) => String(item?.evidence || '').trim().length >= 12).length,
     adaptiveCount: adaptiveResponses.length,
     adaptiveDimensions,
     adaptiveReasons: unique(adaptiveResponses.map((item) => item.adaptive?.reason)).filter(Boolean).slice(0, 6),
