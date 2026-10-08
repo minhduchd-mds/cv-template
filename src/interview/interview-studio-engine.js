@@ -47,22 +47,33 @@ export const stableClaimId = (source, text) => {
 
 // Old notes used position-based ids. Carry the text forward as an unverified
 // draft only: an old "ready" flag cannot safely be mapped after CV reordering.
-export const migrateLegacyClaimEvidence = (saved = {}, claims = []) => {
+export const migrateLegacyClaimEvidence = (saved = {}) => {
   const legacy = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {}
-  const next = { ...legacy }
-  for (const item of claims) {
-    if (!item?.id || !item.legacyId || Object.prototype.hasOwnProperty.call(next, item.id)) continue
-    const previous = legacy[item.legacyId]
-    if (!previous || typeof previous !== 'object') continue
-    next[item.id] = {
-      note: String(previous.note || ''),
-      ready: false,
-      needsReview: true,
-      legacySourceId: item.legacyId,
-    }
-  }
-  return next
+  const archived = Array.isArray(legacy.__legacyNotes) ? legacy.__legacyNotes : []
+  const seen = new Set(archived.map(item => item?.legacyId))
+  const added = Object.entries(legacy)
+    .filter(([key, item]) =>
+      /^claim-\\d+$/.test(key)
+      && !seen.has(key)
+      && item && typeof item === 'object'
+      && String(item.note || '').trim())
+    .map(([legacyId, value]) => ({
+      legacyId,
+      note: String(value.note),
+      wasReady: Boolean(value.ready),
+      appliedTo: '',
+    }))
+  // The original numeric key was tied to list position. We cannot reliably
+  // infer which CV statement it described after a reorder, so never attach
+  // archived notes or their ready flags to a different claim automatically.
+  return [...archived, ...added].length
+    ? { ...legacy, __legacyNotes: [...archived, ...added] }
+    : legacy
 }
+
+export const getUnassignedClaimNotes = (saved = {}) =>
+  (Array.isArray(saved?.__legacyNotes) ? saved.__legacyNotes : [])
+    .filter(item => item && !item.appliedTo && String(item.note || '').trim())
 
 const claim = (id, source, label, text) => {
   const numberSignals = text.match(/\b\d+(?:[.,]\d+)?%?\+?\b/g) || []
