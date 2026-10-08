@@ -26,6 +26,7 @@ import {
   evaluateInterviewResponse,
   extractCvClaims,
   matchQuestionsToClaim,
+  migrateLegacyClaimEvidence,
   questionRelevanceScore,
   relatedClaimsForAnswer,
 } from '../../src/interview/interview-studio-engine.js'
@@ -118,6 +119,7 @@ const interviewerForStage=stage=>({hr:'recruiter','hiring-manager':'hiring-manag
 const applications=()=>Array.isArray(workspace?.ats?.applications)?workspace.ats.applications:[]
 const activeApplication=()=>applications().find(a=>a.id===state.applicationId)||null
 const cvClaims=()=>extractCvClaims(workspace?.profile||{})
+state.claimEvidence=migrateLegacyClaimEvidence(state.claimEvidence,cvClaims())
 const claimRisk=item=>Math.min(99,34+(item?.numbers?.length?22:0)+(item?.leadershipSignal?20:0)+(item?.outcomeSignal?17:0)+(item?.specificity>=75?8:0))
 const highRiskClaims=()=>cvClaims().filter(item=>claimRisk(item)>=70)
 const marketLabel=()=>state.market==='vietnam'?'Việt Nam':state.market==='global'?'Quốc tế':'VN + Quốc tế'
@@ -209,7 +211,7 @@ const readinessDetail=()=>{
   if(!latest)return `${deck.length} câu đang hoạt động · ${templateSpecific} theo CV · ${industrySpecific} theo ngành ${activeIndustry().label} · ${sourced} có nguồn.`
   return `Độ phủ dữ liệu ${practiceDataCoverage()}% · evidence CV ${evidenceCoverage()}% · ngành ${activeIndustry().label} · ${state.sessions.length} phiên luyện.`
 }
-const saveClaims=()=>localStorage.setItem(CLAIM_KEY,JSON.stringify(state.claimEvidence))
+const saveClaims=()=>{try{localStorage.setItem(CLAIM_KEY,JSON.stringify(state.claimEvidence))}catch{toast('Không lưu được: bộ nhớ trình duyệt đã đầy hoặc bị khóa')}}
 const saveSessions=()=>{state.sessions=state.sessions.slice(0,30);localStorage.setItem(SESSION_KEY,JSON.stringify(state.sessions))}
 const saveStories=()=>{state.storyBank=(Array.isArray(state.storyBank)?state.storyBank:[]).slice(0,60);localStorage.setItem(STORY_KEY,JSON.stringify(state.storyBank))}
 const toast=message=>{
@@ -436,7 +438,7 @@ function renderClaims(){
       <div class="meta chips">${selected.numbers.map(n=>`<span># Có số liệu: ${e(n)}</span>`).join('')}${selected.leadershipSignal?'<span># Ownership / leadership</span>':''}${selected.outcomeSignal?'<span># Outcome claim</span>':''}<span># ${e(selected.source)}</span></div>
       <div class="section"><span class="eyebrow">RECRUITER PROBES</span><ol class="probe-list">${list(claimProbes(selected))}</ol></div>
       <div class="section"><span class="eyebrow">MATCHED QUESTIONS</span><ol class="probe-list">${list(matchQuestionsToClaim(selected,questionDeck()).map(q=>q.question))||'<li>Chưa có câu hỏi đủ gần; dùng recruiter probes phía trên.</li>'}</ol></div>
-      <div class="section evidence-box"><span class="eyebrow">EVIDENCE NOTE</span><textarea id="claim-note" rows="6" placeholder="Baseline, phạm vi mình sở hữu, cách đo, ai tham gia, trade-off, result...">${e(state.claimEvidence[selected.id]?.note||'')}</textarea><div class="evidence-footer"><span id="claim-count">${(state.claimEvidence[selected.id]?.note||'').length} ký tự</span><button id="claim-ready" class="${state.claimEvidence[selected.id]?.ready?'ready':''}">${state.claimEvidence[selected.id]?.ready?'✓ Evidence ready':'Đánh dấu evidence ready'}</button></div></div>
+      <div class="section evidence-box"><span class="eyebrow">EVIDENCE NOTE</span>${state.claimEvidence[selected.id]?.needsReview?'<p role="status">Ghi chú cũ cần xác minh lại theo claim hiện tại. Trạng thái ready không tự động được chuyển.</p>':''}<textarea id="claim-note" rows="6" placeholder="Baseline, phạm vi mình sở hữu, cách đo, ai tham gia, trade-off, result...">${e(state.claimEvidence[selected.id]?.note||'')}</textarea><div class="evidence-footer"><span id="claim-count">${(state.claimEvidence[selected.id]?.note||'').length} ký tự</span><button id="claim-ready" class="${state.claimEvidence[selected.id]?.ready?'ready':''}">${state.claimEvidence[selected.id]?.ready?'✓ Evidence ready':'Đánh dấu evidence ready'}</button></div></div>
     </section>`:'<section class="empty">CV hiện tại chưa có đủ nội dung để trích xuất claim.</section>'}
   </div>`
   root.querySelectorAll('[data-claim]').forEach(b=>b.onclick=()=>{state.selectedClaimId=b.dataset.claim;renderClaims()})
@@ -444,7 +446,7 @@ function renderClaims(){
     const note=document.querySelector('#claim-note')
     note.oninput=()=>{state.claimEvidence[selected.id]={...(state.claimEvidence[selected.id]||{}),note:note.value};document.querySelector('#claim-count').textContent=note.value.length+' ký tự'}
     note.onchange=saveClaims
-    document.querySelector('#claim-ready').onclick=()=>{const current=state.claimEvidence[selected.id]||{};state.claimEvidence[selected.id]={...current,ready:!current.ready};saveClaims();renderClaims()}
+    document.querySelector('#claim-ready').onclick=()=>{const current=state.claimEvidence[selected.id]||{};state.claimEvidence[selected.id]={...current,ready:!current.ready,needsReview:false,claimText:selected.text};saveClaims();renderClaims()}
   }
 }
 
