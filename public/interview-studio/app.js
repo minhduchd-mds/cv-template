@@ -99,6 +99,7 @@ const state={
   showMarketExplorer:false,
   interviewerMode:'hiring-manager',
   selectedScenarioId:'',
+  showAllScenarios:false,
   pressureLevel:'realistic',
   selectedClaimId:'',
   claimEvidence:readJson(CLAIM_KEY,{}),
@@ -366,6 +367,7 @@ function startApplicationPractice(app=activeApplication()||state.applicationDraf
   }
   const analysis=applicationAnalysis(contextApp)
   if(!analysis)return
+  state.selectedScenarioId=''
   state.stageId=analysis.recommendedStage||state.stageId
   state.interviewerMode=interviewerForStage(state.stageId)
   const selected=buildApplicationPracticeSet({application:contextApp,claims:cvClaims(),stories:state.storyBank,questions:[...questionDeck()].sort((a,b)=>practiceContextBonus(b)-practiceContextBonus(a)),limit:5})
@@ -624,8 +626,8 @@ function renderMock(){
     const chosen=getInterviewScenario(state.selectedScenarioId)
     safeDom(root).html =pageHeading('MOCK INTERVIEW','Luyện theo <em>tình huống.</em>','', '5Q')+`
       <section class="scenario-picker" aria-label="Kịch bản phỏng vấn">
-        <header><div><span class="eyebrow">PRACTICE SCENARIOS</span><h2>Chọn kịch bản phỏng vấn</h2><p>10 tình huống · HR, UI/UX, kỹ thuật và đàm phán</p></div>${chosen?'<button id="clear-scenario">Bỏ chọn</button>':''}</header>
-        <div class="scenario-grid">${interviewScenarios.map(sc=>`<button type="button" class="scenario-card ${state.selectedScenarioId===sc.id?'selected':''}" data-scenario="${e(sc.id)}" aria-pressed="${state.selectedScenarioId===sc.id}"><span class="scenario-number">${e(sc.icon)}</span><span><strong>${e(sc.label)}</strong><small>${e(sc.group)} · ${e(sc.time)}</small></span><b>${state.selectedScenarioId===sc.id?'✓':'↗'}</b></button>`).join('')}</div>
+        <header><div><span class="eyebrow">PRACTICE SCENARIOS</span><h2>Chọn kịch bản phỏng vấn</h2><p>HR · UI/UX · kỹ thuật · đàm phán</p></div><div class="scenario-actions"><button id="toggle-scenarios">${state.showAllScenarios?'Thu gọn':'Xem đủ 10 kịch bản'}</button>${chosen?'<button id="clear-scenario">Bỏ chọn</button>':''}</div></header>
+        <div class="scenario-grid">${(state.showAllScenarios?interviewScenarios:interviewScenarios.slice(0,5)).map(sc=>`<button type="button" class="scenario-card ${state.selectedScenarioId===sc.id?'selected':''}" data-scenario="${e(sc.id)}" aria-pressed="${state.selectedScenarioId===sc.id}"><span class="scenario-number">${e(sc.icon)}</span><span><strong>${e(sc.label)}</strong><small>${e(sc.group)} · ${e(sc.time)}</small></span><b>${state.selectedScenarioId===sc.id?'✓':'↗'}</b></button>`).join('')}</div>
         ${chosen?`<div class="scenario-preview"><span>${e(chosen.level)} · ${chosen.questions.length} câu gốc</span><p>${e(chosen.context)}</p><button id="start-scenario" class="primary">Luyện kịch bản này →</button></div>`:''}
       </section>
       <section class="mock-start"><div class="mock-config"><h2>Thiết lập phiên luyện</h2>
@@ -646,6 +648,8 @@ function renderMock(){
       }
       renderMock()
     })
+    const toggleScenarios=document.querySelector('#toggle-scenarios')
+    if(toggleScenarios)toggleScenarios.onclick=()=>{state.showAllScenarios=!state.showAllScenarios;renderMock()}
     const clearScenario=document.querySelector('#clear-scenario')
     if(clearScenario)clearScenario.onclick=()=>{state.selectedScenarioId='';renderMock()}
     const startScenario=document.querySelector('#start-scenario')
