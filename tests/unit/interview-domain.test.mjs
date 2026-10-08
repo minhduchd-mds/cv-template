@@ -266,3 +266,21 @@ test('Micro-practice retries the weakest prior question when trusted by the cata
   const unknown=buildMicroPracticeSet({goalId:'not-a-goal',count:3})
   assert.equal(unknown.length,3)
 })
+
+test('Growth Coach does not mix scores between two named career goals', () => {
+  const design={
+    growthGoalId:'design',createdAt:'2026-10-08T10:00:00Z',
+    report:{overall:50,dimensions:{evidence:28,structure:67}},
+  }
+  const ai={
+    growthGoalId:'ai',createdAt:'2026-10-08T11:00:00Z',
+    report:{overall:92,dimensions:{evidence:95,structure:70}},
+  }
+  const plan=buildCandidateGrowthPlan({goalId:'design',sessions:[ai,design]})
+  assert.equal(plan.hasBaseline,true)
+  assert.equal(plan.focusScore,28)
+  assert.equal(plan.sessionsCount,1)
+  const aiPlan=buildCandidateGrowthPlan({goalId:'ai',sessions:[ai,design]})
+  assert.equal(aiPlan.sessionsCount,1)
+  assert.equal(aiPlan.focusScore,70)
+})
