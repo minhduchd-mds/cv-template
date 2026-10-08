@@ -893,6 +893,23 @@
               <button type="button" @click="activeModule = 'mock'">Bắt đầu luyện →</button>
             </div>
           </section>
+
+          <section class="is-panel is-privacy-controls" aria-label="Quản lý dữ liệu Interview Studio">
+            <div class="is-panel__heading">
+              <span class="is-eyebrow">DATA PRIVACY</span>
+              <h2>Kiểm soát dữ liệu luyện phỏng vấn</h2>
+            </div>
+            <p>
+              Câu trả lời, Story Bank và ghi chú evidence được lưu trong trình duyệt này.
+              File xuất ra là JSON không mã hóa, cần cất giữ riêng tư.
+              Hồ sơ CV và danh sách ứng tuyển/JD dùng chung với CV Studio sẽ <strong>không bị xóa</strong>
+              khi xóa dữ liệu Interview Studio.
+            </p>
+            <div class="is-privacy-controls__actions">
+              <button type="button" class="is-button" @click="exportInterviewData">Xuất dữ liệu Interview Studio (.json)</button>
+              <button type="button" class="is-button is-privacy-controls__danger" @click="eraseInterviewData">Xóa dữ liệu luyện tập trên thiết bị</button>
+            </div>
+          </section>
         </section>
       </div>
     </section>
@@ -902,6 +919,7 @@
 <script>
 import { templates } from '../data/cv'
 import { patchCanonicalWorkspace, readCanonicalWorkspace } from '../data/workspace-store'
+import { clearInterviewLocalData, downloadInterviewDataExport } from './interview-data-controls'
 import {
   industryPracticeProfiles,
   templateDefaultIndustry,
@@ -1782,6 +1800,34 @@ export default {
     clearPracticeHistory() {
       this.practiceSessions = []
       this.savePracticeSessions()
+    },
+    exportInterviewData() {
+      try {
+        downloadInterviewDataExport(window.localStorage, document, URL, Blob)
+      } catch (error) {
+        console.warn('Unable to export Interview Studio data.', error)
+        window.alert('Không thể xuất dữ liệu lúc này. Hãy kiểm tra quyền truy cập bộ nhớ trình duyệt.')
+      }
+    },
+    eraseInterviewData() {
+      if (!window.confirm('Xóa toàn bộ lịch sử luyện tập, Story Bank, ghi chú Claim Defense và thiết lập Interview Studio trên thiết bị này? CV và các JD dùng chung sẽ được giữ lại.')) return
+      try {
+        clearInterviewLocalData(window.localStorage)
+        this.stopQuestionTimer()
+        this.stopDictation()
+        this.practiceActive = false
+        this.practiceQuestions = []
+        this.practiceDrafts = {}
+        this.practiceSessions = []
+        this.claimEvidence = {}
+        this.storyBank = []
+        this.industryId = 'auto'
+        this.market = 'vietnam'
+        this.seniority = 'Senior'
+      } catch (error) {
+        console.warn('Unable to clear Interview Studio data.', error)
+        window.alert('Không thể xóa hết dữ liệu trong trình duyệt này.')
+      }
     },
     formatSessionDate(value) {
       try {
@@ -2906,6 +2952,12 @@ export default {
   font-size: 18px;
 }
 
+.is-privacy-controls {
+  margin-top: 20px;
+  > p { max-width: 80ch; color: var(--muted); font-size: 11px; line-height: 1.65; }
+}
+.is-privacy-controls__actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
+.is-privacy-controls__danger { color: var(--danger); border-color: rgba(255,130,124,.25); }
 .is-warning-list { margin: 0; padding: 0; list-style: none; }
 .is-warning-list li { padding: 11px 0 11px 20px; position: relative; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; line-height: 1.5; }
 .is-warning-list li::before { content: "!"; position: absolute; left: 0; color: var(--warning); font-weight: 800; }
