@@ -133,3 +133,15 @@
 @media(max-width:1180px){
   .compact-grid{grid-template-columns:1fr}
 }
+
+/* Interview Studio data export and scoped local deletion */
+.privacy-controls { margin-top: 18px; }
+.privacy-controls > p { max-width: 80ch; color: var(--muted); font-size: 11px; line-height: 1.65; }
+.privacy-actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 15px; }
+.privacy-actions .privacy-danger { color: var(--danger); border-color: rgba(255,130,124,.3); }
+.legacy-notes > p { color: var(--muted); font-size: 10px; line-height: 1.6; }
+.legacy-notes article { margin-top: 9px; padding: 11px; border: 1px solid var(--line); border-radius: 9px; background: #09151b; }
+.legacy-notes article small { color: var(--accent2); font-size: 9px; }
+.legacy-notes article p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; line-height: 1.5; }
+.legacy-notes article button { min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--accent); cursor: pointer; }
+.legacy-notes article button:disabled { opacity: .45; cursor: not-allowed; }
