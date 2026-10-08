@@ -25,6 +25,7 @@ import {
   pressureLevels,
   evaluateInterviewResponse,
   extractCvClaims,
+  getUnassignedClaimNotes,
   matchQuestionsToClaim,
   migrateLegacyClaimEvidence,
   questionRelevanceScore,
@@ -119,7 +120,7 @@ const interviewerForStage=stage=>({hr:'recruiter','hiring-manager':'hiring-manag
 const applications=()=>Array.isArray(workspace?.ats?.applications)?workspace.ats.applications:[]
 const activeApplication=()=>applications().find(a=>a.id===state.applicationId)||null
 const cvClaims=()=>extractCvClaims(workspace?.profile||{})
-state.claimEvidence=migrateLegacyClaimEvidence(state.claimEvidence,cvClaims())
+state.claimEvidence=migrateLegacyClaimEvidence(state.claimEvidence)
 const claimRisk=item=>Math.min(99,34+(item?.numbers?.length?22:0)+(item?.leadershipSignal?20:0)+(item?.outcomeSignal?17:0)+(item?.specificity>=75?8:0))
 const highRiskClaims=()=>cvClaims().filter(item=>claimRisk(item)>=70)
 const marketLabel=()=>state.market==='vietnam'?'Việt Nam':state.market==='global'?'Quốc tế':'VN + Quốc tế'
@@ -438,6 +439,7 @@ function renderClaims(){
       <div class="meta chips">${selected.numbers.map(n=>`<span># Có số liệu: ${e(n)}</span>`).join('')}${selected.leadershipSignal?'<span># Ownership / leadership</span>':''}${selected.outcomeSignal?'<span># Outcome claim</span>':''}<span># ${e(selected.source)}</span></div>
       <div class="section"><span class="eyebrow">RECRUITER PROBES</span><ol class="probe-list">${list(claimProbes(selected))}</ol></div>
       <div class="section"><span class="eyebrow">MATCHED QUESTIONS</span><ol class="probe-list">${list(matchQuestionsToClaim(selected,questionDeck()).map(q=>q.question))||'<li>Chưa có câu hỏi đủ gần; dùng recruiter probes phía trên.</li>'}</ol></div>
+      ${getUnassignedClaimNotes(state.claimEvidence).length?`<div class="section legacy-notes"><span class="eyebrow">GHI CHÚ CŨ CẦN GÁN LẠI</span><p>Không thể tự xác định ghi chú cũ thuộc claim nào sau khi sắp xếp lại CV. Chỉ gán khi anh xác nhận.</p>${getUnassignedClaimNotes(state.claimEvidence).map(note=>`<article><small>${e(note.legacyId)}</small><p>${e(note.note)}</p><button data-legacy-note="${e(note.legacyId)}" ${state.claimEvidence[selected.id]?.note?'disabled':''}>Gán vào claim đang chọn</button></article>`).join('')}</div>`:''}
       <div class="section evidence-box"><span class="eyebrow">EVIDENCE NOTE</span>${state.claimEvidence[selected.id]?.needsReview?'<p role="status">Ghi chú cũ cần xác minh lại theo claim hiện tại. Trạng thái ready không tự động được chuyển.</p>':''}<textarea id="claim-note" rows="6" placeholder="Baseline, phạm vi mình sở hữu, cách đo, ai tham gia, trade-off, result...">${e(state.claimEvidence[selected.id]?.note||'')}</textarea><div class="evidence-footer"><span id="claim-count">${(state.claimEvidence[selected.id]?.note||'').length} ký tự</span><button id="claim-ready" class="${state.claimEvidence[selected.id]?.ready?'ready':''}">${state.claimEvidence[selected.id]?.ready?'✓ Evidence ready':'Đánh dấu evidence ready'}</button></div></div>
     </section>`:'<section class="empty">CV hiện tại chưa có đủ nội dung để trích xuất claim.</section>'}
   </div>`
@@ -447,6 +449,18 @@ function renderClaims(){
     note.oninput=()=>{state.claimEvidence[selected.id]={...(state.claimEvidence[selected.id]||{}),note:note.value};document.querySelector('#claim-count').textContent=note.value.length+' ký tự'}
     note.onchange=saveClaims
     document.querySelector('#claim-ready').onclick=()=>{const current=state.claimEvidence[selected.id]||{};state.claimEvidence[selected.id]={...current,ready:!current.ready,needsReview:false,claimText:selected.text};saveClaims();renderClaims()}
+    root.querySelectorAll('[data-legacy-note]').forEach(button=>button.onclick=()=>{
+      if(String(state.claimEvidence[selected.id]?.note||'').trim())return
+      const legacyId=button.dataset.legacyNote
+      const original=getUnassignedClaimNotes(state.claimEvidence).find(item=>item.legacyId===legacyId)
+      if(!original)return
+      state.claimEvidence={
+        ...state.claimEvidence,
+        __legacyNotes:state.claimEvidence.__legacyNotes.map(item=>item.legacyId===legacyId?{...item,appliedTo:selected.id}:item),
+        [selected.id]:{note:original.note,ready:false,needsReview:true,claimText:selected.text,legacySourceId:legacyId},
+      }
+      saveClaims();renderClaims()
+    })
   }
 }
 
