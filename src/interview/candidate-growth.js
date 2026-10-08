@@ -38,7 +38,8 @@ export const buildCandidateGrowthPlan = ({
 } = {}) => {
   const goal = candidateGoals.find(item => item.id === goalId) || candidateGoals[5]
   const history = (Array.isArray(sessions) ? sessions : [])
-    .filter(session => session?.report && safeScores(session).length)
+    .filter(session => session?.report && safeScores(session).length &&
+      (!session.growthGoalId || session.growthGoalId === goal.id))
     .slice()
     .sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0))
   const latest = history[0] || null
@@ -106,7 +107,8 @@ export const buildMicroPracticeSet = ({
   count = 3,
 } = {}) => {
   const goal = candidateGoals.find(item => item.id === goalId) || candidateGoals[5]
-  const history = Array.isArray(sessions) ? sessions : []
+  const history = (Array.isArray(sessions) ? sessions : []).filter(
+    session => !session?.growthGoalId || session.growthGoalId === goal.id)
   const latest = history.find(session => session?.report)
   const selected = []
   const seen = new Set()
