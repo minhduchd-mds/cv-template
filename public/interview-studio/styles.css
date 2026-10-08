@@ -302,3 +302,22 @@ body { background:radial-gradient(ellipse at 85% 0%,#e6f6f3 0%, transparent 32%)
 .retry-comparison { margin-top:13px; padding:10px 12px; display:flex; flex-wrap:wrap; align-items:center; gap:11px; border:1px solid var(--line); border-radius:9px; background:#fff; }
 .retry-comparison strong { font-size:17px; color:var(--accent); }
 .retry-comparison span { font-size:11px; color:var(--muted); line-height:1.45; }
+
+
+/* Before/after answer reflection, Light style and narrow screen support */
+.revision-original { margin: 14px 0; padding: 14px 16px; border: 1px solid #c9e3dd; border-radius: 12px; background: #f5fbf9; }
+.revision-original > summary { color: var(--accent); font-size: 12px; font-weight: 700; cursor: pointer; }
+.revision-original p,.revision-report p { margin: 10px 0; font-size: 12px; line-height: 1.65; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.revision-original > div { padding: 10px 0; border-top: 1px solid var(--line); }
+.revision-original > div strong { font-size: 11px; }
+.revision-original button { min-height: 36px; margin-top: 4px; }
+.revision-report-item { border-top: 1px solid var(--line); padding: 13px 0; }
+.revision-report-item > summary { cursor: pointer; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.revision-report-item > summary strong { font-size: 12px; }
+.revision-report-item > summary span { color: var(--accent); font-size: 11px; white-space: nowrap; }
+.revision-pair { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 11px; padding-top: 13px; }
+.revision-pair article { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: #f8fbfd; }
+.revision-pair article span { color: var(--muted); font-size: 10px; font-weight: 750; }
+.revision-pair article small { display: block; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.revision-note { color: var(--muted); font-size: 10px; line-height: 1.5; }
+@media (max-width: 690px) { .revision-pair { grid-template-columns: 1fr; } }
