@@ -674,11 +674,45 @@
           <div class="is-page-heading">
             <div>
               <span class="is-eyebrow">MOCK INTERVIEW</span>
-              <h1>Trả lời như vòng thật. <em>Coach chỉ xuất hiện sau.</em></h1>
-              <p>Question engine ưu tiên JD, CV claims và vòng phỏng vấn. Có timer, speech input khi trình duyệt hỗ trợ và evidence check sau từng câu.</p>
+              <h1>Luyện phỏng vấn <em>theo tình huống.</em></h1>
+              <p>Chọn kịch bản, trả lời, nhận phản hồi và luyện lại.</p>
             </div>
             <div class="is-heading-number">{{ practiceActive ? practiceIndex + 1 + '/' + practiceQuestions.length : '5Q' }}</div>
           </div>
+
+          <section v-if="!practiceActive" class="is-scenario-picker" aria-label="Kịch bản phỏng vấn">
+            <div class="is-scenario-picker__heading">
+              <div>
+                <span class="is-eyebrow">PRACTICE SCENARIOS</span>
+                <h2>Chọn kịch bản phỏng vấn</h2>
+                <p>10 tình huống · Từ HR đến vòng chuyên môn và đàm phán offer</p>
+              </div>
+              <button v-if="selectedScenarioId" type="button" class="is-text-button" @click="selectScenario('')">Bỏ chọn</button>
+            </div>
+            <div class="is-scenario-grid">
+              <button
+                v-for="scenario in interviewScenarios"
+                :key="scenario.id"
+                type="button"
+                class="is-scenario-card"
+                :class="{ 'is-scenario-card--active': selectedScenarioId === scenario.id }"
+                :aria-pressed="selectedScenarioId === scenario.id"
+                @click="selectScenario(scenario.id)"
+              >
+                <span class="is-scenario-card__number">{{ scenario.icon }}</span>
+                <span class="is-scenario-card__body">
+                  <strong>{{ scenario.label }}</strong>
+                  <small>{{ scenario.group }} · {{ scenario.time }}</small>
+                </span>
+                <span class="is-scenario-card__check">{{ selectedScenarioId === scenario.id ? '✓' : '↗' }}</span>
+              </button>
+            </div>
+            <div v-if="selectedScenario" class="is-scenario-preview">
+              <span>{{ selectedScenario.level }} · {{ selectedScenario.questions.length }} câu gốc</span>
+              <p>{{ selectedScenario.context }}</p>
+              <button type="button" class="is-button is-button--primary" @click="startPractice">Luyện kịch bản này →</button>
+            </div>
+          </section>
 
           <section v-if="!practiceActive" class="is-mock-start">
             <div class="is-mock-config">
@@ -750,7 +784,7 @@
                   QUESTION {{ practiceIndex + 1 }} / {{ practiceQuestions.length }}
                   <b v-if="practiceCurrent.adaptive?.isFollowUp" class="is-adaptive-badge">ADAPTIVE FOLLOW-UP</b>
                 </span>
-                <small>{{ categoryName(practiceCurrent.category) }} · {{ activeStageLabel }} · {{ activeInterviewer.label }} · {{ activePressure.label }}</small>
+                <small>{{ selectedScenario?.label || categoryName(practiceCurrent.category) }} · {{ activeStageLabel }} · {{ activeInterviewer.label }} · {{ activePressure.label }}</small>
               </div>
               <div class="is-timer" :class="{ warning: timerRemaining <= 20 }">
                 <b>{{ formattedTimer }}</b>
@@ -994,6 +1028,7 @@
 import { templates } from '../data/cv'
 import { patchCanonicalWorkspace, readCanonicalWorkspace } from '../data/workspace-store'
 import { clearInterviewLocalData, downloadInterviewDataExport } from './interview-data-controls'
+import { interviewScenarios, getInterviewScenario, scenarioPracticeQuestions } from './interview-scenarios'
 import {
   JOB_MARKET_AS_OF, observedJobSignals, salaryBenchmarks, verifiedEmployers,
   jobMarketSources, salaryDisplay, jobSourceForRole, isObservedJobCurrent,
@@ -1057,6 +1092,8 @@ export default {
       jobMarketDate: JOB_MARKET_AS_OF,
       interviewerModes,
       pressureLevels,
+      interviewScenarios,
+      selectedScenarioId: '',
       modules: [
         { id: 'overview', label: 'Overview', icon: '◇' },
         { id: 'applications', label: 'Application Lab', icon: '◎', badge: 'JD' },
@@ -1129,6 +1166,9 @@ export default {
       if (this.market === 'vietnam') return 'Việt Nam'
       if (this.market === 'global') return 'Quốc tế'
       return 'VN + Quốc tế'
+    },
+    selectedScenario() {
+      return getInterviewScenario(this.selectedScenarioId)
     },
     applications() {
       return Array.isArray(this.workspace?.ats?.applications) ? this.workspace.ats.applications : []
@@ -1404,6 +1444,15 @@ export default {
     window.speechSynthesis?.cancel()
   },
   methods: {
+    selectScenario(id) {
+      this.selectedScenarioId = id
+      const scenario = getInterviewScenario(id)
+      if (!scenario) return
+      this.stageId = scenario.stageId
+      this.interviewerMode = scenario.interviewerMode
+      this.pressureLevel = scenario.pressureLevel
+      this.practiceSize = 5
+    },
     loadPracticePrefs() {
       try {
         const saved = JSON.parse(window.localStorage.getItem(PREF_KEY) || '{}')
@@ -1471,6 +1520,8 @@ export default {
         templateId: this.selectedTemplateId,
         industryId: this.industryId,
         rolePackId: this.rolePackId,
+        scenarioId: this.selectedScenarioId || '',
+        scenarioLabel: this.selectedScenario?.label || '',
         seniority: this.seniority,
         industryId: this.resolvedIndustryId,
         stageId: this.stageId,
@@ -1769,9 +1820,10 @@ export default {
         if (!selected.some((item) => item.id === question.id)) selected.push(question)
       })
 
-      this.practiceBaseSize = this.practiceSize
+      const scripted = scenarioPracticeQuestions(this.selectedScenarioId, this.practiceSize, selected)
+      this.practiceBaseSize = scripted.length
       this.adaptiveInsertedCount = 0
-      this.practiceQuestions = selected.slice(0, this.practiceSize)
+      this.practiceQuestions = scripted
       this.practiceDrafts = Object.fromEntries(this.practiceQuestions.map((item) => [
         item.id,
         { answer: '', evidence: '', confidence: 3, evaluation: null },
