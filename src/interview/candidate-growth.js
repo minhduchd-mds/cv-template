@@ -31,7 +31,11 @@ const focusGuide = {
   delivery: { label: 'Diễn đạt', action: 'Tập trả lời rõ trong khoảng 60–90 giây.', check: 'Một thông điệp, một ví dụ, một kết quả?' },
 }
 
-const validNumber = value => Number.isFinite(Number(value)) ? Number(value) : null
+const validNumber = value => {
+  if (value === null || value === undefined || value === '' || typeof value === 'boolean') return null
+  const numeric = Number(value)
+  return Number.isFinite(numeric) && numeric >= 0 && numeric <= 100 ? numeric : null
+}
 const safeScores = session => {
   const values = Object.entries(session?.report?.dimensions || {})
     .filter(([key, value]) => focusGuide[key] && validNumber(value) !== null)
@@ -69,12 +73,22 @@ export const buildCandidateGrowthPlan = ({
   const focus = focusGuide[focusKey]
   // Only compare practice signals for sessions with matching scenario and job
   // context. Otherwise report "not comparable" instead of an invented trend.
-  const baseline = latest && history.slice(1).find(session =>
-    (session.scenarioId || '') === (latest.scenarioId || '') &&
-    (session.applicationId || '') === (latest.applicationId || '') &&
-    session.stageId === latest.stageId &&
-    Number(session.baseQuestions || 0) === Number(latest.baseQuestions || 0)
-  )
+  const originalQuestionIds = session => (Array.isArray(session?.responses) ? session.responses : [])
+    .filter(item => item?.questionId && !item?.adaptive?.isFollowUp)
+    .map(item => item.questionId)
+  const latestIds = originalQuestionIds(latest)
+  const baseline = latest && history.slice(1).find(session => {
+    const previousIds = originalQuestionIds(session)
+    const sameQuestions = !latestIds.length && !previousIds.length
+      ? true
+      : latestIds.length === previousIds.length
+        && latestIds.every((id, index) => id === previousIds[index])
+    return sameQuestions &&
+      (session.scenarioId || '') === (latest.scenarioId || '') &&
+      (session.applicationId || '') === (latest.applicationId || '') &&
+      session.stageId === latest.stageId &&
+      Number(session.baseQuestions || 0) === Number(latest.baseQuestions || 0)
+  })
   const delta = baseline
     ? Number(latest.report.overall) - Number(baseline.report.overall)
     : null
@@ -117,8 +131,9 @@ export const buildMicroPracticeSet = ({
   count = 3,
 } = {}) => {
   const goal = candidateGoals.find(item => item.id === goalId) || candidateGoals[5]
-  const history = (Array.isArray(sessions) ? sessions : []).filter(
-    session => !session?.growthGoalId || session.growthGoalId === goal.id)
+  const history = (Array.isArray(sessions) ? sessions : [])
+    .filter(session => !session?.growthGoalId || session.growthGoalId === goal.id)
+    .sort((a, b) => (Date.parse(b?.createdAt || 0) || 0) - (Date.parse(a?.createdAt || 0) || 0))
   const latest = history.find(session => session?.report)
   const selected = []
   const seen = new Set()
@@ -134,7 +149,7 @@ export const buildMicroPracticeSet = ({
   const scenario = getInterviewScenario(goal.scenarioId)
   const catalog = [...(scenario?.questions || []), ...(Array.isArray(questions) ? questions : [])]
   const weakestResponse = (latest?.responses || [])
-    .filter(r => r?.evaluation?.dimensions && r?.questionId && !r?.adaptive?.isFollowUp)
+    .filter(r => r?.evaluation?.dimensions && r?.questionId && String(r?.answer || '').trim() && !r?.adaptive?.isFollowUp)
     .map(r => ({
       id: r.questionId,
       score: Math.min(...Object.values(r.evaluation.dimensions)
