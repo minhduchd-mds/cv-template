@@ -857,7 +857,9 @@
               <label>
                 <span>Câu trả lời của anh</span>
                 <textarea
+                  ref="practiceAnswer"
                   v-model="currentDraft.answer"
+                  @input="invalidateCurrentEvaluation"
                   rows="9"
                   placeholder="Nói hoặc nhập đúng cách anh sẽ trả lời trong buổi phỏng vấn thật..."
                 ></textarea>
@@ -867,6 +869,7 @@
                 <span>Evidence / STAR anchors</span>
                 <textarea
                   v-model="currentDraft.evidence"
+                  @input="invalidateCurrentEvaluation"
                   rows="6"
                   placeholder="Project · ownership · baseline · decision · trade-off · result · learning"
                 ></textarea>
@@ -876,7 +879,7 @@
 
             <label class="is-confidence">
               <span>Mức tự tin</span>
-              <input v-model.number="currentDraft.confidence" type="range" min="1" max="5" step="1" />
+              <input v-model.number="currentDraft.confidence" @input="invalidateCurrentEvaluation" type="range" min="1" max="5" step="1" />
               <b>{{ currentDraft.confidence }}/5</b>
             </label>
 
@@ -910,6 +913,7 @@
               </div>
               <button type="button" class="is-button" @click="retryCurrentAnswer">Sửa và đánh giá lại ↻</button>
             </section>
+            <p v-if="currentDraft.retryBaseline && !currentDraft.evaluation" class="is-revision-prompt" role="status">Câu trả lời đã được sửa. Bấm “Đánh giá câu này” để cập nhật phản hồi.</p>
             <button type="button" class="is-coach-toggle" @click="practiceShowGuide = !practiceShowGuide">
               {{ practiceShowGuide ? 'Ẩn Answer Coach' : 'Mở Answer Coach sau khi đã trả lời' }}
             </button>
@@ -966,7 +970,7 @@
                 · {{ latestReport.interviewerLabel || 'Interviewer' }} · {{ latestReport.pressureLabel || 'Realistic' }}
                 · {{ latestReport.answered }}/{{ latestReport.total }} câu
               </p>
-              <span>{{ latestReport.report.evidenceReady }}/{{ latestReport.total }} câu có evidence note · {{ latestReport.report.adaptiveCount || 0 }} adaptive follow-up</span>
+              <span>{{ latestReport.report.evidenceReady }}/{{ latestReport.total }} câu có evidence note · {{ latestReport.report.skipped || 0 }} câu bỏ qua · {{ latestReport.report.adaptiveCount || 0 }} follow-up</span>
               <small v-if="latestReport.report.revisions?.revised">
                 {{ latestReport.report.revisions.revised }} câu đã sửa · {{ latestReport.report.revisions.improved }} câu có tín hiệu cải thiện sau sửa
               </small>
@@ -1124,6 +1128,8 @@ import {
   evaluateInterviewResponse,
   buildAnswerImprovement,
   compareAnswerAttempts,
+  snapshotAnswerInput,
+  isEvaluationCurrent,
   summarizeAnswerRevisions,
   extractCvClaims,
   getUnassignedClaimNotes,
@@ -1410,6 +1416,7 @@ export default {
       return this.practiceQuestions.filter((item) => item?.adaptive?.isFollowUp).length
     },
     nextPracticeLabel() {
+      if (!String(this.currentDraft.answer || '').trim()) return 'Bỏ qua câu này →'
       const mayAdapt = !this.practiceCurrent?.adaptive?.isFollowUp
         && this.adaptiveInsertedCount < this.adaptiveMaxFollowUps
       if (mayAdapt) return 'Phân tích & tiếp tục →'
@@ -1819,7 +1826,7 @@ export default {
     },
     saveCurrentStory() {
       if (!this.practiceCurrent || !this.currentDraft?.answer) return
-      if (!this.currentDraft.evaluation) this.evaluateCurrent()
+      if (!isEvaluationCurrent(this.currentDraft)) this.evaluateCurrent()
       const draft = this.practiceDrafts[this.practiceCurrent.id] || this.currentDraft
       const relatedClaims = relatedClaimsForAnswer(draft.answer, this.cvClaims, 3)
       const keyApplicationId = this.activeApplication?.id || ''
@@ -1996,6 +2003,25 @@ export default {
     elapsedSeconds() {
       return Math.max(0, this.timerChoice - this.timerRemaining)
     },
+    invalidateCurrentEvaluation() {
+      if (!this.practiceCurrent) return
+      const id = this.practiceCurrent.id
+      const draft = this.practiceDrafts[id]
+      if (!draft?.evaluation) return
+      this.practiceDrafts = {
+        ...this.practiceDrafts,
+        [id]: {
+          ...draft,
+          retryBaseline: draft.retryBaseline || {
+            ...snapshotAnswerInput(draft.evaluatedInput || draft),
+            evaluation: draft.evaluation,
+          },
+          evaluation: null,
+          evaluatedInput: null,
+        },
+      }
+      this.practiceShowGuide = false
+    },
     retryCurrentAnswer() {
       if (!this.practiceCurrent || !this.currentDraft.evaluation) return
       const id = this.practiceCurrent.id
@@ -2005,15 +2031,16 @@ export default {
         [id]: {
           ...current,
           retryBaseline: current.retryBaseline || {
-            answer: String(current.answer || '').trim(),
-            evidence: String(current.evidence || '').trim(),
+            ...snapshotAnswerInput(current.evaluatedInput || current),
             evaluation: current.evaluation,
           },
           evaluation: null,
+          evaluatedInput: null,
         },
       }
       this.practiceShowGuide = false
       this.stopQuestionTimer()
+      this.$nextTick(() => this.$refs.practiceAnswer?.focus())
     },
     evaluateCurrent() {
       if (!this.practiceCurrent) return
@@ -2029,9 +2056,9 @@ export default {
       })
       this.practiceDrafts = {
         ...this.practiceDrafts,
-        [id]: { ...draft, evaluation },
+        [id]: { ...draft, evaluation, evaluatedInput: snapshotAnswerInput(draft) },
       }
-      this.practiceShowGuide = true
+      this.practiceShowGuide = Boolean(String(draft.answer || '').trim())
     },
     nextPractice() {
       if (!this.practiceCurrent) return
@@ -2078,7 +2105,7 @@ export default {
       this.stopDictation()
       const responses = this.practiceQuestions.map((item) => {
         const draft = this.practiceDrafts[item.id] || {}
-        const evaluation = draft.evaluation || evaluateInterviewResponse({
+        const evaluation = isEvaluationCurrent(draft) ? draft.evaluation : evaluateInterviewResponse({
           answer: draft.answer,
           evidence: draft.evidence,
           confidence: draft.confidence,
@@ -2129,8 +2156,8 @@ export default {
         total: responses.length,
         baseQuestions: this.practiceBaseSize,
         adaptiveFollowUps: responses.filter((item) => item.adaptive?.isFollowUp).length,
-        answered: responses.filter((item) => item.answer || item.evidence).length,
-        evidenceReady: responses.filter((item) => item.evidence.length >= 12).length,
+        answered: responses.filter((item) => item.answer).length,
+        evidenceReady: responses.filter((item) => item.answer && item.evidence.length >= 12).length,
         responses,
         report,
       }
@@ -2207,6 +2234,7 @@ export default {
       let committed = ''
       const baseAnswer = String(this.currentDraft.answer || '').replace(/\s*\[đang nghe:.*$/s, '').trim()
       recognition.onresult = (event) => {
+        this.invalidateCurrentEvaluation()
         let interim = ''
         for (let index = event.resultIndex; index < event.results.length; index += 1) {
           const transcript = event.results[index][0]?.transcript || ''
@@ -2229,6 +2257,7 @@ export default {
         this.speechRecording = false
       }
       recognition.onend = () => {
+        this.invalidateCurrentEvaluation()
         this.speechRecording = false
         const id = this.practiceCurrent?.id
         if (!id) return
@@ -4132,4 +4161,5 @@ export default {
 .is-retry-coach__comparison strong { font-size:17px; color:var(--accent); }
 .is-retry-coach__comparison span { font-size:11px; color:var(--muted); line-height:1.45; }
 
+.is-revision-prompt { margin: 10px 0; color: var(--accent); font-size: 12px; line-height: 1.45; }
 </style>
